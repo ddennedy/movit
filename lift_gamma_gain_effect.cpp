@@ -38,5 +38,5 @@ void LiftGammaGainEffect::set_uniforms(GLhandleARB glsl_program_num, const std::
 		2.2f / gamma.r,
 		2.2f / gamma.g,
 		2.2f / gamma.b);
-	set_uniform_vec3(glsl_program_num, prefix, "inv_gamma_22", (float *)&gain_pow_inv_gamma);
+	set_uniform_vec3(glsl_program_num, prefix, "inv_gamma_22", (float *)&inv_gamma_22);
 }
