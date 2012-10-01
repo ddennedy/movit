@@ -138,7 +138,7 @@ void mouse(int x, int y)
 	update_hsv();
 }
 
-void load_texture(const char *filename)
+unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 {
 	SDL_Surface *img = IMG_Load(filename);
 	if (img == NULL) {
@@ -177,17 +177,30 @@ void load_texture(const char *filename)
 	}
 	SDL_UnlockSurface(img);
 
+	*w = img->w;
+	*h = img->h;
+
+	SDL_FreeSurface(img);
+
+	return dst_pixels;
+}
+
+void load_texture(const char *filename)
+{
+	unsigned w, h;
+	unsigned char *pixels = load_image(filename, &w, &h);
+
 #if 1
 	// we will convert to sRGB in the shader
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img->w, img->h, 0, GL_RGB, GL_UNSIGNED_BYTE, dst_pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	check_error();
 #else
 	// implicit sRGB conversion in hardware
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, img->w, img->h, 0, GL_RGB, GL_UNSIGNED_BYTE, dst_pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 	check_error();
 #endif
-	free(dst_pixels);
-	SDL_FreeSurface(img);
+
+	free(pixels);
 }
 
 void write_ppm(const char *filename, unsigned char *screenbuf)
