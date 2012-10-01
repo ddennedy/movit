@@ -34,13 +34,13 @@ void EffectChain::add_output(const ImageFormat &format)
 Effect *instantiate_effect(EffectId effect)
 {
 	switch (effect) {
-	case GAMMA_CONVERSION:
+	case EFFECT_GAMMA_EXPANSION:
 		return new GammaExpansionEffect();
-	case RGB_PRIMARIES_CONVERSION:
-		return new GammaExpansionEffect();
-	case LIFT_GAMMA_GAIN:
+	case EFFECT_GAMMA_COMPRESSION:
+		return new GammaCompressionEffect();
+	case EFFECT_LIFT_GAMMA_GAIN:
 		return new LiftGammaGainEffect();
-	case SATURATION:
+	case EFFECT_SATURATION:
 		return new SaturationEffect();
 	}
 	assert(false);

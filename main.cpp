@@ -183,8 +183,8 @@ int main(int argc, char **argv)
 	inout_format.gamma_curve = GAMMA_sRGB;
 
 	chain.add_input(inout_format);
-	Effect *lift_gamma_gain_effect = chain.add_effect(LIFT_GAMMA_GAIN);
-	Effect *saturation_effect = chain.add_effect(SATURATION);
+	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
+	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
 	chain.add_output(inout_format);
 	chain.finalize();
 
