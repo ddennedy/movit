@@ -46,6 +46,9 @@ public:
 	void render_to_screen(unsigned char *src);
 
 private:
+	void normalize_to_linear_gamma();
+	void normalize_to_srgb();
+
 	unsigned width, height;
 	ImageFormat input_format, output_format;
 	std::vector<Effect *> effects;

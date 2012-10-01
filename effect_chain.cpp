@@ -10,6 +10,7 @@
 #include "util.h"
 #include "effect_chain.h"
 #include "gamma_expansion_effect.h"
+#include "gamma_compression_effect.h"
 #include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
 #include "texture_enum.h"
@@ -42,24 +43,34 @@ Effect *instantiate_effect(EffectId effect)
 	assert(false);
 }
 
+void EffectChain::normalize_to_linear_gamma()
+{
+	GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
+	gamma_conversion->set_int("source_curve", current_gamma_curve);
+	effects.push_back(gamma_conversion);
+	current_gamma_curve = GAMMA_LINEAR;
+}
+
+void EffectChain::normalize_to_srgb()
+{
+	assert(current_gamma_curve == GAMMA_LINEAR);
+	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
+	colorspace_conversion->set_int("source_space", current_color_space);
+	colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
+	effects.push_back(colorspace_conversion);
+	current_color_space = COLORSPACE_sRGB;
+}
+
 Effect *EffectChain::add_effect(EffectId effect_id)
 {
 	Effect *effect = instantiate_effect(effect_id);
 
 	if (effect->needs_linear_light() && current_gamma_curve != GAMMA_LINEAR) {
-		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
-		gamma_conversion->set_int("source_curve", current_gamma_curve);
-		effects.push_back(gamma_conversion);
-		current_gamma_curve = GAMMA_LINEAR;
+		normalize_to_linear_gamma();
 	}
 
 	if (effect->needs_srgb_primaries() && current_color_space != COLORSPACE_sRGB) {
-		assert(current_gamma_curve == GAMMA_LINEAR);
-		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
-		colorspace_conversion->set_int("source_space", current_color_space);
-		colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
-		effects.push_back(colorspace_conversion);
-		current_color_space = COLORSPACE_sRGB;
+		normalize_to_srgb();
 	}
 
 	// not handled yet
@@ -113,6 +124,19 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 
 void EffectChain::finalize()
 {
+	// TODO: If we want a non-sRGB output color space, convert.
+
+	if (current_gamma_curve != output_format.gamma_curve) {
+		if (current_gamma_curve != GAMMA_LINEAR) {
+			normalize_to_linear_gamma();
+		}
+		assert(current_gamma_curve == GAMMA_LINEAR);
+		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
+		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
+		effects.push_back(gamma_conversion);
+		current_gamma_curve = output_format.gamma_curve;
+	}
+
 	std::string frag_shader = read_file("header.glsl");
 
 	for (unsigned i = 0; i < effects.size(); ++i) {
