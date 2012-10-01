@@ -1,6 +1,6 @@
 #version 120
 uniform sampler2D tex;
-varying vec4 tc;
+varying vec2 tc;
 uniform vec3 lift, gain;
 uniform vec3 gain_pow_inv_gamma, inv_gamma_22;
 uniform float saturation;
@@ -40,7 +40,7 @@ vec3 from_linear(vec3 x) {
 
 void main()
 {
-	vec3 x = texture2D(tex, tc.st, -30.0f).rgb;
+	vec3 x = texture2D(tex, tc).rgb;
 	x = to_linear(x);
 
 	// do lift in nonlinear space (the others don't care)

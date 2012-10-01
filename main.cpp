@@ -38,31 +38,6 @@ float lift_r = 0.0f, lift_g = 0.0f, lift_b = 0.0f;
 float gamma_r = 1.0f, gamma_g = 1.0f, gamma_b = 1.0f;
 float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
 
-GLhandleARB read_shader(const char* filename, GLenum type)
-{
-	std::string shader_src = read_file(filename);
-
-	GLhandleARB obj = glCreateShaderObjectARB(type);
-	const GLchar* source[] = { shader_src.data() };
-	const GLint length[] = { shader_src.size() };
-	glShaderSource(obj, 1, source, length);
-	glCompileShader(obj);
-
-	GLchar info_log[4096];
-	GLsizei log_length = sizeof(info_log) - 1;
-	glGetShaderInfoLog(obj, log_length, &log_length, info_log);
-	info_log[log_length] = 0; 
-	printf("shader compile log: %s\n", info_log);
-
-	GLint status;
-	glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
-	if (status == GL_FALSE) {
-		exit(1);
-	}
-
-	return obj;
-}
-
 void draw_picture_quad(GLint prog, int frame)
 {
 	glUseProgramObjectARB(prog);
@@ -251,6 +226,19 @@ int main(int argc, char **argv)
 	check_error();
 
 	load_texture("blg_wheels_woman_1.jpg");
+
+	EffectChain chain(WIDTH, HEIGHT);
+
+	ImageFormat inout_format;
+	inout_format.pixel_format = FORMAT_RGB;
+	inout_format.color_space = COLORSPACE_sRGB;
+	inout_format.gamma_curve = GAMMA_sRGB;
+
+	chain.add_input(inout_format);
+	Effect *lift_gamma_gain_effect = chain.add_effect(LIFT_GAMMA_GAIN);
+	chain.add_output(inout_format);
+	chain.finalize();
+
 	//glGenerateMipmap(GL_TEXTURE_2D);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 4);
 	//check_error();
@@ -306,8 +294,8 @@ int main(int argc, char **argv)
 	update_hsv();
 
 	int prog = glCreateProgram();
-	GLhandleARB vs_obj = read_shader("vs.glsl", GL_VERTEX_SHADER);
-	GLhandleARB fs_obj = read_shader("fs.glsl", GL_FRAGMENT_SHADER);
+	GLhandleARB vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
+	GLhandleARB fs_obj = compile_shader(read_file("fs.glsl"), GL_FRAGMENT_SHADER);
 	glAttachObjectARB(prog, vs_obj);
 	check_error();
 	glAttachObjectARB(prog, fs_obj);
@@ -344,6 +332,7 @@ int main(int argc, char **argv)
 
 		++frame;
 
+		
 		draw_picture_quad(prog, frame);
 		
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));

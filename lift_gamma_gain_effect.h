@@ -6,6 +6,7 @@
 class LiftGammaGainEffect : public Effect {
 public:
 	LiftGammaGainEffect();
+	std::string output_glsl();
 
 private:
 	RGBTriplet lift, gamma, gain;

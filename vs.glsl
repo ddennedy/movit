@@ -1,5 +1,5 @@
 #version 120
-varying vec4 tc;
+varying vec2 tc;
 //varying vec3 lift, inv_gamma, gain;
 //uniform vec3 gamma;
 //varying vec3 inv_gamma;
@@ -15,7 +15,7 @@ vec3 to_linear(vec3 x) {
 
 void main()
 {
-        tc = gl_MultiTexCoord0;
+        tc = gl_MultiTexCoord0.st;
 
 	//lift = to_linear(vec3(rgba.r, 0.0, 0.0));
 	//lift = vec3(rgba.r, 0.0, 0.0);

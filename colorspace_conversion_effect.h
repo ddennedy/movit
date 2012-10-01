@@ -7,6 +7,7 @@
 class ColorSpaceConversionEffect : public Effect {
 public:
 	ColorSpaceConversionEffect();
+	std::string output_glsl();
 
 private:
 	ColorSpace source_space, destination_space;

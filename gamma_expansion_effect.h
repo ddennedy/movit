@@ -7,6 +7,7 @@
 class GammaExpansionEffect : public Effect {
 public:
 	GammaExpansionEffect();
+	std::string output_glsl();
 
 private:
 	GammaCurve source_curve;
