@@ -6,7 +6,8 @@
 // operation.
 
 // These are calculated in the host code to save some arithmetic.
-uniform vec3 PREFIX(gain_pow_inv_gamma), PREFIX(inv_gamma_22);
+uniform vec3 PREFIX(gain_pow_inv_gamma);  // gain^(1/gamma).
+uniform vec3 PREFIX(inv_gamma_22);  // 2.2 / gamma.
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = LAST_INPUT(tc);
