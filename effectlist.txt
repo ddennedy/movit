@@ -19,7 +19,7 @@ spatial (6)
  * sharpen                            +2
  * denoise                            +2
  * glow                               +2 
- * vignette                            0
+ * vignette                           +1
  * diffuse                            +2
  
 color and exposure (5)
