@@ -21,6 +21,18 @@ void set_uniform_float(GLhandleARB glsl_program_num, const std::string &prefix, 
 	check_error();
 }
 
+void set_uniform_vec2(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
+{
+	std::string name = prefix + "_" + key;
+	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	if (l == -1) {
+		return;
+	}
+	check_error();
+	glUniform2fv(l, 1, values);
+	check_error();
+}
+
 void set_uniform_vec3(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
 {
 	std::string name = prefix + "_" + key;
@@ -51,6 +63,15 @@ bool Effect::set_float(const std::string &key, float value)
 	return true;
 }
 
+bool Effect::set_vec2(const std::string &key, const float *values)
+{
+	if (params_vec2.count(key) == 0) {
+		return false;
+	}
+	memcpy(params_vec2[key], values, sizeof(float) * 2);
+	return true;
+}
+
 bool Effect::set_vec3(const std::string &key, const float *values)
 {
 	if (params_vec3.count(key) == 0) {
@@ -72,6 +93,12 @@ void Effect::register_float(const std::string &key, float *value)
 	params_float[key] = value;
 }
 
+void Effect::register_vec2(const std::string &key, float *values)
+{
+	assert(params_vec2.count(key) == 0);
+	params_vec2[key] = values;
+}
+
 void Effect::register_vec3(const std::string &key, float *values)
 {
 	assert(params_vec3.count(key) == 0);
@@ -90,6 +117,13 @@ std::string Effect::output_convenience_uniforms()
 		sprintf(buf, "uniform float PREFIX(%s);\n", it->first.c_str());
 		output.append(buf);
 	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec2.begin();
+	     it != params_vec2.end();
+	     ++it) {
+		char buf[256];
+		sprintf(buf, "uniform vec2 PREFIX(%s);\n", it->first.c_str());
+		output.append(buf);
+	}
 	for (std::map<std::string, float*>::const_iterator it = params_vec3.begin();
 	     it != params_vec3.end();
 	     ++it) {
@@ -106,6 +140,11 @@ void Effect::set_uniforms(GLhandleARB glsl_program_num, const std::string& prefi
 	     it != params_float.end();
 	     ++it) {
 		set_uniform_float(glsl_program_num, prefix, it->first, *it->second);
+	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec2.begin();
+	     it != params_vec2.end();
+	     ++it) {
+		set_uniform_vec2(glsl_program_num, prefix, it->first, it->second);
 	}
 	for (std::map<std::string, float*>::const_iterator it = params_vec3.begin();
 	     it != params_vec3.end();
