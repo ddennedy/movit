@@ -4,8 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <string>
+
 // assumes h in [0, 2pi> or [-pi, pi>
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b);
+
+std::string read_file(const std::string &filename);
 
 #ifdef NDEBUG
 #define check_error()

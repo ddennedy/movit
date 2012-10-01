@@ -42,3 +42,18 @@ void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 	*g += m;
 	*b += m;
 }
+
+std::string read_file(const std::string &filename)
+{
+	static char buf[131072];
+	FILE *fp = fopen(filename.c_str(), "r");
+	if (fp == NULL) {
+		perror(filename.c_str());
+		exit(1);
+	}
+
+	int len = fread(buf, 1, sizeof(buf), fp);
+	fclose(fp);
+
+	return std::string(buf, len);
+}

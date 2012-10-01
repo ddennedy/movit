@@ -40,19 +40,11 @@ float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
 
 GLhandleARB read_shader(const char* filename, GLenum type)
 {
-	static char buf[131072];
-	FILE *fp = fopen(filename, "r");
-	if (fp == NULL) {
-		perror(filename);
-		exit(1);
-	}
-
-	int len = fread(buf, 1, sizeof(buf), fp);
-	fclose(fp);
+	std::string shader_src = read_file(filename);
 
 	GLhandleARB obj = glCreateShaderObjectARB(type);
-	const GLchar* source[] = { buf };
-	const GLint length[] = { len };
+	const GLchar* source[] = { shader_src.data() };
+	const GLint length[] = { shader_src.size() };
 	glShaderSource(obj, 1, source, length);
 	glCompileShader(obj);
 
