@@ -12,7 +12,6 @@ uniform vec3 PREFIX(inv_gamma_22);  // 2.2 / gamma.
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = LAST_INPUT(tc);
 
-	// do lift in nonlinear space (the others don't care)
 	x.rgb = pow(x.rgb, vec3(1.0/2.2));
 	x.rgb += PREFIX(lift) * (vec3(1) - x.rgb);
 	x.rgb = pow(x.rgb, PREFIX(inv_gamma_22));
