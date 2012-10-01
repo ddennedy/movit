@@ -17,7 +17,7 @@ GLhandleARB compile_shader(const std::string &shader_src, GLenum type);
 #ifdef NDEBUG
 #define check_error()
 #else
-#define check_error() { int err = glGetError(); if (err != GL_NO_ERROR) { printf("GL error 0x%x at line %d\n", err, __LINE__); exit(1); } }
+#define check_error() { int err = glGetError(); if (err != GL_NO_ERROR) { printf("GL error 0x%x at %s:%d\n", err, __FILE__, __LINE__); exit(1); } }
 #endif
 
 #endif // !defined(_UTIL_H)
