@@ -17,7 +17,7 @@
 #include "texture_enum.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
-	: width(width), height(height), finalized(false) {}
+	: width(width), height(height), use_srgb_texture_format(false), finalized(false) {}
 
 void EffectChain::add_input(const ImageFormat &format)
 {
@@ -48,9 +48,14 @@ Effect *instantiate_effect(EffectId effect)
 
 void EffectChain::normalize_to_linear_gamma()
 {
-	GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
-	gamma_conversion->set_int("source_curve", current_gamma_curve);
-	effects.push_back(gamma_conversion);
+	if (current_gamma_curve == GAMMA_sRGB) {
+		// TODO: check if the extension exists
+		use_srgb_texture_format = true;
+	} else {
+		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
+		gamma_conversion->set_int("source_curve", current_gamma_curve);
+		effects.push_back(gamma_conversion);
+	}
 	current_gamma_curve = GAMMA_LINEAR;
 }
 
@@ -183,11 +188,15 @@ void EffectChain::render_to_screen(unsigned char *src)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
 
-	// TODO: use sRGB textures if applicable
+	GLenum internal_format = GL_RGBA8;
+	if (use_srgb_texture_format) {
+		internal_format = GL_SRGB8;
+	}
+
 	if (input_format.pixel_format == FORMAT_RGB) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, src);
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, src);
 	} else if (input_format.pixel_format == FORMAT_RGBA) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, src);
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, src);
 	} else {
 		assert(false);
 	}

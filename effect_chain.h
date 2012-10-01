@@ -53,6 +53,8 @@ private:
 	ImageFormat input_format, output_format;
 	std::vector<Effect *> effects;
 
+	bool use_srgb_texture_format;
+
 	int glsl_program_num;
 	bool finalized;
 
