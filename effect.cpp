@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "effect.h"
@@ -47,3 +48,24 @@ void Effect::register_vec3(const std::string &key, float *values)
 	params_vec3[key] = values;
 }
 
+// Output convenience uniforms for each parameter.
+// These will be filled in per-frame.
+std::string Effect::output_convenience_uniforms()
+{
+	std::string output = "";
+	for (std::map<std::string, float*>::const_iterator it = params_float.begin();
+	     it != params_float.end();
+	     ++it) {
+		char buf[256];
+		sprintf(buf, "uniform float PREFIX(%s);\n", it->first.c_str());
+		output.append(buf);
+	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec3.begin();
+	     it != params_vec3.end();
+	     ++it) {
+		char buf[256];
+		sprintf(buf, "uniform vec3 PREFIX(%s);\n", it->first.c_str());
+		output.append(buf);
+	}
+	return output;
+}

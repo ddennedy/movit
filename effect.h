@@ -18,6 +18,8 @@ public:
 	virtual bool needs_srgb_primaries() { return true; }
 	virtual bool needs_many_samples() { return false; }
 	virtual bool needs_mipmaps() { return false; }
+
+	virtual std::string output_convenience_uniforms();
 	virtual std::string output_glsl() = 0;
 
 	// Neither of these take ownership.

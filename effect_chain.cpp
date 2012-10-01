@@ -1,6 +1,7 @@
 #define GL_GLEXT_PROTOTYPES 1
 
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include <GL/gl.h>
@@ -68,6 +69,47 @@ Effect *EffectChain::add_effect(EffectId effect_id)
 	return effect;
 }
 
+// GLSL pre-1.30 doesn't support token pasting. Replace PREFIX(x) with <effect_id>_x.
+std::string replace_prefix(const std::string &text, const std::string &prefix)
+{
+	std::string output;
+	size_t start = 0;
+
+	while (start < text.size()) {
+		size_t pos = text.find("PREFIX(", start);
+		if (pos == std::string::npos) {
+			output.append(text.substr(start, std::string::npos));
+			break;
+		}
+
+		output.append(text.substr(start, pos - start));
+		output.append(prefix);
+		output.append("_");
+
+		pos += strlen("PREFIX(");
+	
+		// Output stuff until we find the matching ), which we then eat.
+		int depth = 1;
+		size_t end_arg_pos = pos;
+		while (end_arg_pos < text.size()) {
+			if (text[end_arg_pos] == '(') {
+				++depth;
+			} else if (text[end_arg_pos] == ')') {
+				--depth;
+				if (depth == 0) {
+					break;
+				}
+			}
+			++end_arg_pos;
+		}
+		output.append(text.substr(pos, end_arg_pos - pos));
+		++end_arg_pos;
+		assert(depth == 0);
+		start = end_arg_pos;
+	}
+	return output;
+}
+
 void EffectChain::finalize()
 {
 	std::string frag_shader = read_file("header.glsl");
@@ -77,9 +119,9 @@ void EffectChain::finalize()
 		sprintf(effect_id, "eff%d", i);
 	
 		frag_shader += "\n";
-		frag_shader += std::string("#define PREFIX(x) ") + effect_id + "_ ## x\n";
 		frag_shader += std::string("#define FUNCNAME ") + effect_id + "\n";
-		frag_shader += effects[i]->output_glsl();
+		frag_shader += replace_prefix(effects[i]->output_convenience_uniforms(), effect_id);
+		frag_shader += replace_prefix(effects[i]->output_glsl(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
 		frag_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
