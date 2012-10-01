@@ -2,7 +2,7 @@ CC=gcc
 CXX=g++
 CXXFLAGS=-Wall
 LDFLAGS=-lSDL -lSDL_image -lGL
-OBJS=test.o util.o
+OBJS=test.o util.o widgets.o
 
 test: $(OBJS)
 	$(CXX) -o test $(OBJS) $(LDFLAGS)
