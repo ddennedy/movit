@@ -556,7 +556,7 @@ int main(int argc, char **argv)
 		SDL_GL_SwapBuffers();
 		check_error();
 
-		unsigned char *screenbuf = glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
+		unsigned char *screenbuf = (unsigned char *)glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
 		check_error();
 		if (screenshot) {
 			char filename[256];
