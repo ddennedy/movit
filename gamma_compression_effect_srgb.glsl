@@ -3,14 +3,14 @@
 #if 0
 
 // if we have the lut
-uniform sampler1D PREFIX(srgb_tex);
+uniform sampler1D PREFIX(srgb_inverse_tex);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = LAST_INPUT(tc);
 
-	x.r = texture1D(PREFIX(srgb_tex), x.r).x;
-	x.g = texture1D(PREFIX(srgb_tex), x.g).x;
-	x.b = texture1D(PREFIX(srgb_tex), x.b).x;
+	x.r = texture1D(PREFIX(srgb_inverse_tex), x.r).x;
+	x.g = texture1D(PREFIX(srgb_inverse_tex), x.g).x;
+	x.b = texture1D(PREFIX(srgb_inverse_tex), x.b).x;
 
 	return x;
 }
