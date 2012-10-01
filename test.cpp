@@ -10,6 +10,9 @@
 #include <math.h>
 #include <time.h>
 
+#include <string>
+#include <vector>
+
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 #include <SDL/SDL_image.h>
@@ -33,6 +36,54 @@ float saturation = 1.0f;
 float lift_r = 0.0f, lift_g = 0.0f, lift_b = 0.0f;
 float gamma_r = 1.0f, gamma_g = 1.0f, gamma_b = 1.0f;
 float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
+
+struct ImageFormat {
+	enum { FORMAT_RGB, FORMAT_RGBA } format;
+
+	// Note: sRGB and 709 use the same colorspace primaries.
+	enum { COLORSPACE_sRGB, COLORSPACE_REC_601_525, COLORSPACE_REC_601_625, COLORSPACE_REC_709 } color_space;
+
+	// Note: Rec. 601 and 709 use the same gamma curve.
+	enum { LINEAR_LIGHT, GAMMA_sRGB, GAMMA_REC_601, GAMMA_REC_709 } gamma_curve;
+};
+
+enum EffectId {
+	// Mostly for internal use.
+	GAMMA_CONVERSION = 0,
+	RGB_PRIMARIES_CONVERSION,
+
+	// Color.
+	LIFT_GAMMA_GAIN,
+};
+
+class Effect {
+public: 
+	virtual bool needs_linear_light() { return true; }
+	virtual bool needs_srgb_primaries() { return true; }
+	virtual bool needs_many_samples() { return false; }
+	virtual bool needs_mipmaps() { return false; }
+	bool set_float(const std::string& key, float value);
+	bool set_float_array(const std::string&, const float *values, size_t num_values);
+
+private:
+	bool register_float(const std::string& key, float value);
+	bool register_float_array(const std::string& key, float *values, size_t num_values);
+};      
+
+class EffectChain {
+public:
+	void set_size(unsigned width, unsigned height);
+	void add_input(const ImageFormat &format);
+	Effect *add_effect(EffectId effect);
+	void add_output(const ImageFormat &format);
+
+	void render(unsigned char *src, unsigned char *dst);
+
+private:
+	unsigned width, height;
+	ImageFormat input_format, output_format;
+	std::vector<Effect *> effects;
+};
 
 enum textures {
 	SOURCE_IMAGE = 1,
