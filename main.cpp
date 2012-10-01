@@ -241,23 +241,6 @@ int main(int argc, char **argv)
 
 	make_hsv_wheel_texture();
 
-	int prog = glCreateProgram();
-	GLhandleARB vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
-	GLhandleARB fs_obj = compile_shader(read_file("fs.glsl"), GL_FRAGMENT_SHADER);
-	glAttachObjectARB(prog, vs_obj);
-	check_error();
-	glAttachObjectARB(prog, fs_obj);
-	check_error();
-	glLinkProgram(prog);
-	check_error();
-
-	GLchar info_log[4096];
-	GLsizei log_length = sizeof(info_log) - 1;
-	log_length = sizeof(info_log) - 1;
-	glGetProgramInfoLog(prog, log_length, &log_length, info_log);
-	info_log[log_length] = 0; 
-	printf("link: %s\n", info_log);
-
 	struct timespec start, now;
 	int frame = 0, screenshot = 0;
 	clock_gettime(CLOCK_MONOTONIC, &start);
