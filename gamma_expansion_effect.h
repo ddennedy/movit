@@ -9,6 +9,9 @@ public:
 	GammaExpansionEffect();
 	std::string output_glsl();
 
+	virtual bool needs_linear_light() { return false; }
+	virtual bool needs_srgb_primaries() { return false; }
+
 private:
 	GammaCurve source_curve;
 };

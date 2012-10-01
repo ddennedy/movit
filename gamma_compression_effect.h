@@ -9,6 +9,8 @@ public:
 	GammaCompressionEffect();
 	std::string output_glsl();
 
+	virtual bool needs_srgb_primaries() { return false; }
+
 private:
 	GammaCurve destination_curve;
 };
