@@ -20,6 +20,8 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+#include "util.h"
+
 #ifdef NDEBUG
 #define check_error()
 #else
@@ -91,48 +93,6 @@ enum textures {
 	SRGB_REVERSE_LUT = 3,
 	HSV_WHEEL = 4,
 };
-
-// assumes h in [0, 2pi> or [-pi, pi>
-void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
-{
-	if (h < 0.0f) {
-		h += 2.0f * M_PI;
-	}
-	float c = v * s;
-	float hp = (h * 180.0 / M_PI) / 60.0;
-	float x = c * (1 - fabs(fmod(hp, 2.0f) - 1.0f));
-
-	if (hp >= 0 && hp < 1) {
-		*r = c;
-		*g = x;
-		*b = 0.0f;
-	} else if (hp >= 1 && hp < 2) {
-		*r = x;
-		*g = c;
-		*b = 0.0f;
-	} else if (hp >= 2 && hp < 3) {
-		*r = 0.0f;
-		*g = c;
-		*b = x;
-	} else if (hp >= 3 && hp < 4) {
-		*r = 0.0f;
-		*g = x;
-		*b = c;
-	} else if (hp >= 4 && hp < 5) {
-		*r = x;
-		*g = 0.0f;
-		*b = c;
-	} else {
-		*r = c;
-		*g = 0.0f;
-		*b = x;
-	}
-
-	float m = v - c;
-	*r += m;
-	*g += m;
-	*b += m;
-}
 
 GLhandleARB read_shader(const char* filename, GLenum type)
 {
