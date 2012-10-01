@@ -2,7 +2,8 @@ CC=gcc
 CXX=g++
 CXXFLAGS=-Wall
 LDFLAGS=-lSDL -lSDL_image -lGL
-OBJS=main.o util.o widgets.o effect.o
+OBJS=main.o util.o widgets.o effect.o effect_chain.o
+OBJS += lift_gamma_gain_effect.o gamma_expansion_effect.o colorspace_conversion_effect.o
 
 test: $(OBJS)
 	$(CXX) -o test $(OBJS) $(LDFLAGS)

@@ -4,6 +4,14 @@
 #include <map>
 #include <string>
 
+// Can alias on a float[3].
+struct RGBTriplet {
+	RGBTriplet(float r, float g, float b)
+		: r(r), g(g), b(b) {}
+
+	float r, g, b;
+};
+
 class Effect {
 public: 
 	virtual bool needs_linear_light() { return true; }
