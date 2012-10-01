@@ -102,7 +102,7 @@ void draw_saturation_bar(float y, float saturation)
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glPointSize(5.0f);
 	glBegin(GL_POINTS);
-	glVertex2f(0.2f * (saturation / 4.0f) * 9.0f / 16.0f, y + 0.01f);
+	glVertex2f(0.2f * saturation * 9.0f / 16.0f, y + 0.01f);
 	glEnd();
 
 	glColor3f(1.0f, 1.0f, 1.0f);

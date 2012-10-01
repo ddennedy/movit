@@ -34,6 +34,9 @@ float gamma_theta = 0.0f, gamma_rad = 0.0f, gamma_v = 0.5f;
 float gain_theta = 0.0f, gain_rad = 0.0f, gain_v = 0.25f;
 float saturation = 1.0f;
 
+float radius = 0.3f;
+float inner_radius = 0.3f;
+
 void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 {
 	RGBTriplet lift(0.0f, 0.0f, 0.0f);
@@ -69,6 +72,10 @@ void mouse(int x, int y)
 		read_colorwheel(xf, yf - 0.4f, &gain_rad, &gain_theta, &gain_v);
 	} else if (yf >= 0.6f && yf < 0.62f && xf < 0.2f) {
 		saturation = (xf / 0.2f) * 4.0f;
+	} else if (yf >= 0.65f && yf < 0.67f && xf < 0.2f) {
+		radius = (xf / 0.2f);
+	} else if (yf >= 0.70f && yf < 0.72f && xf < 0.2f) {
+		inner_radius = (xf / 0.2f);
 	}
 }
 
@@ -167,6 +174,7 @@ int main(int argc, char **argv)
 	chain.add_input(inout_format);
 	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
+	Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
 	chain.add_output(inout_format);
 	chain.finalize();
 
@@ -242,6 +250,8 @@ int main(int argc, char **argv)
 		++frame;
 
 		update_hsv(lift_gamma_gain_effect, saturation_effect);
+		vignette_effect->set_float("radius", radius);
+		vignette_effect->set_float("inner_radius", inner_radius);
 		chain.render_to_screen(src_img);
 		
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));
@@ -250,7 +260,9 @@ int main(int argc, char **argv)
 		draw_hsv_wheel(0.0f, lift_rad, lift_theta, lift_v);
 		draw_hsv_wheel(0.2f, gamma_rad, gamma_theta, gamma_v);
 		draw_hsv_wheel(0.4f, gain_rad, gain_theta, gain_v);
-		draw_saturation_bar(0.6f, saturation);
+		draw_saturation_bar(0.6f, saturation / 4.0f);
+		draw_saturation_bar(0.65f, radius);
+		draw_saturation_bar(0.70f, inner_radius);
 
 		SDL_GL_SwapBuffers();
 		check_error();
