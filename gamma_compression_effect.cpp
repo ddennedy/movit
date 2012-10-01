@@ -12,6 +12,8 @@ GammaCompressionEffect::GammaCompressionEffect()
 std::string GammaCompressionEffect::output_glsl()
 {
 	switch (destination_curve) {
+	case GAMMA_LINEAR:
+		return read_file("identity.glsl");
 	case GAMMA_sRGB:
 		return read_file("gamma_compression_effect_srgb.glsl");
 	case GAMMA_REC_709:  // and GAMMA_REC_601
