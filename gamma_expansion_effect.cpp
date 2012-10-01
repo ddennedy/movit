@@ -1,4 +1,4 @@
-#include "gamma_expansion_effect.h"j
+#include "gamma_expansion_effect.h"
 
 GammaExpansionEffect::GammaExpansionEffect()
 	: source_curve(GAMMA_LINEAR)
