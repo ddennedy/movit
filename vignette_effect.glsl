@@ -6,7 +6,7 @@ uniform vec2 PREFIX(aspect_correction);
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = LAST_INPUT(tc);
 
-	const float pihalf = 3.14159265358979324 / 2;
+	const float pihalf = 0.5 * 3.14159265358979324;
 
 	vec2 normalized_pos = (tc - PREFIX(center)) * PREFIX(aspect_correction);
 	float dist = (length(normalized_pos) - PREFIX(inner_radius)) * PREFIX(inv_radius);
