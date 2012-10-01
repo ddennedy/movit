@@ -34,7 +34,7 @@ float gamma_theta = 0.0f, gamma_rad = 0.0f, gamma_v = 0.5f;
 float gain_theta = 0.0f, gain_rad = 0.0f, gain_v = 0.25f;
 float saturation = 1.0f;
 
-void update_hsv(Effect *lift_gamma_gain_effect)
+void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 {
 	RGBTriplet lift(0.0f, 0.0f, 0.0f);
 	RGBTriplet gamma(1.0f, 1.0f, 1.0f);
@@ -52,6 +52,8 @@ void update_hsv(Effect *lift_gamma_gain_effect)
 	if (saturation < 0.0) {
 		saturation = 0.0;
 	}
+	ok = saturation_effect->set_float("saturation", saturation);
+	assert(ok);
 }
 
 void mouse(int x, int y)
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
 
 	chain.add_input(inout_format);
 	Effect *lift_gamma_gain_effect = chain.add_effect(LIFT_GAMMA_GAIN);
+	Effect *saturation_effect = chain.add_effect(SATURATION);
 	chain.add_output(inout_format);
 	chain.finalize();
 
@@ -277,7 +280,7 @@ int main(int argc, char **argv)
 
 		++frame;
 
-		update_hsv(lift_gamma_gain_effect);
+		update_hsv(lift_gamma_gain_effect, saturation_effect);
 		chain.render_to_screen(src_img);
 		
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));

@@ -12,7 +12,6 @@ public:
 
 private:
 	RGBTriplet lift, gamma, gain;
-	float saturation;
 };
 
 #endif // !defined(_LIFT_GAMMA_GAIN_EFFECT_H)

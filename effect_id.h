@@ -8,6 +8,7 @@ enum EffectId {
 
        // Color.
        LIFT_GAMMA_GAIN,
+       SATURATION,
 };
 
 #endif // !defined(_EFFECT_ID_H)

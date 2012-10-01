@@ -13,6 +13,7 @@
 #include "gamma_compression_effect.h"
 #include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
+#include "saturation_effect.h"
 #include "texture_enum.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
@@ -39,6 +40,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new GammaExpansionEffect();
 	case LIFT_GAMMA_GAIN:
 		return new LiftGammaGainEffect();
+	case SATURATION:
+		return new SaturationEffect();
 	}
 	assert(false);
 }
