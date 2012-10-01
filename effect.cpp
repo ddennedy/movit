@@ -1,7 +1,37 @@
+#define GL_GLEXT_PROTOTYPES 1
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "effect.h"
+#include "util.h"
+
+#include <GL/gl.h>
+#include <GL/glext.h>
+
+void set_uniform_float(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, float value)
+{
+	std::string name = prefix + "_" + key;
+	GLuint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	if (l == -1) {
+		return;
+	}
+	check_error();
+	glUniform1f(l, value);
+	check_error();
+}
+
+void set_uniform_vec3(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
+{
+	std::string name = prefix + "_" + key;
+	GLuint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	if (l == -1) {
+		return;
+	}
+	check_error();
+	glUniform3fv(l, 1, values);
+	check_error();
+}
 
 bool Effect::set_int(const std::string &key, int value)
 {
@@ -68,4 +98,18 @@ std::string Effect::output_convenience_uniforms()
 		output.append(buf);
 	}
 	return output;
+}
+
+void Effect::set_uniforms(GLhandleARB glsl_program_num, const std::string& prefix)
+{
+	for (std::map<std::string, float*>::const_iterator it = params_float.begin();
+	     it != params_float.end();
+	     ++it) {
+		set_uniform_float(glsl_program_num, prefix, it->first, *it->second);
+	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec3.begin();
+	     it != params_vec3.end();
+	     ++it) {
+		set_uniform_vec3(glsl_program_num, prefix, it->first, it->second);
+	}
 }

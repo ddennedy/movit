@@ -44,9 +44,10 @@ void update_hsv(Effect *lift_gamma_gain_effect)
 	hsv2rgb(gamma_theta, gamma_rad, gamma_v * 2.0f, &gamma.r, &gamma.g, &gamma.b);
 	hsv2rgb(gain_theta, gain_rad, gain_v * 4.0f, &gain.r, &gain.g, &gain.b);
 
-	lift_gamma_gain_effect->set_vec3("lift", (float *)&lift);
-	lift_gamma_gain_effect->set_vec3("gamma", (float *)&gamma);
-	lift_gamma_gain_effect->set_vec3("gain", (float *)&gain);
+	bool ok = lift_gamma_gain_effect->set_vec3("lift", (float *)&lift);
+	ok = ok && lift_gamma_gain_effect->set_vec3("gamma", (float *)&gamma);
+	ok = ok && lift_gamma_gain_effect->set_vec3("gain", (float *)&gain);
+	assert(ok);
 
 	if (saturation < 0.0) {
 		saturation = 0.0;

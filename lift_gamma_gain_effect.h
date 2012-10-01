@@ -8,6 +8,8 @@ public:
 	LiftGammaGainEffect();
 	std::string output_glsl();
 
+	void set_uniforms(GLhandleARB glsl_program_num, const std::string &prefix);
+
 private:
 	RGBTriplet lift, gamma, gain;
 	float saturation;

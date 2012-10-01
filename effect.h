@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 
+#include <GL/gl.h>
+
 // Can alias on a float[3].
 struct RGBTriplet {
 	RGBTriplet(float r, float g, float b)
@@ -11,6 +13,10 @@ struct RGBTriplet {
 
 	float r, g, b;
 };
+
+// Convenience functions that deal with prepending the prefix..
+void set_uniform_float(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, float value);
+void set_uniform_vec3(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 
 class Effect {
 public: 
@@ -21,6 +27,8 @@ public:
 
 	virtual std::string output_convenience_uniforms();
 	virtual std::string output_glsl() = 0;
+
+	virtual void set_uniforms(GLhandleARB glsl_program_num, const std::string& prefix);
 
 	// Neither of these take ownership.
 	bool set_int(const std::string&, int value);
