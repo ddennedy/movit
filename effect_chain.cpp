@@ -12,6 +12,7 @@
 #include "gamma_expansion_effect.h"
 #include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
+#include "texture_enum.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width), height(height), finalized(false) {}
@@ -124,18 +125,80 @@ void EffectChain::finalize()
 		frag_shader += replace_prefix(effects[i]->output_glsl(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
+		frag_shader += "#undef LAST_INPUT\n";
 		frag_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
 		frag_shader += "\n";
 	}
+	frag_shader.append(read_file("footer.glsl"));
 	printf("%s\n", frag_shader.c_str());
 	
 	glsl_program_num = glCreateProgram();
 	GLhandleARB vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
 	GLhandleARB fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
-	glAttachObjectARB(glsl_program_num, vs_obj);
+	glAttachShader(glsl_program_num, vs_obj);
 	check_error();
-	glAttachObjectARB(glsl_program_num, fs_obj);
+	glAttachShader(glsl_program_num, fs_obj);
 	check_error();
 	glLinkProgram(glsl_program_num);
+	check_error();
+
+	finalized = true;
+}
+
+void EffectChain::render_to_screen(unsigned char *src)
+{
+	assert(finalized);
+
+	check_error();
+	glUseProgram(glsl_program_num);
+	check_error();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
+
+	// TODO: use sRGB textures if applicable
+	if (input_format.pixel_format == FORMAT_RGB) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, src);
+	} else if (input_format.pixel_format == FORMAT_RGBA) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, src);
+	} else {
+		assert(false);
+	}
+	check_error();
+	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
+
+	//for (unsigned i = 0; i < effects.size(); ++i) {
+	//	effects[i]->set_uniforms();
+	//}
+
+	glDisable(GL_BLEND);
+	check_error();
+	glDisable(GL_DEPTH_TEST);
+	check_error();
+	glDepthMask(GL_FALSE);
+	check_error();
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glBegin(GL_QUADS);
+
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2f(0.0f, 0.0f);
+
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(1.0f, 0.0f);
+
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2f(1.0f, 1.0f);
+
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(0.0f, 1.0f);
+
+	glEnd();
 	check_error();
 }

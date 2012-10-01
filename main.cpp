@@ -38,71 +38,6 @@ float lift_r = 0.0f, lift_g = 0.0f, lift_b = 0.0f;
 float gamma_r = 1.0f, gamma_g = 1.0f, gamma_b = 1.0f;
 float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
 
-void draw_picture_quad(GLint prog, int frame)
-{
-	glUseProgramObjectARB(prog);
-	check_error();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
-	glUniform1i(glGetUniformLocation(prog, "tex"), 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_1D, SRGB_LUT);
-	glUniform1i(glGetUniformLocation(prog, "srgb_tex"), 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_1D, SRGB_REVERSE_LUT);
-	glUniform1i(glGetUniformLocation(prog, "srgb_reverse_tex"), 2);
-
-	glUniform3f(glGetUniformLocation(prog, "lift"), lift_r, lift_g, lift_b);
-	//glUniform3f(glGetUniformLocation(prog, "gamma"), gamma_r, gamma_g, gamma_b);
-	glUniform3f(glGetUniformLocation(prog, "inv_gamma_22"),
-	            2.2f / gamma_r,
-	            2.2f / gamma_g,
-	            2.2f / gamma_b);
-	glUniform3f(glGetUniformLocation(prog, "gain_pow_inv_gamma"),
-	            pow(gain_r, 1.0f / gamma_r),
-	            pow(gain_g, 1.0f / gamma_g),
-	            pow(gain_b, 1.0f / gamma_b));
-	glUniform1f(glGetUniformLocation(prog, "saturation"), saturation);
-
-	glDisable(GL_BLEND);
-	check_error();
-	glDisable(GL_DEPTH_TEST);
-	check_error();
-	glDepthMask(GL_FALSE);
-	check_error();
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-//	glClear(GL_COLOR_BUFFER_BIT);
-	check_error();
-
-	glBegin(GL_QUADS);
-
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(0.0f, 0.0f);
-
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(1.0f, 0.0f);
-
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(1.0f, 1.0f);
-
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, 1.0f);
-
-	glEnd();
-	check_error();
-}
-
 void update_hsv()
 {
 	hsv2rgb(lift_theta, lift_rad, lift_v, &lift_r, &lift_g, &lift_b);
@@ -238,7 +173,8 @@ int main(int argc, char **argv)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
 
-	load_texture("blg_wheels_woman_1.jpg");
+	unsigned img_w, img_h;
+	unsigned char *src_img = load_image("blg_wheels_woman_1.jpg", &img_w, &img_h);
 
 	EffectChain chain(WIDTH, HEIGHT);
 
@@ -345,8 +281,7 @@ int main(int argc, char **argv)
 
 		++frame;
 
-		
-		draw_picture_quad(prog, frame);
+		chain.render_to_screen(src_img);
 		
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));
 		check_error();
