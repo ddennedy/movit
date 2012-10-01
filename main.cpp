@@ -5,11 +5,14 @@
 #define HEIGHT 720
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
+#include <string.h>
 #include <math.h>
 #include <time.h>
+#include <assert.h>
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
@@ -33,14 +36,26 @@ float lift_r = 0.0f, lift_g = 0.0f, lift_b = 0.0f;
 float gamma_r = 1.0f, gamma_g = 1.0f, gamma_b = 1.0f;
 float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
 
+enum PixelFormat { FORMAT_RGB, FORMAT_RGBA };
+
+enum ColorSpace {
+	COLORSPACE_sRGB = 0,
+	COLORSPACE_REC_709 = 0,  // Same as sRGB.
+	COLORSPACE_REC_601_525 = 1,
+	COLORSPACE_REC_601_625 = 2,
+};
+
+enum GammaCurve {
+	GAMMA_LINEAR = 0,
+	GAMMA_sRGB = 1,
+	GAMMA_REC_601 = 2,
+	GAMMA_REC_709 = 2,  // Same as Rec. 601.
+};
+
 struct ImageFormat {
-	enum { FORMAT_RGB, FORMAT_RGBA } format;
-
-	// Note: sRGB and 709 use the same colorspace primaries.
-	enum { COLORSPACE_sRGB, COLORSPACE_REC_601_525, COLORSPACE_REC_601_625, COLORSPACE_REC_709 } color_space;
-
-	// Note: Rec. 601 and 709 use the same gamma curve.
-	enum { LINEAR_LIGHT, GAMMA_sRGB, GAMMA_REC_601, GAMMA_REC_709 } gamma_curve;
+	PixelFormat pixel_format;
+	ColorSpace color_space;
+	GammaCurve gamma_curve;
 };
 
 enum EffectId {
@@ -58,19 +73,132 @@ public:
 	virtual bool needs_srgb_primaries() { return true; }
 	virtual bool needs_many_samples() { return false; }
 	virtual bool needs_mipmaps() { return false; }
-	bool set_float(const std::string& key, float value);
-	bool set_float_array(const std::string&, const float *values, size_t num_values);
+
+	// Neither of these take ownership.
+	bool set_int(const std::string&, int value);
+	bool set_float(const std::string &key, float value);
+	bool set_vec3(const std::string &key, const float *values);
+
+protected:
+	// Neither of these take ownership.
+	void register_int(const std::string &key, int *value);
+	void register_float(const std::string &key, float *value);
+	void register_vec3(const std::string &key, float *values);
+	
+private:
+	std::map<std::string, int *> params_int;
+	std::map<std::string, float *> params_float;
+	std::map<std::string, float *> params_vec3;
+};
+
+bool Effect::set_int(const std::string &key, int value)
+{
+	if (params_int.count(key) == 0) {
+		return false;
+	}
+	*params_int[key] = value;
+	return true;
+}
+
+bool Effect::set_float(const std::string &key, float value)
+{
+	if (params_float.count(key) == 0) {
+		return false;
+	}
+	*params_float[key] = value;
+	return true;
+}
+
+bool Effect::set_vec3(const std::string &key, const float *values)
+{
+	if (params_vec3.count(key) == 0) {
+		return false;
+	}
+	memcpy(params_vec3[key], values, sizeof(float) * 3);
+	return true;
+}
+
+void Effect::register_int(const std::string &key, int *value)
+{
+	assert(params_int.count(key) == 0);
+	params_int[key] = value;
+}
+
+void Effect::register_float(const std::string &key, float *value)
+{
+	assert(params_float.count(key) == 0);
+	params_float[key] = value;
+}
+
+void Effect::register_vec3(const std::string &key, float *values)
+{
+	assert(params_vec3.count(key) == 0);
+	params_vec3[key] = values;
+}
+
+// Can alias on a float[3].
+struct RGBTriplet {
+	RGBTriplet(float r, float g, float b)
+		: r(r), g(g), b(b) {}
+
+	float r, g, b;
+};
+
+class GammaExpansionEffect : public Effect {
+public:
+	GammaExpansionEffect()
+		: source_curve(GAMMA_LINEAR)
+	{
+		register_int("source_curve", (int *)&source_curve);
+	}
 
 private:
-	bool register_float(const std::string& key, float value);
-	bool register_float_array(const std::string& key, float *values, size_t num_values);
-};      
+	GammaCurve source_curve;
+};
+
+class ColorSpaceConversionEffect : public Effect {
+public:
+	ColorSpaceConversionEffect()
+		: source_space(COLORSPACE_sRGB),
+		  destination_space(COLORSPACE_sRGB)
+	{
+		register_int("source_space", (int *)&source_space);
+		register_int("destination_space", (int *)&destination_space);
+	}
+
+private:
+	ColorSpace source_space, destination_space;
+};
+
+class ColorSpaceConversionEffect;
+
+class LiftGammaGainEffect : public Effect {
+public:
+	LiftGammaGainEffect()
+		: lift(0.0f, 0.0f, 0.0f),
+		  gamma(1.0f, 1.0f, 1.0f),
+		  gain(1.0f, 1.0f, 1.0f),
+		  saturation(1.0f)
+	{
+		register_vec3("lift", (float *)&lift);
+		register_vec3("gamma", (float *)&gamma);
+		register_vec3("gain", (float *)&gain);
+		register_float("saturation", &saturation);
+	}
+
+private:
+	RGBTriplet lift, gamma, gain;
+	float saturation;
+};
 
 class EffectChain {
 public:
-	void set_size(unsigned width, unsigned height);
+	EffectChain(unsigned width, unsigned height);
 	void add_input(const ImageFormat &format);
+
+	// The pointer is owned by EffectChain.
 	Effect *add_effect(EffectId effect);
+
 	void add_output(const ImageFormat &format);
 
 	void render(unsigned char *src, unsigned char *dst);
@@ -79,7 +207,62 @@ private:
 	unsigned width, height;
 	ImageFormat input_format, output_format;
 	std::vector<Effect *> effects;
+
+	ColorSpace current_color_space;
+	GammaCurve current_gamma_curve;	
 };
+
+EffectChain::EffectChain(unsigned width, unsigned height)
+	: width(width), height(height) {}
+
+void EffectChain::add_input(const ImageFormat &format)
+{
+	input_format = format;
+	current_color_space = format.color_space;
+	current_gamma_curve = format.gamma_curve;
+}
+
+void EffectChain::add_output(const ImageFormat &format)
+{
+	output_format = format;
+}
+	
+Effect *instantiate_effect(EffectId effect)
+{
+	switch (effect) {
+	case GAMMA_CONVERSION:
+		return new GammaExpansionEffect();
+	case RGB_PRIMARIES_CONVERSION:
+		return new GammaExpansionEffect();
+	case LIFT_GAMMA_GAIN:
+		return new LiftGammaGainEffect();
+	}
+	assert(false);
+}
+
+Effect *EffectChain::add_effect(EffectId effect_id)
+{
+	Effect *effect = instantiate_effect(effect_id);
+
+	if (effect->needs_linear_light() && current_gamma_curve != GAMMA_LINEAR) {
+		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
+		gamma_conversion->set_int("source_curve", current_gamma_curve);
+		effects.push_back(gamma_conversion);
+		current_gamma_curve = GAMMA_LINEAR;
+	}
+
+	if (effect->needs_srgb_primaries() && current_color_space != COLORSPACE_sRGB) {
+		assert(current_gamma_curve == GAMMA_LINEAR);
+		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
+		colorspace_conversion->set_int("source_space", current_color_space);
+		colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
+		effects.push_back(colorspace_conversion);
+		current_color_space = COLORSPACE_sRGB;
+	}
+
+	effects.push_back(effect);
+	return effect;
+}
 
 GLhandleARB read_shader(const char* filename, GLenum type)
 {
