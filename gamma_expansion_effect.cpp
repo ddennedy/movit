@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "gamma_expansion_effect.h"
 #include "util.h"
 
@@ -9,5 +11,13 @@ GammaExpansionEffect::GammaExpansionEffect()
 
 std::string GammaExpansionEffect::output_glsl()
 {
-	return read_file("todo.glsl");
+	switch (source_curve) {
+	case GAMMA_sRGB:
+		return read_file("gamma_expansion_effect_srgb.glsl");
+	case GAMMA_REC_709:  // and GAMMA_REC_601
+		// Not implemented yet.
+		assert(false);
+	default:
+		assert(false);
+	}
 }
