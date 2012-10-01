@@ -34,25 +34,23 @@ float gamma_theta = 0.0f, gamma_rad = 0.0f, gamma_v = 0.5f;
 float gain_theta = 0.0f, gain_rad = 0.0f, gain_v = 0.25f;
 float saturation = 1.0f;
 
-float lift_r = 0.0f, lift_g = 0.0f, lift_b = 0.0f;
-float gamma_r = 1.0f, gamma_g = 1.0f, gamma_b = 1.0f;
-float gain_r = 1.0f, gain_g = 1.0f, gain_b = 1.0f;
-
-void update_hsv()
+void update_hsv(Effect *lift_gamma_gain_effect)
 {
-	hsv2rgb(lift_theta, lift_rad, lift_v, &lift_r, &lift_g, &lift_b);
-	hsv2rgb(gamma_theta, gamma_rad, gamma_v * 2.0f, &gamma_r, &gamma_g, &gamma_b);
-	hsv2rgb(gain_theta, gain_rad, gain_v * 4.0f, &gain_r, &gain_g, &gain_b);
+	RGBTriplet lift(0.0f, 0.0f, 0.0f);
+	RGBTriplet gamma(1.0f, 1.0f, 1.0f);
+	RGBTriplet gain(1.0f, 1.0f, 1.0f);
+
+	hsv2rgb(lift_theta, lift_rad, lift_v, &lift.r, &lift.g, &lift.b);
+	hsv2rgb(gamma_theta, gamma_rad, gamma_v * 2.0f, &gamma.r, &gamma.g, &gamma.b);
+	hsv2rgb(gain_theta, gain_rad, gain_v * 4.0f, &gain.r, &gain.g, &gain.b);
+
+	lift_gamma_gain_effect->set_vec3("lift", (float *)&lift);
+	lift_gamma_gain_effect->set_vec3("gamma", (float *)&gamma);
+	lift_gamma_gain_effect->set_vec3("gain", (float *)&gain);
 
 	if (saturation < 0.0) {
 		saturation = 0.0;
 	}
-
-	printf("lift: %f %f %f\n", lift_r, lift_g, lift_b);
-	printf("gamma: %f %f %f\n", gamma_r, gamma_g, gamma_b);
-	printf("gain: %f %f %f\n", gain_r, gain_g, gain_b);
-	printf("saturation: %f\n", saturation);
-	printf("\n");
 }
 
 void mouse(int x, int y)
@@ -69,8 +67,6 @@ void mouse(int x, int y)
 	} else if (yf >= 0.6f && yf < 0.62f && xf < 0.2f) {
 		saturation = (xf / 0.2f) * 4.0f;
 	}
-
-	update_hsv();
 }
 
 unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
@@ -240,7 +236,6 @@ int main(int argc, char **argv)
 	glBufferData(GL_PIXEL_PACK_BUFFER_ARB, WIDTH * HEIGHT * 4, NULL, GL_STREAM_READ);
 
 	make_hsv_wheel_texture();
-	update_hsv();
 
 	int prog = glCreateProgram();
 	GLhandleARB vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
@@ -281,6 +276,7 @@ int main(int argc, char **argv)
 
 		++frame;
 
+		update_hsv(lift_gamma_gain_effect);
 		chain.render_to_screen(src_img);
 		
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));
