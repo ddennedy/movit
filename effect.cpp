@@ -12,7 +12,7 @@
 void set_uniform_float(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, float value)
 {
 	std::string name = prefix + "_" + key;
-	GLuint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
 	if (l == -1) {
 		return;
 	}
@@ -24,7 +24,7 @@ void set_uniform_float(GLhandleARB glsl_program_num, const std::string &prefix, 
 void set_uniform_vec3(GLhandleARB glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
 {
 	std::string name = prefix + "_" + key;
-	GLuint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
 	if (l == -1) {
 		return;
 	}
