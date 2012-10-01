@@ -92,7 +92,7 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	SDL_LockSurface(img);
 	unsigned char *src_pixels = (unsigned char *)img->pixels;
 	unsigned char *dst_pixels = (unsigned char *)malloc(img->w * img->h * 3);
-	for (unsigned i = 0; i < img->w * img->h; ++i) {
+	for (int i = 0; i < img->w * img->h; ++i) {
 		unsigned char r, g, b;
 		unsigned int temp;
 		unsigned int pixel = *(unsigned int *)(src_pixels + i * fmt->BytesPerPixel);
