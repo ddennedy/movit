@@ -21,6 +21,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
+#include "effect.h"
 #include "util.h"
 #include "widgets.h"
 #include "texture_enum.h"
@@ -66,75 +67,6 @@ enum EffectId {
 	// Color.
 	LIFT_GAMMA_GAIN,
 };
-
-class Effect {
-public: 
-	virtual bool needs_linear_light() { return true; }
-	virtual bool needs_srgb_primaries() { return true; }
-	virtual bool needs_many_samples() { return false; }
-	virtual bool needs_mipmaps() { return false; }
-
-	// Neither of these take ownership.
-	bool set_int(const std::string&, int value);
-	bool set_float(const std::string &key, float value);
-	bool set_vec3(const std::string &key, const float *values);
-
-protected:
-	// Neither of these take ownership.
-	void register_int(const std::string &key, int *value);
-	void register_float(const std::string &key, float *value);
-	void register_vec3(const std::string &key, float *values);
-	
-private:
-	std::map<std::string, int *> params_int;
-	std::map<std::string, float *> params_float;
-	std::map<std::string, float *> params_vec3;
-};
-
-bool Effect::set_int(const std::string &key, int value)
-{
-	if (params_int.count(key) == 0) {
-		return false;
-	}
-	*params_int[key] = value;
-	return true;
-}
-
-bool Effect::set_float(const std::string &key, float value)
-{
-	if (params_float.count(key) == 0) {
-		return false;
-	}
-	*params_float[key] = value;
-	return true;
-}
-
-bool Effect::set_vec3(const std::string &key, const float *values)
-{
-	if (params_vec3.count(key) == 0) {
-		return false;
-	}
-	memcpy(params_vec3[key], values, sizeof(float) * 3);
-	return true;
-}
-
-void Effect::register_int(const std::string &key, int *value)
-{
-	assert(params_int.count(key) == 0);
-	params_int[key] = value;
-}
-
-void Effect::register_float(const std::string &key, float *value)
-{
-	assert(params_float.count(key) == 0);
-	params_float[key] = value;
-}
-
-void Effect::register_vec3(const std::string &key, float *values)
-{
-	assert(params_vec3.count(key) == 0);
-	params_vec3[key] = values;
-}
 
 // Can alias on a float[3].
 struct RGBTriplet {
