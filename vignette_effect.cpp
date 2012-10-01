@@ -22,7 +22,7 @@ std::string VignetteEffect::output_glsl()
 	return read_file("vignette_effect.glsl");
 }
 
-void VignetteEffect::set_uniforms(GLhandleARB glsl_program_num, const std::string &prefix)
+void VignetteEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix)
 {
 	Effect::set_uniforms(glsl_program_num, prefix);
 

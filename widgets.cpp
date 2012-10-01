@@ -12,7 +12,7 @@
 
 void draw_hsv_wheel(float y, float rad, float theta, float value)
 {
-	glUseProgramObjectARB(0);
+	glUseProgram(0);
 	check_error();
 	glActiveTexture(GL_TEXTURE0);
 	check_error();
@@ -81,7 +81,7 @@ void draw_hsv_wheel(float y, float rad, float theta, float value)
 
 void draw_saturation_bar(float y, float saturation)
 {
-	glUseProgramObjectARB(0);
+	glUseProgram(0);
 	check_error();
 
 	// value slider

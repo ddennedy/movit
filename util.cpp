@@ -65,9 +65,9 @@ std::string read_file(const std::string &filename)
 	return std::string(buf, len);
 }
 
-GLhandleARB compile_shader(const std::string &shader_src, GLenum type)
+GLuint compile_shader(const std::string &shader_src, GLenum type)
 {
-	GLhandleARB obj = glCreateShaderObjectARB(type);
+	GLuint obj = glCreateShader(type);
 	const GLchar* source[] = { shader_src.data() };
 	const GLint length[] = { shader_src.size() };
 	glShaderSource(obj, 1, source, length);

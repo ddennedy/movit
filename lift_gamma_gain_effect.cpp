@@ -22,7 +22,7 @@ std::string LiftGammaGainEffect::output_glsl()
 	return read_file("lift_gamma_gain_effect.glsl");
 }
 
-void LiftGammaGainEffect::set_uniforms(GLhandleARB glsl_program_num, const std::string &prefix)
+void LiftGammaGainEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix)
 {
 	Effect::set_uniforms(glsl_program_num, prefix);
 

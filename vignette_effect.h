@@ -8,7 +8,7 @@ public:
 	VignetteEffect();
 	std::string output_glsl();
 
-	void set_uniforms(GLhandleARB glsl_program_num, const std::string &prefix);
+	void set_uniforms(GLuint glsl_program_num, const std::string &prefix);
 
 private:
 	Point2D center;

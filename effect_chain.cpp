@@ -176,8 +176,8 @@ void EffectChain::finalize()
 	printf("%s\n", frag_shader.c_str());
 	
 	glsl_program_num = glCreateProgram();
-	GLhandleARB vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
-	GLhandleARB fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
+	GLuint vs_obj = compile_shader(read_file("vs.glsl"), GL_VERTEX_SHADER);
+	GLuint fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
 	glAttachShader(glsl_program_num, vs_obj);
 	check_error();
 	glAttachShader(glsl_program_num, fs_obj);
