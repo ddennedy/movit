@@ -5,7 +5,7 @@ enum EffectId {
        // Mostly for internal use.
        EFFECT_GAMMA_EXPANSION = 0,
        EFFECT_GAMMA_COMPRESSION,
-       EFFECT_RGB_PRIMARIES_CONVERSION,
+       EFFECT_COLOR_SPACE_CONVERSION,
 
        // Color.
        EFFECT_LIFT_GAMMA_GAIN,

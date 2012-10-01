@@ -38,6 +38,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new GammaExpansionEffect();
 	case EFFECT_GAMMA_COMPRESSION:
 		return new GammaCompressionEffect();
+	case EFFECT_COLOR_SPACE_CONVERSION:
+		return new ColorSpaceConversionEffect();
 	case EFFECT_LIFT_GAMMA_GAIN:
 		return new LiftGammaGainEffect();
 	case EFFECT_SATURATION:
