@@ -227,9 +227,14 @@ int main(int argc, char **argv)
 
 	make_hsv_wheel_texture();
 
-	struct timespec start, now;
 	int frame = 0, screenshot = 0;
+#if _POSIX_C_SOURCE >= 199309L
+	struct timespec start, now;
 	clock_gettime(CLOCK_MONOTONIC, &start);
+#else
+	struct timeval start, now;
+	gettimeofday(&start, NULL);
+#endif
 
 	while (!quit) {
 		SDL_Event event;
@@ -280,9 +285,15 @@ int main(int argc, char **argv)
 		check_error();
 
 #if 1
+#if _POSIX_C_SOURCE >= 199309L
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		double elapsed = now.tv_sec - start.tv_sec +
 			1e-9 * (now.tv_nsec - start.tv_nsec);
+#else
+		gettimeofday(&now, NULL);
+		double elapsed = now.tv_sec - start.tv_sec +
+			1e-6 * (now.tv_usec - start.tv_usec);
+#endif
 		printf("%d frames in %.3f seconds = %.1f fps (%.1f ms/frame)\n",
 			frame, elapsed, frame / elapsed,
 			1e3 * elapsed / frame);
