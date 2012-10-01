@@ -119,24 +119,6 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	return dst_pixels;
 }
 
-void load_texture(const char *filename)
-{
-	unsigned w, h;
-	unsigned char *pixels = load_image(filename, &w, &h);
-
-#if 1
-	// we will convert to sRGB in the shader
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	check_error();
-#else
-	// implicit sRGB conversion in hardware
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	check_error();
-#endif
-
-	free(pixels);
-}
-
 void write_ppm(const char *filename, unsigned char *screenbuf)
 {
 	FILE *fp = fopen(filename, "w");
@@ -191,10 +173,6 @@ int main(int argc, char **argv)
 	//glGenerateMipmap(GL_TEXTURE_2D);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 4);
 	//check_error();
-
-	//load_texture("maserati_gts_wallpaper_1280x720_01.jpg");
-	//load_texture("90630d1295075297-console-games-wallpapers-wallpaper_need_for_speed_prostreet_09_1920x1080.jpg");
-	//load_texture("glacier-lake-1280-720-4087.jpg");
 
 #if 0
 	// sRGB reverse LUT
