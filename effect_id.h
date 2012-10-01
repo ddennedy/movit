@@ -10,6 +10,9 @@ enum EffectId {
        // Color.
        EFFECT_LIFT_GAMMA_GAIN,
        EFFECT_SATURATION,
+
+       // Spatial.
+       EFFECT_VIGNETTE,
 };
 
 #endif // !defined(_EFFECT_ID_H)
