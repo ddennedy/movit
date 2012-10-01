@@ -1,0 +1,36 @@
+API
+
+- jobb på GPUen, glReadPixels() tilbake
+  - asynkrone reads?
+- input/output: pixelarray [seinere: tekstur]
+  - fargerom (gammakurve, XYZ-primaries? hvordan konverterer man fra chromacity-koordinater for hvitpunkt?)
+  - YUYV inn? subsamplet input inn?
+  - RGBA fp16 internt
+  - hva gjør vi med f.eks. Rec. 601 vs. Rec. 701? sRGB-fargerom hele veien internt?
+- lang kjede av effekter, rammeverket setter inn normaliseringer ved behov
+  - GLSL, funksjoner ala
+
+    #define INPUT_FUNCTION read_input
+    half4 levels_1(float4 coord) {
+      return INPUT_FUNCTION(coord) * half4(0.8f, 1.0f, 0.9f, 1.0f);
+    }
+    #undef INPUT_FUNCTION
+  - kan erklære «will do many samples», dvs. rammeverket burde mellomlagre i tekstur
+  - kan erklære «trenger mipmaps», i så fall vil alle innteksturer ha mipmaps
+    (mipmaps for intermediates håndteres av GPUen)
+  - parametre kommer inn via uniforms, så vi slipper å rekompilere for hver runde
+  - ...og 1D-teksturer (for curves og slikt)
+  - default: linear light (rammeverket konverterer fra/til ved behov)
+  - optomalisering; kan erklære «don't care» (f.eks. mirror) => ignorer fargerom,
+    pixels er opaque half4
+- pseudo-effekter kan kombinere flere andre (eks. blur=horiz+vert blur, glow=blur+add)
+- dissolves/fades => to inputs!
+  - trenger vi en generell DAG her, mon tro?
+  - utsett til seinere
+- trenger vi CPU-effekter?
+
+
+mål
+- bildekvalitet, men ikke for enhver pris
+- ytelse, men ikke for enhver pris
+- gpu støttet: intel/mesa, nvidia/proprietær
