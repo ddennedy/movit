@@ -132,7 +132,13 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 
 void EffectChain::finalize()
 {
-	// TODO: If we want a non-sRGB output color space, convert.
+	if (current_color_space != output_format.color_space) {
+		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
+		colorspace_conversion->set_int("source_space", current_color_space);
+		colorspace_conversion->set_int("destination_space", output_format.color_space);
+		effects.push_back(colorspace_conversion);
+		current_color_space = output_format.color_space;
+	}
 
 	if (current_gamma_curve != output_format.gamma_curve) {
 		if (current_gamma_curve != GAMMA_LINEAR) {
