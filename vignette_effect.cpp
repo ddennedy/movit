@@ -17,11 +17,6 @@ VignetteEffect::VignetteEffect()
 	register_float("inner_radius", (float *)&inner_radius);
 }
 
-std::string VignetteEffect::output_vertex_shader()
-{
-	return read_file("vignette_effect.vert");
-}
-
 std::string VignetteEffect::output_fragment_shader()
 {
 	return read_file("vignette_effect.frag");
