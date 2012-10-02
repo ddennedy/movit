@@ -19,7 +19,7 @@ VignetteEffect::VignetteEffect()
 
 std::string VignetteEffect::output_fragment_shader()
 {
-	return read_file("vignette_effect.glsl");
+	return read_file("vignette_effect.frag");
 }
 
 void VignetteEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix)

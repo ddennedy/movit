@@ -156,7 +156,7 @@ void EffectChain::finalize()
 		current_gamma_curve = output_format.gamma_curve;
 	}
 	
-	std::string vert_shader = read_file("vs-header.glsl");
+	std::string vert_shader = read_file("header.vert");
 	for (unsigned i = 0; i < effects.size(); ++i) {
 		char effect_id[256];
 		sprintf(effect_id, "eff%d", i);
@@ -171,10 +171,10 @@ void EffectChain::finalize()
 		vert_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
 		vert_shader += "\n";
 	}
-	vert_shader.append(read_file("vs-footer.glsl"));
+	vert_shader.append(read_file("footer.vert"));
 	printf("%s\n", vert_shader.c_str());
 
-	std::string frag_shader = read_file("fs-header.glsl");
+	std::string frag_shader = read_file("header.frag");
 	for (unsigned i = 0; i < effects.size(); ++i) {
 		char effect_id[256];
 		sprintf(effect_id, "eff%d", i);
@@ -189,7 +189,7 @@ void EffectChain::finalize()
 		frag_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
 		frag_shader += "\n";
 	}
-	frag_shader.append(read_file("fs-footer.glsl"));
+	frag_shader.append(read_file("footer.frag"));
 	printf("%s\n", frag_shader.c_str());
 	
 	glsl_program_num = glCreateProgram();

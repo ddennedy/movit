@@ -13,11 +13,11 @@ std::string GammaExpansionEffect::output_fragment_shader()
 {
 	switch (source_curve) {
 	case GAMMA_LINEAR:
-		return read_file("identity-fs.glsl");
+		return read_file("identity.frag");
 	case GAMMA_sRGB:
-		return read_file("gamma_expansion_effect_srgb.glsl");
+		return read_file("gamma_expansion_effect_srgb.frag");
 	case GAMMA_REC_709:  // and GAMMA_REC_601
-		return read_file("gamma_expansion_effect_rec709.glsl");
+		return read_file("gamma_expansion_effect_rec709.frag");
 	default:
 		assert(false);
 	}

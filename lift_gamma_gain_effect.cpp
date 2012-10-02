@@ -19,7 +19,7 @@ LiftGammaGainEffect::LiftGammaGainEffect()
 
 std::string LiftGammaGainEffect::output_fragment_shader()
 {
-	return read_file("lift_gamma_gain_effect.glsl");
+	return read_file("lift_gamma_gain_effect.frag");
 }
 
 void LiftGammaGainEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix)

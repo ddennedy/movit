@@ -155,5 +155,5 @@ void Effect::set_uniforms(GLuint glsl_program_num, const std::string& prefix)
 
 std::string Effect::output_vertex_shader()
 {
-	return read_file("identity-vs.glsl");
+	return read_file("identity.vert");
 }
