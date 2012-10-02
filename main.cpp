@@ -77,7 +77,7 @@ void mouse(int x, int y)
 	} else if (yf >= 0.70f && yf < 0.72f && xf < 0.2f) {
 		inner_radius = (xf / 0.2f);
 	} else if (yf >= 0.75f && yf < 0.77f && xf < 0.2f) {
-		blur_radius = (xf / 0.2f) * 10.0f;
+		blur_radius = (xf / 0.2f) * 100.0f;
 	}
 }
 
@@ -240,7 +240,7 @@ int main(int argc, char **argv)
 		draw_saturation_bar(0.6f, saturation / 4.0f);
 		draw_saturation_bar(0.65f, radius);
 		draw_saturation_bar(0.70f, inner_radius);
-		draw_saturation_bar(0.75f, blur_radius / 10.0f);
+		draw_saturation_bar(0.75f, blur_radius / 100.0f);
 
 		SDL_GL_SwapBuffers();
 		check_error();
