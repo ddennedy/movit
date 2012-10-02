@@ -176,6 +176,7 @@ int main(int argc, char **argv)
 	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
 	Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
+	//chain.add_effect(EFFECT_MIRROR);
 	chain.add_output(inout_format);
 	chain.finalize();
 
@@ -258,6 +259,7 @@ int main(int argc, char **argv)
 		update_hsv(lift_gamma_gain_effect, saturation_effect);
 		vignette_effect->set_float("radius", radius);
 		vignette_effect->set_float("inner_radius", inner_radius);
+		//vignette_effect->set_vec2("center", (float[]){ 0.7f, 0.5f });
 		chain.render_to_screen(src_img);
 		
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);

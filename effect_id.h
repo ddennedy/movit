@@ -12,6 +12,7 @@ enum EffectId {
        EFFECT_SATURATION,
 
        // Spatial.
+       EFFECT_MIRROR,
        EFFECT_VIGNETTE,
 };
 

@@ -14,6 +14,7 @@
 #include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
 #include "saturation_effect.h"
+#include "mirror_effect.h"
 #include "vignette_effect.h"
 #include "texture_enum.h"
 
@@ -45,6 +46,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new LiftGammaGainEffect();
 	case EFFECT_SATURATION:
 		return new SaturationEffect();
+	case EFFECT_MIRROR:
+		return new MirrorEffect();
 	case EFFECT_VIGNETTE:
 		return new VignetteEffect();
 	}
