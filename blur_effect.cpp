@@ -3,14 +3,17 @@
 #include <math.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
+#include <assert.h>
 
 #include "blur_effect.h"
 #include "util.h"
 
 BlurEffect::BlurEffect()
-	: radius(3.0f)
+	: radius(3.0f),
+	  direction(HORIZONTAL)
 {
 	register_float("radius", (float *)&radius);
+	register_int("direction", (int *)&direction);
 }
 
 std::string BlurEffect::output_fragment_shader()
@@ -37,7 +40,16 @@ void BlurEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_mipmap_level);
 	check_error();
 
-	set_uniform_float(glsl_program_num, prefix, "pixel_offset", pixel_size / 1280.0f);  // FIXME
+	// FIXME
+	if (direction == HORIZONTAL) {
+		float ps[] = { pixel_size / 1280.0f, 0.0f };
+		set_uniform_vec2(glsl_program_num, prefix, "pixel_offset", ps);
+	} else if (direction == VERTICAL) {
+		float ps[] = { 0.0f, pixel_size / 720.0f };
+		set_uniform_vec2(glsl_program_num, prefix, "pixel_offset", ps);
+	} else {
+		assert(false);
+	}
 
 	// Simple Gaussian weights for now.
 	float weight[15], total = 0.0f;

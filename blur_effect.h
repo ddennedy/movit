@@ -13,8 +13,11 @@ public:
 
 	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
+	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
+
 private:
 	float radius;
+	Direction direction;
 };
 
 #endif // !defined(_BLUR_EFFECT_H)
