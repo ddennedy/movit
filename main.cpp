@@ -35,6 +35,7 @@ float saturation = 1.0f;
 
 float radius = 0.3f;
 float inner_radius = 0.3f;
+float blur_radius = 3.0f;
 	
 void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 {
@@ -75,6 +76,8 @@ void mouse(int x, int y)
 		radius = (xf / 0.2f);
 	} else if (yf >= 0.70f && yf < 0.72f && xf < 0.2f) {
 		inner_radius = (xf / 0.2f);
+	} else if (yf >= 0.75f && yf < 0.77f && xf < 0.2f) {
+		blur_radius = (xf / 0.2f) * 10.0f;
 	}
 }
 
@@ -213,6 +216,7 @@ int main(int argc, char **argv)
 		vignette_effect->set_float("radius", radius);
 		vignette_effect->set_float("inner_radius", inner_radius);
 		//vignette_effect->set_vec2("center", (float[]){ 0.7f, 0.5f });
+		blur_effect->set_float("radius", blur_radius);
 		chain.render_to_screen(src_img);
 		
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
@@ -229,6 +233,7 @@ int main(int argc, char **argv)
 		draw_saturation_bar(0.6f, saturation / 4.0f);
 		draw_saturation_bar(0.65f, radius);
 		draw_saturation_bar(0.70f, inner_radius);
+		draw_saturation_bar(0.75f, blur_radius / 10.0f);
 
 		SDL_GL_SwapBuffers();
 		check_error();
