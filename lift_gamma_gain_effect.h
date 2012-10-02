@@ -8,7 +8,7 @@ public:
 	LiftGammaGainEffect();
 	std::string output_fragment_shader();
 
-	void set_uniforms(GLuint glsl_program_num, const std::string &prefix);
+	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 private:
 	RGBTriplet lift, gamma, gain;

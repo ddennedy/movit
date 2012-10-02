@@ -4,6 +4,8 @@
 #include "effect.h"
 #include "effect_chain.h"
 
+#define EXPANSION_CURVE_SIZE 256
+
 class GammaExpansionEffect : public Effect {
 public:
 	GammaExpansionEffect();
@@ -14,6 +16,7 @@ public:
 
 private:
 	GammaCurve source_curve;
+	float expansion_curve[EXPANSION_CURVE_SIZE];
 };
 
 #endif // !defined(_GAMMA_EXPANSION_EFFECT_H)

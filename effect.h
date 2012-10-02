@@ -23,6 +23,7 @@ struct RGBTriplet {
 };
 
 // Convenience functions that deal with prepending the prefix.
+void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value);
 void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value);
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
@@ -37,7 +38,7 @@ public:
 	virtual std::string output_convenience_uniforms();
 	virtual std::string output_fragment_shader() = 0;
 
-	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix);
+	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
 
 	// Neither of these take ownership.
 	bool set_int(const std::string&, int value);
@@ -51,12 +52,22 @@ protected:
 	void register_float(const std::string &key, float *value);
 	void register_vec2(const std::string &key, float *values);
 	void register_vec3(const std::string &key, float *values);
+	void register_1d_texture(const std::string &key, float *values, size_t size);
+	void invalidate_1d_texture(const std::string &key);
 	
 private:
+	struct Texture1D {
+		float *values;
+		size_t size;
+		bool needs_update;
+		GLuint texture_num;
+	};
+
 	std::map<std::string, int *> params_int;
 	std::map<std::string, float *> params_float;
 	std::map<std::string, float *> params_vec2;
 	std::map<std::string, float *> params_vec3;
+	std::map<std::string, Texture1D> params_tex_1d;
 };
 
 #endif // !defined(_EFFECT_H)

@@ -261,10 +261,11 @@ void EffectChain::render_to_screen(unsigned char *src)
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
 
+	unsigned sampler_num = 1;
 	for (unsigned i = 0; i < effects.size(); ++i) {
 		char effect_id[256];
 		sprintf(effect_id, "eff%d", i);
-		effects[i]->set_uniforms(glsl_program_num, effect_id);
+		effects[i]->set_uniforms(glsl_program_num, effect_id, &sampler_num);
 	}
 
 	glDisable(GL_BLEND);

@@ -178,44 +178,6 @@ int main(int argc, char **argv)
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 4);
 	//check_error();
 
-#if 0
-	// sRGB reverse LUT
-	glBindTexture(GL_TEXTURE_1D, SRGB_REVERSE_LUT);
-	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	check_error();
-	float srgb_reverse_tex[4096];
-	for (unsigned i = 0; i < 4096; ++i) {
-		float x = i / 4095.0;
-		if (x < 0.0031308f) {
-			srgb_reverse_tex[i] = 12.92f * x;
-		} else {
-			srgb_reverse_tex[i] = 1.055f * pow(x, 1.0f / 2.4f) - 0.055f;
-		}
-	}
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, 4096, 0, GL_LUMINANCE, GL_FLOAT, srgb_reverse_tex);
-	check_error();
-
-	// sRGB LUT
-	glBindTexture(GL_TEXTURE_1D, SRGB_LUT);
-	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	check_error();
-	float srgb_tex[256];
-	for (unsigned i = 0; i < 256; ++i) {
-		float x = i / 255.0;
-		if (x < 0.04045f) {
-			srgb_tex[i] = x * (1.0f / 12.92f);
-		} else {
-			srgb_tex[i] = pow((x + 0.055) * (1.0 / 1.055f), 2.4);
-		}
-	}
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, 256, 0, GL_LUMINANCE, GL_FLOAT, srgb_tex);
-	check_error();
-#endif
-
 	// generate a PDO to hold the data we read back with glReadPixels()
 	// (Intel/DRI goes into a slow path if we don't read to PDO)
 	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
