@@ -69,7 +69,7 @@ GLuint compile_shader(const std::string &shader_src, GLenum type)
 {
 	GLuint obj = glCreateShader(type);
 	const GLchar* source[] = { shader_src.data() };
-	const GLint length[] = { shader_src.size() };
+	const GLint length[] = { (GLint)shader_src.size() };
 	glShaderSource(obj, 1, source, length);
 	glCompileShader(obj);
 
