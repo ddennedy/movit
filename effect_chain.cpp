@@ -199,18 +199,21 @@ void EffectChain::render_to_screen(unsigned char *src)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
 
-	GLenum internal_format = GL_RGBA8;
+	GLenum format, internal_format;
 	if (use_srgb_texture_format) {
 		internal_format = GL_SRGB8;
+	} else {
+		internal_format = GL_RGBA8;
 	}
-
 	if (input_format.pixel_format == FORMAT_RGB) {
-		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, src);
+		format = GL_RGB;
 	} else if (input_format.pixel_format == FORMAT_RGBA) {
-		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, src);
+		format = GL_RGBA;
 	} else {
 		assert(false);
 	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
 
