@@ -46,8 +46,17 @@ public:
 	void render_to_screen(unsigned char *src);
 
 private:
+	struct Phase {
+		GLint glsl_program_num;
+		bool input_needs_mipmaps;
+		unsigned start, end;
+	};
+
 	void normalize_to_linear_gamma();
 	void normalize_to_srgb();
+
+	// Create a GLSL program computing effects [start, end>.
+	Phase compile_glsl_program(unsigned start_index, unsigned end_index);
 
 	unsigned width, height;
 	ImageFormat input_format, output_format;
@@ -56,7 +65,11 @@ private:
 	GLuint source_image_num;
 	bool use_srgb_texture_format;
 
-	GLint glsl_program_num;
+	GLuint fbo;
+	GLuint temp_textures[2];
+
+	std::vector<Phase> phases;
+
 	GLenum format, bytes_per_pixel;
 	bool finalized;
 

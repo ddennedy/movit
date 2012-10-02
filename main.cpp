@@ -169,6 +169,7 @@ int main(int argc, char **argv)
 	chain.add_input(inout_format);
 	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
+	Effect *blur_effect = chain.add_effect(EFFECT_BLUR);
 	Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
 	//chain.add_effect(EFFECT_MIRROR);
 	chain.add_output(inout_format);
@@ -225,6 +226,7 @@ int main(int argc, char **argv)
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 		check_error();
 
+		glLoadIdentity();
 		draw_hsv_wheel(0.0f, lift_rad, lift_theta, lift_v);
 		draw_hsv_wheel(0.2f, gamma_rad, gamma_theta, gamma_v);
 		draw_hsv_wheel(0.4f, gain_rad, gain_theta, gain_v);

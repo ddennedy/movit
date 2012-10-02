@@ -14,6 +14,7 @@ enum EffectId {
 	// Spatial.
 	EFFECT_MIRROR,
 	EFFECT_VIGNETTE,
+	EFFECT_BLUR,
 };
 
 #endif // !defined(_EFFECT_ID_H)

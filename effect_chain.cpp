@@ -16,6 +16,7 @@
 #include "saturation_effect.h"
 #include "mirror_effect.h"
 #include "vignette_effect.h"
+#include "blur_effect.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width), height(height), use_srgb_texture_format(false), finalized(false) {}
@@ -49,6 +50,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new MirrorEffect();
 	case EFFECT_VIGNETTE:
 		return new VignetteEffect();
+	case EFFECT_BLUR:
+		return new BlurEffect();
 	}
 	assert(false);
 }
@@ -87,10 +90,6 @@ Effect *EffectChain::add_effect(EffectId effect_id)
 	if (effect->needs_srgb_primaries() && current_color_space != COLORSPACE_sRGB) {
 		normalize_to_srgb();
 	}
-
-	// not handled yet
-	assert(!effect->needs_many_samples());
-	assert(!effect->needs_mipmaps());
 
 	effects.push_back(effect);
 	return effect;
@@ -137,29 +136,11 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 	return output;
 }
 
-void EffectChain::finalize()
+EffectChain::Phase EffectChain::compile_glsl_program(unsigned start_index, unsigned end_index)
 {
-	if (current_color_space != output_format.color_space) {
-		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
-		colorspace_conversion->set_int("source_space", current_color_space);
-		colorspace_conversion->set_int("destination_space", output_format.color_space);
-		effects.push_back(colorspace_conversion);
-		current_color_space = output_format.color_space;
-	}
-
-	if (current_gamma_curve != output_format.gamma_curve) {
-		if (current_gamma_curve != GAMMA_LINEAR) {
-			normalize_to_linear_gamma();
-		}
-		assert(current_gamma_curve == GAMMA_LINEAR);
-		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
-		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
-		effects.push_back(gamma_conversion);
-		current_gamma_curve = output_format.gamma_curve;
-	}
-	
+	bool input_needs_mipmaps = false;
 	std::string frag_shader = read_file("header.frag");
-	for (unsigned i = 0; i < effects.size(); ++i) {
+	for (unsigned i = start_index; i < end_index; ++i) {
 		char effect_id[256];
 		sprintf(effect_id, "eff%d", i);
 	
@@ -172,11 +153,13 @@ void EffectChain::finalize()
 		frag_shader += "#undef LAST_INPUT\n";
 		frag_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
 		frag_shader += "\n";
+
+		input_needs_mipmaps |= effects[i]->needs_mipmaps();
 	}
 	frag_shader.append(read_file("footer.frag"));
 	printf("%s\n", frag_shader.c_str());
 	
-	glsl_program_num = glCreateProgram();
+	GLuint glsl_program_num = glCreateProgram();
 	GLuint vs_obj = compile_shader(read_file("vs.vert"), GL_VERTEX_SHADER);
 	GLuint fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
 	glAttachShader(glsl_program_num, vs_obj);
@@ -186,7 +169,68 @@ void EffectChain::finalize()
 	glLinkProgram(glsl_program_num);
 	check_error();
 
-	// Translate the format to OpenGL's enums.
+	Phase phase;
+	phase.glsl_program_num = glsl_program_num;
+	phase.input_needs_mipmaps = input_needs_mipmaps;
+	phase.start = start_index;
+	phase.end = end_index;
+
+	return phase;
+}
+
+void EffectChain::finalize()
+{
+	// Add normalizers to get the output format right.
+	if (current_color_space != output_format.color_space) {
+		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
+		colorspace_conversion->set_int("source_space", current_color_space);
+		colorspace_conversion->set_int("destination_space", output_format.color_space);
+		effects.push_back(colorspace_conversion);
+		current_color_space = output_format.color_space;
+	}
+	if (current_gamma_curve != output_format.gamma_curve) {
+		if (current_gamma_curve != GAMMA_LINEAR) {
+			normalize_to_linear_gamma();
+		}
+		assert(current_gamma_curve == GAMMA_LINEAR);
+		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
+		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
+		effects.push_back(gamma_conversion);
+		current_gamma_curve = output_format.gamma_curve;
+	}
+
+	// Construct the GLSL programs. We end a program every time we come
+	// to an effect marked as "needs many samples" (ie. "please let me
+	// sample directly from a texture, with no arithmetic in-between"),
+	// and of course at the end.
+	unsigned start = 0;
+	for (unsigned i = 0; i < effects.size(); ++i) {
+		if (effects[i]->needs_many_samples() && i != start) {
+			phases.push_back(compile_glsl_program(start, i));
+			start = i;
+		}
+	}
+	phases.push_back(compile_glsl_program(start, effects.size()));
+
+	// If we have more than one phase, we need intermediate render-to-texture.
+	// Construct an FBO, and then as many textures as we need.
+	if (phases.size() > 1) {
+		glGenFramebuffers(1, &fbo);
+
+		unsigned num_textures = std::max<int>(phases.size() - 1, 2);
+		glGenTextures(num_textures, temp_textures);
+
+		unsigned char *empty = new unsigned char[width * height * 4];
+		for (unsigned i = 0; i < num_textures; ++i) {
+			glBindTexture(GL_TEXTURE_2D, temp_textures[i]);
+			check_error();
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, empty);
+			check_error();
+		}
+		delete[] empty;
+	}
+	
+	// Translate the input format to OpenGL's enums.
 	GLenum internal_format;
 	if (use_srgb_texture_format) {
 		internal_format = GL_SRGB8;
@@ -209,7 +253,7 @@ void EffectChain::finalize()
 		assert(false);
 	}
 
-	// Create PBO to hold the texture, and then the texture itself.
+	// Create PBO to hold the texture holding the input image, and then the texture itself.
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
 	check_error();
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
@@ -252,22 +296,14 @@ void EffectChain::render_to_screen(unsigned char *src)
 	check_error();
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
 	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 	check_error();
 
-	glUseProgram(glsl_program_num);
-	check_error();
-
-	check_error();
-	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
-
-	unsigned sampler_num = 1;
-	for (unsigned i = 0; i < effects.size(); ++i) {
-		char effect_id[256];
-		sprintf(effect_id, "eff%d", i);
-		effects[i]->set_uniforms(glsl_program_num, effect_id, &sampler_num);
-	}
-
+	// Basic state.
 	glDisable(GL_BLEND);
 	check_error();
 	glDisable(GL_DEPTH_TEST);
@@ -282,20 +318,81 @@ void EffectChain::render_to_screen(unsigned char *src)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glBegin(GL_QUADS);
+	if (phases.size() > 1) {
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		check_error();
+	}
 
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(0.0f, 0.0f);
+	for (unsigned phase = 0; phase < phases.size(); ++phase) {
+		// Set up inputs and outputs for this phase.
+		if (phase == 0) {
+			// First phase reads from the input texture (which is already bound).
+		} else {
+			glBindTexture(GL_TEXTURE_2D, temp_textures[(phase + 1) % 2]);
+			check_error();
+		}
+		if (phases[phase].input_needs_mipmaps) {
+			glGenerateMipmap(GL_TEXTURE_2D);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			check_error();
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			check_error();
+		}
 
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(1.0f, 0.0f);
+		if (phase == phases.size() - 1) {
+			// Last phase goes directly to the screen.
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			check_error();
+		} else {
+			glFramebufferTexture2D(
+				GL_FRAMEBUFFER,
+			        GL_COLOR_ATTACHMENT0,
+				GL_TEXTURE_2D,
+				temp_textures[phase % 2],
+				0);
+		}
 
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(1.0f, 1.0f);
+		// We have baked an upside-down transform into the quad coordinates,
+		// since the typical graphics program will have the origin at the upper-left,
+		// while OpenGL uses lower-left. In the next ones, however, the origin
+		// is all right, and we need to reverse that.
+		if (phase == 1) {
+			glTranslatef(0.0f, 1.0f, 0.0f);
+			glScalef(1.0f, -1.0f, 1.0f);
+		}
 
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, 1.0f);
+		// Give the required parameters to all the effects.
+		glUseProgram(phases[phase].glsl_program_num);
+		check_error();
 
-	glEnd();
-	check_error();
+		glUniform1i(glGetUniformLocation(phases[phase].glsl_program_num, "input_tex"), 0);
+		check_error();
+
+		unsigned sampler_num = 1;
+		for (unsigned i = phases[phase].start; i < phases[phase].end; ++i) {
+			char effect_id[256];
+			sprintf(effect_id, "eff%d", i);
+			effects[i]->set_uniforms(phases[phase].glsl_program_num, effect_id, &sampler_num);
+		}
+
+		// Now draw!
+		glBegin(GL_QUADS);
+
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex2f(0.0f, 0.0f);
+
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex2f(1.0f, 0.0f);
+
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex2f(1.0f, 1.0f);
+
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex2f(0.0f, 1.0f);
+
+		glEnd();
+		check_error();
+	}
 }
