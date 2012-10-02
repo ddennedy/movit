@@ -6,7 +6,6 @@
 class MirrorEffect : public Effect {
 public:
 	MirrorEffect();
-	std::string output_vertex_shader();
 	std::string output_fragment_shader();
 };
 

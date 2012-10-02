@@ -152,8 +152,3 @@ void Effect::set_uniforms(GLuint glsl_program_num, const std::string& prefix)
 		set_uniform_vec3(glsl_program_num, prefix, it->first, it->second);
 	}
 }
-
-std::string Effect::output_vertex_shader()
-{
-	return read_file("identity.vert");
-}

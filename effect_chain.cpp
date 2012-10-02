@@ -159,24 +159,6 @@ void EffectChain::finalize()
 		current_gamma_curve = output_format.gamma_curve;
 	}
 	
-	std::string vert_shader = read_file("header.vert");
-	for (unsigned i = 0; i < effects.size(); ++i) {
-		char effect_id[256];
-		sprintf(effect_id, "eff%d", i);
-	
-		vert_shader += "\n";
-		vert_shader += std::string("#define FUNCNAME ") + effect_id + "\n";
-		vert_shader += replace_prefix(effects[i]->output_convenience_uniforms(), effect_id);
-		vert_shader += replace_prefix(effects[i]->output_vertex_shader(), effect_id);
-		vert_shader += "#undef PREFIX\n";
-		vert_shader += "#undef FUNCNAME\n";
-		vert_shader += "#undef LAST_INPUT\n";
-		vert_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
-		vert_shader += "\n";
-	}
-	vert_shader.append(read_file("footer.vert"));
-	printf("%s\n", vert_shader.c_str());
-
 	std::string frag_shader = read_file("header.frag");
 	for (unsigned i = 0; i < effects.size(); ++i) {
 		char effect_id[256];
@@ -196,7 +178,7 @@ void EffectChain::finalize()
 	printf("%s\n", frag_shader.c_str());
 	
 	glsl_program_num = glCreateProgram();
-	GLuint vs_obj = compile_shader(vert_shader, GL_VERTEX_SHADER);
+	GLuint vs_obj = compile_shader(read_file("vs.vert"), GL_VERTEX_SHADER);
 	GLuint fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
 	glAttachShader(glsl_program_num, vs_obj);
 	check_error();

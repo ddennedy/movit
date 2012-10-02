@@ -35,7 +35,6 @@ public:
 	virtual bool needs_mipmaps() { return false; }
 
 	virtual std::string output_convenience_uniforms();
-	virtual std::string output_vertex_shader();
 	virtual std::string output_fragment_shader() = 0;
 
 	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix);
