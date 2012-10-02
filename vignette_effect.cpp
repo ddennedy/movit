@@ -17,7 +17,7 @@ VignetteEffect::VignetteEffect()
 	register_float("inner_radius", (float *)&inner_radius);
 }
 
-std::string VignetteEffect::output_glsl()
+std::string VignetteEffect::output_fragment_shader()
 {
 	return read_file("vignette_effect.glsl");
 }

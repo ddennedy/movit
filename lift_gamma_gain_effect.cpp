@@ -17,7 +17,7 @@ LiftGammaGainEffect::LiftGammaGainEffect()
 	register_vec3("gain", (float *)&gain);
 }
 
-std::string LiftGammaGainEffect::output_glsl()
+std::string LiftGammaGainEffect::output_fragment_shader()
 {
 	return read_file("lift_gamma_gain_effect.glsl");
 }

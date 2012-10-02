@@ -165,7 +165,7 @@ void EffectChain::finalize()
 		frag_shader += "\n";
 		frag_shader += std::string("#define FUNCNAME ") + effect_id + "\n";
 		frag_shader += replace_prefix(effects[i]->output_convenience_uniforms(), effect_id);
-		frag_shader += replace_prefix(effects[i]->output_glsl(), effect_id);
+		frag_shader += replace_prefix(effects[i]->output_fragment_shader(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
 		frag_shader += "#undef LAST_INPUT\n";

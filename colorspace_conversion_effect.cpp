@@ -65,7 +65,7 @@ void get_xyz_matrix(ColorSpace space, Matrix3x3 m)
 	m[2] = Z_R; m[5] = Z_G; m[8] = Z_B;
 }
 
-std::string ColorSpaceConversionEffect::output_glsl()
+std::string ColorSpaceConversionEffect::output_fragment_shader()
 {
 	// Create a matrix to convert from source space -> XYZ,
 	// another matrix to convert from XYZ -> destination space,

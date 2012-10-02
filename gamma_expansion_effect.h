@@ -7,7 +7,7 @@
 class GammaExpansionEffect : public Effect {
 public:
 	GammaExpansionEffect();
-	std::string output_glsl();
+	std::string output_fragment_shader();
 
 	virtual bool needs_linear_light() { return false; }
 	virtual bool needs_srgb_primaries() { return false; }

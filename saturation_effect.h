@@ -6,7 +6,7 @@
 class SaturationEffect : public Effect {
 public:
 	SaturationEffect();
-	std::string output_glsl();
+	std::string output_fragment_shader();
 
 private:
 	float saturation;

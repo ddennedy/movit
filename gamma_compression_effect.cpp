@@ -9,7 +9,7 @@ GammaCompressionEffect::GammaCompressionEffect()
 	register_int("destination_curve", (int *)&destination_curve);
 }
 
-std::string GammaCompressionEffect::output_glsl()
+std::string GammaCompressionEffect::output_fragment_shader()
 {
 	switch (destination_curve) {
 	case GAMMA_LINEAR:

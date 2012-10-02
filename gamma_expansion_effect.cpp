@@ -9,7 +9,7 @@ GammaExpansionEffect::GammaExpansionEffect()
 	register_int("source_curve", (int *)&source_curve);
 }
 
-std::string GammaExpansionEffect::output_glsl()
+std::string GammaExpansionEffect::output_fragment_shader()
 {
 	switch (source_curve) {
 	case GAMMA_LINEAR:
