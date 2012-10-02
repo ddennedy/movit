@@ -213,7 +213,12 @@ void EffectChain::render_to_screen(unsigned char *src)
 		assert(false);
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
+	static bool first = true;
+	if (first) {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
+	} else {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, src);
+	}
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
 
