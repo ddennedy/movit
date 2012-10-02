@@ -6,9 +6,10 @@
 
 #include "widgets.h"
 #include "util.h"
-#include "texture_enum.h"
 
 #define HSV_WHEEL_SIZE 128
+
+GLuint hsv_wheel_num;
 
 void draw_hsv_wheel(float y, float rad, float theta, float value)
 {
@@ -18,7 +19,7 @@ void draw_hsv_wheel(float y, float rad, float theta, float value)
 	check_error();
 	glEnable(GL_TEXTURE_2D);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, HSV_WHEEL);
+	glBindTexture(GL_TEXTURE_2D, hsv_wheel_num);
 	check_error();
 	glActiveTexture(GL_TEXTURE1);
 	check_error();
@@ -110,6 +111,8 @@ void draw_saturation_bar(float y, float saturation)
 
 void make_hsv_wheel_texture()
 {
+	glGenTextures(1, &hsv_wheel_num);
+
 	static unsigned char hsv_pix[HSV_WHEEL_SIZE * HSV_WHEEL_SIZE * 4];
 	for (int y = 0; y < HSV_WHEEL_SIZE; ++y) {
 		for (int x = 0; x < HSV_WHEEL_SIZE; ++x) {
@@ -133,7 +136,7 @@ void make_hsv_wheel_texture()
 		printf("\n");
 	}
 
-	glBindTexture(GL_TEXTURE_2D, HSV_WHEEL);
+	glBindTexture(GL_TEXTURE_2D, hsv_wheel_num);
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();

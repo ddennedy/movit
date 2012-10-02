@@ -16,7 +16,6 @@
 #include "saturation_effect.h"
 #include "mirror_effect.h"
 #include "vignette_effect.h"
-#include "texture_enum.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width), height(height), use_srgb_texture_format(false), finalized(false) {}
@@ -220,7 +219,11 @@ void EffectChain::finalize()
 	memset(mapped_pbo, 0, width * height * bytes_per_pixel);
 	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
 	
-	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
+	glGenTextures(1, &source_image_num);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, source_image_num);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
 	check_error();
@@ -245,7 +248,7 @@ void EffectChain::render_to_screen(unsigned char *src)
 	// Re-upload the texture from the PBO.
 	glActiveTexture(GL_TEXTURE0);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
+	glBindTexture(GL_TEXTURE_2D, source_image_num);
 	check_error();
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
 	check_error();

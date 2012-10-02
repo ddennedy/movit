@@ -25,7 +25,6 @@
 #include "effect_chain.h"
 #include "util.h"
 #include "widgets.h"
-#include "texture_enum.h"
 
 unsigned char result[WIDTH * HEIGHT * 4];
 
@@ -36,7 +35,7 @@ float saturation = 1.0f;
 
 float radius = 0.3f;
 float inner_radius = 0.3f;
-
+	
 void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 {
 	RGBTriplet lift(0.0f, 0.0f, 0.0f);
@@ -156,11 +155,6 @@ int main(int argc, char **argv)
 	// geez	
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
-	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	check_error();
 
 	unsigned img_w, img_h;
 	unsigned char *src_img = load_image("blg_wheels_woman_1.jpg", &img_w, &img_h);
