@@ -11,7 +11,7 @@ public:
 	GammaCompressionEffect();
 	std::string output_fragment_shader();
 
-	virtual bool needs_srgb_primaries() { return false; }
+	virtual bool needs_srgb_primaries() const { return false; }
 
 private:
 	GammaCurve destination_curve;

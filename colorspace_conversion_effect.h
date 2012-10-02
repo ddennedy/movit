@@ -9,7 +9,7 @@ public:
 	ColorSpaceConversionEffect();
 	std::string output_fragment_shader();
 
-	virtual bool needs_srgb_primaries() { return false; }
+	virtual bool needs_srgb_primaries() const { return false; }
 
 private:
 	ColorSpace source_space, destination_space;

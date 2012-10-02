@@ -147,7 +147,7 @@ void Effect::invalidate_1d_texture(const std::string &key)
 
 // Output convenience uniforms for each parameter.
 // These will be filled in per-frame.
-std::string Effect::output_convenience_uniforms()
+std::string Effect::output_convenience_uniforms() const
 {
 	std::string output = "";
 	for (std::map<std::string, float*>::const_iterator it = params_float.begin();

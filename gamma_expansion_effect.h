@@ -11,8 +11,8 @@ public:
 	GammaExpansionEffect();
 	std::string output_fragment_shader();
 
-	virtual bool needs_linear_light() { return false; }
-	virtual bool needs_srgb_primaries() { return false; }
+	virtual bool needs_linear_light() const { return false; }
+	virtual bool needs_srgb_primaries() const { return false; }
 
 private:
 	GammaCurve source_curve;

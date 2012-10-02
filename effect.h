@@ -30,12 +30,12 @@ void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const 
 
 class Effect {
 public: 
-	virtual bool needs_linear_light() { return true; }
-	virtual bool needs_srgb_primaries() { return true; }
-	virtual bool needs_many_samples() { return false; }
-	virtual bool needs_mipmaps() { return false; }
+	virtual bool needs_linear_light() const { return true; }
+	virtual bool needs_srgb_primaries() const { return true; }
+	virtual bool needs_many_samples() const { return false; }
+	virtual bool needs_mipmaps() const { return false; }
 
-	virtual std::string output_convenience_uniforms();
+	virtual std::string output_convenience_uniforms() const;
 	virtual std::string output_fragment_shader() = 0;
 
 	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
