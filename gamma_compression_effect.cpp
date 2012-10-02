@@ -13,7 +13,7 @@ std::string GammaCompressionEffect::output_fragment_shader()
 {
 	switch (destination_curve) {
 	case GAMMA_LINEAR:
-		return read_file("identity.glsl");
+		return read_file("identity-fs.glsl");
 	case GAMMA_sRGB:
 		return read_file("gamma_compression_effect_srgb.glsl");
 	case GAMMA_REC_709:  // and GAMMA_REC_601
