@@ -92,7 +92,7 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	SDL_PixelFormat *fmt = img->format;
 	SDL_LockSurface(img);
 	unsigned char *src_pixels = (unsigned char *)img->pixels;
-	unsigned char *dst_pixels = (unsigned char *)malloc(img->w * img->h * 3);
+	unsigned char *dst_pixels = (unsigned char *)malloc(img->w * img->h * 4);
 	for (int i = 0; i < img->w * img->h; ++i) {
 		unsigned char r, g, b;
 		unsigned int temp;
@@ -113,9 +113,10 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 		temp = temp << fmt->Bloss;
 		b = temp;
 
-		dst_pixels[i * 3 + 0] = r;
-		dst_pixels[i * 3 + 1] = g;
-		dst_pixels[i * 3 + 2] = b;
+		dst_pixels[i * 4 + 0] = b;
+		dst_pixels[i * 4 + 1] = g;
+		dst_pixels[i * 4 + 2] = r;
+		dst_pixels[i * 4 + 3] = 255;
 	}
 	SDL_UnlockSurface(img);
 
@@ -168,7 +169,7 @@ int main(int argc, char **argv)
 	EffectChain chain(WIDTH, HEIGHT);
 
 	ImageFormat inout_format;
-	inout_format.pixel_format = FORMAT_RGB;
+	inout_format.pixel_format = FORMAT_BGRA;
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
 

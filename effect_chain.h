@@ -6,7 +6,7 @@
 #include "effect.h"
 #include "effect_id.h"
 
-enum PixelFormat { FORMAT_RGB, FORMAT_RGBA };
+enum PixelFormat { FORMAT_RGB, FORMAT_RGBA, FORMAT_BGR, FORMAT_BGRA };
 
 enum ColorSpace {
 	COLORSPACE_sRGB = 0,

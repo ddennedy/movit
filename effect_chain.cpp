@@ -209,6 +209,10 @@ void EffectChain::render_to_screen(unsigned char *src)
 		format = GL_RGB;
 	} else if (input_format.pixel_format == FORMAT_RGBA) {
 		format = GL_RGBA;
+	} else if (input_format.pixel_format == FORMAT_BGR) {
+		format = GL_BGR;
+	} else if (input_format.pixel_format == FORMAT_BGRA) {
+		format = GL_BGRA;
 	} else {
 		assert(false);
 	}
