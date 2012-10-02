@@ -3,7 +3,6 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 #include <string.h>
 #include <math.h>
@@ -261,7 +260,11 @@ int main(int argc, char **argv)
 		vignette_effect->set_float("inner_radius", inner_radius);
 		chain.render_to_screen(src_img);
 		
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
+		check_error();
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));
+		check_error();
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 		check_error();
 
 		draw_hsv_wheel(0.0f, lift_rad, lift_theta, lift_v);
@@ -274,6 +277,8 @@ int main(int argc, char **argv)
 		SDL_GL_SwapBuffers();
 		check_error();
 
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
+		check_error();
 		unsigned char *screenbuf = (unsigned char *)glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
 		check_error();
 		if (screenshot) {
@@ -284,6 +289,8 @@ int main(int argc, char **argv)
 			screenshot = 0;
 		}
 		glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+		check_error();
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 		check_error();
 
 #if 1

@@ -55,7 +55,8 @@ private:
 
 	bool use_srgb_texture_format;
 
-	int glsl_program_num;
+	GLint glsl_program_num;
+	GLenum format, bytes_per_pixel;
 	bool finalized;
 
 	// Used during the building of the effect chain.

@@ -185,21 +185,8 @@ void EffectChain::finalize()
 	glLinkProgram(glsl_program_num);
 	check_error();
 
-	finalized = true;
-}
-
-void EffectChain::render_to_screen(unsigned char *src)
-{
-	assert(finalized);
-
-	check_error();
-	glUseProgram(glsl_program_num);
-	check_error();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
-
-	GLenum format, internal_format;
+	// Translate the format to OpenGL's enums.
+	GLenum internal_format;
 	if (use_srgb_texture_format) {
 		internal_format = GL_SRGB8;
 	} else {
@@ -207,22 +194,65 @@ void EffectChain::render_to_screen(unsigned char *src)
 	}
 	if (input_format.pixel_format == FORMAT_RGB) {
 		format = GL_RGB;
+		bytes_per_pixel = 3;
 	} else if (input_format.pixel_format == FORMAT_RGBA) {
 		format = GL_RGBA;
+		bytes_per_pixel = 4;
 	} else if (input_format.pixel_format == FORMAT_BGR) {
 		format = GL_BGR;
+		bytes_per_pixel = 3;
 	} else if (input_format.pixel_format == FORMAT_BGRA) {
 		format = GL_BGRA;
+		bytes_per_pixel = 4;
 	} else {
 		assert(false);
 	}
 
-	static bool first = true;
-	if (first) {
-		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
-	} else {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, src);
-	}
+	// Create PBO to hold the texture, and then the texture itself.
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
+	check_error();
+	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
+	check_error();
+
+	void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
+	memset(mapped_pbo, 0, width * height * bytes_per_pixel);
+	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+	
+	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+	check_error();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+	check_error();
+
+	finalized = true;
+}
+
+void EffectChain::render_to_screen(unsigned char *src)
+{
+	assert(finalized);
+
+	// Copy the pixel data into the PBO.
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
+	check_error();
+	void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
+	memcpy(mapped_pbo, src, width * height * bytes_per_pixel);
+	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+	check_error();
+
+	// Re-upload the texture from the PBO.
+	glActiveTexture(GL_TEXTURE0);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, SOURCE_IMAGE);
+	check_error();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+	check_error();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+	check_error();
+
+	glUseProgram(glsl_program_num);
+	check_error();
+
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "input_tex"), 0);
 
