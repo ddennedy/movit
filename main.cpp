@@ -175,10 +175,6 @@ int main(int argc, char **argv)
 	chain.add_output(inout_format);
 	chain.finalize();
 
-	//glGenerateMipmap(GL_TEXTURE_2D);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 4);
-	//check_error();
-
 	// generate a PDO to hold the data we read back with glReadPixels()
 	// (Intel/DRI goes into a slow path if we don't read to PDO)
 	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);

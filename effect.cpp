@@ -33,6 +33,18 @@ void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const
 	check_error();
 }
 
+void set_uniform_float_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values)
+{
+	std::string name = prefix + "_" + key;
+	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	if (l == -1) {
+		return;
+	}
+	check_error();
+	glUniform1fv(l, num_values, values);
+	check_error();
+}
+
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
 {
 	std::string name = prefix + "_" + key;

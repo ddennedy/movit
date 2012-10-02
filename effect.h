@@ -25,6 +25,7 @@ struct RGBTriplet {
 // Convenience functions that deal with prepending the prefix.
 void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value);
 void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value);
+void set_uniform_float_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 
