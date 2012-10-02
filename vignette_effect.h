@@ -6,6 +6,7 @@
 class VignetteEffect : public Effect {
 public:
 	VignetteEffect();
+	std::string output_vertex_shader();
 	std::string output_fragment_shader();
 
 	void set_uniforms(GLuint glsl_program_num, const std::string &prefix);
