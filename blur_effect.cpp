@@ -36,6 +36,16 @@ void BlurEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix
 		pixel_size *= 2.0f;
 	}	
 
+	// In the second pass, we do the same, but don't sample from a mipmap;
+	// that would re-blur the other direction in an ugly fashion, and we already
+	// have the vertical box blur we need from that pass.
+	//
+	// TODO: We really need to present horizontal+vertical as a unit;
+	// currently, there's really no guarantee vertical blur is the second pass.
+	if (direction == VERTICAL) {
+		base_mipmap_level = 0;
+	}
+
 	glActiveTexture(GL_TEXTURE0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_mipmap_level);
 	check_error();
