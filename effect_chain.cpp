@@ -303,6 +303,11 @@ void EffectChain::render_to_screen(unsigned char *src)
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	check_error();
+
+	// Intel/Mesa seems to have a broken glGenerateMipmap() for non-FBO textures, so do it here.
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, phases[0].input_needs_mipmaps ? GL_TRUE : GL_FALSE);
+	check_error();
+
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 	check_error();
 
@@ -336,8 +341,11 @@ void EffectChain::render_to_screen(unsigned char *src)
 			check_error();
 		}
 		if (phases[phase].input_needs_mipmaps) {
-			glGenerateMipmap(GL_TEXTURE_2D);
-			check_error();
+			if (phase != 0) {
+				// For phase 0, it's done further up.
+				glGenerateMipmap(GL_TEXTURE_2D);
+				check_error();
+			}
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 			check_error();
 		} else {
