@@ -89,44 +89,34 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 		exit(1);
 	}
 
-	// Convert to RGB.
-	SDL_PixelFormat *fmt = img->format;
-	SDL_LockSurface(img);
-	unsigned char *src_pixels = (unsigned char *)img->pixels;
-	unsigned char *dst_pixels = (unsigned char *)malloc(img->w * img->h * 4);
-	for (int i = 0; i < img->w * img->h; ++i) {
-		unsigned char r, g, b;
-		unsigned int temp;
-		unsigned int pixel = *(unsigned int *)(src_pixels + i * fmt->BytesPerPixel);
+	SDL_PixelFormat rgba_fmt;
+	rgba_fmt.palette = NULL;
+	rgba_fmt.BitsPerPixel = 32;
+	rgba_fmt.BytesPerPixel = 8;
+	rgba_fmt.Rloss = rgba_fmt.Gloss = rgba_fmt.Bloss = rgba_fmt.Aloss = 0;
 
-		temp = pixel & fmt->Rmask;
-		temp = temp >> fmt->Rshift;
-		temp = temp << fmt->Rloss;
-		r = temp;
+	// NOTE: Assumes little endian.
+	rgba_fmt.Rmask = 0x000000ff;
+	rgba_fmt.Gmask = 0x0000ff00;
+	rgba_fmt.Bmask = 0x00ff0000;
+	rgba_fmt.Amask = 0xff000000;
 
-		temp = pixel & fmt->Gmask;
-		temp = temp >> fmt->Gshift;
-		temp = temp << fmt->Gloss;
-		g = temp;
+	rgba_fmt.Rshift = 0;
+	rgba_fmt.Gshift = 8;
+	rgba_fmt.Bshift = 16;
+	rgba_fmt.Ashift = 24;
+	
+	rgba_fmt.colorkey = 0;
+	rgba_fmt.alpha = 255;
 
-		temp = pixel & fmt->Bmask;
-		temp = temp >> fmt->Bshift;
-		temp = temp << fmt->Bloss;
-		b = temp;
-
-		dst_pixels[i * 4 + 0] = b;
-		dst_pixels[i * 4 + 1] = g;
-		dst_pixels[i * 4 + 2] = r;
-		dst_pixels[i * 4 + 3] = 255;
-	}
-	SDL_UnlockSurface(img);
+	SDL_Surface *converted = SDL_ConvertSurface(img, &rgba_fmt, SDL_SWSURFACE);
 
 	*w = img->w;
 	*h = img->h;
 
 	SDL_FreeSurface(img);
 
-	return dst_pixels;
+	return (unsigned char *)converted->pixels;
 }
 
 void write_ppm(const char *filename, unsigned char *screenbuf)
