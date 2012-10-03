@@ -69,6 +69,18 @@ void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const 
 	check_error();
 }
 
+void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values)
+{
+	std::string name = prefix + "_" + key;
+	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
+	if (l == -1) {
+		return;
+	}
+	check_error();
+	glUniform4fv(l, num_values, values);
+	check_error();
+}
+
 bool Effect::set_int(const std::string &key, int value)
 {
 	if (params_int.count(key) == 0) {
