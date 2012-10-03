@@ -220,8 +220,6 @@ void EffectChain::finalize()
 		unsigned num_textures = std::max<int>(phases.size() - 1, 2);
 		glGenTextures(num_textures, temp_textures);
 
-		unsigned char *empty = new unsigned char[width * height * 4];
-		memset(empty, 0, width * height * 4);
 		for (unsigned i = 0; i < num_textures; ++i) {
 			glBindTexture(GL_TEXTURE_2D, temp_textures[i]);
 			check_error();
@@ -229,10 +227,9 @@ void EffectChain::finalize()
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, empty);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			check_error();
 		}
-		delete[] empty;
 	}
 	
 	// Translate the input format to OpenGL's enums.
