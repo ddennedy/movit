@@ -1,10 +1,3 @@
-// Standard lift/gamma/gain color correction tools.
-//
-// We do lift in a nonlinear (gamma-2.2) space since that looks a lot better
-// than in linear (blacks stay a lot closer to black). The two others don't
-// really care; they are (sans some constants) commutative with the x^2.2
-// operation.
-
 // These are calculated in the host code to save some arithmetic.
 uniform vec3 PREFIX(gain_pow_inv_gamma);  // gain^(1/gamma).
 uniform vec3 PREFIX(inv_gamma_22);  // 2.2 / gamma.

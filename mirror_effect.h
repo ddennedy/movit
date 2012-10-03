@@ -1,6 +1,8 @@
 #ifndef _MIRROR_EFFECT_H
 #define _MIRROR_EFFECT_H 1
 
+// A simple horizontal mirroring.
+
 #include "effect.h"
 
 class MirrorEffect : public Effect {

@@ -1,6 +1,9 @@
 #ifndef _VIGNETTE_EFFECT_H
 #define _VIGNETTE_EFFECT_H 1
 
+// A circular vignette, falling off as cos² of the distance from the center
+// (the classic formula for approximating a real lens).
+
 #include "effect.h"
 
 class VignetteEffect : public Effect {

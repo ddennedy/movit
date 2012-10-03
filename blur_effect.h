@@ -1,6 +1,14 @@
 #ifndef _BLUR_EFFECT_H
 #define _BLUR_EFFECT_H 1
 
+// A separable 2D blur implemented by a combination of mipmap filtering
+// and convolution (essentially giving a convolution with a piecewise linear
+// approximation to the true impulse response).
+//
+// Works in two passes; first horizontal, then vertical (BlurEffect,
+// which is what the user is intended to use, instantiates two copies of
+// SingleBlurPassEffect behind the scenes).
+
 #include "effect.h"
 
 class SingleBlurPassEffect;
