@@ -9,6 +9,9 @@ class MirrorEffect : public Effect {
 public:
 	MirrorEffect();
 	std::string output_fragment_shader();
+
+	virtual bool needs_linear_light() const { return false; }
+	virtual bool needs_srgb_primaries() const { return false; }
 };
 
 #endif // !defined(_MIRROR_EFFECT_H)
