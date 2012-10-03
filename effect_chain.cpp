@@ -221,6 +221,7 @@ void EffectChain::finalize()
 		glGenTextures(num_textures, temp_textures);
 
 		unsigned char *empty = new unsigned char[width * height * 4];
+		memset(empty, 0, width * height * 4);
 		for (unsigned i = 0; i < num_textures; ++i) {
 			glBindTexture(GL_TEXTURE_2D, temp_textures[i]);
 			check_error();
