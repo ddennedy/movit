@@ -263,10 +263,7 @@ void EffectChain::finalize()
 	check_error();
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
 	check_error();
-
-	void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
-	memset(mapped_pbo, 0, width * height * bytes_per_pixel);
-	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 	check_error();
 	
 	glGenTextures(1, &source_image_num);
@@ -275,9 +272,7 @@ void EffectChain::finalize()
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
-	check_error();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
 	check_error();
 
 	finalized = true;
