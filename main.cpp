@@ -96,14 +96,14 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	rgba_fmt.Rloss = rgba_fmt.Gloss = rgba_fmt.Bloss = rgba_fmt.Aloss = 0;
 
 	// NOTE: Assumes little endian.
-	rgba_fmt.Rmask = 0x000000ff;
+	rgba_fmt.Rmask = 0x00ff0000;
 	rgba_fmt.Gmask = 0x0000ff00;
-	rgba_fmt.Bmask = 0x00ff0000;
+	rgba_fmt.Bmask = 0x000000ff;
 	rgba_fmt.Amask = 0xff000000;
 
-	rgba_fmt.Rshift = 0;
+	rgba_fmt.Rshift = 16;
 	rgba_fmt.Gshift = 8;
-	rgba_fmt.Bshift = 16;
+	rgba_fmt.Bshift = 0;
 	rgba_fmt.Ashift = 24;
 	
 	rgba_fmt.colorkey = 0;
