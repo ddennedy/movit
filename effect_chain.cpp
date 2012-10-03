@@ -224,6 +224,10 @@ void EffectChain::finalize()
 		for (unsigned i = 0; i < num_textures; ++i) {
 			glBindTexture(GL_TEXTURE_2D, temp_textures[i]);
 			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			check_error();
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, empty);
 			check_error();
 		}
@@ -334,7 +338,7 @@ void EffectChain::render_to_screen(unsigned char *src)
 		if (phases[phase].input_needs_mipmaps) {
 			glGenerateMipmap(GL_TEXTURE_2D);
 			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 			check_error();
 		} else {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -398,6 +402,8 @@ void EffectChain::render_to_screen(unsigned char *src)
 		// HACK
 		glActiveTexture(GL_TEXTURE0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
 		check_error();
 	}
 }
