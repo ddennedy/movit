@@ -13,6 +13,7 @@
 #include "gamma_compression_effect.h"
 #include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
+#include "sandbox_effect.h"
 #include "saturation_effect.h"
 #include "mirror_effect.h"
 #include "vignette_effect.h"
@@ -42,6 +43,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new GammaCompressionEffect();
 	case EFFECT_COLOR_SPACE_CONVERSION:
 		return new ColorSpaceConversionEffect();
+	case EFFECT_SANDBOX:
+		return new SandboxEffect();
 	case EFFECT_LIFT_GAMMA_GAIN:
 		return new LiftGammaGainEffect();
 	case EFFECT_SATURATION:

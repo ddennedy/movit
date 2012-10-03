@@ -174,6 +174,8 @@ int main(int argc, char **argv)
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
 	Effect *blur_effect = chain.add_effect(EFFECT_BLUR);
 	Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
+	//Effect *sandbox_effect = chain.add_effect(EFFECT_SANDBOX);
+	//sandbox_effect->set_float("parm", 42.0f);
 	//chain.add_effect(EFFECT_MIRROR);
 	chain.add_output(inout_format);
 	chain.finalize();
