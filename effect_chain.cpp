@@ -267,6 +267,7 @@ void EffectChain::finalize()
 	void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
 	memset(mapped_pbo, 0, width * height * bytes_per_pixel);
 	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+	check_error();
 	
 	glGenTextures(1, &source_image_num);
 	check_error();
@@ -330,6 +331,7 @@ void EffectChain::render_to_screen(unsigned char *src)
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		// Set up inputs and outputs for this phase.
+		glActiveTexture(GL_TEXTURE0);
 		if (phase == 0) {
 			// First phase reads from the input texture (which is already bound).
 		} else {
@@ -357,6 +359,7 @@ void EffectChain::render_to_screen(unsigned char *src)
 				GL_TEXTURE_2D,
 				temp_textures[phase % 2],
 				0);
+			check_error();
 		}
 
 		// We have baked an upside-down transform into the quad coordinates,
