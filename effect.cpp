@@ -9,75 +9,75 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value)
+GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key)
 {
 	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	return glGetUniformLocation(glsl_program_num, name.c_str());
+}
+
+void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value)
+{
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform1i(l, value);
+	glUniform1i(location, value);
 	check_error();
 }
 
 void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value)
 {
-	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform1f(l, value);
+	glUniform1f(location, value);
 	check_error();
 }
 
 void set_uniform_float_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values)
 {
-	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform1fv(l, num_values, values);
+	glUniform1fv(location, num_values, values);
 	check_error();
 }
 
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
 {
-	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform2fv(l, 1, values);
+	glUniform2fv(location, 1, values);
 	check_error();
 }
 
 void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
 {
-	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform3fv(l, 1, values);
+	glUniform3fv(location, 1, values);
 	check_error();
 }
 
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values)
 {
-	std::string name = prefix + "_" + key;
-	GLint l = glGetUniformLocation(glsl_program_num, name.c_str());
-	if (l == -1) {
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
 		return;
 	}
 	check_error();
-	glUniform4fv(l, num_values, values);
+	glUniform4fv(location, num_values, values);
 	check_error();
 }
 
