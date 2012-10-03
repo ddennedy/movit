@@ -10,8 +10,27 @@
 
 // Must match blur_effect.frag.
 #define NUM_TAPS 16
+	
+BlurEffect::BlurEffect() {
+	hpass = new SingleBlurPassEffect();
+	hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL);
+	vpass = new SingleBlurPassEffect();
+	vpass->set_int("direction", SingleBlurPassEffect::VERTICAL);
+}
 
-BlurEffect::BlurEffect()
+void BlurEffect::add_self_to_effect_chain(std::vector<Effect *> *chain) {
+	hpass->add_self_to_effect_chain(chain);
+	vpass->add_self_to_effect_chain(chain);
+}
+
+bool BlurEffect::set_float(const std::string &key, float value) {
+	if (!hpass->set_float(key, value)) {
+		return false;
+	}
+	return vpass->set_float(key, value);
+}
+
+SingleBlurPassEffect::SingleBlurPassEffect()
 	: radius(3.0f),
 	  direction(HORIZONTAL)
 {
@@ -19,12 +38,12 @@ BlurEffect::BlurEffect()
 	register_int("direction", (int *)&direction);
 }
 
-std::string BlurEffect::output_fragment_shader()
+std::string SingleBlurPassEffect::output_fragment_shader()
 {
 	return read_file("blur_effect.frag");
 }
 
-void BlurEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void SingleBlurPassEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
 	Effect::set_uniforms(glsl_program_num, prefix, sampler_num);
 

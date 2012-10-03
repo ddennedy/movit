@@ -64,7 +64,7 @@ void EffectChain::normalize_to_linear_gamma()
 	} else {
 		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
 		gamma_conversion->set_int("source_curve", current_gamma_curve);
-		effects.push_back(gamma_conversion);
+		gamma_conversion->add_self_to_effect_chain(&effects);
 	}
 	current_gamma_curve = GAMMA_LINEAR;
 }
@@ -75,7 +75,7 @@ void EffectChain::normalize_to_srgb()
 	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
 	colorspace_conversion->set_int("source_space", current_color_space);
 	colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
-	effects.push_back(colorspace_conversion);
+	colorspace_conversion->add_self_to_effect_chain(&effects);
 	current_color_space = COLORSPACE_sRGB;
 }
 
@@ -91,7 +91,7 @@ Effect *EffectChain::add_effect(EffectId effect_id)
 		normalize_to_srgb();
 	}
 
-	effects.push_back(effect);
+	effect->add_self_to_effect_chain(&effects);
 	return effect;
 }
 

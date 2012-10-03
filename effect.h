@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include <GL/gl.h>
 
@@ -36,6 +37,9 @@ public:
 	virtual bool needs_srgb_primaries() const { return true; }
 	virtual bool needs_many_samples() const { return false; }
 	virtual bool needs_mipmaps() const { return false; }
+	virtual void add_self_to_effect_chain(std::vector<Effect *> *chain) {
+		chain->push_back(this);
+	}
 
 	virtual std::string output_convenience_uniforms() const;
 	virtual std::string output_fragment_shader() = 0;
@@ -43,10 +47,10 @@ public:
 	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
 
 	// Neither of these take ownership.
-	bool set_int(const std::string&, int value);
-	bool set_float(const std::string &key, float value);
-	bool set_vec2(const std::string &key, const float *values);
-	bool set_vec3(const std::string &key, const float *values);
+	virtual bool set_int(const std::string&, int value);
+	virtual bool set_float(const std::string &key, float value);
+	virtual bool set_vec2(const std::string &key, const float *values);
+	virtual bool set_vec3(const std::string &key, const float *values);
 
 protected:
 	// Neither of these take ownership.
