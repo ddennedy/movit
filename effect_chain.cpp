@@ -394,5 +394,10 @@ void EffectChain::render_to_screen(unsigned char *src)
 
 		glEnd();
 		check_error();
+
+		// HACK
+		glActiveTexture(GL_TEXTURE0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		check_error();
 	}
 }
