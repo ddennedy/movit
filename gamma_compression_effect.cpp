@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 #include <assert.h>
 
 #include "gamma_compression_effect.h"
@@ -8,6 +9,7 @@ GammaCompressionEffect::GammaCompressionEffect()
 	: destination_curve(GAMMA_LINEAR)
 {
 	register_int("destination_curve", (int *)&destination_curve);
+	memset(compression_curve, 0, sizeof(compression_curve));
 	register_1d_texture("compression_curve_tex", compression_curve, COMPRESSION_CURVE_SIZE);
 }
 
