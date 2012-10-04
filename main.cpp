@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
 	unsigned img_w, img_h;
-	unsigned char *src_img = load_image("test.jpg", &img_w, &img_h);
+	unsigned char *src_img = load_image("blg_wheels_woman_1.jpg", &img_w, &img_h);
 
 	EffectChain chain(WIDTH, HEIGHT);
 
