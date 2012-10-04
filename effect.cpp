@@ -170,9 +170,9 @@ void Effect::invalidate_1d_texture(const std::string &key)
 	params_tex_1d[key].needs_update = true;
 }
 
-void Effect::add_self_to_effect_chain(EffectChain *chain, Effect *input)
+void Effect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs)
 {
-	chain->add_effect_raw(this, input);
+	chain->add_effect_raw(this, inputs);
 }
 
 // Output convenience uniforms for each parameter.

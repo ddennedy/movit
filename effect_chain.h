@@ -41,7 +41,18 @@ public:
 	Effect *add_effect(EffectId effect) {
 		return add_effect(effect, get_last_added_effect());
 	}
-	Effect *add_effect(EffectId effect, Effect *input);
+	Effect *add_effect(EffectId effect, Effect *input) {
+		std::vector<Effect *> inputs;
+		inputs.push_back(input);
+		return add_effect(effect, inputs);
+	}
+	Effect *add_effect(EffectId effect, Effect *input1, Effect *input2) {
+		std::vector<Effect *> inputs;
+		inputs.push_back(input1);
+		inputs.push_back(input2);
+		return add_effect(effect, inputs);
+	}
+	Effect *add_effect(EffectId effect, const std::vector<Effect *> &inputs);
 
 	// Similar to add_effect, but:
 	//
@@ -51,7 +62,7 @@ public:
 	//
 	// We should really separate out these two “sides” of Effect in the
 	// type system soon.
-	void add_effect_raw(Effect *effect, Effect *input);
+	void add_effect_raw(Effect *effect, const std::vector<Effect *> &inputs);
 
 	void add_output(const ImageFormat &format);
 	void finalize();
@@ -95,8 +106,8 @@ private:
 	bool finalized;
 
 	// Used during the building of the effect chain.
-	ColorSpace current_color_space;
-	GammaCurve current_gamma_curve;	
+	std::map<Effect *, ColorSpace> output_color_space;
+	std::map<Effect *, GammaCurve> output_gamma_curve;	
 };
 
 

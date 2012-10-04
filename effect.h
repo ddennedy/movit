@@ -94,11 +94,16 @@ public:
 	// needs mipmaps, you will also get them).
 	virtual bool needs_mipmaps() const { return false; }
 
+	// How many inputs this effect will take (a fixed number).
+	// If you have only one input, it will be called INPUT() in GLSL;
+	// if you have several, they will be INPUT1(), INPUT2(), and so on.
+	virtual unsigned num_inputs() const { return 1; }
+
 	// Requests that this effect adds itself to the given effect chain.
 	// For most effects, the default will be fine, but for effects that
 	// consist of multiple passes, it is often useful to replace this
 	// with something that adds completely different things to the chain.
-	virtual void add_self_to_effect_chain(EffectChain *graph, Effect *input);
+	virtual void add_self_to_effect_chain(EffectChain *graph, const std::vector<Effect *> &inputs);
 
 	// Outputs one GLSL uniform declaration for each registered parameter
 	// (see below), with the right prefix prepended to each uniform name.

@@ -18,9 +18,13 @@ BlurEffect::BlurEffect() {
 	vpass->set_int("direction", SingleBlurPassEffect::VERTICAL);
 }
 
-void BlurEffect::add_self_to_effect_chain(EffectChain *chain, Effect *input) {
-	hpass->add_self_to_effect_chain(chain, input);
-	vpass->add_self_to_effect_chain(chain, hpass);
+void BlurEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs) {
+	assert(inputs.size() == 1);
+	hpass->add_self_to_effect_chain(chain, inputs);
+
+	std::vector<Effect *> vpass_inputs;
+	vpass_inputs.push_back(hpass);
+	vpass->add_self_to_effect_chain(chain, vpass_inputs);
 }
 
 bool BlurEffect::set_float(const std::string &key, float value) {
