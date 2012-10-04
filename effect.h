@@ -49,7 +49,7 @@ public:
 	// the pixels, e.g. mirror, won't need to care, and can set this
 	// to false. If so, the input gamma will be undefined.
 	//
-	// Also see the note on needs_many_samples(), below.
+	// Also see the note on needs_texture_bounce(), below.
 	virtual bool needs_linear_light() const { return true; }
 
 	// Whether this effect expects its input to be in the sRGB
@@ -61,19 +61,29 @@ public:
 	// Again, most effects will want this.
 	virtual bool needs_srgb_primaries() const { return true; }
 
-	// Whether this effect expects to be sampling many times from
-	// its input. If this is true, the framework will not chain the
+	// Whether this effect expects its input to come directly from
+	// a texture. If this is true, the framework will not chain the
 	// input from other effects, but will store the results of the
 	// chain to a temporary (RGBA fp16) texture and let this effect
 	// sample directly from that.
 	//
-	// Note that if you do _not_ set this, and do not sample on
-	// whole pixels (ie. you request linear filtering), it is undefined
-	// whether that filtering happen in linear gamma or not.
-	// It _could_ be (for instance in the case where the input is sRGB
-	// and your GPU applies gamma expansion before filtering), but you
-	// have no such guarantee. For most uses, however, this will be fine.
-	virtual bool needs_many_samples() const { return false; }
+	// There are two good reasons why you might want to set this:
+	//
+	//  1. You are sampling more than once from the input,
+	//     in which case computing all the previous steps might
+	//     be more expensive than going to a memory intermediate.
+	//  2. You rely on previous effects, possibly including gamma
+	//     expansion, to happen pre-filtering instead of post-filtering.
+	//     (This is only relevant if you actually need the filtering; if
+	//     you sample on whole input pixels only, it makes no difference.)
+	//
+	// Note that in some cases, you might get post-filtered gamma expansion
+	// even when setting this option. More specifically, if you are the
+	// first effect in the chain, and the GPU is doing sRGB gamma
+	// expansion, it is undefined (from OpenGL's side) whether expansion
+	// happens pre- or post-filtering. For most uses, however,
+	// either will be fine.
+	virtual bool needs_texture_bounce() const { return false; }
 
 	// Whether this effect expects mipmaps or not. If you set this to
 	// true, you will be sampling with bilinear filtering; if not,

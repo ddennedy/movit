@@ -24,7 +24,7 @@ public:
 		assert(false);
 	}
 
-	virtual bool needs_many_samples() const { return true; }
+	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
 	virtual void add_self_to_effect_chain(std::vector<Effect *> *chain);
 	virtual bool set_float(const std::string &key, float value);
@@ -38,7 +38,7 @@ public:
 	SingleBlurPassEffect();
 	std::string output_fragment_shader();
 
-	virtual bool needs_many_samples() const { return true; }
+	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
 
 	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);

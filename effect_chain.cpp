@@ -208,7 +208,7 @@ void EffectChain::finalize()
 	// and of course at the end.
 	unsigned start = 0;
 	for (unsigned i = 0; i < effects.size(); ++i) {
-		if (effects[i]->needs_many_samples() && i != start) {
+		if (effects[i]->needs_texture_bounce() && i != start) {
 			phases.push_back(compile_glsl_program(start, i));
 			start = i;
 		}
