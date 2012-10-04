@@ -153,8 +153,8 @@ EffectChain::Phase EffectChain::compile_glsl_program(unsigned start_index, unsig
 		frag_shader += replace_prefix(effects[i]->output_fragment_shader(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
-		frag_shader += "#undef LAST_INPUT\n";
-		frag_shader += std::string("#define LAST_INPUT ") + effect_id + "\n";
+		frag_shader += "#undef INPUT\n";
+		frag_shader += std::string("#define INPUT ") + effect_id + "\n";
 		frag_shader += "\n";
 
 		input_needs_mipmaps |= effects[i]->needs_mipmaps();

@@ -4,7 +4,7 @@ uniform float PREFIX(inv_radius);
 uniform vec2 PREFIX(aspect_correction);
 
 vec4 FUNCNAME(vec2 tc) {
-	vec4 x = LAST_INPUT(tc);
+	vec4 x = INPUT(tc);
 
 	const float pihalf = 0.5 * 3.14159265358979324;
 
