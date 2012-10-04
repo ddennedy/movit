@@ -32,18 +32,36 @@ class EffectChain {
 public:
 	EffectChain(unsigned width, unsigned height);
 
+	// User API:
 	// input, effects, output, finalize need to come in that specific order.
 
 	void add_input(const ImageFormat &format);
 
 	// The returned pointer is owned by EffectChain.
-	Effect *add_effect(EffectId effect);
+	Effect *add_effect(EffectId effect) {
+		return add_effect(effect, get_last_added_effect());
+	}
+	Effect *add_effect(EffectId effect, Effect *input);
+
+	// Similar to add_effect, but:
+	//
+	//  * Does not insert any normalizing effects.
+	//  * Does not ask the effect to insert itself, so it won't work
+	//    with meta-effects.
+	//
+	// We should really separate out these two “sides” of Effect in the
+	// type system soon.
+	void add_effect_raw(Effect *effect, Effect *input);
 
 	void add_output(const ImageFormat &format);
 	void finalize();
 
 	//void render(unsigned char *src, unsigned char *dst);
 	void render_to_screen(unsigned char *src);
+
+	Effect *get_last_added_effect() { 
+		return last_added_effect;
+	}
 
 private:
 	struct Phase {
@@ -52,8 +70,8 @@ private:
 		unsigned start, end;
 	};
 
-	void normalize_to_linear_gamma();
-	void normalize_to_srgb();
+	Effect *normalize_to_linear_gamma(Effect *input);
+	Effect *normalize_to_srgb(Effect *input);
 
 	// Create a GLSL program computing effects [start, end>.
 	Phase compile_glsl_program(unsigned start_index, unsigned end_index);
@@ -61,6 +79,9 @@ private:
 	unsigned width, height;
 	ImageFormat input_format, output_format;
 	std::vector<Effect *> effects;
+	std::multimap<Effect *, Effect *> outgoing_links;
+	std::multimap<Effect *, Effect *> incoming_links;
+	Effect *last_added_effect;
 
 	GLuint source_image_num;
 	bool use_srgb_texture_format;

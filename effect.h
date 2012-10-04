@@ -16,6 +16,8 @@
 
 #include <GL/gl.h>
 
+class EffectChain;
+
 // Can alias on a float[2].
 struct Point2D {
 	Point2D(float x, float y)
@@ -96,9 +98,7 @@ public:
 	// For most effects, the default will be fine, but for effects that
 	// consist of multiple passes, it is often useful to replace this
 	// with something that adds completely different things to the chain.
-	virtual void add_self_to_effect_chain(std::vector<Effect *> *chain) {
-		chain->push_back(this);
-	}
+	virtual void add_self_to_effect_chain(EffectChain *graph, Effect *input);
 
 	// Outputs one GLSL uniform declaration for each registered parameter
 	// (see below), with the right prefix prepended to each uniform name.

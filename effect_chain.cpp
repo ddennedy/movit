@@ -20,7 +20,11 @@
 #include "blur_effect.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
-	: width(width), height(height), use_srgb_texture_format(false), finalized(false) {}
+	: width(width),
+	  height(height),
+	  last_added_effect(NULL),
+	  use_srgb_texture_format(false),
+	  finalized(false) {}
 
 void EffectChain::add_input(const ImageFormat &format)
 {
@@ -33,7 +37,15 @@ void EffectChain::add_output(const ImageFormat &format)
 {
 	output_format = format;
 }
-	
+
+void EffectChain::add_effect_raw(Effect *effect, Effect *input)
+{
+	effects.push_back(effect);
+	outgoing_links.insert(std::make_pair(input, effect));
+	incoming_links.insert(std::make_pair(effect, input));
+	last_added_effect = effect;
+}
+
 Effect *instantiate_effect(EffectId effect)
 {
 	switch (effect) {
@@ -59,42 +71,46 @@ Effect *instantiate_effect(EffectId effect)
 	assert(false);
 }
 
-void EffectChain::normalize_to_linear_gamma()
+Effect *EffectChain::normalize_to_linear_gamma(Effect *input)
 {
 	if (current_gamma_curve == GAMMA_sRGB) {
 		// TODO: check if the extension exists
 		use_srgb_texture_format = true;
+		current_gamma_curve = GAMMA_LINEAR;
+		return input;
 	} else {
 		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
 		gamma_conversion->set_int("source_curve", current_gamma_curve);
-		gamma_conversion->add_self_to_effect_chain(&effects);
+		gamma_conversion->add_self_to_effect_chain(this, input);
+		current_gamma_curve = GAMMA_LINEAR;
+		return gamma_conversion;
 	}
-	current_gamma_curve = GAMMA_LINEAR;
 }
 
-void EffectChain::normalize_to_srgb()
+Effect *EffectChain::normalize_to_srgb(Effect *input)
 {
 	assert(current_gamma_curve == GAMMA_LINEAR);
 	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
 	colorspace_conversion->set_int("source_space", current_color_space);
 	colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
-	colorspace_conversion->add_self_to_effect_chain(&effects);
+	colorspace_conversion->add_self_to_effect_chain(this, input);
 	current_color_space = COLORSPACE_sRGB;
+	return colorspace_conversion;
 }
 
-Effect *EffectChain::add_effect(EffectId effect_id)
+Effect *EffectChain::add_effect(EffectId effect_id, Effect *input)
 {
 	Effect *effect = instantiate_effect(effect_id);
 
 	if (effect->needs_linear_light() && current_gamma_curve != GAMMA_LINEAR) {
-		normalize_to_linear_gamma();
+		input = normalize_to_linear_gamma(input);
 	}
 
 	if (effect->needs_srgb_primaries() && current_color_space != COLORSPACE_sRGB) {
-		normalize_to_srgb();
+		input = normalize_to_srgb(input);
 	}
 
-	effect->add_self_to_effect_chain(&effects);
+	effect->add_self_to_effect_chain(this, input);
 	return effect;
 }
 
@@ -193,7 +209,7 @@ void EffectChain::finalize()
 	}
 	if (current_gamma_curve != output_format.gamma_curve) {
 		if (current_gamma_curve != GAMMA_LINEAR) {
-			normalize_to_linear_gamma();
+			normalize_to_linear_gamma(last_added_effect);  // FIXME
 		}
 		assert(current_gamma_curve == GAMMA_LINEAR);
 		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();

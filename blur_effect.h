@@ -26,7 +26,7 @@ public:
 
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
-	virtual void add_self_to_effect_chain(std::vector<Effect *> *chain);
+	virtual void add_self_to_effect_chain(EffectChain *chain, Effect *input);
 	virtual bool set_float(const std::string &key, float value);
 	
 private:

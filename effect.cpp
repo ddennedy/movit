@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h>
 #include "effect.h"
+#include "effect_chain.h"
 #include "util.h"
 
 #include <GL/gl.h>
@@ -167,6 +168,11 @@ void Effect::invalidate_1d_texture(const std::string &key)
 {
 	assert(params_tex_1d.count(key) != 0);
 	params_tex_1d[key].needs_update = true;
+}
+
+void Effect::add_self_to_effect_chain(EffectChain *chain, Effect *input)
+{
+	chain->add_effect_raw(this, input);
 }
 
 // Output convenience uniforms for each parameter.
