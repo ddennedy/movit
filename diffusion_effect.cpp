@@ -23,7 +23,7 @@ void DiffusionEffect::add_self_to_effect_chain(EffectChain *chain, const std::ve
 
 	std::vector<Effect *> overlay_matte_inputs;
 	overlay_matte_inputs.push_back(inputs[0]);
-	overlay_matte_inputs.push_back(chain->get_last_added_effect());  // FIXME
+	overlay_matte_inputs.push_back(chain->last_added_effect());  // FIXME
 	overlay_matte->add_self_to_effect_chain(chain, overlay_matte_inputs);
 }
 

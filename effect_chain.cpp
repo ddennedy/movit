@@ -26,7 +26,6 @@
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width),
 	  height(height),
-	  last_added_effect(NULL),
 	  use_srgb_texture_format(false),
 	  finalized(false) {}
 
@@ -58,7 +57,8 @@ void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &in
 		outgoing_links[inputs[i]].push_back(effect);
 	}
 	incoming_links.insert(std::make_pair(effect, inputs));
-	last_added_effect = effect;
+	output_gamma_curve[effect] = output_gamma_curve[last_added_effect()];
+	output_color_space[effect] = output_color_space[last_added_effect()];
 }
 
 Effect *instantiate_effect(EffectId effect)
@@ -90,35 +90,35 @@ Effect *instantiate_effect(EffectId effect)
 
 Effect *EffectChain::normalize_to_linear_gamma(Effect *input)
 {
-	GammaCurve current_gamma_curve = output_gamma_curve[input];
-	if (current_gamma_curve == GAMMA_sRGB) {
+	assert(output_gamma_curve.count(input) != 0);
+	if (output_gamma_curve[input] == GAMMA_sRGB) {
 		// TODO: check if the extension exists
 		use_srgb_texture_format = true;
-		current_gamma_curve = GAMMA_LINEAR;
+		output_gamma_curve[input] = GAMMA_LINEAR;
 		return input;
 	} else {
 		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
-		gamma_conversion->set_int("source_curve", current_gamma_curve);
+		gamma_conversion->set_int("source_curve", output_gamma_curve[input]);
 		std::vector<Effect *> inputs;
 		inputs.push_back(input);
 		gamma_conversion->add_self_to_effect_chain(this, inputs);
-		current_gamma_curve = GAMMA_LINEAR;
+		output_gamma_curve[gamma_conversion] = GAMMA_LINEAR;
 		return gamma_conversion;
 	}
 }
 
 Effect *EffectChain::normalize_to_srgb(Effect *input)
 {
-	GammaCurve current_gamma_curve = output_gamma_curve[input];
-	ColorSpace current_color_space = output_color_space[input];
-	assert(current_gamma_curve == GAMMA_LINEAR);
+	assert(output_gamma_curve.count(input) != 0);
+	assert(output_color_space.count(input) != 0);
+	assert(output_gamma_curve[input] == GAMMA_LINEAR);
 	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
-	colorspace_conversion->set_int("source_space", current_color_space);
+	colorspace_conversion->set_int("source_space", output_color_space[input]);
 	colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
 	std::vector<Effect *> inputs;
 	inputs.push_back(input);
 	colorspace_conversion->add_self_to_effect_chain(this, inputs);
-	current_color_space = COLORSPACE_sRGB;
+	output_color_space[colorspace_conversion] = COLORSPACE_sRGB;
 	return colorspace_conversion;
 }
 
@@ -130,9 +130,11 @@ Effect *EffectChain::add_effect(EffectId effect_id, const std::vector<Effect *> 
 
 	std::vector<Effect *> normalized_inputs = inputs;
 	for (unsigned i = 0; i < normalized_inputs.size(); ++i) {
+		assert(output_gamma_curve.count(normalized_inputs[i]) != 0);
 		if (effect->needs_linear_light() && output_gamma_curve[normalized_inputs[i]] != GAMMA_LINEAR) {
 			normalized_inputs[i] = normalize_to_linear_gamma(normalized_inputs[i]);
 		}
+		assert(output_color_space.count(normalized_inputs[i]) != 0);
 		if (effect->needs_srgb_primaries() && output_color_space[normalized_inputs[i]] != COLORSPACE_sRGB) {
 			normalized_inputs[i] = normalize_to_srgb(normalized_inputs[i]);
 		}
@@ -364,24 +366,30 @@ void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *com
 void EffectChain::finalize()
 {
 	// Add normalizers to get the output format right.
-	GammaCurve current_gamma_curve = output_gamma_curve[last_added_effect];  // FIXME
-	ColorSpace current_color_space = output_color_space[last_added_effect];  // FIXME
+	assert(output_gamma_curve.count(last_added_effect()) != 0);
+	assert(output_color_space.count(last_added_effect()) != 0);
+	ColorSpace current_color_space = output_color_space[last_added_effect()];  // FIXME
 	if (current_color_space != output_format.color_space) {
 		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
 		colorspace_conversion->set_int("source_space", current_color_space);
 		colorspace_conversion->set_int("destination_space", output_format.color_space);
-		effects.push_back(colorspace_conversion);
-		current_color_space = output_format.color_space;
+		std::vector<Effect *> inputs;
+		inputs.push_back(last_added_effect());
+		colorspace_conversion->add_self_to_effect_chain(this, inputs);
+		output_color_space[colorspace_conversion] = output_format.color_space;
 	}
+	GammaCurve current_gamma_curve = output_gamma_curve[last_added_effect()];  // FIXME
 	if (current_gamma_curve != output_format.gamma_curve) {
 		if (current_gamma_curve != GAMMA_LINEAR) {
-			normalize_to_linear_gamma(last_added_effect);  // FIXME
+			normalize_to_linear_gamma(last_added_effect());  // FIXME
 		}
 		assert(current_gamma_curve == GAMMA_LINEAR);
 		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
 		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
-		effects.push_back(gamma_conversion);
-		current_gamma_curve = output_format.gamma_curve;
+		std::vector<Effect *> inputs;
+		inputs.push_back(last_added_effect());
+		gamma_conversion->add_self_to_effect_chain(this, inputs);
+		output_gamma_curve[gamma_conversion] = output_format.gamma_curve;
 	}
 
 	// Construct all needed GLSL programs, starting at the input.

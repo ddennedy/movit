@@ -40,7 +40,7 @@ public:
 
 	// The returned pointer is owned by EffectChain.
 	Effect *add_effect(EffectId effect) {
-		return add_effect(effect, get_last_added_effect());
+		return add_effect(effect, last_added_effect());
 	}
 	Effect *add_effect(EffectId effect, Effect *input) {
 		std::vector<Effect *> inputs;
@@ -71,8 +71,12 @@ public:
 	//void render(unsigned char *src, unsigned char *dst);
 	void render_to_screen(unsigned char *src);
 
-	Effect *get_last_added_effect() { 
-		return last_added_effect;
+	Effect *last_added_effect() {
+		if (effects.empty()) {
+			return NULL;
+		} else {
+			return effects.back();
+		}	
 	}
 
 private:
@@ -102,7 +106,6 @@ private:
 	std::map<Effect *, GLuint> effect_output_textures;
 	std::map<Effect *, std::vector<Effect *> > outgoing_links;
 	std::map<Effect *, std::vector<Effect *> > incoming_links;
-	Effect *last_added_effect;
 
 	GLuint source_image_num;
 	bool use_srgb_texture_format;
