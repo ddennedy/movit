@@ -1,6 +1,7 @@
 #ifndef _EFFECT_CHAIN_H
 #define _EFFECT_CHAIN_H 1
 
+#include <set>
 #include <vector>
 
 #include "effect.h"
@@ -78,28 +79,35 @@ private:
 	struct Phase {
 		GLint glsl_program_num;
 		bool input_needs_mipmaps;
-		unsigned start, end;
+		std::vector<Effect *> inputs;
+		std::vector<Effect *> effects;  // In order.
 	};
 
 	Effect *normalize_to_linear_gamma(Effect *input);
 	Effect *normalize_to_srgb(Effect *input);
 
-	// Create a GLSL program computing effects [start, end>.
-	Phase compile_glsl_program(unsigned start_index, unsigned end_index);
+	void draw_vertex(float x, float y, const std::vector<Effect *> &inputs);
+
+	// Create a GLSL program computing the given effects in order.
+	Phase compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects);
+
+	// Create all GLSL programs needed to compute the given effect, and all outputs
+	// that depends on it (whenever possible).
+	void construct_glsl_programs(Effect *start, std::set<Effect *> *completed_effects);
 
 	unsigned width, height;
 	ImageFormat input_format, output_format;
-	std::vector<Effect *> effects;
-	std::multimap<Effect *, Effect *> outgoing_links;
-	std::multimap<Effect *, Effect *> incoming_links;
+	std::vector<Effect *> effects, unexpanded_effects;
+	std::map<Effect *, std::string> effect_ids;
+	std::map<Effect *, GLuint> effect_output_textures;
+	std::map<Effect *, std::vector<Effect *> > outgoing_links;
+	std::map<Effect *, std::vector<Effect *> > incoming_links;
 	Effect *last_added_effect;
 
 	GLuint source_image_num;
 	bool use_srgb_texture_format;
 
 	GLuint fbo;
-	GLuint temp_textures[2];
-
 	std::vector<Phase> phases;
 
 	GLenum format, bytes_per_pixel;
