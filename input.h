@@ -1,6 +1,8 @@
 #ifndef _INPUT_H
 #define _INPUT_H 1
 
+#include <assert.h>
+
 #include "effect.h"
 #include "image_format.h"
 
@@ -43,13 +45,22 @@ public:
 		return pixel_data;
 	}
 
+	void set_pitch(unsigned pitch) {
+		assert(!finalized);
+		this->pitch = pitch;
+	}
+
+	unsigned get_pitch() {
+		return pitch;
+	}
+
 private:
 	ImageFormat image_format;
 	GLenum format;
 	GLuint pbo, texture_num;
-	bool needs_update;
+	bool needs_update, finalized;
 	int use_srgb_texture_format, needs_mipmaps;
-	unsigned width, height, bytes_per_pixel;
+	unsigned width, height, pitch, bytes_per_pixel;
 	const unsigned char *pixel_data;
 };
 

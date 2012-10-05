@@ -11,10 +11,12 @@
 Input::Input(ImageFormat image_format, unsigned width, unsigned height)
 	: image_format(image_format),
 	  needs_update(false),
+	  finalized(false),
 	  use_srgb_texture_format(false),
 	  needs_mipmaps(false),
 	  width(width),
-	  height(height)
+	  height(height),
+	  pitch(width)
 {
 	register_int("use_srgb_texture_format", &use_srgb_texture_format);
 	register_int("needs_mipmaps", &needs_mipmaps);
@@ -53,7 +55,7 @@ void Input::finalize()
 	check_error();
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
 	check_error();
-	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, pitch * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
 	check_error();
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 	check_error();
@@ -64,14 +66,19 @@ void Input::finalize()
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
+	check_error();
 	// Intel/Mesa seems to have a broken glGenerateMipmap() for non-FBO textures, so do it here
 	// instead of calling glGenerateMipmap().
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, needs_mipmaps);
 	check_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
 	check_error();
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	check_error();
 
 	needs_update = false;
+	finalized = true;
 }
 	
 void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
@@ -81,7 +88,7 @@ void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, uns
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
 		check_error();
 		void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
-		memcpy(mapped_pbo, pixel_data, width * height * bytes_per_pixel);
+		memcpy(mapped_pbo, pixel_data, pitch * height * bytes_per_pixel);
 		glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
 		check_error();
 
@@ -90,7 +97,11 @@ void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, uns
 		check_error();
 		glBindTexture(GL_TEXTURE_2D, texture_num);
 		check_error();
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
+		check_error();
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+		check_error();
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		check_error();
