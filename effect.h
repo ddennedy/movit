@@ -60,7 +60,9 @@ public:
 	// set of RGB primaries; you would currently not get YCbCr
 	// or something similar).
 	//
-	// Again, most effects will want this.
+	// Again, most effects will want this, but you can set it to false
+	// if you process each channel independently, equally _and_
+	// in a linear fashion.
 	virtual bool needs_srgb_primaries() const { return true; }
 
 	// Whether this effect expects its input to come directly from

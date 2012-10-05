@@ -11,6 +11,8 @@ public:
 	VignetteEffect();
 	std::string output_fragment_shader();
 
+	virtual bool needs_srgb_primaries() const { return false; }
+
 	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 private:

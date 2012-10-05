@@ -17,6 +17,8 @@ class BlurEffect : public Effect {
 public:
 	BlurEffect();
 
+	virtual bool needs_srgb_primaries() const { return false; }
+
 	virtual std::string output_fragment_shader() {
 		assert(false);
 	}
@@ -38,6 +40,7 @@ public:
 	SingleBlurPassEffect();
 	std::string output_fragment_shader();
 
+	virtual bool needs_srgb_primaries() const { return false; }
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
 
