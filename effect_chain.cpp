@@ -21,6 +21,7 @@
 #include "mirror_effect.h"
 #include "vignette_effect.h"
 #include "blur_effect.h"
+#include "diffusion_effect.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width),
@@ -81,6 +82,8 @@ Effect *instantiate_effect(EffectId effect)
 		return new VignetteEffect();
 	case EFFECT_BLUR:
 		return new BlurEffect();
+	case EFFECT_DIFFUSION:
+		return new DiffusionEffect();
 	}
 	assert(false);
 }

@@ -33,9 +33,10 @@ float gamma_theta = 0.0f, gamma_rad = 0.0f, gamma_v = 0.5f;
 float gain_theta = 0.0f, gain_rad = 0.0f, gain_v = 0.25f;
 float saturation = 1.0f;
 
-float radius = 0.3f;
-float inner_radius = 0.3f;
-float blur_radius = 3.0f;
+//float radius = 0.3f;
+// float inner_radius = 0.3f;
+float blur_radius = 20.0f;
+float blurred_mix_amount = 0.5f;
 	
 void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 {
@@ -72,12 +73,16 @@ void mouse(int x, int y)
 		read_colorwheel(xf, yf - 0.4f, &gain_rad, &gain_theta, &gain_v);
 	} else if (yf >= 0.6f && yf < 0.62f && xf < 0.2f) {
 		saturation = (xf / 0.2f) * 4.0f;
+#if 0
 	} else if (yf >= 0.65f && yf < 0.67f && xf < 0.2f) {
 		radius = (xf / 0.2f);
 	} else if (yf >= 0.70f && yf < 0.72f && xf < 0.2f) {
 		inner_radius = (xf / 0.2f);
+#endif
 	} else if (yf >= 0.75f && yf < 0.77f && xf < 0.2f) {
 		blur_radius = (xf / 0.2f) * 100.0f;
+	} else if (yf >= 0.80f && yf < 0.82f && xf < 0.2f) {
+		blurred_mix_amount = (xf / 0.2f);
 	}
 }
 
@@ -162,8 +167,8 @@ int main(int argc, char **argv)
 	chain.add_input(inout_format);
 	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
-	Effect *blur_effect = chain.add_effect(EFFECT_BLUR);
-	Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
+	Effect *diffusion_effect = chain.add_effect(EFFECT_DIFFUSION);
+	//Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
 	//Effect *sandbox_effect = chain.add_effect(EFFECT_SANDBOX);
 	//sandbox_effect->set_float("parm", 42.0f);
 	//chain.add_effect(EFFECT_MIRROR);
@@ -205,11 +210,12 @@ int main(int argc, char **argv)
 		++frame;
 
 		update_hsv(lift_gamma_gain_effect, saturation_effect);
-		vignette_effect->set_float("radius", radius);
-		vignette_effect->set_float("inner_radius", inner_radius);
+		//vignette_effect->set_float("radius", radius);
+		//vignette_effect->set_float("inner_radius", inner_radius);
 		//vignette_effect->set_vec2("center", (float[]){ 0.7f, 0.5f });
 
-		blur_effect->set_float("radius", blur_radius);
+		diffusion_effect->set_float("radius", blur_radius);
+		diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount);
 
 		chain.render_to_screen(src_img);
 		
@@ -225,9 +231,12 @@ int main(int argc, char **argv)
 		draw_hsv_wheel(0.2f, gamma_rad, gamma_theta, gamma_v);
 		draw_hsv_wheel(0.4f, gain_rad, gain_theta, gain_v);
 		draw_saturation_bar(0.6f, saturation / 4.0f);
+#if 0
 		draw_saturation_bar(0.65f, radius);
 		draw_saturation_bar(0.70f, inner_radius);
+#endif
 		draw_saturation_bar(0.75f, blur_radius / 100.0f);
+		draw_saturation_bar(0.80f, blurred_mix_amount);
 
 		SDL_GL_SwapBuffers();
 		check_error();

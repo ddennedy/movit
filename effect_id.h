@@ -16,6 +16,7 @@ enum EffectId {
 	EFFECT_MIRROR,
 	EFFECT_VIGNETTE,
 	EFFECT_BLUR,
+	EFFECT_DIFFUSION,
 };
 
 #endif // !defined(_EFFECT_ID_H)
