@@ -47,9 +47,9 @@ std::string SingleBlurPassEffect::output_fragment_shader()
 	return read_file("blur_effect.frag");
 }
 
-void SingleBlurPassEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
-	Effect::set_uniforms(glsl_program_num, prefix, sampler_num);
+	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
 	int base_texture_size, texture_size;
 	if (direction == HORIZONTAL) {
@@ -201,4 +201,14 @@ void SingleBlurPassEffect::set_uniforms(GLuint glsl_program_num, const std::stri
 
 	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS + 1);
 #endif
+}
+
+void SingleBlurPassEffect::clear_gl_state()
+{
+	glActiveTexture(GL_TEXTURE0);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
+	check_error();
 }

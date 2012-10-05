@@ -22,7 +22,7 @@ public:
 	virtual std::string output_fragment_shader() {
 		assert(false);
 	}
-	virtual void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
+	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
 		assert(false);
 	}
 
@@ -44,7 +44,8 @@ public:
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
 
-	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void clear_gl_state();
 	
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 

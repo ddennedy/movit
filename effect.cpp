@@ -211,7 +211,7 @@ std::string Effect::output_convenience_uniforms() const
 	return output;
 }
 
-void Effect::set_uniforms(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+void Effect::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
 {
 	for (std::map<std::string, float*>::const_iterator it = params_float.begin();
 	     it != params_float.end();
@@ -246,3 +246,5 @@ void Effect::set_uniforms(GLuint glsl_program_num, const std::string& prefix, un
 		++*sampler_num;
 	}
 }
+
+void Effect::clear_gl_state() {}

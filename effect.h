@@ -115,17 +115,19 @@ public:
 	// Returns the GLSL fragment shader string for this effect.
 	virtual std::string output_fragment_shader() = 0;
 
-	// Set all uniforms the shader needs in the current GL context.
-	// The default implementation sets one uniform per registered parameter.
+	// Set all OpenGL state that this effect needs before rendering.
+	// The default implementation sets one uniform per registered parameter,
+	// but no other state.
 	//
 	// <sampler_num> is the first free texture sampler. If you want to use
 	// textures, you can bind a texture to GL_TEXTURE0 + <sampler_num>,
 	// and then increment the number (so that the next effect in the chain
 	// will use a different sampler).
-	//
-	// NOTE: Currently this is also abused a bit to set other GL state
-	// the effect might need.
-	virtual void set_uniforms(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+	virtual void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+
+	// If you set any special OpenGL state in set_gl_state(), you can clear it
+	// after rendering here. The default implementation does nothing.
+	virtual void clear_gl_state();
 
 	// Set a parameter; intended to be called from user code.
 	// Neither of these take ownership of the pointer.

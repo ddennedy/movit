@@ -22,9 +22,9 @@ std::string VignetteEffect::output_fragment_shader()
 	return read_file("vignette_effect.frag");
 }
 
-void VignetteEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void VignetteEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
-	Effect::set_uniforms(glsl_program_num, prefix, sampler_num);
+	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
 	set_uniform_float(glsl_program_num, prefix, "inv_radius", 1.0f / radius);
 

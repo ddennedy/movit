@@ -573,7 +573,7 @@ void EffectChain::render_to_screen(unsigned char *src)
 		unsigned sampler_num = phases[phase].inputs.size();
 		for (unsigned i = 0; i < phases[phase].effects.size(); ++i) {
 			Effect *effect = phases[phase].effects[i];
-			effect->set_uniforms(phases[phase].glsl_program_num, effect_ids[effect], &sampler_num);
+			effect->set_gl_state(phases[phase].glsl_program_num, effect_ids[effect], &sampler_num);
 		}
 
 		// Now draw!
@@ -594,11 +594,9 @@ void EffectChain::render_to_screen(unsigned char *src)
 		glEnd();
 		check_error();
 
-		// HACK
-		glActiveTexture(GL_TEXTURE0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
-		check_error();
+		for (unsigned i = 0; i < phases[phase].effects.size(); ++i) {
+			Effect *effect = phases[phase].effects[i];
+			effect->clear_gl_state();
+		}
 	}
 }

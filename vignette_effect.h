@@ -13,7 +13,7 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 
-	void set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 private:
 	Point2D center;

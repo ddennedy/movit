@@ -22,9 +22,9 @@ std::string LiftGammaGainEffect::output_fragment_shader()
 	return read_file("lift_gamma_gain_effect.frag");
 }
 
-void LiftGammaGainEffect::set_uniforms(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void LiftGammaGainEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
-	Effect::set_uniforms(glsl_program_num, prefix, sampler_num);
+	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
 	RGBTriplet gain_pow_inv_gamma(
 		pow(gain.r, 1.0f / gamma.r),
