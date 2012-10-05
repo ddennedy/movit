@@ -17,6 +17,10 @@ enum EffectId {
 	EFFECT_VIGNETTE,
 	EFFECT_BLUR,
 	EFFECT_DIFFUSION,
+	EFFECT_GLOW,
+
+	// Combining.
+	EFFECT_MIX,
 };
 
 #endif // !defined(_EFFECT_ID_H)

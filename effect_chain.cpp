@@ -22,6 +22,8 @@
 #include "vignette_effect.h"
 #include "blur_effect.h"
 #include "diffusion_effect.h"
+#include "glow_effect.h"
+#include "mix_effect.h"
 #include "input.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
@@ -85,6 +87,10 @@ Effect *instantiate_effect(EffectId effect)
 		return new BlurEffect();
 	case EFFECT_DIFFUSION:
 		return new DiffusionEffect();
+	case EFFECT_GLOW:
+		return new GlowEffect();
+	case EFFECT_MIX:
+		return new MixEffect();
 	}
 	assert(false);
 }
