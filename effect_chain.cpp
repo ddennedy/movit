@@ -22,19 +22,22 @@
 #include "vignette_effect.h"
 #include "blur_effect.h"
 #include "diffusion_effect.h"
+#include "input.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width),
 	  height(height),
-	  use_srgb_texture_format(false),
 	  finalized(false) {}
 
-void EffectChain::add_input(const ImageFormat &format)
+Input *EffectChain::add_input(const ImageFormat &format)
 {
-	input_format = format;
-	output_color_space.insert(std::make_pair(static_cast<Effect *>(NULL), format.color_space));
-	output_gamma_curve.insert(std::make_pair(static_cast<Effect *>(NULL), format.gamma_curve));
-	effect_ids.insert(std::make_pair(static_cast<Effect *>(NULL), "src_image"));
+	Input *input = new Input(format, width, height);
+	effects.push_back(input);
+	output_color_space.insert(std::make_pair(input, format.color_space));
+	output_gamma_curve.insert(std::make_pair(input, format.gamma_curve));
+	effect_ids.insert(std::make_pair(input, "src_image"));
+	incoming_links.insert(std::make_pair(input, std::vector<Effect *>()));
+	return input;
 }
 
 void EffectChain::add_output(const ImageFormat &format)
@@ -51,9 +54,7 @@ void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &in
 	effect_ids.insert(std::make_pair(effect, effect_id));
 	assert(inputs.size() == effect->num_inputs());
 	for (unsigned i = 0; i < inputs.size(); ++i) {
-		if (inputs[i] != NULL) {
-			assert(std::find(effects.begin(), effects.end(), inputs[i]) != effects.end());
-		}
+		assert(std::find(effects.begin(), effects.end(), inputs[i]) != effects.end());
 		outgoing_links[inputs[i]].push_back(effect);
 	}
 	incoming_links.insert(std::make_pair(effect, inputs));
@@ -93,7 +94,7 @@ Effect *EffectChain::normalize_to_linear_gamma(Effect *input)
 	assert(output_gamma_curve.count(input) != 0);
 	if (output_gamma_curve[input] == GAMMA_sRGB) {
 		// TODO: check if the extension exists
-		use_srgb_texture_format = true;
+		effects[0]->set_int("use_srgb_texture_format", 1);
 		output_gamma_curve[input] = GAMMA_LINEAR;
 		return input;
 	} else {
@@ -210,7 +211,7 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 	
 		frag_shader += std::string("uniform sampler2D tex_") + effect_id + ";\n";	
 		frag_shader += std::string("vec4 ") + effect_id + "(vec2 tc) {\n";
-		if (effect == NULL) {
+		if (effect->num_inputs() == 0) {
 			// OpenGL's origin is bottom-left, but most graphics software assumes
 			// a top-left origin. Thus, for inputs that come from the user,
 			// we flip the y coordinate. However, for FBOs, the origin
@@ -259,6 +260,12 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 
 		input_needs_mipmaps |= effect->needs_mipmaps();
 	}
+	for (unsigned i = 0; i < effects.size(); ++i) {
+		Effect *effect = effects[i];
+		if (effect->num_inputs() == 0) {
+			effect->set_int("needs_mipmaps", input_needs_mipmaps);
+		}
+	}
 	assert(!last_effect_id.empty());
 	frag_shader += std::string("#define INPUT ") + last_effect_id + "\n";
 	frag_shader.append(read_file("footer.frag"));
@@ -289,6 +296,7 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 // effects, and of course at the end.
 void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *completed_effects)
 {
+	assert(start != NULL);
 	if (completed_effects->count(start) != 0) {
 		// This has already been done for us.
 		return;
@@ -298,15 +306,15 @@ void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *com
 	std::vector<Effect *> this_phase_effects;
 	Effect *node = start;
 	for ( ;; ) {  // Termination condition within loop.
-		if (node == NULL) {
-			this_phase_inputs.push_back(node);
-		} else {
-			// Check that we have all the inputs we need for this effect.
-			// If not, we end the phase here right away; the other side
-			// of the input chain will eventually come and pick the effect up.
-			assert(incoming_links.count(node) != 0);
-			std::vector<Effect *> deps = incoming_links[node];
-			assert(!deps.empty());
+		assert(node != NULL);
+
+		// Check that we have all the inputs we need for this effect.
+		// If not, we end the phase here right away; the other side
+		// of the input chain will eventually come and pick the effect up.
+		assert(incoming_links.count(node) == 1);
+		std::vector<Effect *> deps = incoming_links[node];
+		assert(node->num_inputs() == deps.size());
+		if (!deps.empty()) {
 			bool have_all_deps = true;
 			for (unsigned i = 0; i < deps.size(); ++i) {
 				if (completed_effects->count(deps[i]) == 0) {
@@ -322,8 +330,8 @@ void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *com
 				return;
 			}
 			this_phase_inputs.insert(this_phase_inputs.end(), deps.begin(), deps.end());	
-			this_phase_effects.push_back(node);
 		}
+		this_phase_effects.push_back(node);
 		completed_effects->insert(node);	
 
 		// Find all the effects that use this one as a direct input.
@@ -336,11 +344,11 @@ void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *com
 		std::vector<Effect *> next = outgoing_links[node];
 		assert(!next.empty());
 		if (next.size() > 1) {
-			// More than one effect uses this as the input.
-			// The easiest thing to do (and probably also the safest
-			// performance-wise in most cases) is to bounce it to a texture
-			// and then let the next passes read from that.
-			if (node != NULL) {
+			if (node->num_inputs() != 0) {
+				// More than one effect uses this as the input, and it is not a texture itself.
+				// The easiest thing to do (and probably also the safest
+				// performance-wise in most cases) is to bounce it to a texture
+				// and then let the next passes read from that.
 				phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
 			}
 
@@ -394,7 +402,7 @@ void EffectChain::finalize()
 
 	// Construct all needed GLSL programs, starting at the input.
 	std::set<Effect *> completed_effects;
-	construct_glsl_programs(NULL, &completed_effects);
+	construct_glsl_programs(effects[0], &completed_effects);
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.
@@ -420,78 +428,15 @@ void EffectChain::finalize()
 			effect_output_textures.insert(std::make_pair(output_effect, temp_texture));
 		}
 	}
+		
+	(static_cast<Input *>(effects[0]))->finalize();
 	
-	// Translate the input format to OpenGL's enums.
-	GLenum internal_format;
-	if (use_srgb_texture_format) {
-		internal_format = GL_SRGB8;
-	} else {
-		internal_format = GL_RGBA8;
-	}
-	if (input_format.pixel_format == FORMAT_RGB) {
-		format = GL_RGB;
-		bytes_per_pixel = 3;
-	} else if (input_format.pixel_format == FORMAT_RGBA) {
-		format = GL_RGBA;
-		bytes_per_pixel = 4;
-	} else if (input_format.pixel_format == FORMAT_BGR) {
-		format = GL_BGR;
-		bytes_per_pixel = 3;
-	} else if (input_format.pixel_format == FORMAT_BGRA) {
-		format = GL_BGRA;
-		bytes_per_pixel = 4;
-	} else {
-		assert(false);
-	}
-
-	// Create PBO to hold the texture holding the input image, and then the texture itself.
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
-	check_error();
-	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
-	check_error();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-	check_error();
-	
-	glGenTextures(1, &source_image_num);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, source_image_num);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	check_error();
-	// Intel/Mesa seems to have a broken glGenerateMipmap() for non-FBO textures, so do it here.
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, phases[0].input_needs_mipmaps ? GL_TRUE : GL_FALSE);
-	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
-	check_error();
-
 	finalized = true;
 }
 
-void EffectChain::render_to_screen(unsigned char *src)
+void EffectChain::render_to_screen()
 {
 	assert(finalized);
-
-	// Copy the pixel data into the PBO.
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
-	check_error();
-	void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
-	memcpy(mapped_pbo, src, width * height * bytes_per_pixel);
-	glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
-	check_error();
-
-	// Re-upload the texture from the PBO.
-	glActiveTexture(GL_TEXTURE0);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, source_image_num);
-	check_error();
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	check_error();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-	check_error();
 
 	// Basic state.
 	glDisable(GL_BLEND);
@@ -514,25 +459,19 @@ void EffectChain::render_to_screen(unsigned char *src)
 	}
 
 	std::set<Effect *> generated_mipmaps;
-	generated_mipmaps.insert(NULL);  // Already done further up.
+	generated_mipmaps.insert(effects[0]);  // Already done further up.
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		glUseProgram(phases[phase].glsl_program_num);
 		check_error();
 
-		// Set up inputs for this phase.
-		assert(!phases[phase].inputs.empty());
+		// Set up RTT inputs for this phase.
 		for (unsigned sampler = 0; sampler < phases[phase].inputs.size(); ++sampler) {
 			glActiveTexture(GL_TEXTURE0 + sampler);
 			Effect *input = phases[phase].inputs[sampler];
-			if (input == NULL) {
-				glBindTexture(GL_TEXTURE_2D, source_image_num);
-				check_error();
-			} else {
-				assert(effect_output_textures.count(input) != 0);
-				glBindTexture(GL_TEXTURE_2D, effect_output_textures[input]);
-				check_error();
-			}
+			assert(effect_output_textures.count(input) != 0);
+			glBindTexture(GL_TEXTURE_2D, effect_output_textures[input]);
+			check_error();
 			if (phases[phase].input_needs_mipmaps) {
 				if (generated_mipmaps.count(input) == 0) {
 					glGenerateMipmap(GL_TEXTURE_2D);

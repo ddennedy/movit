@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
 
-	chain.add_input(inout_format);
+	Input *input = chain.add_input(inout_format);
 	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
 	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
 	Effect *diffusion_effect = chain.add_effect(EFFECT_DIFFUSION);
@@ -217,7 +217,8 @@ int main(int argc, char **argv)
 		diffusion_effect->set_float("radius", blur_radius);
 		diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount);
 
-		chain.render_to_screen(src_img);
+		input->set_pixel_data(src_img);
+		chain.render_to_screen();
 		
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
 		check_error();

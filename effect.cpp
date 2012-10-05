@@ -229,7 +229,7 @@ void Effect::set_gl_state(GLuint glsl_program_num, const std::string& prefix, un
 		set_uniform_vec3(glsl_program_num, prefix, it->first, it->second);
 	}
 
-	for (std::map<std::string, Texture1D>::const_iterator it = params_tex_1d.begin();
+	for (std::map<std::string, Texture1D>::iterator it = params_tex_1d.begin();
 	     it != params_tex_1d.end();
 	     ++it) {
 		glActiveTexture(GL_TEXTURE0 + *sampler_num);

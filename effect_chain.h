@@ -6,28 +6,8 @@
 
 #include "effect.h"
 #include "effect_id.h"
-
-enum PixelFormat { FORMAT_RGB, FORMAT_RGBA, FORMAT_BGR, FORMAT_BGRA };
-
-enum ColorSpace {
-	COLORSPACE_sRGB = 0,
-	COLORSPACE_REC_709 = 0,  // Same as sRGB.
-	COLORSPACE_REC_601_525 = 1,
-	COLORSPACE_REC_601_625 = 2,
-};
-
-enum GammaCurve {
-	GAMMA_LINEAR = 0,
-	GAMMA_sRGB = 1,
-	GAMMA_REC_601 = 2,
-	GAMMA_REC_709 = 2,  // Same as Rec. 601.
-};
-
-struct ImageFormat {
-	PixelFormat pixel_format;
-	ColorSpace color_space;
-	GammaCurve gamma_curve;
-};
+#include "image_format.h"
+#include "input.h"
 
 class EffectChain {
 public:
@@ -36,7 +16,7 @@ public:
 	// User API:
 	// input, effects, output, finalize need to come in that specific order.
 
-	void add_input(const ImageFormat &format);
+	Input *add_input(const ImageFormat &format);
 
 	// The returned pointer is owned by EffectChain.
 	Effect *add_effect(EffectId effect) {
@@ -69,7 +49,7 @@ public:
 	void finalize();
 
 	//void render(unsigned char *src, unsigned char *dst);
-	void render_to_screen(unsigned char *src);
+	void render_to_screen();
 
 	Effect *last_added_effect() {
 		if (effects.empty()) {
@@ -106,9 +86,6 @@ private:
 	std::map<Effect *, GLuint> effect_output_textures;
 	std::map<Effect *, std::vector<Effect *> > outgoing_links;
 	std::map<Effect *, std::vector<Effect *> > incoming_links;
-
-	GLuint source_image_num;
-	bool use_srgb_texture_format;
 
 	GLuint fbo;
 	std::vector<Phase> phases;
