@@ -240,6 +240,7 @@ void Effect::set_gl_state(GLuint glsl_program_num, const std::string& prefix, un
 		if (it->second.needs_update) {
 			glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, it->second.size, 0, GL_LUMINANCE, GL_FLOAT, it->second.values);
 			check_error();
+			it->second.needs_update = false;
 		}
 
 		set_uniform_int(glsl_program_num, prefix, it->first, *sampler_num);
