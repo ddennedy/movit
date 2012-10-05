@@ -177,7 +177,9 @@ int main(int argc, char **argv)
 
 	// generate a PDO to hold the data we read back with glReadPixels()
 	// (Intel/DRI goes into a slow path if we don't read to PDO)
-	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
+	GLuint pbo;
+	glGenBuffers(1, &pbo);
+	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
 	glBufferData(GL_PIXEL_PACK_BUFFER_ARB, WIDTH * HEIGHT * 4, NULL, GL_STREAM_READ);
 
 	make_hsv_wheel_texture();
@@ -220,7 +222,7 @@ int main(int argc, char **argv)
 		input->set_pixel_data(src_img);
 		chain.render_to_screen();
 		
-		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
 		check_error();
 		glReadPixels(0, 0, WIDTH, HEIGHT, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(0));
 		check_error();
@@ -242,7 +244,7 @@ int main(int argc, char **argv)
 		SDL_GL_SwapBuffers();
 		check_error();
 
-		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 1);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
 		check_error();
 		unsigned char *screenbuf = (unsigned char *)glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
 		check_error();

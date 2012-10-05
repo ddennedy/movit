@@ -46,7 +46,9 @@ void Input::finalize()
 	}
 
 	// Create PBO to hold the texture holding the input image, and then the texture itself.
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
+	glGenBuffers(1, &pbo);
+	check_error();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
 	check_error();
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
 	check_error();
@@ -73,7 +75,7 @@ void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, uns
 {
 	if (needs_update) {
 		// Copy the pixel data into the PBO.
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 2);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
 		check_error();
 		void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
 		memcpy(mapped_pbo, pixel_data, width * height * bytes_per_pixel);

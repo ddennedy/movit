@@ -46,7 +46,7 @@ public:
 private:
 	ImageFormat image_format;
 	GLenum format;
-	GLuint texture_num;
+	GLuint pbo, texture_num;
 	bool needs_update;
 	int use_srgb_texture_format, needs_mipmaps;
 	unsigned width, height, bytes_per_pixel;
