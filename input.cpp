@@ -41,6 +41,9 @@ void Input::finalize()
 	} else if (image_format.pixel_format == FORMAT_BGRA) {
 		format = GL_BGRA;
 		bytes_per_pixel = 4;
+	} else if (image_format.pixel_format == FORMAT_GRAYSCALE) {
+		format = GL_LUMINANCE;
+		bytes_per_pixel = 1;
 	} else {
 		assert(false);
 	}
