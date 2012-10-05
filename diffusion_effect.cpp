@@ -12,11 +12,6 @@ DiffusionEffect::DiffusionEffect()
 {
 }
 
-std::string DiffusionEffect::output_fragment_shader()
-{
-	return read_file("sandbox_effect.frag");
-}
-
 void DiffusionEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs) {
 	assert(inputs.size() == 1);
 	blur->add_self_to_effect_chain(chain, inputs);

@@ -20,10 +20,16 @@ class OverlayMatteEffect;
 class DiffusionEffect : public Effect {
 public:
 	DiffusionEffect();
-	std::string output_fragment_shader();
 
 	virtual void add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &input);
 	virtual bool set_float(const std::string &key, float value);
+	
+	virtual std::string output_fragment_shader() {
+		assert(false);
+	}
+	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
+		assert(false);
+	}
 
 private:
 	BlurEffect *blur;
