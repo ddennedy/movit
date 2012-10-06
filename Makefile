@@ -4,7 +4,7 @@ CXXFLAGS=-Wall -g
 LDFLAGS=-lSDL -lSDL_image -lGL
 
 # Core.
-OBJS=main.o util.o widgets.o effect.o effect_chain.o input.o
+OBJS=main.o util.o widgets.o effect.o effect_chain.o flat_input.o
 
 # Effects.
 OBJS += lift_gamma_gain_effect.o

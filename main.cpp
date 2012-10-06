@@ -26,6 +26,7 @@
 #include "util.h"
 #include "widgets.h"
 
+#include "flat_input.h"
 #include "lift_gamma_gain_effect.h"
 #include "saturation_effect.h"
 #include "diffusion_effect.h"
@@ -168,7 +169,8 @@ int main(int argc, char **argv)
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
 
-	Input *input = chain.add_input(inout_format);
+	FlatInput *input = new FlatInput(inout_format, WIDTH, HEIGHT);
+	chain.add_input(input);
 	Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
 	Effect *saturation_effect = chain.add_effect(new SaturationEffect());
 	Effect *diffusion_effect = chain.add_effect(new DiffusionEffect());

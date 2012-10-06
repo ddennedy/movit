@@ -15,7 +15,9 @@ public:
 	// User API:
 	// input, effects, output, finalize need to come in that specific order.
 
-	Input *add_input(const ImageFormat &format);
+	// EffectChain takes ownership of the given input.
+	// input is returned back for convenience.
+	Input *add_input(Input *input);
 
 	// EffectChain takes ownership of the given effect.
 	// effect is returned back for convenience.

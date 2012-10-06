@@ -5,10 +5,10 @@
 #include <GL/glext.h>
 #include <assert.h>
 
-#include "input.h"
+#include "flat_input.h"
 #include "util.h"
 
-Input::Input(ImageFormat image_format, unsigned width, unsigned height)
+FlatInput::FlatInput(ImageFormat image_format, unsigned width, unsigned height)
 	: image_format(image_format),
 	  needs_update(false),
 	  finalized(false),
@@ -22,7 +22,7 @@ Input::Input(ImageFormat image_format, unsigned width, unsigned height)
 	register_int("needs_mipmaps", &needs_mipmaps);
 }
 
-void Input::finalize()
+void FlatInput::finalize()
 {
 	// Translate the input format to OpenGL's enums.
 	GLenum internal_format;
@@ -81,7 +81,7 @@ void Input::finalize()
 	finalized = true;
 }
 	
-void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
 {
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
@@ -119,7 +119,7 @@ void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, uns
 	++*sampler_num;
 }
 
-std::string Input::output_fragment_shader()
+std::string FlatInput::output_fragment_shader()
 {
-	return read_file("input.frag");
+	return read_file("flat_input.frag");
 }

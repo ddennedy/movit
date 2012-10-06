@@ -24,16 +24,15 @@ EffectChain::EffectChain(unsigned width, unsigned height)
 	  height(height),
 	  finalized(false) {}
 
-Input *EffectChain::add_input(const ImageFormat &format)
+Input *EffectChain::add_input(Input *input)
 {
 	char eff_id[256];
 	sprintf(eff_id, "src_image%u", (unsigned)inputs.size());
 
-	Input *input = new Input(format, width, height);
 	effects.push_back(input);
 	inputs.push_back(input);
-	output_color_space.insert(std::make_pair(input, format.color_space));
-	output_gamma_curve.insert(std::make_pair(input, format.gamma_curve));
+	output_color_space.insert(std::make_pair(input, input->get_color_space()));
+	output_gamma_curve.insert(std::make_pair(input, input->get_gamma_curve()));
 	effect_ids.insert(std::make_pair(input, eff_id));
 	incoming_links.insert(std::make_pair(input, std::vector<Effect *>()));
 	return input;
