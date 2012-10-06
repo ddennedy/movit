@@ -36,7 +36,7 @@ EffectChain::EffectChain(unsigned width, unsigned height)
 Input *EffectChain::add_input(const ImageFormat &format)
 {
 	char eff_id[256];
-	sprintf(eff_id, "src_image%d", inputs.size());
+	sprintf(eff_id, "src_image%u", (unsigned)inputs.size());
 
 	Input *input = new Input(format, width, height);
 	effects.push_back(input);
