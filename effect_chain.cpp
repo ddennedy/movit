@@ -16,16 +16,7 @@
 #include "effect_chain.h"
 #include "gamma_expansion_effect.h"
 #include "gamma_compression_effect.h"
-#include "lift_gamma_gain_effect.h"
 #include "colorspace_conversion_effect.h"
-#include "sandbox_effect.h"
-#include "saturation_effect.h"
-#include "mirror_effect.h"
-#include "vignette_effect.h"
-#include "blur_effect.h"
-#include "diffusion_effect.h"
-#include "glow_effect.h"
-#include "mix_effect.h"
 #include "input.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
@@ -68,37 +59,6 @@ void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &in
 	incoming_links.insert(std::make_pair(effect, inputs));
 	output_gamma_curve[effect] = output_gamma_curve[last_added_effect()];
 	output_color_space[effect] = output_color_space[last_added_effect()];
-}
-
-Effect *instantiate_effect(EffectId effect)
-{
-	switch (effect) {
-	case EFFECT_GAMMA_EXPANSION:
-		return new GammaExpansionEffect();
-	case EFFECT_GAMMA_COMPRESSION:
-		return new GammaCompressionEffect();
-	case EFFECT_COLOR_SPACE_CONVERSION:
-		return new ColorSpaceConversionEffect();
-	case EFFECT_SANDBOX:
-		return new SandboxEffect();
-	case EFFECT_LIFT_GAMMA_GAIN:
-		return new LiftGammaGainEffect();
-	case EFFECT_SATURATION:
-		return new SaturationEffect();
-	case EFFECT_MIRROR:
-		return new MirrorEffect();
-	case EFFECT_VIGNETTE:
-		return new VignetteEffect();
-	case EFFECT_BLUR:
-		return new BlurEffect();
-	case EFFECT_DIFFUSION:
-		return new DiffusionEffect();
-	case EFFECT_GLOW:
-		return new GlowEffect();
-	case EFFECT_MIX:
-		return new MixEffect();
-	}
-	assert(false);
 }
 
 // Set the "use_srgb_texture_format" option on all inputs that feed into this node,
@@ -160,10 +120,8 @@ Effect *EffectChain::normalize_to_srgb(Effect *input)
 	return colorspace_conversion;
 }
 
-Effect *EffectChain::add_effect(EffectId effect_id, const std::vector<Effect *> &inputs)
+Effect *EffectChain::add_effect(Effect *effect, const std::vector<Effect *> &inputs)
 {
-	Effect *effect = instantiate_effect(effect_id);
-
 	assert(inputs.size() == effect->num_inputs());
 
 	std::vector<Effect *> normalized_inputs = inputs;

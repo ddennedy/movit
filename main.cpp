@@ -26,6 +26,10 @@
 #include "util.h"
 #include "widgets.h"
 
+#include "lift_gamma_gain_effect.h"
+#include "saturation_effect.h"
+#include "diffusion_effect.h"
+
 unsigned char result[WIDTH * HEIGHT * 4];
 
 float lift_theta = 0.0f, lift_rad = 0.0f, lift_v = 0.0f;
@@ -165,13 +169,13 @@ int main(int argc, char **argv)
 	inout_format.gamma_curve = GAMMA_sRGB;
 
 	Input *input = chain.add_input(inout_format);
-	Effect *lift_gamma_gain_effect = chain.add_effect(EFFECT_LIFT_GAMMA_GAIN);
-	Effect *saturation_effect = chain.add_effect(EFFECT_SATURATION);
-	Effect *diffusion_effect = chain.add_effect(EFFECT_DIFFUSION);
-	//Effect *vignette_effect = chain.add_effect(EFFECT_VIGNETTE);
-	//Effect *sandbox_effect = chain.add_effect(EFFECT_SANDBOX);
+	Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
+	Effect *saturation_effect = chain.add_effect(new SaturationEffect());
+	Effect *diffusion_effect = chain.add_effect(new DiffusionEffect());
+	//Effect *vignette_effect = chain.add_effect(new VignetteEffect());
+	//Effect *sandbox_effect = chain.add_effect(new SandboxEffect());
 	//sandbox_effect->set_float("parm", 42.0f);
-	//chain.add_effect(EFFECT_MIRROR);
+	//chain.add_effect(new MirrorEffect());
 	chain.add_output(inout_format);
 	chain.finalize();
 

@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "effect.h"
-#include "effect_id.h"
 #include "image_format.h"
 #include "input.h"
 
@@ -18,22 +17,23 @@ public:
 
 	Input *add_input(const ImageFormat &format);
 
-	// The returned pointer is owned by EffectChain.
-	Effect *add_effect(EffectId effect) {
+	// EffectChain takes ownership of the given effect.
+	// effect is returned back for convenience.
+	Effect *add_effect(Effect *effect) {
 		return add_effect(effect, last_added_effect());
 	}
-	Effect *add_effect(EffectId effect, Effect *input) {
+	Effect *add_effect(Effect *effect, Effect *input) {
 		std::vector<Effect *> inputs;
 		inputs.push_back(input);
 		return add_effect(effect, inputs);
 	}
-	Effect *add_effect(EffectId effect, Effect *input1, Effect *input2) {
+	Effect *add_effect(Effect *effect, Effect *input1, Effect *input2) {
 		std::vector<Effect *> inputs;
 		inputs.push_back(input1);
 		inputs.push_back(input2);
 		return add_effect(effect, inputs);
 	}
-	Effect *add_effect(EffectId effect, const std::vector<Effect *> &inputs);
+	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
 	// Similar to add_effect, but:
 	//
