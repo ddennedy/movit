@@ -80,7 +80,7 @@ private:
 	void construct_glsl_programs(Effect *start, std::set<Effect *> *completed_effects);
 
 	unsigned width, height;
-	ImageFormat input_format, output_format;
+	ImageFormat output_format;
 	std::vector<Effect *> effects;
 	std::map<Effect *, std::string> effect_ids;
 	std::map<Effect *, GLuint> effect_output_textures;
