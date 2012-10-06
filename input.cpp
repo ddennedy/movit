@@ -83,6 +83,11 @@ void Input::finalize()
 	
 void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
 {
+	glActiveTexture(GL_TEXTURE0 + *sampler_num);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texture_num);
+	check_error();
+
 	if (needs_update) {
 		// Copy the pixel data into the PBO.
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
@@ -93,10 +98,6 @@ void Input::set_gl_state(GLuint glsl_program_num, const std::string& prefix, uns
 		check_error();
 
 		// Re-upload the texture from the PBO.
-		glActiveTexture(GL_TEXTURE0);
-		check_error();
-		glBindTexture(GL_TEXTURE_2D, texture_num);
-		check_error();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 		check_error();
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
