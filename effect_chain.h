@@ -81,7 +81,7 @@ private:
 
 	unsigned width, height;
 	ImageFormat input_format, output_format;
-	std::vector<Effect *> effects, unexpanded_effects;
+	std::vector<Effect *> effects;
 	std::map<Effect *, std::string> effect_ids;
 	std::map<Effect *, GLuint> effect_output_textures;
 	std::map<Effect *, std::vector<Effect *> > outgoing_links;
