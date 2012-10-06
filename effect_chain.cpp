@@ -35,6 +35,7 @@ Input *EffectChain::add_input(const ImageFormat &format)
 {
 	Input *input = new Input(format, width, height);
 	effects.push_back(input);
+	inputs.push_back(input);
 	output_color_space.insert(std::make_pair(input, format.color_space));
 	output_gamma_curve.insert(std::make_pair(input, format.gamma_curve));
 	effect_ids.insert(std::make_pair(input, "src_image"));
@@ -95,12 +96,37 @@ Effect *instantiate_effect(EffectId effect)
 	assert(false);
 }
 
+// Set the "use_srgb_texture_format" option on all inputs that feed into this node,
+// and update the output_gamma_curve[] map as we go.
+//
+// NOTE: We assume that the only way we could actually get GAMMA_sRGB from an
+// effect (except from GammaCompressionCurve, which should never be inserted
+// into a chain when this is called) is by pass-through from a texture.
+// Thus, we can simply feed the flag up towards all inputs.
+void EffectChain::set_use_srgb_texture_format(Effect *effect)
+{
+	assert(output_gamma_curve.count(effect) != 0);
+	assert(output_gamma_curve[effect] == GAMMA_sRGB);
+	if (effect->num_inputs() == 0) {
+		effect->set_int("use_srgb_texture_format", 1);
+	} else {
+		assert(incoming_links.count(effect) == 1);
+		std::vector<Effect *> deps = incoming_links[effect];
+		assert(effect->num_inputs() == deps.size());
+		for (unsigned i = 0; i < deps.size(); ++i) {
+			set_use_srgb_texture_format(deps[i]);
+			assert(output_gamma_curve[deps[i]] == GAMMA_LINEAR);
+		}
+	}
+	output_gamma_curve[effect] = GAMMA_LINEAR;
+}
+
 Effect *EffectChain::normalize_to_linear_gamma(Effect *input)
 {
 	assert(output_gamma_curve.count(input) != 0);
 	if (output_gamma_curve[input] == GAMMA_sRGB) {
 		// TODO: check if the extension exists
-		effects[0]->set_int("use_srgb_texture_format", 1);
+		set_use_srgb_texture_format(input);
 		output_gamma_curve[input] = GAMMA_LINEAR;
 		return input;
 	} else {
@@ -406,9 +432,11 @@ void EffectChain::finalize()
 		output_gamma_curve[gamma_conversion] = output_format.gamma_curve;
 	}
 
-	// Construct all needed GLSL programs, starting at the input.
+	// Construct all needed GLSL programs, starting at the inputs.
 	std::set<Effect *> completed_effects;
-	construct_glsl_programs(effects[0], &completed_effects);
+	for (unsigned i = 0; i < inputs.size(); ++i) {
+		construct_glsl_programs(inputs[i], &completed_effects);
+	}
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.
@@ -435,7 +463,9 @@ void EffectChain::finalize()
 		}
 	}
 		
-	(static_cast<Input *>(effects[0]))->finalize();
+	for (unsigned i = 0; i < inputs.size(); ++i) {
+		inputs[i]->finalize();
+	}
 	
 	finalized = true;
 }
@@ -465,7 +495,11 @@ void EffectChain::render_to_screen()
 	}
 
 	std::set<Effect *> generated_mipmaps;
-	generated_mipmaps.insert(effects[0]);  // Already done further up.
+	for (unsigned i = 0; i < inputs.size(); ++i) {
+		// Inputs generate their own mipmaps if they need to
+		// (see input.cpp).
+		generated_mipmaps.insert(inputs[i]);
+	}
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		glUseProgram(phases[phase].glsl_program_num);

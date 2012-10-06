@@ -63,10 +63,11 @@ private:
 	struct Phase {
 		GLint glsl_program_num;
 		bool input_needs_mipmaps;
-		std::vector<Effect *> inputs;
+		std::vector<Effect *> inputs;   // Only from other phases; input textures are not counted here.
 		std::vector<Effect *> effects;  // In order.
 	};
 
+	void set_use_srgb_texture_format(Effect *effect);
 	Effect *normalize_to_linear_gamma(Effect *input);
 	Effect *normalize_to_srgb(Effect *input);
 
@@ -82,6 +83,7 @@ private:
 	unsigned width, height;
 	ImageFormat output_format;
 	std::vector<Effect *> effects;
+	std::vector<Input *> inputs;  // Also contained in effects.
 	std::map<Effect *, std::string> effect_ids;
 	std::map<Effect *, GLuint> effect_output_textures;
 	std::map<Effect *, std::vector<Effect *> > outgoing_links;
