@@ -91,8 +91,8 @@ std::string ColorSpaceConversionEffect::output_fragment_shader()
 		"    %.8f, %.8f, %.8f,\n"
 		"    %.8f, %.8f, %.8f,\n"
 		"    %.8f, %.8f, %.8f);\n\n",
-		m[0], m[3], m[6],
-		m[1], m[4], m[7],
-		m[2], m[5], m[8]);
+		m[0], m[1], m[2],
+		m[3], m[4], m[5],
+		m[6], m[7], m[8]);
 	return buf + read_file("colorspace_conversion_effect.frag");
 }
