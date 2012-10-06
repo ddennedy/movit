@@ -175,8 +175,8 @@ int main(int argc, char **argv)
 	chain.add_output(inout_format);
 	chain.finalize();
 
-	// generate a PDO to hold the data we read back with glReadPixels()
-	// (Intel/DRI goes into a slow path if we don't read to PDO)
+	// generate a PBO to hold the data we read back with glReadPixels()
+	// (Intel/DRI goes into a slow path if we don't read to PBO)
 	GLuint pbo;
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
