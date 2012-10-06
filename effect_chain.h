@@ -78,7 +78,7 @@ private:
 
 	// Create all GLSL programs needed to compute the given effect, and all outputs
 	// that depends on it (whenever possible).
-	void construct_glsl_programs(Effect *start, std::set<Effect *> *completed_effects);
+	void construct_glsl_programs(Effect *output);
 
 	unsigned width, height;
 	ImageFormat output_format;

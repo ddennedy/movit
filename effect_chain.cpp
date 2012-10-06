@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <set>
+#include <stack>
+#include <vector>
 
 #include "util.h"
 #include "effect_chain.h"
@@ -33,12 +35,15 @@ EffectChain::EffectChain(unsigned width, unsigned height)
 
 Input *EffectChain::add_input(const ImageFormat &format)
 {
+	char eff_id[256];
+	sprintf(eff_id, "src_image%d", inputs.size());
+
 	Input *input = new Input(format, width, height);
 	effects.push_back(input);
 	inputs.push_back(input);
 	output_color_space.insert(std::make_pair(input, format.color_space));
 	output_gamma_curve.insert(std::make_pair(input, format.gamma_curve));
-	effect_ids.insert(std::make_pair(input, "src_image"));
+	effect_ids.insert(std::make_pair(input, eff_id));
 	incoming_links.insert(std::make_pair(input, std::vector<Effect *>()));
 	return input;
 }
@@ -220,17 +225,12 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 
 EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects)
 {
-	assert(!inputs.empty());
 	assert(!effects.empty());
 
-	// Figure out the true set of inputs to this phase. These are the ones
-	// that we need somehow but don't calculate ourselves.
-	std::set<Effect *> effect_set(effects.begin(), effects.end());
-	std::set<Effect *> input_set(inputs.begin(), inputs.end());
-	std::vector<Effect *> true_inputs;
-	std::set_difference(input_set.begin(), input_set.end(),
-		effect_set.begin(), effect_set.end(),
-		std::back_inserter(true_inputs));
+	// Deduplicate the inputs.
+	std::vector<Effect *> true_inputs = inputs;
+	std::sort(true_inputs.begin(), true_inputs.end());
+	true_inputs.erase(std::unique(true_inputs.begin(), true_inputs.end()), true_inputs.end());
 
 	bool input_needs_mipmaps = false;
 	std::string frag_shader = read_file("header.frag");
@@ -326,117 +326,153 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 // the chain from there. We end a program every time we come to an effect
 // marked as "needs texture bounce", one that is used by multiple other
 // effects, and of course at the end.
-void EffectChain::construct_glsl_programs(Effect *start, std::set<Effect *> *completed_effects)
+//
+// We follow a quite simple depth-first search from the output, although
+// without any explicit recursion.
+void EffectChain::construct_glsl_programs(Effect *output)
 {
-	assert(start != NULL);
-	if (completed_effects->count(start) != 0) {
-		// This has already been done for us.
-		return;
-	}
+	// Which effects have already been completed in this phase?
+	// We need to keep track of it, as an effect with multiple outputs
+	// could otherwise be calculate multiple times.
+	std::set<Effect *> completed_effects;
 
-	std::vector<Effect *> this_phase_inputs;  // Also includes all intermediates; these will be filtered away later.
+	// Effects in the current phase, as well as inputs (outputs from other phases
+	// that we depend on). Note that since we start iterating from the end,
+	// the effect list will be in the reverse order.
+	std::vector<Effect *> this_phase_inputs;
 	std::vector<Effect *> this_phase_effects;
-	Effect *node = start;
+
+	// Effects that we have yet to calculate, but that we know should
+	// be in the current phase.
+	std::stack<Effect *> effects_todo_this_phase;
+
+	// Effects that we have yet to calculate, but that come from other phases.
+	// We delay these until we have this phase done in its entirety,
+	// at which point we pick any of them and start a new phase from that.
+	std::stack<Effect *> effects_todo_other_phases;
+
+	effects_todo_this_phase.push(output);
+
 	for ( ;; ) {  // Termination condition within loop.
-		assert(node != NULL);
+		if (!effects_todo_this_phase.empty()) {
+			// OK, we have more to do this phase.
+			Effect *effect = effects_todo_this_phase.top();
+			effects_todo_this_phase.pop();
 
-		// Check that we have all the inputs we need for this effect.
-		// If not, we end the phase here right away; the other side
-		// of the input chain will eventually come and pick the effect up.
-		assert(incoming_links.count(node) == 1);
-		std::vector<Effect *> deps = incoming_links[node];
-		assert(node->num_inputs() == deps.size());
-		if (!deps.empty()) {
-			bool have_all_deps = true;
+			// This should currently only happen for effects that are phase outputs,
+			// and we throw those out separately below.
+			assert(completed_effects.count(effect) == 0);
+
+			this_phase_effects.push_back(effect);
+			completed_effects.insert(effect);
+
+			// Find all the dependencies of this effect, and add them to the stack.
+			assert(incoming_links.count(effect) == 1);
+			std::vector<Effect *> deps = incoming_links[effect];
+			assert(effect->num_inputs() == deps.size());
 			for (unsigned i = 0; i < deps.size(); ++i) {
-				if (completed_effects->count(deps[i]) == 0) {
-					have_all_deps = false;
-					break;
+				bool start_new_phase = false;
+
+				if (effect->needs_texture_bounce()) {
+					start_new_phase = true;
+				}
+
+				assert(outgoing_links.count(deps[i]) == 1);
+				if (outgoing_links[deps[i]].size() > 1 && deps[i]->num_inputs() > 0) {
+					// More than one effect uses this as the input,
+					// and it is not a texture itself.
+					// The easiest thing to do (and probably also the safest
+					// performance-wise in most cases) is to bounce it to a texture
+					// and then let the next passes read from that.
+					start_new_phase = true;
+				}
+
+				if (start_new_phase) {
+					effects_todo_other_phases.push(deps[i]);
+					this_phase_inputs.push_back(deps[i]);
+				} else {
+					effects_todo_this_phase.push(deps[i]);
 				}
 			}
-		
-			if (!have_all_deps) {
-				if (!this_phase_effects.empty()) {
-					phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
-				}
-				return;
-			}
-			this_phase_inputs.insert(this_phase_inputs.end(), deps.begin(), deps.end());	
-		}
-		this_phase_effects.push_back(node);
-		completed_effects->insert(node);	
-
-		// Find all the effects that use this one as a direct input.
-		if (outgoing_links.count(node) == 0) {
-			// End of the line; output.
-			phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
-			return;
+			continue;
 		}
 
-		std::vector<Effect *> next = outgoing_links[node];
-		assert(!next.empty());
-		if (next.size() > 1) {
-			if (node->num_inputs() != 0) {
-				// More than one effect uses this as the input, and it is not a texture itself.
-				// The easiest thing to do (and probably also the safest
-				// performance-wise in most cases) is to bounce it to a texture
-				// and then let the next passes read from that.
-				phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
-			}
-
-			// Start phases for all the effects that need us (in arbitrary order).
-			for (unsigned i = 0; i < next.size(); ++i) {
-				construct_glsl_programs(next[i], completed_effects);
-			}
-			return;
-		}
-	
-		// OK, only one effect uses this as the input. Keep iterating,
-		// but first see if it requires a texture bounce; if so, give it
-		// one by starting a new phase.
-		node = next[0];
-		if (node->needs_texture_bounce()) {
+		// No more effects to do this phase. Take all the ones we have,
+		// and create a GLSL program for it.
+		if (!this_phase_effects.empty()) {
+			reverse(this_phase_effects.begin(), this_phase_effects.end());
 			phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
 			this_phase_inputs.clear();
 			this_phase_effects.clear();
 		}
+		assert(this_phase_inputs.empty());
+		assert(this_phase_effects.empty());
+
+		// If we have no effects left, exit.
+		if (effects_todo_other_phases.empty()) {
+			break;
+		}
+
+		Effect *effect = effects_todo_other_phases.top();
+		effects_todo_other_phases.pop();
+
+		if (completed_effects.count(effect) == 0) {
+			// Start a new phase, calculating from this effect.
+			effects_todo_this_phase.push(effect);
+		}
 	}
+
+	// Finally, since the phases are found from the output but must be executed
+	// from the input(s), reverse them, too.
+	std::reverse(phases.begin(), phases.end());
 }
 
 void EffectChain::finalize()
 {
+	// Find the output effect. This is, simply, one that has no outgoing links.
+	// If there are multiple ones, the graph is malformed (we do not support
+	// multiple outputs right now).
+	std::vector<Effect *> output_effects;
+	for (unsigned i = 0; i < effects.size(); ++i) {
+		Effect *effect = effects[i];
+		if (outgoing_links.count(effect) == 0 || outgoing_links[effect].size() == 0) {
+			output_effects.push_back(effect);
+		}
+	}
+	assert(output_effects.size() == 1);
+	Effect *output_effect = output_effects[0];
+
 	// Add normalizers to get the output format right.
-	assert(output_gamma_curve.count(last_added_effect()) != 0);
-	assert(output_color_space.count(last_added_effect()) != 0);
-	ColorSpace current_color_space = output_color_space[last_added_effect()];  // FIXME
+	assert(output_gamma_curve.count(output_effect) != 0);
+	assert(output_color_space.count(output_effect) != 0);
+	ColorSpace current_color_space = output_color_space[output_effect];
 	if (current_color_space != output_format.color_space) {
 		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
 		colorspace_conversion->set_int("source_space", current_color_space);
 		colorspace_conversion->set_int("destination_space", output_format.color_space);
 		std::vector<Effect *> inputs;
-		inputs.push_back(last_added_effect());
+		inputs.push_back(output_effect);
 		colorspace_conversion->add_self_to_effect_chain(this, inputs);
 		output_color_space[colorspace_conversion] = output_format.color_space;
+		output_effect = colorspace_conversion;
 	}
-	GammaCurve current_gamma_curve = output_gamma_curve[last_added_effect()];  // FIXME
+	GammaCurve current_gamma_curve = output_gamma_curve[output_effect];
 	if (current_gamma_curve != output_format.gamma_curve) {
 		if (current_gamma_curve != GAMMA_LINEAR) {
-			normalize_to_linear_gamma(last_added_effect());  // FIXME
+			output_effect = normalize_to_linear_gamma(output_effect);
+			current_gamma_curve = GAMMA_LINEAR;
 		}
-		assert(current_gamma_curve == GAMMA_LINEAR);
 		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
 		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
 		std::vector<Effect *> inputs;
-		inputs.push_back(last_added_effect());
+		inputs.push_back(output_effect);
 		gamma_conversion->add_self_to_effect_chain(this, inputs);
 		output_gamma_curve[gamma_conversion] = output_format.gamma_curve;
+		output_effect = gamma_conversion;
 	}
 
-	// Construct all needed GLSL programs, starting at the inputs.
-	std::set<Effect *> completed_effects;
-	for (unsigned i = 0; i < inputs.size(); ++i) {
-		construct_glsl_programs(inputs[i], &completed_effects);
-	}
+	// Construct all needed GLSL programs, starting at the output.
+	construct_glsl_programs(output_effect);
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.
