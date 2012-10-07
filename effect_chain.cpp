@@ -220,13 +220,6 @@ EffectChain::Phase *EffectChain::compile_glsl_program(const std::vector<Effect *
 	
 		frag_shader += std::string("uniform sampler2D tex_") + effect_id + ";\n";	
 		frag_shader += std::string("vec4 ") + effect_id + "(vec2 tc) {\n";
-		if (effect->num_inputs() == 0) {
-			// OpenGL's origin is bottom-left, but most graphics software assumes
-			// a top-left origin. Thus, for inputs that come from the user,
-			// we flip the y coordinate. However, for FBOs, the origin
-			// is all correct, so don't do anything.
-			frag_shader += "\ttc.y = 1.0f - tc.y;\n";
-		}
 		frag_shader += "\treturn texture2D(tex_" + effect_id + ", tc);\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
