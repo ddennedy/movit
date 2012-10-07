@@ -1,12 +1,9 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <assert.h>
 
 #include "sandbox_effect.h"
 #include "util.h"
+#include "opengl.h"
 
 SandboxEffect::SandboxEffect()
 	: parm(0.0f)

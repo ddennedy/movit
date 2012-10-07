@@ -18,12 +18,10 @@
 #include <SDL/SDL_opengl.h>
 #include <SDL/SDL_image.h>
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-
 #include "effect.h"
 #include "effect_chain.h"
 #include "util.h"
+#include "opengl.h"
 #include "widgets.h"
 
 #include "flat_input.h"

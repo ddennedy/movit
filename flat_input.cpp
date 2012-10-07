@@ -1,12 +1,9 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <string.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <assert.h>
 
 #include "flat_input.h"
 #include "util.h"
+#include "opengl.h"
 
 FlatInput::FlatInput(ImageFormat image_format, unsigned width, unsigned height)
 	: image_format(image_format),

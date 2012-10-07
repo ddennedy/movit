@@ -1,13 +1,9 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <stdio.h>
 #include <assert.h>
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-
 #include <math.h>
 #include "util.h"
+#include "opengl.h"
 
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 {

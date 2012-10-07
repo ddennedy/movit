@@ -1,12 +1,9 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <assert.h>
 
 #include "blur_effect.h"
 #include "util.h"
+#include "opengl.h"
 
 // Must match blur_effect.frag.
 #define NUM_TAPS 16

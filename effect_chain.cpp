@@ -4,9 +4,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-
 #include <algorithm>
 #include <set>
 #include <stack>
@@ -18,6 +15,7 @@
 #include "gamma_compression_effect.h"
 #include "colorspace_conversion_effect.h"
 #include "input.h"
+#include "opengl.h"
 
 EffectChain::EffectChain(unsigned width, unsigned height)
 	: width(width),

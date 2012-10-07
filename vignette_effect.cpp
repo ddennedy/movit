@@ -1,11 +1,8 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 
 #include "vignette_effect.h"
 #include "util.h"
+#include "opengl.h"
 
 VignetteEffect::VignetteEffect()
 	: center(0.5f, 0.5f),

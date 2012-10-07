@@ -1,12 +1,9 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <string.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 #include <assert.h>
 
 #include "ycbcr_input.h"
 #include "util.h"
+#include "opengl.h"
 
 YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        const YCbCrFormat &ycbcr_format,

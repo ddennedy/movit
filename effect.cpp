@@ -1,5 +1,3 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -7,8 +5,7 @@
 #include "effect_chain.h"
 #include "util.h"
 
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include "opengl.h"
 
 GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key)
 {

@@ -1,11 +1,8 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <math.h>
-#include <GL/gl.h>
-#include <GL/glext.h>
 
 #include "lift_gamma_gain_effect.h"
 #include "util.h"
+#include "opengl.h"
 
 LiftGammaGainEffect::LiftGammaGainEffect()
 	: lift(0.0f, 0.0f, 0.0f),
