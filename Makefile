@@ -4,7 +4,11 @@ CXXFLAGS=-Wall -g
 LDFLAGS=-lSDL -lSDL_image -lGL
 
 # Core.
-OBJS=main.o util.o widgets.o effect.o effect_chain.o flat_input.o
+OBJS=main.o util.o widgets.o effect.o effect_chain.o
+
+# Inputs.
+OBJS += flat_input.o
+OBJS += ycbcr_input.o
 
 # Effects.
 OBJS += lift_gamma_gain_effect.o
@@ -27,9 +31,10 @@ test: $(OBJS)
 %.o: %.cpp
 	$(CXX) -MMD $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
--include $(OBJS:.o=.d)
+DEPS=$(OBJS:.o=.d)
+-include $(DEPS)
 
 clean:
-	$(RM) test $(OBJS)
+	$(RM) test $(OBJS) $(DEPS)
 
 .PHONY: clean
