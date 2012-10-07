@@ -351,6 +351,7 @@ void EffectChain::construct_glsl_programs(Effect *output)
 			for (unsigned i = 0; i < deps.size(); ++i) {
 				bool start_new_phase = false;
 
+				// FIXME: If we sample directly from a texture, we won't need this.
 				if (effect->needs_texture_bounce()) {
 					start_new_phase = true;
 				}
@@ -527,6 +528,8 @@ void EffectChain::finalize()
 	for (unsigned i = 0; i < inputs.size(); ++i) {
 		inputs[i]->finalize();
 	}
+
+	assert(phases[0]->inputs.empty());
 	
 	finalized = true;
 }
@@ -556,11 +559,6 @@ void EffectChain::render_to_screen()
 	}
 
 	std::set<Effect *> generated_mipmaps;
-	for (unsigned i = 0; i < inputs.size(); ++i) {
-		// Inputs generate their own mipmaps if they need to
-		// (see input.cpp).
-		generated_mipmaps.insert(inputs[i]);
-	}
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		// See if the requested output size has changed. If so, we need to recreate
