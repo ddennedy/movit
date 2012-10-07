@@ -23,8 +23,10 @@ OBJS += sandbox_effect.o
 test: $(OBJS)
 	$(CXX) -o test $(OBJS) $(LDFLAGS)
 
-.o: .cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $<
+%.o: %.cpp
+	$(CXX) -MMD $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+
+-include $(OBJS:.o=.d)
 
 clean:
 	$(RM) test $(OBJS)
