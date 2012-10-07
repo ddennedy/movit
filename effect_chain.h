@@ -69,7 +69,9 @@ private:
 		std::vector<Effect *> effects;  // In order.
 	};
 
-	void set_use_srgb_texture_format(Effect *effect);
+	void find_all_nonlinear_inputs(Effect *effect,
+	                               std::vector<Input *> *nonlinear_inputs,
+	                               std::vector<Effect *> *intermediates);
 	Effect *normalize_to_linear_gamma(Effect *input);
 	Effect *normalize_to_srgb(Effect *input);
 

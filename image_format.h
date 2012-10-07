@@ -17,6 +17,11 @@ enum GammaCurve {
 	GAMMA_REC_709 = 2,  // Same as Rec. 601.
 };
 
+enum YCbCrLumaCoefficients {
+	YCBCR_REC_601 = 0,
+	YCBCR_REC_709 = 1,
+};
+
 struct ImageFormat {
 	MovitPixelFormat pixel_format;
 	ColorSpace color_space;

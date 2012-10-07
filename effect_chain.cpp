@@ -60,48 +60,70 @@ void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &in
 	output_color_space[effect] = output_color_space[last_added_effect()];
 }
 
-// Set the "use_srgb_texture_format" option on all inputs that feed into this node,
-// and update the output_gamma_curve[] map as we go.
-//
-// NOTE: We assume that the only way we could actually get GAMMA_sRGB from an
-// effect (except from GammaCompressionCurve, which should never be inserted
-// into a chain when this is called) is by pass-through from a texture.
-// Thus, we can simply feed the flag up towards all inputs.
-void EffectChain::set_use_srgb_texture_format(Effect *effect)
+void EffectChain::find_all_nonlinear_inputs(Effect *effect,
+                                            std::vector<Input *> *nonlinear_inputs,
+                                            std::vector<Effect *> *intermediates)
 {
 	assert(output_gamma_curve.count(effect) != 0);
-	assert(output_gamma_curve[effect] == GAMMA_sRGB);
+	if (output_gamma_curve[effect] == GAMMA_LINEAR) {
+		return;
+	}
 	if (effect->num_inputs() == 0) {
-		effect->set_int("use_srgb_texture_format", 1);
+		nonlinear_inputs->push_back(static_cast<Input *>(effect));
 	} else {
+		intermediates->push_back(effect);
+
 		assert(incoming_links.count(effect) == 1);
 		std::vector<Effect *> deps = incoming_links[effect];
 		assert(effect->num_inputs() == deps.size());
 		for (unsigned i = 0; i < deps.size(); ++i) {
-			set_use_srgb_texture_format(deps[i]);
-			assert(output_gamma_curve[deps[i]] == GAMMA_LINEAR);
+			find_all_nonlinear_inputs(deps[i], nonlinear_inputs, intermediates);
 		}
 	}
-	output_gamma_curve[effect] = GAMMA_LINEAR;
 }
 
 Effect *EffectChain::normalize_to_linear_gamma(Effect *input)
 {
-	assert(output_gamma_curve.count(input) != 0);
-	if (output_gamma_curve[input] == GAMMA_sRGB) {
-		// TODO: check if the extension exists
-		set_use_srgb_texture_format(input);
-		output_gamma_curve[input] = GAMMA_LINEAR;
-		return input;
-	} else {
-		GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
-		gamma_conversion->set_int("source_curve", output_gamma_curve[input]);
-		std::vector<Effect *> inputs;
-		inputs.push_back(input);
-		gamma_conversion->add_self_to_effect_chain(this, inputs);
-		output_gamma_curve[gamma_conversion] = GAMMA_LINEAR;
-		return gamma_conversion;
+	// Find out if all the inputs can be set to deliver sRGB inputs.
+	// If so, we can just ask them to do that instead of inserting a
+	// (possibly expensive) conversion operation.
+	//
+	// NOTE: We assume that effects generally don't mess with the gamma
+	// curve (except GammaCompressionEffect, which should never be
+	// inserted into a chain when this is called), so that we can just
+	// update the output gamma as we go.
+	//
+	// TODO: Setting this flag for one source might confuse a different
+	// part of the pipeline using the same source.
+	std::vector<Input *> nonlinear_inputs;
+	std::vector<Effect *> intermediates;
+	find_all_nonlinear_inputs(input, &nonlinear_inputs, &intermediates);
+
+	bool all_ok = true;
+	for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
+		all_ok &= nonlinear_inputs[i]->can_output_linear_gamma();
 	}
+
+	if (all_ok) {
+		for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
+			bool ok = nonlinear_inputs[i]->set_int("output_linear_gamma", 1);
+			assert(ok);
+			output_gamma_curve[nonlinear_inputs[i]] = GAMMA_LINEAR;
+		}
+		for (unsigned i = 0; i < intermediates.size(); ++i) {
+			output_gamma_curve[intermediates[i]] = GAMMA_LINEAR;
+		}
+		return input;
+	}
+
+	// OK, that didn't work. Insert a conversion effect.
+	GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
+	gamma_conversion->set_int("source_curve", output_gamma_curve[input]);
+	std::vector<Effect *> inputs;
+	inputs.push_back(input);
+	gamma_conversion->add_self_to_effect_chain(this, inputs);
+	output_gamma_curve[gamma_conversion] = GAMMA_LINEAR;
+	return gamma_conversion;
 }
 
 Effect *EffectChain::normalize_to_srgb(Effect *input)

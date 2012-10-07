@@ -24,8 +24,13 @@ public:
 	// mipmap generation) at that point.
 	virtual void finalize() = 0;
 
-	virtual ColorSpace get_color_space() = 0;	
-	virtual GammaCurve get_gamma_curve() = 0;	
+	// Whether this input can deliver linear gamma directly if it's
+	// asked to. (If so, set the parameter “output_linear_gamma”
+	// to activate it.)
+	virtual bool can_output_linear_gamma() const = 0;
+
+	virtual ColorSpace get_color_space() const = 0;
+	virtual GammaCurve get_gamma_curve() const = 0;
 };
 
 #endif // !defined(_INPUT_H)

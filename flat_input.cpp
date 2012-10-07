@@ -12,13 +12,13 @@ FlatInput::FlatInput(ImageFormat image_format, unsigned width, unsigned height)
 	: image_format(image_format),
 	  needs_update(false),
 	  finalized(false),
-	  use_srgb_texture_format(false),
+	  output_linear_gamma(false),
 	  needs_mipmaps(false),
 	  width(width),
 	  height(height),
 	  pitch(width)
 {
-	register_int("use_srgb_texture_format", &use_srgb_texture_format);
+	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
 }
 
@@ -26,7 +26,7 @@ void FlatInput::finalize()
 {
 	// Translate the input format to OpenGL's enums.
 	GLenum internal_format;
-	if (use_srgb_texture_format) {
+	if (output_linear_gamma) {
 		internal_format = GL_SRGB8;
 	} else {
 		internal_format = GL_RGBA8;
