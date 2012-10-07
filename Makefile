@@ -18,6 +18,7 @@ OBJS += blur_effect.o
 OBJS += diffusion_effect.o
 OBJS += glow_effect.o
 OBJS += mix_effect.o
+OBJS += resize_effect.o
 OBJS += sandbox_effect.o
 
 test: $(OBJS)

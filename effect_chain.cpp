@@ -200,7 +200,7 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 	return output;
 }
 
-EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects)
+EffectChain::Phase *EffectChain::compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects)
 {
 	assert(!effects.empty());
 
@@ -290,11 +290,11 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 	glLinkProgram(glsl_program_num);
 	check_error();
 
-	Phase phase;
-	phase.glsl_program_num = glsl_program_num;
-	phase.input_needs_mipmaps = input_needs_mipmaps;
-	phase.inputs = true_inputs;
-	phase.effects = effects;
+	Phase *phase = new Phase;
+	phase->glsl_program_num = glsl_program_num;
+	phase->input_needs_mipmaps = input_needs_mipmaps;
+	phase->inputs = true_inputs;
+	phase->effects = effects;
 
 	return phase;
 }
@@ -302,7 +302,8 @@ EffectChain::Phase EffectChain::compile_glsl_program(const std::vector<Effect *>
 // Construct GLSL programs, starting at the given effect and following
 // the chain from there. We end a program every time we come to an effect
 // marked as "needs texture bounce", one that is used by multiple other
-// effects, and of course at the end.
+// effects, every time an effect wants to change the output size,
+// and of course at the end.
 //
 // We follow a quite simple depth-first search from the output, although
 // without any explicit recursion.
@@ -364,6 +365,10 @@ void EffectChain::construct_glsl_programs(Effect *output)
 					start_new_phase = true;
 				}
 
+				if (deps[i]->changes_output_size()) {
+					start_new_phase = true;
+				}
+
 				if (start_new_phase) {
 					effects_todo_other_phases.push(deps[i]);
 					this_phase_inputs.push_back(deps[i]);
@@ -379,6 +384,7 @@ void EffectChain::construct_glsl_programs(Effect *output)
 		if (!this_phase_effects.empty()) {
 			reverse(this_phase_effects.begin(), this_phase_effects.end());
 			phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
+			output_effects_to_phase.insert(std::make_pair(this_phase_effects.back(), phases.back()));
 			this_phase_inputs.clear();
 			this_phase_effects.clear();
 		}
@@ -402,6 +408,45 @@ void EffectChain::construct_glsl_programs(Effect *output)
 	// Finally, since the phases are found from the output but must be executed
 	// from the input(s), reverse them, too.
 	std::reverse(phases.begin(), phases.end());
+}
+
+void EffectChain::find_output_size(EffectChain::Phase *phase)
+{
+	Effect *output_effect = phase->effects.back();
+
+	// If the last effect explicitly sets an output size,
+	// use that.
+	if (output_effect->changes_output_size()) {
+		output_effect->get_output_size(&phase->output_width, &phase->output_height);
+		return;
+	}
+
+	// If not, look at the input phases, if any. We select the largest one
+	// (really assuming they all have the same aspect currently), by pixel count.
+	if (!phase->inputs.empty()) {
+		unsigned best_width = 0, best_height = 0;
+		for (unsigned i = 0; i < phase->inputs.size(); ++i) {
+			Effect *input = phase->inputs[i];
+			assert(output_effects_to_phase.count(input) != 0);
+			const Phase *input_phase = output_effects_to_phase[input];
+			assert(input_phase->output_width != 0);
+			assert(input_phase->output_height != 0);
+			if (input_phase->output_width * input_phase->output_height > best_width * best_height) {
+				best_width = input_phase->output_width;
+				best_height = input_phase->output_height;
+			}
+		}
+		assert(best_width != 0);
+		assert(best_height != 0);
+		phase->output_width = best_width;
+		phase->output_height = best_height;
+		return;
+	}
+
+	// OK, no inputs. Just use the global width/height.
+	// TODO: We probably want to use the texture's size eventually.
+	phase->output_width = width;
+	phase->output_height = height;
 }
 
 void EffectChain::finalize()
@@ -460,7 +505,9 @@ void EffectChain::finalize()
 		glGenFramebuffers(1, &fbo);
 
 		for (unsigned i = 0; i < phases.size() - 1; ++i) {
-			Effect *output_effect = phases[i].effects.back();
+			find_output_size(phases[i]);
+
+			Effect *output_effect = phases[i]->effects.back();
 			GLuint temp_texture;
 			glGenTextures(1, &temp_texture);
 			check_error();
@@ -470,9 +517,10 @@ void EffectChain::finalize()
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, phases[i]->output_width, phases[i]->output_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			check_error();
 			effect_output_textures.insert(std::make_pair(output_effect, temp_texture));
+			effect_output_texture_sizes.insert(std::make_pair(output_effect, std::make_pair(phases[i]->output_width, phases[i]->output_height)));
 		}
 	}
 		
@@ -515,17 +563,41 @@ void EffectChain::render_to_screen()
 	}
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
-		glUseProgram(phases[phase].glsl_program_num);
+		// See if the requested output size has changed. If so, we need to recreate
+		// the texture (and before we start setting up inputs).
+		if (phase != phases.size() - 1) {
+			find_output_size(phases[phase]);
+
+			Effect *output_effect = phases[phase]->effects.back();
+			assert(effect_output_texture_sizes.count(output_effect) != 0);
+			std::pair<GLuint, GLuint> old_size = effect_output_texture_sizes[output_effect];
+
+			if (old_size.first != phases[phase]->output_width ||
+			    old_size.second != phases[phase]->output_height) {
+				glActiveTexture(GL_TEXTURE0);
+				check_error();
+				assert(effect_output_textures.count(output_effect) != 0);
+				glBindTexture(GL_TEXTURE_2D, effect_output_textures[output_effect]);
+				check_error();
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, phases[phase]->output_width, phases[phase]->output_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+				check_error();
+				effect_output_texture_sizes[output_effect] = std::make_pair(phases[phase]->output_width, phases[phase]->output_height);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				check_error();
+			}
+		}
+
+		glUseProgram(phases[phase]->glsl_program_num);
 		check_error();
 
 		// Set up RTT inputs for this phase.
-		for (unsigned sampler = 0; sampler < phases[phase].inputs.size(); ++sampler) {
+		for (unsigned sampler = 0; sampler < phases[phase]->inputs.size(); ++sampler) {
 			glActiveTexture(GL_TEXTURE0 + sampler);
-			Effect *input = phases[phase].inputs[sampler];
+			Effect *input = phases[phase]->inputs[sampler];
 			assert(effect_output_textures.count(input) != 0);
 			glBindTexture(GL_TEXTURE_2D, effect_output_textures[input]);
 			check_error();
-			if (phases[phase].input_needs_mipmaps) {
+			if (phases[phase]->input_needs_mipmaps) {
 				if (generated_mipmaps.count(input) == 0) {
 					glGenerateMipmap(GL_TEXTURE_2D);
 					check_error();
@@ -540,7 +612,7 @@ void EffectChain::render_to_screen()
 
 			assert(effect_ids.count(input));
 			std::string texture_name = std::string("tex_") + effect_ids[input];
-			glUniform1i(glGetUniformLocation(phases[phase].glsl_program_num, texture_name.c_str()), sampler);
+			glUniform1i(glGetUniformLocation(phases[phase]->glsl_program_num, texture_name.c_str()), sampler);
 			check_error();
 		}
 
@@ -549,23 +621,26 @@ void EffectChain::render_to_screen()
 			// Last phase goes directly to the screen.
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			check_error();
+			glViewport(0, 0, width, height);
 		} else {
-			Effect *last_effect = phases[phase].effects.back();
-			assert(effect_output_textures.count(last_effect) != 0);
+			Effect *output_effect = phases[phase]->effects.back();
+			assert(effect_output_textures.count(output_effect) != 0);
 			glFramebufferTexture2D(
 				GL_FRAMEBUFFER,
 			        GL_COLOR_ATTACHMENT0,
 				GL_TEXTURE_2D,
-				effect_output_textures[last_effect],
+				effect_output_textures[output_effect],
 				0);
 			check_error();
+			glViewport(0, 0, phases[phase]->output_width, phases[phase]->output_height);
 		}
 
 		// Give the required parameters to all the effects.
-		unsigned sampler_num = phases[phase].inputs.size();
-		for (unsigned i = 0; i < phases[phase].effects.size(); ++i) {
-			Effect *effect = phases[phase].effects[i];
-			effect->set_gl_state(phases[phase].glsl_program_num, effect_ids[effect], &sampler_num);
+		unsigned sampler_num = phases[phase]->inputs.size();
+		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
+			Effect *effect = phases[phase]->effects[i];
+			effect->set_gl_state(phases[phase]->glsl_program_num, effect_ids[effect], &sampler_num);
+			check_error();
 		}
 
 		// Now draw!
@@ -586,8 +661,8 @@ void EffectChain::render_to_screen()
 		glEnd();
 		check_error();
 
-		for (unsigned i = 0; i < phases[phase].effects.size(); ++i) {
-			Effect *effect = phases[phase].effects[i];
+		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
+			Effect *effect = phases[phase]->effects[i];
 			effect->clear_gl_state();
 		}
 	}

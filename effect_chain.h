@@ -67,7 +67,12 @@ private:
 		bool input_needs_mipmaps;
 		std::vector<Effect *> inputs;   // Only from other phases; input textures are not counted here.
 		std::vector<Effect *> effects;  // In order.
+		unsigned output_width, output_height;
 	};
+
+	// Determine the preferred output size of a given phase.
+	// Requires that all input phases (if any) already have output sizes set.
+	void find_output_size(Phase *phase);
 
 	void find_all_nonlinear_inputs(Effect *effect,
 	                               std::vector<Input *> *nonlinear_inputs,
@@ -78,7 +83,7 @@ private:
 	void draw_vertex(float x, float y, const std::vector<Effect *> &inputs);
 
 	// Create a GLSL program computing the given effects in order.
-	Phase compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects);
+	Phase *compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects);
 
 	// Create all GLSL programs needed to compute the given effect, and all outputs
 	// that depends on it (whenever possible).
@@ -90,11 +95,16 @@ private:
 	std::vector<Input *> inputs;  // Also contained in effects.
 	std::map<Effect *, std::string> effect_ids;
 	std::map<Effect *, GLuint> effect_output_textures;
+	std::map<Effect *, std::pair<GLuint, GLuint> > effect_output_texture_sizes;
 	std::map<Effect *, std::vector<Effect *> > outgoing_links;
 	std::map<Effect *, std::vector<Effect *> > incoming_links;
 
 	GLuint fbo;
-	std::vector<Phase> phases;
+	std::vector<Phase *> phases;
+
+	// This is a bit ugly; we should probably fix so that Phase takes other phases
+	// as inputs, instead of Effect.
+	std::map<Effect *, Phase *> output_effects_to_phase;
 
 	GLenum format, bytes_per_pixel;
 	bool finalized;

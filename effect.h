@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include <assert.h>
+
 #include "opengl.h"
 
 class EffectChain;
@@ -95,6 +97,21 @@ public:
 	// (although there is no guarantee; if a different effect in the chain
 	// needs mipmaps, you will also get them).
 	virtual bool needs_mipmaps() const { return false; }
+
+	// Whether this effect wants to output to a different size than
+	// its input(s). If you set this to true, the output will be
+	// bounced to a texture (similarly to if the next effect set
+	// needs_texture_bounce()).
+	virtual bool changes_output_size() const { return false; }
+
+	// If changes_output_size() is true, you must implement this to tell
+	// the framework what output size you want.
+	//
+	// Note that it is explicitly allowed to change width and height
+	// from frame to frame; EffectChain will reallocate textures as needed.
+	virtual void get_output_size(unsigned *width, unsigned *height) const {
+		assert(false);
+	}
 
 	// How many inputs this effect will take (a fixed number).
 	// If you have only one input, it will be called INPUT() in GLSL;
