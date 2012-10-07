@@ -8,35 +8,72 @@
 // Must match blur_effect.frag.
 #define NUM_TAPS 16
 	
-BlurEffect::BlurEffect() {
+BlurEffect::BlurEffect()
+	: radius(3.0f)
+{
 	hpass = new SingleBlurPassEffect();
 	hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL);
 	vpass = new SingleBlurPassEffect();
 	vpass->set_int("direction", SingleBlurPassEffect::VERTICAL);
+
+	update_radius();
 }
 
-void BlurEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs) {
+void BlurEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs)
+{
 	assert(inputs.size() == 1);
 	hpass->add_self_to_effect_chain(chain, inputs);
 
 	std::vector<Effect *> vpass_inputs;
 	vpass_inputs.push_back(hpass);
-	vpass->add_self_to_effect_chain(chain, vpass_inputs);
+	vpass->add_self_to_effect_chain(chain, vpass_inputs); 
+}
+		
+void BlurEffect::update_radius()
+{
+	// We only have 16 taps to work with on each side, and we want that to
+	// reach out to about 2.5*sigma. Bump up the mipmap levels (giving us
+	// box blurs) until we have what we need.
+	//
+	// TODO: Consider the actual width and height (they influence mipmap
+	// sizes subtly).
+	unsigned base_mipmap_level = 0;
+	float adjusted_radius = radius;
+	while (adjusted_radius * 1.5f > NUM_TAPS / 2) {
+		++base_mipmap_level;
+		adjusted_radius /= 2.0f;
+	}
+	
+	bool ok = hpass->set_float("radius", adjusted_radius);
+	ok |= hpass->set_int("width", 1280 / (1 << base_mipmap_level));  // FIXME
+	ok |= hpass->set_int("height", 720 / (1 << base_mipmap_level));  // FIXME
+
+	ok |= vpass->set_float("radius", adjusted_radius);
+	ok |= vpass->set_int("width", 1280 / (1 << base_mipmap_level));  // FIXME
+	ok |= vpass->set_int("height", 720 / (1 << base_mipmap_level));  // FIXME
+
+	assert(ok);
 }
 
 bool BlurEffect::set_float(const std::string &key, float value) {
-	if (!hpass->set_float(key, value)) {
-		return false;
+	if (key == "radius") {
+		radius = value;
+		update_radius();
+		return true;
 	}
-	return vpass->set_float(key, value);
+	return false;
 }
 
 SingleBlurPassEffect::SingleBlurPassEffect()
 	: radius(3.0f),
-	  direction(HORIZONTAL)
+	  direction(HORIZONTAL),
+ 	  width(1280),
+ 	  height(720)
 {
-	register_float("radius", (float *)&radius);
+	register_float("radius", &radius);
 	register_int("direction", (int *)&direction);
+	register_int("width", &width);
+	register_int("height", &height);
 }
 
 std::string SingleBlurPassEffect::output_fragment_shader()
@@ -47,45 +84,6 @@ std::string SingleBlurPassEffect::output_fragment_shader()
 void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
-
-	int base_texture_size, texture_size;
-	if (direction == HORIZONTAL) {
-		base_texture_size = texture_size = 1280;  // FIXME
-	} else if (direction == VERTICAL) {
-		base_texture_size = texture_size = 720;  // FIXME
-	} else {
-		assert(false);
-	}
-
-	// We only have 16 taps to work with on each side, and we want that to
-	// reach out to about 2.5*sigma.  Bump up the mipmap levels (giving us
-	// box blurs) until we have what we need.
-	//
-	// FIXME: we really need to pick the same mipmap level for both horizontal and vertical!
-	unsigned base_mipmap_level = 0;
-	float adjusted_radius = radius;
-	while (texture_size > 1 && adjusted_radius * 2.5f > NUM_TAPS / 2) {
-		++base_mipmap_level;
-		texture_size /= 2;  // Rounding down.
-		adjusted_radius = radius * float(texture_size) / float(base_texture_size);
-	}
-
-	// In the second pass, we do the same, but don't sample from a mipmap;
-	// that would re-blur the other direction in an ugly fashion, and we already
-	// have the vertical box blur we need from that pass.
-	//
-	// TODO: We really need to present horizontal+vertical as a unit;
-	// currently, there's really no guarantee vertical blur is the second pass.
-	if (direction == VERTICAL) {
-		base_mipmap_level = 0;
-	}
-
-	glActiveTexture(GL_TEXTURE0);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_mipmap_level);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, base_mipmap_level);
-	check_error();
 
 	// Compute the weights; they will be symmetrical, so we only compute
 	// the right side.
@@ -98,7 +96,7 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 	} else {
 		float sum = 0.0f;
 		for (unsigned i = 0; i < NUM_TAPS + 1; ++i) {
-			float z = i / adjusted_radius;
+			float z = i / radius;
 
 			// Gaussian blur is a common, but maybe not the prettiest choice;
 			// it can feel a bit too blurry in the fine detail and too little
@@ -116,9 +114,6 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 			weight[i] /= sum;
 		}
 	}
-
-#if 0
-	// NOTE: This is currently broken.
 
 	// Since the GPU gives us bilinear sampling for free, we can get two
 	// samples for the price of one (for every but the center sample,
@@ -152,17 +147,12 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 			offset = w2 / (w1 + w2);
 			total_weight = w1 + w2;
 		}
-#if 0
-		// hack for easier visualization
-		offset = 0.5f;
-		total_weight = 8.0f;
-#endif
 		float x = 0.0f, y = 0.0f;
 
 		if (direction == HORIZONTAL) {
-			x = (base_pos + offset) / (float)texture_size;
+			x = (base_pos + offset) / (float)width;
 		} else if (direction == VERTICAL) {
-			y = (base_pos + offset) / (float)texture_size;
+			y = (base_pos + offset) / (float)height;
 		} else {
 			assert(false);
 		}
@@ -174,38 +164,8 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 	}
 
 	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS / 2 + 1);
-#else
-	// Boring, at-whole-pixels sampling.
-	float samples[4 * NUM_TAPS];
-
-	// All other samples.
-	for (unsigned i = 0; i < NUM_TAPS + 1; ++i) {
-		float x = 0.0f, y = 0.0f;
-
-		if (direction == HORIZONTAL) {
-			x = i / (float)texture_size;
-		} else if (direction == VERTICAL) {
-			y = i / (float)texture_size;
-		} else {
-			assert(false);
-		}
-
-		samples[4 * i + 0] = x;
-		samples[4 * i + 1] = y;
-		samples[4 * i + 2] = weight[i];
-		samples[4 * i + 3] = 0.0f;
-	}
-
-	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS + 1);
-#endif
 }
 
 void SingleBlurPassEffect::clear_gl_state()
 {
-	glActiveTexture(GL_TEXTURE0);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1000);
-	check_error();
 }
