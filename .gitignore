@@ -1,4 +1,5 @@
 *.o
+*.d
 test
 *.jpg
 *.png
