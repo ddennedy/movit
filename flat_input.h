@@ -7,7 +7,7 @@
 // comes from a single 2D array with chunky pixels.
 class FlatInput : public Input {
 public:
-	FlatInput(ImageFormat format, unsigned width, unsigned height);
+	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, unsigned width, unsigned height);
 
 	// Create the texture itself. We cannot do this in the constructor,
 	// because we don't necessarily know all the settings (sRGB texture,
@@ -56,6 +56,7 @@ public:
 
 private:
 	ImageFormat image_format;
+	MovitPixelFormat pixel_format;
 	GLenum format;
 	GLuint pbo, texture_num;
 	bool needs_update, finalized;

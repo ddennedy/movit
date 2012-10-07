@@ -5,8 +5,9 @@
 #include "util.h"
 #include "opengl.h"
 
-FlatInput::FlatInput(ImageFormat image_format, unsigned width, unsigned height)
+FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, unsigned width, unsigned height)
 	: image_format(image_format),
+          pixel_format(pixel_format),
 	  needs_update(false),
 	  finalized(false),
 	  output_linear_gamma(false),
@@ -28,19 +29,19 @@ void FlatInput::finalize()
 	} else {
 		internal_format = GL_RGBA8;
 	}
-	if (image_format.pixel_format == FORMAT_RGB) {
+	if (pixel_format == FORMAT_RGB) {
 		format = GL_RGB;
 		bytes_per_pixel = 3;
-	} else if (image_format.pixel_format == FORMAT_RGBA) {
+	} else if (pixel_format == FORMAT_RGBA) {
 		format = GL_RGBA;
 		bytes_per_pixel = 4;
-	} else if (image_format.pixel_format == FORMAT_BGR) {
+	} else if (pixel_format == FORMAT_BGR) {
 		format = GL_BGR;
 		bytes_per_pixel = 3;
-	} else if (image_format.pixel_format == FORMAT_BGRA) {
+	} else if (pixel_format == FORMAT_BGRA) {
 		format = GL_BGRA;
 		bytes_per_pixel = 4;
-	} else if (image_format.pixel_format == FORMAT_GRAYSCALE) {
+	} else if (pixel_format == FORMAT_GRAYSCALE) {
 		format = GL_LUMINANCE;
 		bytes_per_pixel = 1;
 	} else {

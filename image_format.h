@@ -23,7 +23,6 @@ enum YCbCrLumaCoefficients {
 };
 
 struct ImageFormat {
-	MovitPixelFormat pixel_format;
 	ColorSpace color_space;
 	GammaCurve gamma_curve;
 };

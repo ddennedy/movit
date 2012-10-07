@@ -163,11 +163,10 @@ int main(int argc, char **argv)
 	EffectChain chain(WIDTH, HEIGHT);
 
 	ImageFormat inout_format;
-	inout_format.pixel_format = FORMAT_BGRA;
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
 
-	FlatInput *input = new FlatInput(inout_format, WIDTH, HEIGHT);
+	FlatInput *input = new FlatInput(inout_format, FORMAT_BGRA, WIDTH, HEIGHT);
 	chain.add_input(input);
 	Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
 	Effect *saturation_effect = chain.add_effect(new SaturationEffect());
