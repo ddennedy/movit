@@ -54,19 +54,49 @@ public:
 	void render_to_screen();
 
 	Effect *last_added_effect() {
-		if (effects.empty()) {
+		if (nodes.empty()) {
 			return NULL;
 		} else {
-			return effects.back();
+			return nodes.back()->effect;
 		}	
 	}
 
 private:
+	struct Phase;
+
+	// A node in the graph; basically an effect and some associated information.
+	struct Node {
+		Effect *effect;
+
+		// Identifier used to create unique variables in GLSL.
+		std::string effect_id;
+
+		// Edges in the graph (forward and backward).
+		std::vector<Node *> outgoing_links;
+		std::vector<Node *> incoming_links;
+
+		// If output goes to RTT (otherwise, none of these are set).
+		// The Phsae pointer is a but ugly; we should probably fix so
+		// that Phase takes other phases as inputs, instead of Node.
+		GLuint output_texture;
+		unsigned output_texture_width, output_texture_height;
+		Phase *phase;
+
+		// Used during the building of the effect chain.
+		ColorSpace output_color_space;
+		GammaCurve output_gamma_curve;	
+	};
+
+	// A rendering phase; a single GLSL program rendering a single quad.
 	struct Phase {
 		GLint glsl_program_num;
 		bool input_needs_mipmaps;
-		std::vector<Effect *> inputs;   // Only from other phases; input textures are not counted here.
-		std::vector<Effect *> effects;  // In order.
+
+		// Inputs are only inputs from other phases (ie., those that come from RTT);
+		// input textures are not counted here.
+		std::vector<Node *> inputs;
+
+		std::vector<Node *> effects;  // In order.
 		unsigned output_width, output_height;
 	};
 
@@ -74,44 +104,35 @@ private:
 	// Requires that all input phases (if any) already have output sizes set.
 	void find_output_size(Phase *phase);
 
-	void find_all_nonlinear_inputs(Effect *effect,
-	                               std::vector<Input *> *nonlinear_inputs,
-	                               std::vector<Effect *> *intermediates);
-	Effect *normalize_to_linear_gamma(Effect *input);
-	Effect *normalize_to_srgb(Effect *input);
+	void find_all_nonlinear_inputs(Node *effect,
+	                               std::vector<Node *> *nonlinear_inputs,
+	                               std::vector<Node *> *intermediates);
+	Node *normalize_to_linear_gamma(Node *input);
+	Node *normalize_to_srgb(Node *input);
 
 	void draw_vertex(float x, float y, const std::vector<Effect *> &inputs);
 
 	// Create a GLSL program computing the given effects in order.
-	Phase *compile_glsl_program(const std::vector<Effect *> &inputs, const std::vector<Effect *> &effects);
+	Phase *compile_glsl_program(const std::vector<Node *> &inputs,
+	                            const std::vector<Node *> &effects);
 
 	// Create all GLSL programs needed to compute the given effect, and all outputs
 	// that depends on it (whenever possible).
-	void construct_glsl_programs(Effect *output);
+	void construct_glsl_programs(Node *output);
 
 	unsigned width, height;
 	ImageFormat output_format;
-	std::vector<Effect *> effects;
-	std::vector<Input *> inputs;  // Also contained in effects.
-	std::map<Effect *, std::string> effect_ids;
-	std::map<Effect *, GLuint> effect_output_textures;
-	std::map<Effect *, std::pair<GLuint, GLuint> > effect_output_texture_sizes;
-	std::map<Effect *, std::vector<Effect *> > outgoing_links;
-	std::map<Effect *, std::vector<Effect *> > incoming_links;
+
+	std::vector<Node *> nodes;
+	std::map<Effect *, Node *> node_map;
+
+	std::vector<Input *> inputs;  // Also contained in nodes.
 
 	GLuint fbo;
 	std::vector<Phase *> phases;
 
-	// This is a bit ugly; we should probably fix so that Phase takes other phases
-	// as inputs, instead of Effect.
-	std::map<Effect *, Phase *> output_effects_to_phase;
-
 	GLenum format, bytes_per_pixel;
 	bool finalized;
-
-	// Used during the building of the effect chain.
-	std::map<Effect *, ColorSpace> output_color_space;
-	std::map<Effect *, GammaCurve> output_gamma_curve;	
 };
 
 
