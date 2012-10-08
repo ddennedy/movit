@@ -15,6 +15,10 @@
 // Converts a HSV color to RGB. Assumes h in [0, 2pi> or [-pi, pi>
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b);
 
+// Converts a HSV color to RGB, but keeps luminance constant
+// (ie. color luminance is as if S=0).
+void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b);
+
 // Column major (same as OpenGL).
 typedef double Matrix3x3[9];
 

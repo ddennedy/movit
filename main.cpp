@@ -47,9 +47,9 @@ void update_hsv(Effect *lift_gamma_gain_effect, Effect *saturation_effect)
 	RGBTriplet gamma(1.0f, 1.0f, 1.0f);
 	RGBTriplet gain(1.0f, 1.0f, 1.0f);
 
-	hsv2rgb(lift_theta, lift_rad, lift_v, &lift.r, &lift.g, &lift.b);
-	hsv2rgb(gamma_theta, gamma_rad, gamma_v * 2.0f, &gamma.r, &gamma.g, &gamma.b);
-	hsv2rgb(gain_theta, gain_rad, gain_v * 4.0f, &gain.r, &gain.g, &gain.b);
+	hsv2rgb_normalized(lift_theta, lift_rad, lift_v, &lift.r, &lift.g, &lift.b);
+	hsv2rgb_normalized(gamma_theta, gamma_rad, gamma_v * 2.0f, &gamma.r, &gamma.g, &gamma.b);
+	hsv2rgb_normalized(gain_theta, gain_rad, gain_v * 4.0f, &gain.r, &gain.g, &gain.b);
 
 	bool ok = lift_gamma_gain_effect->set_vec3("lift", (float *)&lift);
 	ok = ok && lift_gamma_gain_effect->set_vec3("gamma", (float *)&gamma);

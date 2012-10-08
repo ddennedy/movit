@@ -46,6 +46,21 @@ void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 	*b += m;
 }
 
+void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b)
+{
+	float ref_r, ref_g, ref_b;
+	hsv2rgb(h, s, v, r, g, b);
+	hsv2rgb(h, 0.0f, v, &ref_r, &ref_g, &ref_b);
+	float lum = 0.2126 * *r + 0.7152 * *g + 0.0722 * *b;
+	float ref_lum = 0.2126 * ref_r + 0.7152 * ref_g + 0.0722 * ref_b;
+	if (lum > 1e-3) {
+		float fac = ref_lum / lum;
+		*r *= fac;
+		*g *= fac;
+		*b *= fac;
+	}
+}
+
 std::string read_file(const std::string &filename)
 {
 	static char buf[131072];
