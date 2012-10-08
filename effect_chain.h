@@ -8,6 +8,49 @@
 #include "image_format.h"
 #include "input.h"
 
+class EffectChain;
+class Phase;
+
+// A node in the graph; basically an effect and some associated information.
+class Node {
+public:
+	Effect *effect;
+
+	// Edges in the graph (forward and backward).
+	std::vector<Node *> outgoing_links;
+	std::vector<Node *> incoming_links;
+
+private:
+	// Identifier used to create unique variables in GLSL.
+	std::string effect_id;
+
+	// If output goes to RTT (otherwise, none of these are set).
+	// The Phsae pointer is a but ugly; we should probably fix so
+	// that Phase takes other phases as inputs, instead of Node.
+	GLuint output_texture;
+	unsigned output_texture_width, output_texture_height;
+	Phase *phase;
+
+	// Used during the building of the effect chain.
+	ColorSpace output_color_space;
+	GammaCurve output_gamma_curve;
+
+	friend class EffectChain;
+};
+
+// A rendering phase; a single GLSL program rendering a single quad.
+struct Phase {
+	GLint glsl_program_num;
+	bool input_needs_mipmaps;
+
+	// Inputs are only inputs from other phases (ie., those that come from RTT);
+	// input textures are not counted here.
+	std::vector<Node *> inputs;
+
+	std::vector<Node *> effects;  // In order.
+	unsigned output_width, output_height;
+};
+
 class EffectChain {
 public:
 	EffectChain(unsigned width, unsigned height);
@@ -62,44 +105,6 @@ public:
 	}
 
 private:
-	struct Phase;
-
-	// A node in the graph; basically an effect and some associated information.
-	struct Node {
-		Effect *effect;
-
-		// Identifier used to create unique variables in GLSL.
-		std::string effect_id;
-
-		// Edges in the graph (forward and backward).
-		std::vector<Node *> outgoing_links;
-		std::vector<Node *> incoming_links;
-
-		// If output goes to RTT (otherwise, none of these are set).
-		// The Phsae pointer is a but ugly; we should probably fix so
-		// that Phase takes other phases as inputs, instead of Node.
-		GLuint output_texture;
-		unsigned output_texture_width, output_texture_height;
-		Phase *phase;
-
-		// Used during the building of the effect chain.
-		ColorSpace output_color_space;
-		GammaCurve output_gamma_curve;	
-	};
-
-	// A rendering phase; a single GLSL program rendering a single quad.
-	struct Phase {
-		GLint glsl_program_num;
-		bool input_needs_mipmaps;
-
-		// Inputs are only inputs from other phases (ie., those that come from RTT);
-		// input textures are not counted here.
-		std::vector<Node *> inputs;
-
-		std::vector<Node *> effects;  // In order.
-		unsigned output_width, output_height;
-	};
-
 	// Determine the preferred output size of a given phase.
 	// Requires that all input phases (if any) already have output sizes set.
 	void find_output_size(Phase *phase);
@@ -134,6 +139,5 @@ private:
 	GLenum format, bytes_per_pixel;
 	bool finalized;
 };
-
 
 #endif // !defined(_EFFECT_CHAIN_H)

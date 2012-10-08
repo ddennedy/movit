@@ -74,9 +74,9 @@ void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &in
 	node_map[effect] = node;
 }
 
-void EffectChain::find_all_nonlinear_inputs(EffectChain::Node *node,
-                                            std::vector<EffectChain::Node *> *nonlinear_inputs,
-                                            std::vector<EffectChain::Node *> *intermediates)
+void EffectChain::find_all_nonlinear_inputs(Node *node,
+                                            std::vector<Node *> *nonlinear_inputs,
+                                            std::vector<Node *> *intermediates)
 {
 	if (node->output_gamma_curve == GAMMA_LINEAR) {
 		return;
@@ -92,7 +92,7 @@ void EffectChain::find_all_nonlinear_inputs(EffectChain::Node *node,
 	}
 }
 
-EffectChain::Node *EffectChain::normalize_to_linear_gamma(EffectChain::Node *input)
+Node *EffectChain::normalize_to_linear_gamma(Node *input)
 {
 	// Find out if all the inputs can be set to deliver sRGB inputs.
 	// If so, we can just ask them to do that instead of inserting a
@@ -140,7 +140,7 @@ EffectChain::Node *EffectChain::normalize_to_linear_gamma(EffectChain::Node *inp
 	return node;
 }
 
-EffectChain::Node *EffectChain::normalize_to_srgb(EffectChain::Node *input)
+Node *EffectChain::normalize_to_srgb(Node *input)
 {
 	assert(input->output_gamma_curve == GAMMA_LINEAR);
 	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
@@ -218,9 +218,9 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 	return output;
 }
 
-EffectChain::Phase *EffectChain::compile_glsl_program(
-	const std::vector<EffectChain::Node *> &inputs,
-	const std::vector<EffectChain::Node *> &effects)
+Phase *EffectChain::compile_glsl_program(
+	const std::vector<Node *> &inputs,
+	const std::vector<Node *> &effects)
 {
 	assert(!effects.empty());
 
@@ -312,7 +312,7 @@ EffectChain::Phase *EffectChain::compile_glsl_program(
 //
 // We follow a quite simple depth-first search from the output, although
 // without any explicit recursion.
-void EffectChain::construct_glsl_programs(EffectChain::Node *output)
+void EffectChain::construct_glsl_programs(Node *output)
 {
 	// Which effects have already been completed in this phase?
 	// We need to keep track of it, as an effect with multiple outputs
@@ -414,7 +414,7 @@ void EffectChain::construct_glsl_programs(EffectChain::Node *output)
 	std::reverse(phases.begin(), phases.end());
 }
 
-void EffectChain::find_output_size(EffectChain::Phase *phase)
+void EffectChain::find_output_size(Phase *phase)
 {
 	Node *output_node = phase->effects.back();
 
