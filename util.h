@@ -29,6 +29,9 @@ GLuint compile_shader(const std::string &shader_src, GLenum type);
 // Compute a * b.
 void multiply_3x3_matrices(const Matrix3x3 a, const Matrix3x3 b, Matrix3x3 result);
 
+// Compute M * [x0 x1 x2]'.
+void multiply_3x3_matrix_float3(const Matrix3x3 M, float x0, float x1, float x2, float *y0, float *y1, float *y2);
+
 // Compute m^-1. Result is undefined if the matrix is singular or near-singular.
 void invert_3x3_matrix(const Matrix3x3 m, Matrix3x3 result);
 

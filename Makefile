@@ -12,6 +12,7 @@ OBJS += ycbcr_input.o
 
 # Effects.
 OBJS += lift_gamma_gain_effect.o
+OBJS += white_balance_effect.o
 OBJS += gamma_expansion_effect.o
 OBJS += gamma_compression_effect.o
 OBJS += colorspace_conversion_effect.o

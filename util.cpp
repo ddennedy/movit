@@ -99,6 +99,13 @@ void multiply_3x3_matrices(const Matrix3x3 a, const Matrix3x3 b, Matrix3x3 resul
         result[8] = a[2] * b[6] + a[5] * b[7] + a[8] * b[8];
 }
 
+void multiply_3x3_matrix_float3(const Matrix3x3 M, float x0, float x1, float x2, float *y0, float *y1, float *y2)
+{
+	*y0 = M[0] * x0 + M[3] * x1 + M[6] * x2;
+	*y1 = M[1] * x0 + M[4] * x1 + M[7] * x2;
+	*y2 = M[2] * x0 + M[5] * x1 + M[8] * x2;
+}
+
 void invert_3x3_matrix(const Matrix3x3 m, Matrix3x3 result)
 {
 	double inv_det = 1.0 / (

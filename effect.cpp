@@ -79,6 +79,24 @@ void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, 
 	check_error();
 }
 
+void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Matrix3x3 matrix)
+{
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
+		return;
+	}
+	check_error();
+
+	// Convert to float (GLSL has no double matrices).
+	float matrixf[9];
+	for (unsigned i = 0; i < 9; ++i) {
+		matrixf[i] = matrix[i];
+	}
+
+	glUniformMatrix3fv(location, 1, GL_FALSE, matrixf);
+	check_error();
+}
+
 bool Effect::set_int(const std::string &key, int value)
 {
 	if (params_int.count(key) == 0) {
