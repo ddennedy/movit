@@ -115,8 +115,6 @@ private:
 	Node *normalize_to_linear_gamma(Node *input);
 	Node *normalize_to_srgb(Node *input);
 
-	void draw_vertex(float x, float y, const std::vector<Effect *> &inputs);
-
 	// Create a GLSL program computing the given effects in order.
 	Phase *compile_glsl_program(const std::vector<Node *> &inputs,
 	                            const std::vector<Node *> &effects);
