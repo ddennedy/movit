@@ -69,9 +69,11 @@ public:
 	}
 
 	void set_pitch(unsigned channel, unsigned pitch) {
-		assert(!finalized);
 		assert(channel >= 0 && channel < 3);
-		this->pitch[channel] = pitch;
+		if (this->pitch[channel] != pitch) {
+			this->pitch[channel] = pitch;
+			needs_pbo_recreate = true;
+		}
 	}
 
 	unsigned get_pitch(unsigned channel) {
@@ -83,7 +85,7 @@ private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint pbos[3], texture_num[3];
-	bool needs_update, finalized;
+	bool needs_update, needs_pbo_recreate, finalized;
 
 	int needs_mipmaps;
 

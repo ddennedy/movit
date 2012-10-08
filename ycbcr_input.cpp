@@ -11,6 +11,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
 	  needs_update(false),
+	  needs_pbo_recreate(false),
 	  finalized(false),
 	  needs_mipmaps(false),
 	  width(width),
@@ -71,12 +72,20 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 		check_error();
 
-		if (needs_update) {
+		if (needs_update || needs_pbo_recreate) {
 			// Copy the pixel data into the PBO.
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbos[channel]);
 			check_error();
+
+			if (needs_pbo_recreate) {
+				// The pitch has changed; we need to reallocate this PBO.
+				glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, pitch[channel] * heights[channel], NULL, GL_STREAM_DRAW);
+				check_error();
+			}
+
 			void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
 			memcpy(mapped_pbo, pixel_data[channel], pitch[channel] * heights[channel]);
+
 			glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
 			check_error();
 
@@ -103,6 +112,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 
 	*sampler_num += 3;
 	needs_update = false;
+	needs_pbo_recreate = false;
 }
 
 std::string YCbCrInput::output_fragment_shader()
