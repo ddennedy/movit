@@ -436,9 +436,6 @@ void EffectChain::output_dot(const char *filename)
 			}
 
 			switch (nodes[i]->output_color_space) {
-			case COLORSPACE_REC_709:
-				labels.push_back("spc[rec709]");
-				break;
 			case COLORSPACE_REC_601_525:
 				labels.push_back("spc[rec601-525]");
 				break;
