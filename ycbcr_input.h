@@ -45,6 +45,8 @@ public:
 	// Uploads the texture if it has changed since last time.
 	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
 
+	unsigned get_width() const { return width; }
+	unsigned get_height() const { return height; }
 	ColorSpace get_color_space() const { return image_format.color_space; }
 	GammaCurve get_gamma_curve() const { return image_format.gamma_curve; }
 

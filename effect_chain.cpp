@@ -1,6 +1,7 @@
 #define GL_GLEXT_PROTOTYPES 1
 
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <assert.h>
 
@@ -17,9 +18,9 @@
 #include "input.h"
 #include "opengl.h"
 
-EffectChain::EffectChain(unsigned width, unsigned height)
-	: width(width),
-	  height(height),
+EffectChain::EffectChain(float aspect_nom, float aspect_denom)
+	: aspect_nom(aspect_nom),
+	  aspect_denom(aspect_denom),
 	  finalized(false) {}
 
 Input *EffectChain::add_input(Input *input)
@@ -436,6 +437,19 @@ void EffectChain::output_dot(const char *filename)
 	fclose(fp);
 }
 
+unsigned EffectChain::fit_rectangle_to_aspect(unsigned width, unsigned height)
+{
+	if (float(width) * aspect_denom >= float(height) * aspect_nom) {
+		// Same aspect, or W/H > aspect (image is wider than the frame).
+		// In either case, keep width.
+		return width;
+	} else {
+		// W/H < aspect (image is taller than the frame), so keep height,
+		// and adjust width correspondingly.
+		return lrintf(height * aspect_nom / aspect_denom);
+	}
+}
+
 void EffectChain::find_output_size(Phase *phase)
 {
 	Node *output_node = phase->effects.back();
@@ -447,30 +461,33 @@ void EffectChain::find_output_size(Phase *phase)
 		return;
 	}
 
-	// If not, look at the input phases, if any. We select the largest one
-	// (really assuming they all have the same aspect currently), by pixel count.
-	if (!phase->inputs.empty()) {
-		unsigned best_width = 0, best_height = 0;
-		for (unsigned i = 0; i < phase->inputs.size(); ++i) {
-			Node *input = phase->inputs[i];
-			assert(input->phase->output_width != 0);
-			assert(input->phase->output_height != 0);
-			if (input->phase->output_width * input->phase->output_height > best_width * best_height) {
-				best_width = input->phase->output_width;
-				best_height = input->phase->output_height;
-			}
+	// If not, look at the input phases and textures.
+	// We select the largest one (by fit into the current aspect).
+	unsigned best_width = 0;
+	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
+		Node *input = phase->inputs[i];
+		assert(input->phase->output_width != 0);
+		assert(input->phase->output_height != 0);
+		unsigned width = fit_rectangle_to_aspect(input->phase->output_width, input->phase->output_height);
+		if (width > best_width) {
+			best_width = width;
 		}
-		assert(best_width != 0);
-		assert(best_height != 0);
-		phase->output_width = best_width;
-		phase->output_height = best_height;
-		return;
 	}
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Effect *effect = phase->effects[i]->effect;
+		if (effect->num_inputs() != 0) {
+			continue;
+		}
 
-	// OK, no inputs. Just use the global width/height.
-	// TODO: We probably want to use the texture's size eventually.
-	phase->output_width = width;
-	phase->output_height = height;
+		Input *input = static_cast<Input *>(effect);
+		unsigned width = fit_rectangle_to_aspect(input->get_width(), input->get_height());
+		if (width > best_width) {
+			best_width = width;
+		}
+	}
+	assert(best_width != 0);
+	phase->output_width = best_width;
+	phase->output_height = best_width * aspect_denom / aspect_nom;
 }
 
 void EffectChain::sort_nodes_topologically()
@@ -858,6 +875,10 @@ void EffectChain::render_to_screen()
 {
 	assert(finalized);
 
+	// Save original viewport.
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
 	// Basic state.
 	glDisable(GL_BLEND);
 	check_error();
@@ -936,7 +957,7 @@ void EffectChain::render_to_screen()
 			// Last phase goes directly to the screen.
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			check_error();
-			glViewport(0, 0, width, height);
+			glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 		} else {
 			Node *output_node = phases[phase]->effects.back();
 			glFramebufferTexture2D(

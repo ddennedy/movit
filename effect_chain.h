@@ -54,7 +54,7 @@ struct Phase {
 
 class EffectChain {
 public:
-	EffectChain(unsigned width, unsigned height);
+	EffectChain(float aspect_nom, float aspect_denom);  // E.g., 16.0f, 9.0f for 16:9.
 
 	// User API:
 	// input, effects, output, finalize need to come in that specific order.
@@ -107,6 +107,10 @@ public:
 	void insert_node_between(Node *sender, Node *middle, Node *receiver);
 
 private:
+	// Fits a rectangle of the given size to the current aspect ratio
+	// (aspect_nom/aspect_denom) and returns the new width and height.
+	unsigned fit_rectangle_to_aspect(unsigned width, unsigned height);
+
 	// Determine the preferred output size of a given phase.
 	// Requires that all input phases (if any) already have output sizes set.
 	void find_output_size(Phase *phase);
@@ -146,7 +150,7 @@ private:
 	void fix_internal_gamma_by_inserting_nodes(unsigned step);
 	void fix_output_gamma();
 
-	unsigned width, height;
+	float aspect_nom, aspect_denom;
 	ImageFormat output_format;
 
 	std::vector<Node *> nodes;
