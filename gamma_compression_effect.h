@@ -15,6 +15,7 @@
 class GammaCompressionEffect : public Effect {
 public:
 	GammaCompressionEffect();
+	virtual std::string effect_type_id() const { return "GammaCompressionEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }

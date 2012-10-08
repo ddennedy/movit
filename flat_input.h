@@ -9,6 +9,8 @@ class FlatInput : public Input {
 public:
 	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, unsigned width, unsigned height);
 
+	virtual std::string effect_type_id() const { return "FlatInput"; }
+
 	// Create the texture itself. We cannot do this in the constructor,
 	// because we don't necessarily know all the settings (sRGB texture,
 	// mipmap generation) at that point.

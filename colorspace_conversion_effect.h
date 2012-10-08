@@ -14,6 +14,7 @@
 class ColorSpaceConversionEffect : public Effect {
 public:
 	ColorSpaceConversionEffect();
+	virtual std::string effect_type_id() const { return "ColorSpaceConversionEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }

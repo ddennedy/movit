@@ -9,6 +9,7 @@
 class VignetteEffect : public Effect {
 public:
 	VignetteEffect();
+	virtual std::string effect_type_id() const { return "VignetteEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }

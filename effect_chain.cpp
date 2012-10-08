@@ -414,6 +414,26 @@ void EffectChain::construct_glsl_programs(Node *output)
 	std::reverse(phases.begin(), phases.end());
 }
 
+void EffectChain::output_dot(const char *filename)
+{
+	FILE *fp = fopen(filename, "w");
+	if (fp == NULL) {
+		perror(filename);
+		exit(1);
+	}
+
+	fprintf(fp, "digraph G {\n");
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		fprintf(fp, "  n%ld [label=\"%s\"];\n", (long)nodes[i], nodes[i]->effect->effect_type_id().c_str());
+		for (unsigned j = 0; j < nodes[i]->outgoing_links.size(); ++j) {
+			fprintf(fp, "  n%ld -> n%ld;\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j]);
+		}
+	}
+	fprintf(fp, "}\n");
+
+	fclose(fp);
+}
+
 void EffectChain::find_output_size(Phase *phase)
 {
 	Node *output_node = phase->effects.back();
@@ -453,6 +473,8 @@ void EffectChain::find_output_size(Phase *phase)
 
 void EffectChain::finalize()
 {
+	output_dot("final.dot");
+
 	// Find the output effect. This is, simply, one that has no outgoing links.
 	// If there are multiple ones, the graph is malformed (we do not support
 	// multiple outputs right now).

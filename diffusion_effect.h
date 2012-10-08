@@ -20,6 +20,7 @@ class OverlayMatteEffect;
 class DiffusionEffect : public Effect {
 public:
 	DiffusionEffect();
+	virtual std::string effect_type_id() const { return "DiffusionEffect"; }
 
 	virtual void add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &input);
 	virtual bool set_float(const std::string &key, float value);
@@ -41,6 +42,7 @@ private:
 class OverlayMatteEffect : public Effect {
 public:
 	OverlayMatteEffect();
+	virtual std::string effect_type_id() const { return "OverlayMatteEffect"; }
 	std::string output_fragment_shader();
 
 	unsigned num_inputs() const { return 2; }

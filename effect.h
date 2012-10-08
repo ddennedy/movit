@@ -46,7 +46,12 @@ void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const 
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
 
 class Effect {
-public: 
+public:
+	// An identifier for this type of effect, mostly used for debug output
+	// (but some special names, like "ColorSpaceConversionEffect", holds special
+	// meaning). Same as the class name is fine.
+	virtual std::string effect_type_id() const = 0;
+
 	// Whether this effects expects its input (and output) to be in
 	// linear gamma, ie. without an applied gamma curve. Most effects
 	// will want this, although the ones that never actually look at

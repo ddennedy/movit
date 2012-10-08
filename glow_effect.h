@@ -11,6 +11,7 @@ class MixEffect;
 class GlowEffect : public Effect {
 public:
 	GlowEffect();
+	virtual std::string effect_type_id() const { return "GlowEffect"; }
 
 	virtual bool needs_srgb_primaries() const { return false; }
 

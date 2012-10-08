@@ -8,6 +8,7 @@
 class MirrorEffect : public Effect {
 public:
 	MirrorEffect();
+	virtual std::string effect_type_id() const { return "MirrorEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_linear_light() const { return false; }

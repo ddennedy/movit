@@ -31,6 +31,8 @@ public:
 	           const YCbCrFormat &ycbcr_format,
 	           unsigned width, unsigned height);
 
+	virtual std::string effect_type_id() const { return "YCbCrInput"; }
+
 	// Create the texture itself. We cannot do this in the constructor,
 	// because we don't necessarily know all the settings (sRGB texture,
 	// mipmap generation) at that point.

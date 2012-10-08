@@ -123,6 +123,10 @@ private:
 	// that depends on it (whenever possible).
 	void construct_glsl_programs(Node *output);
 
+	// Output the current graph to the given file in a Graphviz-compatible format;
+	// only useful for debugging.
+	void output_dot(const char *filename);
+
 	unsigned width, height;
 	ImageFormat output_format;
 

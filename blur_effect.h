@@ -17,6 +17,8 @@ class BlurEffect : public Effect {
 public:
 	BlurEffect();
 
+	virtual std::string effect_type_id() const { return "BlurEffect"; }
+
 	// We want this for the same reason as ResizeEffect; we could end up scaling
 	// down quite a lot.
 	virtual bool needs_texture_bounce() const { return true; }
@@ -43,6 +45,8 @@ private:
 class SingleBlurPassEffect : public Effect {
 public:
 	SingleBlurPassEffect();
+	virtual std::string effect_type_id() const { return "SingleBlurPassEffect"; }
+
 	std::string output_fragment_shader();
 
 	virtual bool needs_texture_bounce() const { return true; }

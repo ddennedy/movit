@@ -10,6 +10,7 @@
 class ResizeEffect : public Effect {
 public:
 	ResizeEffect();
+	virtual std::string effect_type_id() const { return "ResizeEffect"; }
 	std::string output_fragment_shader();
 
 	// We want processing done pre-filtering and mipmapped,

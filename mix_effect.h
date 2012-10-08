@@ -8,6 +8,7 @@
 class MixEffect : public Effect {
 public:
 	MixEffect();
+	virtual std::string effect_type_id() const { return "MixEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }
