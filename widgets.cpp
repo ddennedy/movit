@@ -130,7 +130,6 @@ void make_hsv_wheel_texture()
 				hsv_pix[(y * HSV_WHEEL_SIZE + x) * 4 + 3] = 255;
 			}
 		}
-		printf("\n");
 	}
 
 	glBindTexture(GL_TEXTURE_2D, hsv_wheel_num);
