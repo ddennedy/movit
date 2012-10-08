@@ -23,7 +23,7 @@ void VignetteEffect::set_gl_state(GLuint glsl_program_num, const std::string &pr
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	set_uniform_float(glsl_program_num, prefix, "inv_radius", 1.0f / radius);
+	set_uniform_float(glsl_program_num, prefix, "pihalf_div_radius", 0.5 * M_PI / radius);
 
 	Point2D aspect(16.0f / 9.0f, 1.0f);  // FIXME
 	set_uniform_vec2(glsl_program_num, prefix, "aspect_correction", (float *)&aspect);
