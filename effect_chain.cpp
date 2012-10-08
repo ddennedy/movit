@@ -426,7 +426,49 @@ void EffectChain::output_dot(const char *filename)
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		fprintf(fp, "  n%ld [label=\"%s\"];\n", (long)nodes[i], nodes[i]->effect->effect_type_id().c_str());
 		for (unsigned j = 0; j < nodes[i]->outgoing_links.size(); ++j) {
-			fprintf(fp, "  n%ld -> n%ld;\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j]);
+			std::vector<std::string> labels;
+
+			if (nodes[i]->outgoing_links[j]->effect->needs_texture_bounce()) {
+				labels.push_back("needs_bounce");
+			}
+			if (nodes[i]->effect->changes_output_size()) {
+				labels.push_back("resize");
+			}
+
+			switch (nodes[i]->output_color_space) {
+			case COLORSPACE_REC_709:
+				labels.push_back("spc[rec709]");
+				break;
+			case COLORSPACE_REC_601_525:
+				labels.push_back("spc[rec601-525]");
+				break;
+			case COLORSPACE_REC_601_625:
+				labels.push_back("spc[rec601-625]");
+				break;
+			default:
+				break;
+			}
+
+			switch (nodes[i]->output_gamma_curve) {
+			case GAMMA_sRGB:
+				labels.push_back("gamma[sRGB]");
+				break;
+			case GAMMA_REC_601:  // and GAMMA_REC_709
+				labels.push_back("gamma[rec601/709]");
+				break;
+			default:
+				break;
+			}
+
+			if (labels.empty()) {
+				fprintf(fp, "  n%ld -> n%ld;\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j]);
+			} else {
+				std::string label = labels[0];
+				for (unsigned k = 1; k < labels.size(); ++k) {
+					label += ", " + labels[k];
+				}
+				fprintf(fp, "  n%ld -> n%ld [label=\"%s\"];\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j], label.c_str());
+			}
 		}
 	}
 	fprintf(fp, "}\n");
