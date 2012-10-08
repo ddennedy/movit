@@ -32,7 +32,7 @@ public:
 		assert(false);
 	}
 
-	virtual void add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &input);
+	virtual void rewrite_graph(EffectChain *graph, Node *self);
 	virtual bool set_float(const std::string &key, float value);
 	
 private:

@@ -4,3 +4,4 @@ test
 *.jpg
 *.png
 perf.data
+*.dot

@@ -24,20 +24,11 @@ EffectChain::EffectChain(unsigned width, unsigned height)
 
 Input *EffectChain::add_input(Input *input)
 {
-	char eff_id[256];
-	sprintf(eff_id, "src_image%u", (unsigned)inputs.size());
-
 	inputs.push_back(input);
 
-	Node *node = new Node;
-	node->effect = input;
-	node->effect_id = eff_id;
+	Node *node = add_node(input);
 	node->output_color_space = input->get_color_space();
 	node->output_gamma_curve = input->get_gamma_curve();
-
-	nodes.push_back(node);
-	node_map[input] = node;
-
 	return input;
 }
 
@@ -46,37 +37,78 @@ void EffectChain::add_output(const ImageFormat &format)
 	output_format = format;
 }
 
-void EffectChain::add_effect_raw(Effect *effect, const std::vector<Effect *> &inputs)
+Node *EffectChain::add_node(Effect *effect)
 {
 	char effect_id[256];
 	sprintf(effect_id, "eff%u", (unsigned)nodes.size());
 
 	Node *node = new Node;
 	node->effect = effect;
+	node->disabled = false;
 	node->effect_id = effect_id;
-
-	assert(inputs.size() == effect->num_inputs());
-	assert(inputs.size() >= 1);
-	for (unsigned i = 0; i < inputs.size(); ++i) {
-		assert(node_map.count(inputs[i]) != 0);
-		node_map[inputs[i]]->outgoing_links.push_back(node);
-		node->incoming_links.push_back(node_map[inputs[i]]);
-		if (i == 0) {
-			node->output_gamma_curve = node_map[inputs[i]]->output_gamma_curve;
-			node->output_color_space = node_map[inputs[i]]->output_color_space;
-		} else {
-			assert(node->output_gamma_curve == node_map[inputs[i]]->output_gamma_curve);
-			assert(node->output_color_space == node_map[inputs[i]]->output_color_space);
-		}
-	}
+	node->output_color_space = COLORSPACE_INVALID;
+	node->output_gamma_curve = GAMMA_INVALID;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
+	return node;
 }
 
-void EffectChain::find_all_nonlinear_inputs(Node *node,
-                                            std::vector<Node *> *nonlinear_inputs,
-                                            std::vector<Node *> *intermediates)
+void EffectChain::connect_nodes(Node *sender, Node *receiver)
+{
+	sender->outgoing_links.push_back(receiver);
+	receiver->incoming_links.push_back(sender);
+}
+
+void EffectChain::replace_receiver(Node *old_receiver, Node *new_receiver)
+{
+	new_receiver->incoming_links = old_receiver->incoming_links;
+	old_receiver->incoming_links.clear();
+	
+	for (unsigned i = 0; i < new_receiver->incoming_links.size(); ++i) {
+		Node *sender = new_receiver->incoming_links[i];
+		for (unsigned j = 0; j < sender->outgoing_links.size(); ++j) {
+			if (sender->outgoing_links[j] == old_receiver) {
+				sender->outgoing_links[j] = new_receiver;
+			}
+		}
+	}	
+}
+
+void EffectChain::replace_sender(Node *old_sender, Node *new_sender)
+{
+	new_sender->outgoing_links = old_sender->outgoing_links;
+	old_sender->outgoing_links.clear();
+	
+	for (unsigned i = 0; i < new_sender->outgoing_links.size(); ++i) {
+		Node *receiver = new_sender->outgoing_links[i];
+		for (unsigned j = 0; j < receiver->incoming_links.size(); ++j) {
+			if (receiver->incoming_links[j] == old_sender) {
+				receiver->incoming_links[j] = new_sender;
+			}
+		}
+	}	
+}
+
+void EffectChain::insert_node_between(Node *sender, Node *middle, Node *receiver)
+{
+	for (unsigned i = 0; i < sender->outgoing_links.size(); ++i) {
+		if (sender->outgoing_links[i] == receiver) {
+			sender->outgoing_links[i] = middle;
+			middle->incoming_links.push_back(sender);
+		}
+	}
+	for (unsigned i = 0; i < receiver->incoming_links.size(); ++i) {
+		if (receiver->incoming_links[i] == sender) {
+			receiver->incoming_links[i] = middle;
+			middle->outgoing_links.push_back(receiver);
+		}
+	}
+
+	assert(middle->incoming_links.size() == middle->effect->num_inputs());
+}
+
+void EffectChain::find_all_nonlinear_inputs(Node *node, std::vector<Node *> *nonlinear_inputs)
 {
 	if (node->output_gamma_curve == GAMMA_LINEAR) {
 		return;
@@ -84,96 +116,21 @@ void EffectChain::find_all_nonlinear_inputs(Node *node,
 	if (node->effect->num_inputs() == 0) {
 		nonlinear_inputs->push_back(node);
 	} else {
-		intermediates->push_back(node);
 		assert(node->effect->num_inputs() == node->incoming_links.size());
 		for (unsigned i = 0; i < node->incoming_links.size(); ++i) {
-			find_all_nonlinear_inputs(node->incoming_links[i], nonlinear_inputs, intermediates);
+			find_all_nonlinear_inputs(node->incoming_links[i], nonlinear_inputs);
 		}
 	}
-}
-
-Node *EffectChain::normalize_to_linear_gamma(Node *input)
-{
-	// Find out if all the inputs can be set to deliver sRGB inputs.
-	// If so, we can just ask them to do that instead of inserting a
-	// (possibly expensive) conversion operation.
-	//
-	// NOTE: We assume that effects generally don't mess with the gamma
-	// curve (except GammaCompressionEffect, which should never be
-	// inserted into a chain when this is called), so that we can just
-	// update the output gamma as we go.
-	//
-	// TODO: Setting this flag for one source might confuse a different
-	// part of the pipeline using the same source.
-	std::vector<Node *> nonlinear_inputs;
-	std::vector<Node *> intermediates;
-	find_all_nonlinear_inputs(input, &nonlinear_inputs, &intermediates);
-
-	bool all_ok = true;
-	for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
-		Input *input = static_cast<Input *>(nonlinear_inputs[i]->effect);
-		all_ok &= input->can_output_linear_gamma();
-	}
-
-	if (all_ok) {
-		for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
-			bool ok = nonlinear_inputs[i]->effect->set_int("output_linear_gamma", 1);
-			assert(ok);
-			nonlinear_inputs[i]->output_gamma_curve = GAMMA_LINEAR;
-		}
-		for (unsigned i = 0; i < intermediates.size(); ++i) {
-			intermediates[i]->output_gamma_curve = GAMMA_LINEAR;
-		}
-		return input;
-	}
-
-	// OK, that didn't work. Insert a conversion effect.
-	GammaExpansionEffect *gamma_conversion = new GammaExpansionEffect();
-	gamma_conversion->set_int("source_curve", input->output_gamma_curve);
-	std::vector<Effect *> inputs;
-	inputs.push_back(input->effect);
-	gamma_conversion->add_self_to_effect_chain(this, inputs);
-
-	assert(node_map.count(gamma_conversion) != 0);
-	Node *node = node_map[gamma_conversion];
-	node->output_gamma_curve = GAMMA_LINEAR;
-	return node;
-}
-
-Node *EffectChain::normalize_to_srgb(Node *input)
-{
-	assert(input->output_gamma_curve == GAMMA_LINEAR);
-	ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
-	colorspace_conversion->set_int("source_space", input->output_color_space);
-	colorspace_conversion->set_int("destination_space", COLORSPACE_sRGB);
-	std::vector<Effect *> inputs;
-	inputs.push_back(input->effect);
-	colorspace_conversion->add_self_to_effect_chain(this, inputs);
-
-	assert(node_map.count(colorspace_conversion) != 0);
-	Node *node = node_map[colorspace_conversion];
-	node->output_color_space = COLORSPACE_sRGB;
-	return node;
 }
 
 Effect *EffectChain::add_effect(Effect *effect, const std::vector<Effect *> &inputs)
 {
 	assert(inputs.size() == effect->num_inputs());
-
-	std::vector<Effect *> normalized_inputs = inputs;
-	for (unsigned i = 0; i < normalized_inputs.size(); ++i) {
-		assert(node_map.count(normalized_inputs[i]) != 0);
-		Node *input = node_map[normalized_inputs[i]];
-		if (effect->needs_linear_light() && input->output_gamma_curve != GAMMA_LINEAR) {
-			input = normalize_to_linear_gamma(input);
-		}
-		if (effect->needs_srgb_primaries() && input->output_color_space != COLORSPACE_sRGB) {
-			input = normalize_to_srgb(input);
-		}
-		normalized_inputs[i] = input->effect;
+	Node *node = add_node(effect);
+	for (unsigned i = 0; i < inputs.size(); ++i) {
+		assert(node_map.count(inputs[i]) != 0);
+		connect_nodes(node_map[inputs[i]], node);
 	}
-
-	effect->add_self_to_effect_chain(this, normalized_inputs);
 	return effect;
 }
 
@@ -436,6 +393,9 @@ void EffectChain::output_dot(const char *filename)
 			}
 
 			switch (nodes[i]->output_color_space) {
+			case COLORSPACE_INVALID:
+				labels.push_back("spc[invalid]");
+				break;
 			case COLORSPACE_REC_601_525:
 				labels.push_back("spc[rec601-525]");
 				break;
@@ -447,6 +407,9 @@ void EffectChain::output_dot(const char *filename)
 			}
 
 			switch (nodes[i]->output_gamma_curve) {
+			case GAMMA_INVALID:
+				labels.push_back("gamma[invalid]");
+				break;
 			case GAMMA_sRGB:
 				labels.push_back("gamma[sRGB]");
 				break;
@@ -510,53 +473,349 @@ void EffectChain::find_output_size(Phase *phase)
 	phase->output_height = height;
 }
 
-void EffectChain::finalize()
+void EffectChain::sort_nodes_topologically()
 {
-	output_dot("final.dot");
+	std::set<Node *> visited_nodes;
+	std::vector<Node *> sorted_list;
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		if (nodes[i]->incoming_links.size() == 0) {
+			topological_sort_visit_node(nodes[i], &visited_nodes, &sorted_list);
+		}
+	}
+	reverse(sorted_list.begin(), sorted_list.end());
+	nodes = sorted_list;
+}
 
-	// Find the output effect. This is, simply, one that has no outgoing links.
-	// If there are multiple ones, the graph is malformed (we do not support
-	// multiple outputs right now).
+void EffectChain::topological_sort_visit_node(Node *node, std::set<Node *> *visited_nodes, std::vector<Node *> *sorted_list)
+{
+	if (visited_nodes->count(node) != 0) {
+		return;
+	}
+	visited_nodes->insert(node);
+	for (unsigned i = 0; i < node->outgoing_links.size(); ++i) {
+		topological_sort_visit_node(node->outgoing_links[i], visited_nodes, sorted_list);
+	}
+	sorted_list->push_back(node);
+}
+
+// Propagate gamma and color space information as far as we can in the graph.
+// The rules are simple: Anything where all the inputs agree, get that as
+// output as well. Anything else keeps having *_INVALID.
+void EffectChain::propagate_gamma_and_color_space()
+{
+	// We depend on going through the nodes in order.
+	sort_nodes_topologically();
+
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		assert(node->incoming_links.size() == node->effect->num_inputs());
+		if (node->incoming_links.size() == 0) {
+			assert(node->output_color_space != COLORSPACE_INVALID);
+			assert(node->output_gamma_curve != GAMMA_INVALID);
+			continue;
+		}
+
+		ColorSpace color_space = node->incoming_links[0]->output_color_space;
+		GammaCurve gamma_curve = node->incoming_links[0]->output_gamma_curve;
+		for (unsigned j = 1; j < node->incoming_links.size(); ++j) {
+			if (node->incoming_links[j]->output_color_space != color_space) {
+				color_space = COLORSPACE_INVALID;
+			}
+			if (node->incoming_links[j]->output_gamma_curve != gamma_curve) {
+				gamma_curve = GAMMA_INVALID;
+			}
+		}
+
+		// The conversion effects already have their outputs set correctly,
+		// so leave them alone.
+		if (node->effect->effect_type_id() != "ColorSpaceConversionEffect") {
+			node->output_color_space = color_space;
+		}		
+		if (node->effect->effect_type_id() != "GammaCompressionEffect" &&
+		    node->effect->effect_type_id() != "GammaExpansionEffect") {
+			node->output_gamma_curve = gamma_curve;
+		}		
+	}
+}
+
+bool EffectChain::node_needs_colorspace_fix(Node *node)
+{
+	if (node->disabled) {
+		return false;
+	}
+	if (node->effect->num_inputs() == 0) {
+		return false;
+	}
+
+	// propagate_gamma_and_color_space() has already set our output
+	// to COLORSPACE_INVALID if the inputs differ, so we can rely on that.
+	if (node->output_color_space == COLORSPACE_INVALID) {
+		return true;
+	}
+	return (node->effect->needs_srgb_primaries() && node->output_color_space != COLORSPACE_sRGB);
+}
+
+// Fix up color spaces so that there are no COLORSPACE_INVALID nodes left in
+// the graph. Our strategy is not always optimal, but quite simple:
+// Find an effect that's as early as possible where the inputs are of
+// unacceptable colorspaces (that is, either different, or, if the effect only
+// wants sRGB, not sRGB.) Add appropriate conversions on all its inputs,
+// propagate the information anew, and repeat until there are no more such
+// effects.
+void EffectChain::fix_internal_color_spaces()
+{
+	unsigned colorspace_propagation_pass = 0;
+	bool found_any;
+	do {
+		found_any = false;
+		for (unsigned i = 0; i < nodes.size(); ++i) {
+			Node *node = nodes[i];
+			if (!node_needs_colorspace_fix(node)) {
+				continue;
+			}
+
+			// Go through each input that is not sRGB, and insert
+			// a colorspace conversion before it.
+			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+				Node *input = node->incoming_links[j];
+				assert(input->output_color_space != COLORSPACE_INVALID);
+				if (input->output_color_space == COLORSPACE_sRGB) {
+					continue;
+				}
+				Node *conversion = add_node(new ColorSpaceConversionEffect());
+				conversion->effect->set_int("source_space", input->output_color_space);
+				conversion->effect->set_int("destination_space", COLORSPACE_sRGB);
+				conversion->output_color_space = COLORSPACE_sRGB;
+				insert_node_between(input, conversion, node);
+			}
+
+			// Re-sort topologically, and propagate the new information.
+			propagate_gamma_and_color_space();
+			
+			found_any = true;
+			break;
+		}
+	
+		char filename[256];
+		sprintf(filename, "step3-colorspacefix-iter%u.dot", ++colorspace_propagation_pass);
+		output_dot(filename);
+		assert(colorspace_propagation_pass < 100);
+	} while (found_any);
+
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		assert(node->output_color_space != COLORSPACE_INVALID);
+	}
+}
+
+// Make so that the output is in the desired color space.
+void EffectChain::fix_output_color_space()
+{
+	Node *output = find_output_node();
+	if (output->output_color_space != output_format.color_space) {
+		Node *conversion = add_node(new ColorSpaceConversionEffect());
+		conversion->effect->set_int("source_space", output->output_color_space);
+		conversion->effect->set_int("destination_space", output_format.color_space);
+		conversion->output_color_space = output_format.color_space;
+		connect_nodes(output, conversion);
+	}
+}
+
+bool EffectChain::node_needs_gamma_fix(Node *node)
+{
+	if (node->disabled) {
+		return false;
+	}
+	if (node->effect->num_inputs() == 0) {
+		return false;
+	}
+
+	// propagate_gamma_and_color_space() has already set our output
+	// to GAMMA_INVALID if the inputs differ, so we can rely on that,
+	// except for GammaCompressionEffect.
+	if (node->output_gamma_curve == GAMMA_INVALID) {
+		return true;
+	}
+	if (node->effect->effect_type_id() == "GammaCompressionEffect") {
+		assert(node->incoming_links.size() == 1);
+		return node->incoming_links[0]->output_gamma_curve != GAMMA_LINEAR;
+	}
+	return (node->effect->needs_linear_light() && node->output_gamma_curve != GAMMA_LINEAR);
+}
+
+// Very similar to fix_internal_color_spaces(), but for gamma.
+// There is one difference, though; before we start adding conversion nodes,
+// we see if we can get anything out of asking the sources to deliver
+// linear gamma directly. fix_internal_gamma_by_asking_inputs()
+// does that part, while fix_internal_gamma_by_inserting_nodes()
+// inserts nodes as needed afterwards.
+void EffectChain::fix_internal_gamma_by_asking_inputs(unsigned step)
+{
+	unsigned gamma_propagation_pass = 0;
+	bool found_any;
+	do {
+		found_any = false;
+		for (unsigned i = 0; i < nodes.size(); ++i) {
+			Node *node = nodes[i];
+			if (!node_needs_gamma_fix(node)) {
+				continue;
+			}
+
+			// See if all inputs can give us linear gamma. If not, leave it.
+			std::vector<Node *> nonlinear_inputs;
+			find_all_nonlinear_inputs(node, &nonlinear_inputs);
+
+			bool all_ok = true;
+			for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
+				Input *input = static_cast<Input *>(nonlinear_inputs[i]->effect);
+				all_ok &= input->can_output_linear_gamma();
+			}
+
+			if (!all_ok) {
+				continue;
+			}
+
+			for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
+				nonlinear_inputs[i]->effect->set_int("output_linear_gamma", 1);
+				nonlinear_inputs[i]->output_gamma_curve = GAMMA_LINEAR;
+			}
+
+			// Re-sort topologically, and propagate the new information.
+			propagate_gamma_and_color_space();
+			
+			found_any = true;
+			break;
+		}
+	
+		char filename[256];
+		sprintf(filename, "step%u-gammafix-iter%u.dot", step, ++gamma_propagation_pass);
+		output_dot(filename);
+		assert(gamma_propagation_pass < 100);
+	} while (found_any);
+}
+
+void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
+{
+	unsigned gamma_propagation_pass = 0;
+	bool found_any;
+	do {
+		found_any = false;
+		for (unsigned i = 0; i < nodes.size(); ++i) {
+			Node *node = nodes[i];
+			if (!node_needs_gamma_fix(node)) {
+				continue;
+			}
+
+			// Go through each input that is not linear gamma, and insert
+			// a gamma conversion before it.
+			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+				Node *input = node->incoming_links[j];
+				assert(input->output_gamma_curve != GAMMA_INVALID);
+				if (input->output_gamma_curve == GAMMA_LINEAR) {
+					continue;
+				}
+				Node *conversion = add_node(new GammaExpansionEffect());
+				conversion->effect->set_int("destination_curve", GAMMA_LINEAR);
+				conversion->output_gamma_curve = GAMMA_LINEAR;
+				insert_node_between(input, conversion, node);
+			}
+
+			// Re-sort topologically, and propagate the new information.
+			propagate_gamma_and_color_space();
+			
+			found_any = true;
+			break;
+		}
+	
+		char filename[256];
+		sprintf(filename, "step%u-gammafix-iter%u.dot", step, ++gamma_propagation_pass);
+		output_dot(filename);
+		assert(gamma_propagation_pass < 100);
+	} while (found_any);
+
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		assert(node->output_gamma_curve != GAMMA_INVALID);
+	}
+}
+
+// Make so that the output is in the desired gamma.
+// Note that this assumes linear input gamma, so it might create the need
+// for another pass of fix_internal_gamma().
+void EffectChain::fix_output_gamma()
+{
+	Node *output = find_output_node();
+	if (output->output_gamma_curve != output_format.gamma_curve) {
+		Node *conversion = add_node(new GammaCompressionEffect());
+		conversion->effect->set_int("destination_curve", output_format.gamma_curve);
+		conversion->output_gamma_curve = output_format.gamma_curve;
+		connect_nodes(output, conversion);
+	}
+}
+
+// Find the output node. This is, simply, one that has no outgoing links.
+// If there are multiple ones, the graph is malformed (we do not support
+// multiple outputs right now).
+Node *EffectChain::find_output_node()
+{
 	std::vector<Node *> output_nodes;
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
 		if (node->outgoing_links.empty()) {
 			output_nodes.push_back(node);
 		}
 	}
 	assert(output_nodes.size() == 1);
-	Node *output_node = output_nodes[0];
+	return output_nodes[0];
+}
 
-	// Add normalizers to get the output format right.
-	if (output_node->output_color_space != output_format.color_space) {
-		ColorSpaceConversionEffect *colorspace_conversion = new ColorSpaceConversionEffect();
-		colorspace_conversion->set_int("source_space", output_node->output_color_space);
-		colorspace_conversion->set_int("destination_space", output_format.color_space);
-		std::vector<Effect *> inputs;
-		inputs.push_back(output_node->effect);
-		colorspace_conversion->add_self_to_effect_chain(this, inputs);
+void EffectChain::finalize()
+{
+	// Output the graph as it is before we do any conversions on it.
+	output_dot("step0-start.dot");
 
-		assert(node_map.count(colorspace_conversion) != 0);
-		output_node = node_map[colorspace_conversion];
-		output_node->output_color_space = output_format.color_space;
+	// Give each effect in turn a chance to rewrite its own part of the graph.
+	// Note that if more effects are added as part of this, they will be
+	// picked up as part of the same for loop, since they are added at the end.
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		nodes[i]->effect->rewrite_graph(this, nodes[i]);
 	}
-	if (output_node->output_gamma_curve != output_format.gamma_curve) {
-		if (output_node->output_gamma_curve != GAMMA_LINEAR) {
-			output_node = normalize_to_linear_gamma(output_node);
-		}
-		GammaCompressionEffect *gamma_conversion = new GammaCompressionEffect();
-		gamma_conversion->set_int("destination_curve", output_format.gamma_curve);
-		std::vector<Effect *> inputs;
-		inputs.push_back(output_node->effect);
-		gamma_conversion->add_self_to_effect_chain(this, inputs);
+	output_dot("step1-rewritten.dot");
 
-		assert(node_map.count(gamma_conversion) != 0);
-		output_node = node_map[gamma_conversion];
-		output_node->output_gamma_curve = output_format.gamma_curve;
-	}
+	propagate_gamma_and_color_space();
+	output_dot("step2-propagated.dot");
 
+	fix_internal_color_spaces();
+	fix_output_color_space();
+	output_dot("step4-output-colorspacefix.dot");
+
+	// Note that we need to fix gamma after colorspace conversion,
+	// because colorspace conversions might create needs for gamma conversions.
+	// Also, we need to run an extra pass of fix_internal_gamma() after 
+	// fixing the output gamma, as we only have conversions to/from linear.
+	fix_internal_gamma_by_asking_inputs(5);
+	fix_internal_gamma_by_inserting_nodes(6);
+	fix_output_gamma();
+	output_dot("step8-output-gammafix.dot");
+	fix_internal_gamma_by_asking_inputs(9);
+	fix_internal_gamma_by_inserting_nodes(10);
+
+	output_dot("step11-final.dot");
+	
 	// Construct all needed GLSL programs, starting at the output.
-	construct_glsl_programs(output_node);
+	construct_glsl_programs(find_output_node());
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.

@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "blur_effect.h"
+#include "effect_chain.h"
 #include "util.h"
 #include "opengl.h"
 
@@ -19,14 +20,14 @@ BlurEffect::BlurEffect()
 	update_radius();
 }
 
-void BlurEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs)
+void BlurEffect::rewrite_graph(EffectChain *graph, Node *self)
 {
-	assert(inputs.size() == 1);
-	hpass->add_self_to_effect_chain(chain, inputs);
-
-	std::vector<Effect *> vpass_inputs;
-	vpass_inputs.push_back(hpass);
-	vpass->add_self_to_effect_chain(chain, vpass_inputs); 
+	Node *hpass_node = graph->add_node(hpass);
+	Node *vpass_node = graph->add_node(vpass);
+	graph->connect_nodes(hpass_node, vpass_node);
+	graph->replace_receiver(self, hpass_node);
+	graph->replace_sender(self, vpass_node);
+	self->disabled = true;
 }
 		
 void BlurEffect::update_radius()

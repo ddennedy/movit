@@ -15,14 +15,19 @@ GlowEffect::GlowEffect()
 	mix->set_float("strength_second", 0.3f);
 }
 
-void GlowEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs) {
-	assert(inputs.size() == 1);
-	blur->add_self_to_effect_chain(chain, inputs);
+void GlowEffect::rewrite_graph(EffectChain *graph, Node *self)
+{
+	assert(self->incoming_links.size() == 1);
+	Node *input = self->incoming_links[0];
 
-	std::vector<Effect *> mix_inputs;
-	mix_inputs.push_back(inputs[0]);
-	mix_inputs.push_back(chain->last_added_effect());  // FIXME
-	mix->add_self_to_effect_chain(chain, mix_inputs);
+	Node *blur_node = graph->add_node(blur);
+	Node *mix_node = graph->add_node(mix);
+	graph->replace_receiver(self, mix_node);
+	graph->connect_nodes(input, blur_node);
+	graph->connect_nodes(blur_node, mix_node);
+	graph->replace_sender(self, mix_node);
+
+	self->disabled = true;
 }
 
 bool GlowEffect::set_float(const std::string &key, float value) {

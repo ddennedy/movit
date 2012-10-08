@@ -19,6 +19,7 @@
 #include "opengl.h"
 
 class EffectChain;
+class Node;
 
 // Can alias on a float[2].
 struct Point2D {
@@ -123,11 +124,19 @@ public:
 	// if you have several, they will be INPUT1(), INPUT2(), and so on.
 	virtual unsigned num_inputs() const { return 1; }
 
-	// Requests that this effect adds itself to the given effect chain.
-	// For most effects, the default will be fine, but for effects that
-	// consist of multiple passes, it is often useful to replace this
-	// with something that adds completely different things to the chain.
-	virtual void add_self_to_effect_chain(EffectChain *graph, const std::vector<Effect *> &inputs);
+	// Let the effect rewrite the effect chain as it sees fit.
+	// Most effects won't need to do this, but this is very useful
+	// if you have an effect that consists of multiple sub-effects
+	// (for instance, two passes). The effect is given to its own
+	// pointer, and it can add new ones (by using add_node()
+	// and connect_node()) as it sees fit. This is called at
+	// EffectChain::finalize() time, when the entire graph is known,
+	// in the order that the effects were originally added.
+	//
+	// Note that if the effect wants to take itself entirely out
+	// of the chain, it must set “disabled” to true and then disconnect
+	// itself from all other effects.
+	virtual void rewrite_graph(EffectChain *graph, Node *self) {}
 
 	// Outputs one GLSL uniform declaration for each registered parameter
 	// (see below), with the right prefix prepended to each uniform name.

@@ -4,6 +4,7 @@
 enum MovitPixelFormat { FORMAT_RGB, FORMAT_RGBA, FORMAT_BGR, FORMAT_BGRA, FORMAT_GRAYSCALE };
 
 enum ColorSpace {
+	COLORSPACE_INVALID = -1,  // For internal use.
 	COLORSPACE_sRGB = 0,
 	COLORSPACE_REC_709 = 0,  // Same as sRGB.
 	COLORSPACE_REC_601_525 = 1,
@@ -11,6 +12,7 @@ enum ColorSpace {
 };
 
 enum GammaCurve {
+	GAMMA_INVALID = -1,  // For internal use.
 	GAMMA_LINEAR = 0,
 	GAMMA_sRGB = 1,
 	GAMMA_REC_601 = 2,

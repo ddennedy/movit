@@ -15,6 +15,7 @@ class Phase;
 class Node {
 public:
 	Effect *effect;
+	bool disabled;
 
 	// Edges in the graph (forward and backward).
 	std::vector<Node *> outgoing_links;
@@ -80,16 +81,6 @@ public:
 	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
-	// Similar to add_effect, but:
-	//
-	//  * Does not insert any normalizing effects.
-	//  * Does not ask the effect to insert itself, so it won't work
-	//    with meta-effects.
-	//
-	// We should really separate out these two “sides” of Effect in the
-	// type system soon.
-	void add_effect_raw(Effect *effect, const std::vector<Effect *> &inputs);
-
 	void add_output(const ImageFormat &format);
 	void finalize();
 
@@ -104,16 +95,25 @@ public:
 		}	
 	}
 
+	// API for manipulating the graph directly. Intended to be used from
+	// effects and by EffectChain itself.
+	//
+	// Note that for nodes with multiple inputs, the order of calls to
+	// connect_nodes() will matter.
+	Node *add_node(Effect *effect);
+	void connect_nodes(Node *sender, Node *receiver);
+	void replace_receiver(Node *old_receiver, Node *new_receiver);
+	void replace_sender(Node *new_sender, Node *receiver);
+	void insert_node_between(Node *sender, Node *middle, Node *receiver);
+
 private:
 	// Determine the preferred output size of a given phase.
 	// Requires that all input phases (if any) already have output sizes set.
 	void find_output_size(Phase *phase);
 
-	void find_all_nonlinear_inputs(Node *effect,
-	                               std::vector<Node *> *nonlinear_inputs,
-	                               std::vector<Node *> *intermediates);
-	Node *normalize_to_linear_gamma(Node *input);
-	Node *normalize_to_srgb(Node *input);
+	// Find all inputs eventually feeding into this effect that have
+	// output gamma different from GAMMA_LINEAR.
+	void find_all_nonlinear_inputs(Node *effect, std::vector<Node *> *nonlinear_inputs);
 
 	// Create a GLSL program computing the given effects in order.
 	Phase *compile_glsl_program(const std::vector<Node *> &inputs,
@@ -126,6 +126,25 @@ private:
 	// Output the current graph to the given file in a Graphviz-compatible format;
 	// only useful for debugging.
 	void output_dot(const char *filename);
+
+	// Some of the graph algorithms assume that the nodes array is sorted
+	// topologically (inputs are always before outputs), but some operations
+	// (like graph rewriting) can change that. This function restores that order.
+	void sort_nodes_topologically();
+	void topological_sort_visit_node(Node *node, std::set<Node *> *visited_nodes, std::vector<Node *> *sorted_list);
+
+	// Used during finalize().
+	void propagate_gamma_and_color_space();
+	Node *find_output_node();
+
+	bool node_needs_colorspace_fix(Node *node);
+	void fix_internal_color_spaces();
+	void fix_output_color_space();
+
+	bool node_needs_gamma_fix(Node *node);
+	void fix_internal_gamma_by_asking_inputs(unsigned step);
+	void fix_internal_gamma_by_inserting_nodes(unsigned step);
+	void fix_output_gamma();
 
 	unsigned width, height;
 	ImageFormat output_format;

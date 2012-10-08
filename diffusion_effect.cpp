@@ -12,14 +12,19 @@ DiffusionEffect::DiffusionEffect()
 {
 }
 
-void DiffusionEffect::add_self_to_effect_chain(EffectChain *chain, const std::vector<Effect *> &inputs) {
-	assert(inputs.size() == 1);
-	blur->add_self_to_effect_chain(chain, inputs);
+void DiffusionEffect::rewrite_graph(EffectChain *graph, Node *self)
+{
+	assert(self->incoming_links.size() == 1);
+	Node *input = self->incoming_links[0];
 
-	std::vector<Effect *> overlay_matte_inputs;
-	overlay_matte_inputs.push_back(inputs[0]);
-	overlay_matte_inputs.push_back(chain->last_added_effect());  // FIXME
-	overlay_matte->add_self_to_effect_chain(chain, overlay_matte_inputs);
+	Node *blur_node = graph->add_node(blur);
+	Node *overlay_matte_node = graph->add_node(overlay_matte);
+	graph->replace_receiver(self, overlay_matte_node);
+	graph->connect_nodes(input, blur_node);
+	graph->connect_nodes(blur_node, overlay_matte_node);
+	graph->replace_sender(self, overlay_matte_node);
+
+	self->disabled = true;
 }
 
 bool DiffusionEffect::set_float(const std::string &key, float value) {
