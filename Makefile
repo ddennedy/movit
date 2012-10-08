@@ -1,7 +1,7 @@
 CC=gcc
 CXX=g++
 CXXFLAGS=-Wall -g
-LDFLAGS=-lSDL -lSDL_image -lGL
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt
 
 # Core.
 OBJS=main.o util.o widgets.o effect.o effect_chain.o
