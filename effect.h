@@ -89,7 +89,7 @@ public:
 	//  2. You rely on previous effects, possibly including gamma
 	//     expansion, to happen pre-filtering instead of post-filtering.
 	//     (This is only relevant if you actually need the filtering; if
-	//     you sample on whole input pixels only, it makes no difference.)
+	//     you sample 1:1 between pixels and texels, it makes no difference.)
 	//
 	// Note that in some cases, you might get post-filtered gamma expansion
 	// even when setting this option. More specifically, if you are the
