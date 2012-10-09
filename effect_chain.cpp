@@ -450,12 +450,69 @@ unsigned EffectChain::fit_rectangle_to_aspect(unsigned width, unsigned height)
 	}
 }
 
+// Propagate input texture sizes throughout, and inform effects downstream.
+// (Like a lot of other code, we depend on effects being in topological order.)
+void EffectChain::inform_input_sizes(Phase *phase)
+{
+	// All effects that have a defined size (inputs and RTT inputs)
+	// get that. Reset all others.
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		if (node->effect->num_inputs() == 0) {
+			Input *input = static_cast<Input *>(node->effect);
+			node->output_width = input->get_width();
+			node->output_height = input->get_height();
+			assert(node->output_width != 0);
+			assert(node->output_height != 0);
+		} else {
+			node->output_width = node->output_height = 0;
+		}
+	}
+	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
+		Node *input = phase->inputs[i];
+		input->output_width = input->phase->output_width;
+		input->output_height = input->phase->output_height;
+		assert(input->output_width != 0);
+		assert(input->output_height != 0);
+	}
+
+	// Now propagate from the inputs towards the end, and inform as we go.
+	// The rules are simple:
+	//
+	//   1. Don't touch effects that already have given sizes (ie., inputs).
+	//   2. If all of your inputs have the same size, that will be your output size.
+	//   3. Otherwise, your output size is 0x0.
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		if (node->effect->num_inputs() == 0) {
+			continue;
+		}
+		unsigned this_output_width = 0;
+		unsigned this_output_height = 0;
+		for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+			Node *input = node->incoming_links[j];
+			node->effect->inform_input_size(j, input->output_width, input->output_height);
+			if (j == 0) {
+				this_output_width = input->output_width;
+				this_output_height = input->output_height;
+			} else if (input->output_width != this_output_width || input->output_height != this_output_height) {
+				// Inputs disagree.
+				this_output_width = 0;
+				this_output_height = 0;
+			}
+		}
+		node->output_width = this_output_width;
+		node->output_height = this_output_height;
+	}
+}
+
+// Note: You should call inform_input_sizes() before this, as the last effect's
+// desired output size might change based on the inputs.
 void EffectChain::find_output_size(Phase *phase)
 {
 	Node *output_node = phase->effects.back();
 
-	// If the last effect explicitly sets an output size,
-	// use that.
+	// If the last effect explicitly sets an output size, use that.
 	if (output_node->effect->changes_output_size()) {
 		output_node->effect->get_output_size(&phase->output_width, &phase->output_height);
 		return;
@@ -843,6 +900,7 @@ void EffectChain::finalize()
 		glGenFramebuffers(1, &fbo);
 
 		for (unsigned i = 0; i < phases.size() - 1; ++i) {
+			inform_input_sizes(phases[i]);
 			find_output_size(phases[i]);
 
 			Node *output_node = phases[i]->effects.back();
@@ -905,6 +963,7 @@ void EffectChain::render_to_screen()
 		// See if the requested output size has changed. If so, we need to recreate
 		// the texture (and before we start setting up inputs).
 		if (phase != phases.size() - 1) {
+			inform_input_sizes(phases[phase]);
 			find_output_size(phases[phase]);
 
 			Node *output_node = phases[phase]->effects.back();

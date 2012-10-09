@@ -25,6 +25,13 @@ private:
 	// Identifier used to create unique variables in GLSL.
 	std::string effect_id;
 
+	// Logical size of the output of this effect, ie. the resolution
+	// you would get if you sampled it as a texture. If it is undefined
+	// (since the inputs differ in resolution), it will be 0x0.
+	// If both this and output_texture_{width,height} are set,
+	// they will be equal.
+	unsigned output_width, output_height;
+
 	// If output goes to RTT (otherwise, none of these are set).
 	// The Phase pointer is a but ugly; we should probably fix so
 	// that Phase takes other phases as inputs, instead of Node.
@@ -110,6 +117,10 @@ private:
 	// Fits a rectangle of the given size to the current aspect ratio
 	// (aspect_nom/aspect_denom) and returns the new width and height.
 	unsigned fit_rectangle_to_aspect(unsigned width, unsigned height);
+
+	// Compute the input sizes for all inputs for all effects in a given phase,
+	// and inform the effects about the results.	
+	void inform_input_sizes(Phase *phase);
 
 	// Determine the preferred output size of a given phase.
 	// Requires that all input phases (if any) already have output sizes set.

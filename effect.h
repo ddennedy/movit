@@ -107,9 +107,9 @@ public:
 	virtual bool needs_mipmaps() const { return false; }
 
 	// Whether this effect wants to output to a different size than
-	// its input(s). If you set this to true, the output will be
-	// bounced to a texture (similarly to if the next effect set
-	// needs_texture_bounce()).
+	// its input(s) (see inform_input_size(), below). If you set this to
+	// true, the output will be bounced to a texture (similarly to if the
+	// next effect set needs_texture_bounce()).
 	virtual bool changes_output_size() const { return false; }
 
 	// If changes_output_size() is true, you must implement this to tell
@@ -120,6 +120,18 @@ public:
 	virtual void get_output_size(unsigned *width, unsigned *height) const {
 		assert(false);
 	}
+
+	// Tells the effect the resolution of each of its input.
+	// This will be called every frame, and always before get_output_size(),
+	// so you can change your output size based on the input if so desired.
+	//
+	// Note that in some cases, an input might not have a single well-defined
+	// resolution (for instance if you fade between two inputs with
+	// different resolutions). In this case, you will get width=0 and height=0
+	// for that input. If you cannot handle that, you will need to set
+	// needs_texture_bounce() to true, which will force a render to a single
+	// given resolution before you get the input.
+	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {}
 
 	// How many inputs this effect will take (a fixed number).
 	// If you have only one input, it will be called INPUT() in GLSL;
