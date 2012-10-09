@@ -10,11 +10,14 @@
 #define NUM_TAPS 16
 	
 BlurEffect::BlurEffect()
-	: radius(3.0f)
+	: radius(3.0f),
+	  input_width(1280),
+	  input_height(720)
 {
-	hpass = new SingleBlurPassEffect();
+	// The first blur pass will forward resolution information to us.
+	hpass = new SingleBlurPassEffect(this);
 	hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL);
-	vpass = new SingleBlurPassEffect();
+	vpass = new SingleBlurPassEffect(NULL);
 	vpass->set_int("direction", SingleBlurPassEffect::VERTICAL);
 
 	update_radius();
@@ -28,6 +31,18 @@ void BlurEffect::rewrite_graph(EffectChain *graph, Node *self)
 	graph->replace_receiver(self, hpass_node);
 	graph->replace_sender(self, vpass_node);
 	self->disabled = true;
+} 
+
+// We get this information forwarded from the first blur pass,
+// since we are not part of the chain ourselves.
+void BlurEffect::inform_input_size(unsigned input_num, unsigned width, unsigned height)
+{
+	assert(input_num == 0);
+	assert(width != 0);
+	assert(height != 0);
+	input_width = width;
+	input_height = height;
+	update_radius();
 }
 		
 void BlurEffect::update_radius()
@@ -35,23 +50,24 @@ void BlurEffect::update_radius()
 	// We only have 16 taps to work with on each side, and we want that to
 	// reach out to about 2.5*sigma. Bump up the mipmap levels (giving us
 	// box blurs) until we have what we need.
-	//
-	// TODO: Consider the actual width and height (they influence mipmap
-	// sizes subtly).
-	unsigned base_mipmap_level = 0;
+	unsigned mipmap_width = input_width, mipmap_height = input_height;
 	float adjusted_radius = radius;
-	while (adjusted_radius * 1.5f > NUM_TAPS / 2) {
-		++base_mipmap_level;
-		adjusted_radius /= 2.0f;
+	while ((mipmap_width > 1 || mipmap_height > 1) && adjusted_radius * 1.5f > NUM_TAPS / 2) {
+		// Find the next mipmap size (round down, minimum 1 pixel).
+		mipmap_width = std::max(mipmap_width / 2, 1u);
+		mipmap_height = std::max(mipmap_height / 2, 1u);
+
+		// Approximate when mipmap sizes are odd, but good enough.
+		adjusted_radius = radius * float(mipmap_width) / float(input_width);
 	}
 	
 	bool ok = hpass->set_float("radius", adjusted_radius);
-	ok |= hpass->set_int("width", 1280 / (1 << base_mipmap_level));  // FIXME
-	ok |= hpass->set_int("height", 720 / (1 << base_mipmap_level));  // FIXME
+	ok |= hpass->set_int("width", mipmap_width);
+	ok |= hpass->set_int("height", mipmap_height);
 
 	ok |= vpass->set_float("radius", adjusted_radius);
-	ok |= vpass->set_int("width", 1280 / (1 << base_mipmap_level));  // FIXME
-	ok |= vpass->set_int("height", 720 / (1 << base_mipmap_level));  // FIXME
+	ok |= vpass->set_int("width", mipmap_width);
+	ok |= vpass->set_int("height", mipmap_height);
 
 	assert(ok);
 }
@@ -65,8 +81,9 @@ bool BlurEffect::set_float(const std::string &key, float value) {
 	return false;
 }
 
-SingleBlurPassEffect::SingleBlurPassEffect()
-	: radius(3.0f),
+SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
+	: parent(parent),
+	  radius(3.0f),
 	  direction(HORIZONTAL),
  	  width(1280),
  	  height(720)

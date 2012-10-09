@@ -25,6 +25,8 @@ public:
 	virtual bool needs_mipmaps() const { return true; }
 	virtual bool needs_srgb_primaries() const { return false; }
 
+	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
+
 	virtual std::string output_fragment_shader() {
 		assert(false);
 	}
@@ -40,11 +42,14 @@ private:
 	
 	float radius;
 	SingleBlurPassEffect *hpass, *vpass;
+	unsigned input_width, input_height;
 };
 
 class SingleBlurPassEffect : public Effect {
 public:
-	SingleBlurPassEffect();
+	// If parent is non-NULL, calls to inform_input_size will be forwarded
+	// so that it can make reasonable decisions for both blur passes.
+	SingleBlurPassEffect(BlurEffect *parent);
 	virtual std::string effect_type_id() const { return "SingleBlurPassEffect"; }
 
 	std::string output_fragment_shader();
@@ -53,6 +58,11 @@ public:
 	virtual bool needs_mipmaps() const { return true; }
 	virtual bool needs_srgb_primaries() const { return false; }
 
+	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
+		if (parent != NULL) {
+			parent->inform_input_size(input_num, width, height);
+		}
+	}
 	virtual bool changes_output_size() const { return true; }
 
 	virtual void get_output_size(unsigned *width, unsigned *height) const {
@@ -66,6 +76,7 @@ public:
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 
 private:
+	BlurEffect *parent;
 	float radius;
 	Direction direction;
 	int width, height;
