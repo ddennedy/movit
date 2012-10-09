@@ -918,6 +918,7 @@ void EffectChain::finalize()
 			output_node->output_texture_width = phases[i]->output_width;
 			output_node->output_texture_height = phases[i]->output_height;
 		}
+		inform_input_sizes(phases.back());
 	}
 		
 	for (unsigned i = 0; i < inputs.size(); ++i) {
@@ -962,8 +963,8 @@ void EffectChain::render_to_screen()
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		// See if the requested output size has changed. If so, we need to recreate
 		// the texture (and before we start setting up inputs).
+		inform_input_sizes(phases[phase]);
 		if (phase != phases.size() - 1) {
-			inform_input_sizes(phases[phase]);
 			find_output_size(phases[phase]);
 
 			Node *output_node = phases[phase]->effects.back();
