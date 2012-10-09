@@ -26,7 +26,7 @@ private:
 	std::string effect_id;
 
 	// If output goes to RTT (otherwise, none of these are set).
-	// The Phsae pointer is a but ugly; we should probably fix so
+	// The Phase pointer is a but ugly; we should probably fix so
 	// that Phase takes other phases as inputs, instead of Node.
 	GLuint output_texture;
 	unsigned output_texture_width, output_texture_height;
