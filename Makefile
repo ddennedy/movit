@@ -22,6 +22,7 @@ OBJS += mirror_effect.o
 OBJS += blur_effect.o
 OBJS += diffusion_effect.o
 OBJS += glow_effect.o
+OBJS += unsharp_mask_effect.o
 OBJS += mix_effect.o
 OBJS += resize_effect.o
 OBJS += deconvolution_sharpen_effect.o
