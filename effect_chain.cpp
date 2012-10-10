@@ -795,7 +795,7 @@ void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
 					continue;
 				}
 				Node *conversion = add_node(new GammaExpansionEffect());
-				conversion->effect->set_int("destination_curve", GAMMA_LINEAR);
+				conversion->effect->set_int("source_curve", input->output_gamma_curve);
 				conversion->output_gamma_curve = GAMMA_LINEAR;
 				insert_node_between(input, conversion, node);
 			}
