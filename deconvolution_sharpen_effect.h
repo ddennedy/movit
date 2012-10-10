@@ -21,6 +21,8 @@
 
 #include "effect.h"
 
+#include <Eigen/Dense>
+
 class DeconvolutionSharpenEffect : public Effect {
 public:
 	DeconvolutionSharpenEffect();
@@ -51,6 +53,13 @@ private:
 	// (ie., blur is assumed to be a 2px circle), correlation = 0.95, and noise = 0.01.
 	// Note that once the radius starts going too far past R, you will get nonsensical results.
 	float circle_radius, gaussian_radius, correlation, noise;
+
+	// The deconvolution kernel, and the parameters last time we did an update.
+	Eigen::MatrixXf g;
+	int last_R;
+	float last_circle_radius, last_gaussian_radius, last_correlation, last_noise;
+	
+	void update_deconvolution_kernel();
 };
 
 #endif // !defined(_DECONVOLUTION_SHARPEN_EFFECT_H)

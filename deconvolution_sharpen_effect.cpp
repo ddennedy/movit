@@ -19,7 +19,12 @@ DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	  circle_radius(2.0f),
 	  gaussian_radius(0.0f),
 	  correlation(0.95f),
-	  noise(0.01f)
+	  noise(0.01f),
+	  last_R(-1),
+	  last_circle_radius(-1.0f),
+	  last_gaussian_radius(-1.0f),
+	  last_correlation(-1.0f),
+	  last_noise(-1.0f)
 {
 	register_int("matrix_size", &R);
 	register_float("circle_radius", &circle_radius);
@@ -32,6 +37,11 @@ std::string DeconvolutionSharpenEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define R %u\n", R);
+
+	assert(R >= 1);
+	assert(R <= 25);  // Same limit as Refocus.
+
+	last_R = R;
 	return buf + read_file("deconvolution_sharpen_effect.frag");
 }
 
@@ -238,13 +248,8 @@ void print_matrix(const MatrixXf &m)
 
 }  // namespace
 
-void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 {
-	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
-
-	assert(R >= 1);
-	assert(R <= 25);  // Same limit as Refocus.
-
 	printf("circular blur radius: %5.3f\n", circle_radius);
 	printf("gaussian blur radius: %5.3f\n", gaussian_radius);
 	printf("correlation:          %5.3f\n", correlation);
@@ -402,7 +407,7 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std
 	assert(g_flattened.cols() == 1);
 
 	// Normalize and de-flatten the deconvolution matrix.
-	MatrixXf g(R + 1, R + 1);
+	g = MatrixXf(R + 1, R + 1);
 	sum = 0.0f;
 	for (int i = 0; i < g_flattened.rows(); ++i) {
 		int y = i / (R + 1);
@@ -421,6 +426,24 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std
 		g(y, x) = g_flattened(i) / sum;
 	}
 
+	last_circle_radius = circle_radius;
+	last_gaussian_radius = gaussian_radius;
+	last_correlation = correlation;
+	last_noise = noise;
+}
+
+void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+{
+	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
+
+	assert(R == last_R);
+
+	if (fabs(circle_radius - last_circle_radius) > 1e-3 ||
+	    fabs(gaussian_radius - last_gaussian_radius) > 1e-3 ||
+	    fabs(correlation - last_correlation) > 1e-3 ||
+	    fabs(noise - last_noise) > 1e-3) {
+		update_deconvolution_kernel();
+	}
 	// Now encode it as uniforms, and pass it on to the shader.
 	// (Actually the shader only uses about half of the elements.)
 	float samples[4 * (R + 1) * (R + 1)];
