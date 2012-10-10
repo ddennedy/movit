@@ -250,12 +250,6 @@ void print_matrix(const MatrixXf &m)
 
 void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 {
-	printf("circular blur radius: %5.3f\n", circle_radius);
-	printf("gaussian blur radius: %5.3f\n", gaussian_radius);
-	printf("correlation:          %5.3f\n", correlation);
-	printf("noise factor:         %5.3f\n", noise);
-	printf("\n");
-
 	// Figure out the impulse response for the circular part of the blur.
 	MatrixXf circ_h(2 * R + 1, 2 * R + 1);
 	for (int y = -R; y <= R; ++y) {	
