@@ -35,28 +35,24 @@ vec4 FUNCNAME(vec2 tc) {
 	// Case D: Diagonal samples have four-way symmetry.
 	for (int xy = 1; xy <= R; ++xy) {
 		vec4 sample = PREFIX(samples)[xy * (R + 1) + xy];
+		vec2 mirror_sample = vec2(sample.x, -sample.y);
 
 		vec4 local_sum = INPUT(tc - sample.xy) + INPUT(tc + sample.xy);
-		sample.y = -sample.y;
-		local_sum += INPUT(tc - sample.xy) + INPUT(tc + sample.xy);
+		local_sum += INPUT(tc - mirror_sample.xy) + INPUT(tc + mirror_sample.xy);
 
 		sum += sample.z * local_sum;
 	}
 
 	// Case *: All other samples have eight-way symmetry.
-	for (int y = 1; y <= R; ++y) {
+	for (int y = 1; y < R; ++y) {
 		for (int x = y + 1; x <= R; ++x) {
 			vec4 sample = PREFIX(samples)[y * (R + 1) + x];
 			vec2 mirror_sample = vec2(sample.x, -sample.y);
 
 			vec4 local_sum = INPUT(tc - sample.xy) + INPUT(tc + sample.xy);
 			local_sum += INPUT(tc - mirror_sample.xy) + INPUT(tc + mirror_sample.xy);
-
-			sample.xy = sample.yx;
-			mirror_sample.xy = mirror_sample.yx;
-
-			local_sum += INPUT(tc - sample.xy) + INPUT(tc + sample.xy);
-			local_sum += INPUT(tc - mirror_sample.xy) + INPUT(tc + mirror_sample.xy);
+			local_sum += INPUT(tc - sample.yx) + INPUT(tc + sample.yx);
+			local_sum += INPUT(tc - mirror_sample.yx) + INPUT(tc + mirror_sample.yx);
 
 			sum += sample.z * local_sum;
 		}
