@@ -1,6 +1,6 @@
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g
+CXXFLAGS=-Wall -g $(shell pkg-config --cflags eigen3 )
 LDFLAGS=-lSDL -lSDL_image -lGL -lrt
 
 # Core.
@@ -24,6 +24,7 @@ OBJS += diffusion_effect.o
 OBJS += glow_effect.o
 OBJS += mix_effect.o
 OBJS += resize_effect.o
+OBJS += deconvolution_sharpen_effect.o
 OBJS += sandbox_effect.o
 
 test: $(OBJS)
