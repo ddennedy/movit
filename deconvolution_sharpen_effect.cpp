@@ -372,8 +372,7 @@ void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 	//   (G+H)     x0 + I x2     = y2
 	//
 	// This both increases accuracy and provides us with a very nice speed
-	// boost. We could have gone even further and went for 8-way symmetry
-	// like the shader does, but this is good enough right now.
+	// boost.
 	MatrixXf M(MatrixXf::Zero((R + 1) * (R + 1), (R + 1) * (R + 1)));
 	MatrixXf r_uv_flattened(MatrixXf::Zero((R + 1) * (R + 1), 1));
 	for (int outer_i = 0; outer_i < 2 * R + 1; ++outer_i) {
@@ -438,7 +437,6 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std
 		update_deconvolution_kernel();
 	}
 	// Now encode it as uniforms, and pass it on to the shader.
-	// (Actually the shader only uses about half of the elements.)
 	float samples[4 * (R + 1) * (R + 1)];
 	for (int y = 0; y <= R; ++y) {
 		for (int x = 0; x <= R; ++x) {
