@@ -450,5 +450,5 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std
 		}
 	}
 
-	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, R * R);
+	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, (R + 1) * (R + 1));
 }
