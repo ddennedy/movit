@@ -326,7 +326,6 @@ void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 	assert(r_vv.cols() == 4 * R + 1);
 
 	// Similarly, r_uv = u ⊙ v = u ⊙ (h ⊙ u) = h ⊙ r_uu.
-	//MatrixXf r_uv = central_convolve(r_uu, h).block(2 * R, 2 * R, 2 * R + 1, 2 * R + 1);
 	MatrixXf r_uu_center = r_uu.block(2 * R, 2 * R, 4 * R + 1, 4 * R + 1);
 	MatrixXf r_uv = central_convolve(r_uu_center, h);
 	assert(r_uv.rows() == 2 * R + 1);
