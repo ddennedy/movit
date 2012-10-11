@@ -75,7 +75,7 @@ void FlatInput::finalize()
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	check_error();
 
-	needs_update = false;
+	needs_update = true;
 	finalized = true;
 }
 	
