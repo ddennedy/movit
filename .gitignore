@@ -3,6 +3,8 @@
 *.d
 *.jpg
 *.png
+*.gcda
+*.gcno
 perf.data
 *.dot
 demo
