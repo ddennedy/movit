@@ -1,10 +1,13 @@
+GTEST_DIR = /usr/src/gtest
+
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g $(shell pkg-config --cflags eigen3 )
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 )
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
 RANLIB=ranlib
 
-TEST_OBJS=main.o
+DEMO_OBJS=demo.o
+TESTS=effect_chain_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -31,11 +34,26 @@ LIB_OBJS += resize_effect.o
 LIB_OBJS += deconvolution_sharpen_effect.o
 LIB_OBJS += sandbox_effect.o
 
-OBJS=$(TEST_OBJS) $(LIB_OBJS)
+# Default target:
+all: $(TESTS) demo
 
-# A small test program (not a unit test).
-test: libmovit.a $(TEST_OBJS)
-	$(CXX) -o test $(TEST_OBJS) libmovit.a $(LDFLAGS)
+# Google Test.
+GDEMO_OBJS = gtest-all.o gtest_sdl_main.o
+
+gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+gtest_sdl_main.o: gtest_sdl_main.cpp
+	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+
+# Unit tests.
+effect_chain_test: effect_chain_test.o $(GDEMO_OBJS) libmovit.a
+	$(CXX) -o $@ effect_chain_test.o $(GDEMO_OBJS) libmovit.a $(LDFLAGS)
+
+OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(GDEMO_OBJS)
+
+# A small demo program.
+demo: libmovit.a $(DEMO_OBJS)
+	$(CXX) -o demo $(DEMO_OBJS) libmovit.a $(LDFLAGS)
 
 # The library itself.
 libmovit.a: $(LIB_OBJS)
@@ -49,6 +67,11 @@ DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
 
 clean:
-	$(RM) test libmovit.a $(OBJS) $(DEPS)
+	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(DEPS)
 
-.PHONY: clean
+check: $(TESTS)
+	for TEST in $(TESTS); do \
+	    ./$$TEST; \
+	done
+
+.PHONY: clean check all

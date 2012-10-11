@@ -1,8 +1,9 @@
 *.o
 *.a
 *.d
-test
 *.jpg
 *.png
 perf.data
 *.dot
+demo
+effect_chain_test
