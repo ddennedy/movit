@@ -37,8 +37,8 @@ LIB_OBJS += sandbox_effect.o
 # Default target:
 all: $(TESTS) demo
 
-# Google Test.
-GTEST_OBJS = gtest-all.o gtest_sdl_main.o
+# Google Test and other test library functions.
+TEST_OBJS = gtest-all.o gtest_sdl_main.o test_util.o
 
 gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
@@ -46,8 +46,8 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
 
 # Unit tests.
-effect_chain_test: effect_chain_test.o $(GTEST_OBJS) libmovit.a
-	$(CXX) -o $@ effect_chain_test.o $(GTEST_OBJS) libmovit.a $(LDFLAGS)
+effect_chain_test: effect_chain_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ effect_chain_test.o $(TEST_OBJS) libmovit.a $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(GDEMO_OBJS)
 
