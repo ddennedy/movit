@@ -7,7 +7,7 @@
 // comes from a single 2D array with chunky pixels.
 class FlatInput : public Input {
 public:
-	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, unsigned width, unsigned height);
+	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height);
 
 	virtual std::string effect_type_id() const { return "FlatInput"; }
 
@@ -38,6 +38,14 @@ public:
 	// on subsequent frames.
 	void set_pixel_data(const unsigned char *pixel_data)
 	{
+		assert(this->type == GL_UNSIGNED_BYTE);
+		this->pixel_data = pixel_data;
+		invalidate_pixel_data();
+	}
+
+	void set_pixel_data(const float *pixel_data)
+	{
+		assert(this->type == GL_FLOAT);
 		this->pixel_data = pixel_data;
 		invalidate_pixel_data();
 	}
@@ -47,29 +55,20 @@ public:
 		needs_update = true;
 	}
 
-	const unsigned char *get_pixel_data() const
-	{
-		return pixel_data;
-	}
-
 	void set_pitch(unsigned pitch) {
 		assert(!finalized);
 		this->pitch = pitch;
 	}
 
-	unsigned get_pitch() {
-		return pitch;
-	}
-
 private:
 	ImageFormat image_format;
 	MovitPixelFormat pixel_format;
-	GLenum format;
+	GLenum format, type;
 	GLuint pbo, texture_num;
 	bool needs_update, finalized;
 	int output_linear_gamma, needs_mipmaps;
 	unsigned width, height, pitch, bytes_per_pixel;
-	const unsigned char *pixel_data;
+	const void *pixel_data;
 };
 
 #endif // !defined(_FLAT_INPUT_H)

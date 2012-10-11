@@ -5,9 +5,10 @@
 #include "util.h"
 #include "opengl.h"
 
-FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, unsigned width, unsigned height)
+FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
 	: image_format(image_format),
           pixel_format(pixel_format),
+	  type(type),
 	  needs_update(false),
 	  finalized(false),
 	  output_linear_gamma(false),
@@ -16,6 +17,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, un
 	  height(height),
 	  pitch(width)
 {
+	assert(type == GL_FLOAT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
 }
@@ -24,9 +26,13 @@ void FlatInput::finalize()
 {
 	// Translate the input format to OpenGL's enums.
 	GLenum internal_format;
-	if (output_linear_gamma) {
+	if (type == GL_FLOAT) {
+		internal_format = GL_RGBA16F_ARB;
+	} else if (output_linear_gamma) {
+		assert(type == GL_UNSIGNED_BYTE);
 		internal_format = GL_SRGB8;
 	} else {
+		assert(type == GL_UNSIGNED_BYTE);
 		internal_format = GL_RGBA8;
 	}
 	if (pixel_format == FORMAT_RGB) {
@@ -46,6 +52,9 @@ void FlatInput::finalize()
 		bytes_per_pixel = 1;
 	} else {
 		assert(false);
+	}
+	if (type == GL_FLOAT) {
+		bytes_per_pixel *= sizeof(float);
 	}
 
 	// Create PBO to hold the texture holding the input image, and then the texture itself.
@@ -70,7 +79,7 @@ void FlatInput::finalize()
 	// instead of calling glGenerateMipmap().
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, needs_mipmaps);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
 	check_error();
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	check_error();
@@ -98,7 +107,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 		// Re-upload the texture from the PBO.
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 		check_error();
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_FLOAT, BUFFER_OFFSET(0));
 		check_error();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();

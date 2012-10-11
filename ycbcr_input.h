@@ -66,23 +66,12 @@ public:
 		needs_update = true;
 	}
 
-	const unsigned char *get_pixel_data(unsigned channel) const
-	{
-		assert(channel >= 0 && channel < 3);
-		return pixel_data[channel];
-	}
-
 	void set_pitch(unsigned channel, unsigned pitch) {
 		assert(channel >= 0 && channel < 3);
 		if (this->pitch[channel] != pitch) {
 			this->pitch[channel] = pitch;
 			needs_pbo_recreate = true;
 		}
-	}
-
-	unsigned get_pitch(unsigned channel) {
-		assert(channel >= 0 && channel < 3);
-		return pitch[channel];
 	}
 
 private:

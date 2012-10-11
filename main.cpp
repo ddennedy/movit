@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
 
-	FlatInput *input = new FlatInput(inout_format, FORMAT_BGRA, img_w, img_h);
+	FlatInput *input = new FlatInput(inout_format, FORMAT_BGRA, GL_UNSIGNED_BYTE, img_w, img_h);
 	chain.add_input(input);
 	Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
 	Effect *saturation_effect = chain.add_effect(new SaturationEffect());
