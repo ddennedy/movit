@@ -707,6 +707,21 @@ bool EffectChain::node_needs_gamma_fix(Node *node)
 	if (node->disabled) {
 		return false;
 	}
+
+	// Small hack since the output is not an explicit node:
+	// If we are the last node and our output is in the wrong
+	// space compared to EffectChain's output, we need to fix it.
+	// This will only take us to linear, but fix_output_gamma()
+	// will come and take us to the desired output gamma
+	// if it is needed.
+	//
+	// This needs to be before everything else, since it could
+	// even apply to inputs (if they are the only effect).
+	if (node->outgoing_links.empty() &&
+	    node->output_gamma_curve != output_format.gamma_curve) {
+		return true;
+	}
+
 	if (node->effect->num_inputs() == 0) {
 		return false;
 	}
@@ -721,6 +736,7 @@ bool EffectChain::node_needs_gamma_fix(Node *node)
 		assert(node->incoming_links.size() == 1);
 		return node->incoming_links[0]->output_gamma_curve != GAMMA_LINEAR;
 	}
+
 	return (node->effect->needs_linear_light() && node->output_gamma_curve != GAMMA_LINEAR);
 }
 
@@ -788,8 +804,21 @@ void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
 				continue;
 			}
 
-			// Go through each input that is not linear gamma, and insert
-			// a gamma conversion before it.
+			// Special case: We could be an input and still be asked to
+			// fix our gamma; if so, we should be the only node
+			// (as node_needs_gamma_fix() would only return true in
+			// for an input in that case). That means we should insert
+			// a conversion node _after_ ourselves.
+			if (node->incoming_links.empty()) {
+				assert(node->outgoing_links.empty());
+				Node *conversion = add_node(new GammaExpansionEffect());
+				conversion->effect->set_int("source_curve", node->output_gamma_curve);
+				conversion->output_gamma_curve = GAMMA_LINEAR;
+				connect_nodes(node, conversion);
+			}
+
+			// If not, go through each input that is not linear gamma,
+			// and insert a gamma conversion before it.
 			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
 				Node *input = node->incoming_links[j];
 				assert(input->output_gamma_curve != GAMMA_INVALID);
