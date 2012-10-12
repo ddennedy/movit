@@ -14,8 +14,8 @@ TEST(GammaExpansionEffectTest, sRGB_KeyValues) {
 		0.00309f, 0.00317f, 
 	};
 	float out_data[4];
-	EffectChainTester tester(data, 2, 2, COLORSPACE_sRGB, GAMMA_sRGB);
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
@@ -25,8 +25,8 @@ TEST(GammaExpansionEffectTest, sRGB_RampAlwaysIncreases) {
 	for (unsigned i = 0; i < 256; ++i) {
 		data[i] = i / 255.0f;
 	}
-	EffectChainTester tester(data, 256, 1, COLORSPACE_sRGB, GAMMA_sRGB);
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	for (unsigned i = 1; i < 256; ++i) {
 		EXPECT_GT(out_data[i], out_data[i - 1])
@@ -44,8 +44,8 @@ TEST(GammaExpansionEffectTest, Rec709_KeyValues) {
 		0.017778f, 0.018167f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data, 2, 2, COLORSPACE_sRGB, GAMMA_REC_709);
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
@@ -55,8 +55,8 @@ TEST(GammaExpansionEffectTest, Rec709_RampAlwaysIncreases) {
 	for (unsigned i = 0; i < 256; ++i) {
 		data[i] = i / 255.0f;
 	}
-	EffectChainTester tester(data, 256, 1, COLORSPACE_sRGB, GAMMA_REC_709);
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	for (unsigned i = 1; i < 256; ++i) {
 		EXPECT_GT(out_data[i], out_data[i - 1])

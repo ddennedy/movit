@@ -15,8 +15,8 @@ TEST(EffectChainTest, EmptyChain) {
 		0.75f, 1.0f, 1.0f,
 	};
 	float out_data[6];
-	EffectChainTester tester(data, 3, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data, out_data, 3, 2);
 }
@@ -35,9 +35,9 @@ TEST(EffectChainTest, Identity) {
 		0.75f, 1.0f, 1.0f,
 	};
 	float out_data[6];
-	EffectChainTester tester(data, 3, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new IdentityEffect());
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data, out_data, 3, 2);
 }
@@ -57,9 +57,9 @@ TEST(EffectChainTest, TextureBouncePreservesIdentity) {
 		0.75f, 1.0f, 1.0f,
 	};
 	float out_data[6];
-	EffectChainTester tester(data, 3, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new BouncingIdentityEffect());
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data, out_data, 3, 2);
 }
@@ -74,9 +74,9 @@ TEST(MirrorTest, BasicTest) {
 		1.0f, 1.0f, 0.75f,
 	};
 	float out_data[6];
-	EffectChainTester tester(data, 3, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new MirrorEffect());
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 3, 2);
 }

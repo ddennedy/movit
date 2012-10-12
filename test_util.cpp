@@ -7,10 +7,10 @@
 
 #include <algorithm>
 
-EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, ColorSpace color_space, GammaCurve gamma_curve)
+EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height)
 {
-	add_input(data, color_space, gamma_curve);
+	add_input(data, pixel_format, color_space, gamma_curve);
 
 	glGenTextures(1, &texnum);
 	check_error();
@@ -34,30 +34,30 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	check_error();
 }
 
-Input *EffectChainTester::add_input(const float *data, ColorSpace color_space, GammaCurve gamma_curve)
+Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve)
 {
 	ImageFormat format;
 	format.color_space = color_space;
 	format.gamma_curve = gamma_curve;
 
-	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
+	FlatInput *input = new FlatInput(format, pixel_format, GL_FLOAT, width, height);
 	input->set_pixel_data(data);
 	chain.add_input(input);
 	return input;
 }
 
-void EffectChainTester::run(float *out_data, ColorSpace color_space, GammaCurve gamma_curve)
+void EffectChainTester::run(float *out_data, GLenum format, ColorSpace color_space, GammaCurve gamma_curve)
 {
-	ImageFormat format;
-	format.color_space = color_space;
-	format.gamma_curve = gamma_curve;
-	chain.add_output(format);
+	ImageFormat image_format;
+	image_format.color_space = color_space;
+	image_format.gamma_curve = gamma_curve;
+	chain.add_output(image_format);
 	chain.finalize();
 
 	chain.render_to_fbo(fbo, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, out_data);
+	glReadPixels(0, 0, width, height, format, GL_FLOAT, out_data);
 
 	// Flip upside-down to compensate for different origin.
 	for (unsigned y = 0; y < height / 2; ++y) {

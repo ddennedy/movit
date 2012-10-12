@@ -18,14 +18,14 @@ TEST(MixEffectTest, FiftyFiftyMix) {
 		0.75f, 0.8f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 2, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	Effect *mix_effect = tester.get_chain()->add_effect(new MixEffect(), input1, input2);
 	ASSERT_TRUE(mix_effect->set_float("strength_first", 0.5f));
 	ASSERT_TRUE(mix_effect->set_float("strength_second", 0.5f));
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
@@ -40,14 +40,14 @@ TEST(MixEffectTest, OnlyA) {
 		0.75f, 0.6f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 2, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	Effect *mix_effect = tester.get_chain()->add_effect(new MixEffect(), input1, input2);
 	ASSERT_TRUE(mix_effect->set_float("strength_first", 1.0f));
 	ASSERT_TRUE(mix_effect->set_float("strength_second", 0.0f));
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data_a, out_data, 2, 2);
 }
@@ -66,14 +66,14 @@ TEST(MixEffectTest, DoesNotSumToOne) {
 		0.6f, 0.4f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 2, 2, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	Effect *mix_effect = tester.get_chain()->add_effect(new MixEffect(), input1, input2);
 	ASSERT_TRUE(mix_effect->set_float("strength_first", 1.0f));
 	ASSERT_TRUE(mix_effect->set_float("strength_second", -1.0f));
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
@@ -92,14 +92,14 @@ TEST(MixEffectTest, MixesLinearlyDespitesRGBInputsAndOutputs) {
 		0.54807f, 0.73536f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 2, 2, COLORSPACE_sRGB, GAMMA_sRGB);
+	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, COLORSPACE_sRGB, GAMMA_sRGB);
+	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	Effect *mix_effect = tester.get_chain()->add_effect(new MixEffect(), input1, input2);
 	ASSERT_TRUE(mix_effect->set_float("strength_first", 0.5f));
 	ASSERT_TRUE(mix_effect->set_float("strength_second", 0.5f));
-	tester.run(out_data, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
