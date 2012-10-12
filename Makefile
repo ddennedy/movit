@@ -2,12 +2,12 @@ GTEST_DIR = /usr/src/gtest
 
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 )
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 ) -fprofile-arcs -ftest-coverage
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread -fprofile-arcs -ftest-coverage
 RANLIB=ranlib
 
 DEMO_OBJS=demo.o
-TESTS=effect_chain_test mix_effect_test
+TESTS=effect_chain_test mix_effect_test gamma_expansion_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -49,6 +49,8 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 effect_chain_test: effect_chain_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+gamma_expansion_effect_test: gamma_expansion_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
