@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include <math.h>
@@ -88,7 +89,9 @@ GLuint compile_shader(const std::string &shader_src, GLenum type)
 	GLsizei log_length = sizeof(info_log) - 1;
 	glGetShaderInfoLog(obj, log_length, &log_length, info_log);
 	info_log[log_length] = 0; 
-	printf("shader compile log: %s\n", info_log);
+	if (strlen(info_log) > 0) {
+		printf("shader compile log: %s\n", info_log);
+	}
 
 	GLint status;
 	glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
