@@ -82,7 +82,7 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 	}
 
 	const float largest_difference_limit = 1.5 / 255.0;
-	const float rms_limit = 0.5 / 255.0;
+	const float rms_limit = 0.2 / 255.0;
 
 	EXPECT_LT(largest_difference, largest_difference_limit);
 
