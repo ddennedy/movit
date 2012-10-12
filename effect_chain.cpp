@@ -961,13 +961,21 @@ void EffectChain::finalize()
 	finalized = true;
 }
 
-void EffectChain::render_to_screen()
+void EffectChain::render_to_fbo(GLuint fbo, unsigned width, unsigned height)
 {
 	assert(finalized);
 
 	// Save original viewport.
-	GLint viewport[4];
-	glGetIntegerv(GL_VIEWPORT, viewport);
+	GLuint x = 0, y = 0;
+
+	if (width == 0 && height == 0) {
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		x = viewport[0];
+		y = viewport[1];
+		width = viewport[2];
+		height = viewport[3];
+	}
 
 	// Basic state.
 	glDisable(GL_BLEND);
@@ -1045,10 +1053,10 @@ void EffectChain::render_to_screen()
 
 		// And now the output.
 		if (phase == phases.size() - 1) {
-			// Last phase goes directly to the screen.
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			// Last phase goes to the output the user specified.
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			check_error();
-			glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+			glViewport(x, y, width, height);
 		} else {
 			Node *output_node = phases[phase]->effects.back();
 			glFramebufferTexture2D(

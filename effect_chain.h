@@ -92,7 +92,14 @@ public:
 	void finalize();
 
 	//void render(unsigned char *src, unsigned char *dst);
-	void render_to_screen();
+	void render_to_screen()
+	{
+		render_to_fbo(0, 0, 0);
+	}
+
+	// Render the effect chain to the given FBO. If width=height=0, keeps
+	// the current viewport.
+	void render_to_fbo(GLuint fbo, unsigned width, unsigned height);
 
 	Effect *last_added_effect() {
 		if (nodes.empty()) {
