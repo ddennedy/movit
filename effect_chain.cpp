@@ -729,7 +729,8 @@ bool EffectChain::node_needs_gamma_fix(Node *node)
 	// This needs to be before everything else, since it could
 	// even apply to inputs (if they are the only effect).
 	if (node->outgoing_links.empty() &&
-	    node->output_gamma_curve != output_format.gamma_curve) {
+	    node->output_gamma_curve != output_format.gamma_curve &&
+	    node->output_gamma_curve != GAMMA_LINEAR) {
 		return true;
 	}
 
