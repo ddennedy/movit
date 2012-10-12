@@ -18,8 +18,9 @@ public:
 
 	// TODO: Check that we actually have the required extension.
 	virtual bool can_output_linear_gamma() const {
-		return (image_format.gamma_curve == GAMMA_LINEAR ||
-		        image_format.gamma_curve == GAMMA_sRGB);
+		return (type == GL_UNSIGNED_BYTE &&
+		        (image_format.gamma_curve == GAMMA_LINEAR ||
+		         image_format.gamma_curve == GAMMA_sRGB));
 	}
 
 	std::string output_fragment_shader();
