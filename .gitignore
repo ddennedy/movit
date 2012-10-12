@@ -9,4 +9,8 @@ perf.data
 *.dot
 demo
 effect_chain_test
+gamma_compression_effect_test
+gamma_expansion_effect_test
+mix_effect_test
+saturation_effect_test
 chain-*.frag
