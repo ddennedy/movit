@@ -6,7 +6,7 @@ CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 )
 LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
 RANLIB=ranlib
 
-ifeq ($(PROFILE),1)
+ifeq ($(COVERAGE),1)
 CXXFLAGS += -fprofile-arcs -ftest-coverage
 LDFLAGS += -fprofile-arcs -ftest-coverage
 endif
