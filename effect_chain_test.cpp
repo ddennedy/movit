@@ -80,3 +80,32 @@ TEST(MirrorTest, BasicTest) {
 
 	expect_equal(expected_data, out_data, 3, 2);
 }
+
+// The identity effect needs linear light, and thus will get conversions on both sides.
+// Verify that sRGB data is properly converted to and from linear light for the entire ramp.
+TEST(EffectChainTest, IdentityThroughsRGBConversions) {
+	float data[256];
+	for (unsigned i = 0; i < 256; ++i) {
+		data[i] = i / 255.0;
+	};
+	float out_data[256];
+	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.get_chain()->add_effect(new IdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	expect_equal(data, out_data, 256, 1);
+}
+
+// Same, for the Rec. 601/709 gamma curve.
+TEST(EffectChainTest, IdentityThroughRec709) {
+	float data[256];
+	for (unsigned i = 0; i < 256; ++i) {
+		data[i] = i / 255.0;
+	};
+	float out_data[256];
+	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.get_chain()->add_effect(new IdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_REC_709);
+
+	expect_equal(data, out_data, 256, 1);
+}
