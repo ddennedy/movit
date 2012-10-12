@@ -884,11 +884,11 @@ void EffectChain::finalize()
 	fix_internal_gamma_by_asking_inputs(5);
 	fix_internal_gamma_by_inserting_nodes(6);
 	fix_output_gamma();
-	output_dot("step8-output-gammafix.dot");
-	fix_internal_gamma_by_asking_inputs(9);
-	fix_internal_gamma_by_inserting_nodes(10);
+	output_dot("step7-output-gammafix.dot");
+	fix_internal_gamma_by_asking_inputs(8);
+	fix_internal_gamma_by_inserting_nodes(9);
 
-	output_dot("step11-final.dot");
+	output_dot("step10-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
 	construct_glsl_programs(find_output_node());
