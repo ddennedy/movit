@@ -74,8 +74,10 @@ clean:
 	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(DEPS)
 
 check: $(TESTS)
+	FAIL=0; \
 	for TEST in $(TESTS); do \
-	    ./$$TEST; \
-	done
+	    ./$$TEST || FAIL=1; \
+	done; \
+	exit $$FAIL
 
 .PHONY: clean check all
