@@ -47,11 +47,11 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 
 # Unit tests.
 effect_chain_test: effect_chain_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ effect_chain_test.o $(TEST_OBJS) libmovit.a $(LDFLAGS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ mix_effect_test.o $(TEST_OBJS) libmovit.a $(LDFLAGS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
-OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(GDEMO_OBJS)
+OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
 demo: libmovit.a $(DEMO_OBJS)
