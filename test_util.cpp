@@ -11,6 +11,27 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	: chain(width, height), width(width), height(height)
 {
 	add_input(data, color_space, gamma_curve);
+
+	glGenTextures(1, &texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	check_error();
+
+	glGenFramebuffers(1, &fbo);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	check_error();
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		texnum,
+		0);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
 }
 
 Input *EffectChainTester::add_input(const float *data, ColorSpace color_space, GammaCurve gamma_curve)
@@ -33,9 +54,9 @@ void EffectChainTester::run(float *out_data, ColorSpace color_space, GammaCurve 
 	chain.add_output(format);
 	chain.finalize();
 
-	glViewport(0, 0, width, height);
-	chain.render_to_screen();
+	chain.render_to_fbo(fbo, width, height);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, out_data);
 
 	// Flip upside-down to compensate for different origin.

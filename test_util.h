@@ -12,6 +12,7 @@ public:
 
 private:
 	EffectChain chain;
+	GLuint fbo, texnum;
 	unsigned width, height;
 };
 
