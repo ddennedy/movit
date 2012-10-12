@@ -76,7 +76,7 @@ DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
 
 clean:
-	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(DEPS)
+	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step-*.dot
 
 check: $(TESTS)
 	FAIL=0; \
