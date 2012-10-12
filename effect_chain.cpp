@@ -111,7 +111,8 @@ void EffectChain::insert_node_between(Node *sender, Node *middle, Node *receiver
 
 void EffectChain::find_all_nonlinear_inputs(Node *node, std::vector<Node *> *nonlinear_inputs)
 {
-	if (node->output_gamma_curve == GAMMA_LINEAR) {
+	if (node->output_gamma_curve == GAMMA_LINEAR &&
+	    node->effect->effect_type_id() != "GammaCompressionEffect") {
 		return;
 	}
 	if (node->effect->num_inputs() == 0) {
@@ -744,6 +745,7 @@ void EffectChain::fix_internal_gamma_by_asking_inputs(unsigned step)
 			// See if all inputs can give us linear gamma. If not, leave it.
 			std::vector<Node *> nonlinear_inputs;
 			find_all_nonlinear_inputs(node, &nonlinear_inputs);
+			assert(!nonlinear_inputs.empty());
 
 			bool all_ok = true;
 			for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
