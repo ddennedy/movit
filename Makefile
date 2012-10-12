@@ -2,9 +2,14 @@ GTEST_DIR = /usr/src/gtest
 
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 ) -fprofile-arcs -ftest-coverage
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread -fprofile-arcs -ftest-coverage
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 )
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
 RANLIB=ranlib
+
+ifeq ($(PROFILE),1)
+CXXFLAGS += -fprofile-arcs -ftest-coverage
+LDFLAGS += -fprofile-arcs -ftest-coverage
+endif
 
 DEMO_OBJS=demo.o
 TESTS=effect_chain_test mix_effect_test gamma_expansion_effect_test
