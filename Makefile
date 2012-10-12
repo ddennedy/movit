@@ -12,7 +12,7 @@ LDFLAGS += -fprofile-arcs -ftest-coverage
 endif
 
 DEMO_OBJS=demo.o
-TESTS=effect_chain_test mix_effect_test gamma_expansion_effect_test gamma_compression_effect_test
+TESTS=effect_chain_test mix_effect_test gamma_expansion_effect_test gamma_compression_effect_test saturation_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -58,6 +58,8 @@ mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
 gamma_expansion_effect_test: gamma_expansion_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 gamma_compression_effect_test: gamma_compression_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+saturation_effect_test: saturation_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
