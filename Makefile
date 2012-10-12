@@ -7,7 +7,7 @@ LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
 RANLIB=ranlib
 
 DEMO_OBJS=demo.o
-TESTS=effect_chain_test
+TESTS=effect_chain_test mix_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -48,6 +48,8 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 # Unit tests.
 effect_chain_test: effect_chain_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ effect_chain_test.o $(TEST_OBJS) libmovit.a $(LDFLAGS)
+mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ mix_effect_test.o $(TEST_OBJS) libmovit.a $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(GDEMO_OBJS)
 

@@ -10,6 +10,11 @@
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, ColorSpace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height)
 {
+	add_input(data, color_space, gamma_curve);
+}
+
+Input *EffectChainTester::add_input(const float *data, ColorSpace color_space, GammaCurve gamma_curve)
+{
 	ImageFormat format;
 	format.color_space = color_space;
 	format.gamma_curve = gamma_curve;
@@ -17,6 +22,7 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
 	input->set_pixel_data(data);
 	chain.add_input(input);
+	return input;
 }
 
 void EffectChainTester::run(float *out_data, ColorSpace color_space, GammaCurve gamma_curve)
