@@ -268,8 +268,7 @@ void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 			if (gaussian_radius < 1e-3) {
 				val = (x == 0 && y == 0) ? 1.0f : 0.0f;
 			} else {
-				float z = hypot(x, y) / gaussian_radius;
-				val = exp(-z * z);
+				val = exp(-(x*x + y*y) / (2.0 * gaussian_radius * gaussian_radius));
 			}
 			gaussian_h(y + 2 * R, x + 2 * R) = val;
 		}
