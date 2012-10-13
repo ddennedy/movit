@@ -973,7 +973,7 @@ void EffectChain::finalize()
 	finalized = true;
 }
 
-void EffectChain::render_to_fbo(GLuint fbo, unsigned width, unsigned height)
+void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height)
 {
 	assert(finalized);
 
@@ -1066,7 +1066,7 @@ void EffectChain::render_to_fbo(GLuint fbo, unsigned width, unsigned height)
 		// And now the output.
 		if (phase == phases.size() - 1) {
 			// Last phase goes to the output the user specified.
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
 			check_error();
 			glViewport(x, y, width, height);
 		} else {
