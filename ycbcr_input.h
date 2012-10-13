@@ -30,6 +30,7 @@ public:
 	YCbCrInput(const ImageFormat &image_format,
 	           const YCbCrFormat &ycbcr_format,
 	           unsigned width, unsigned height);
+	~YCbCrInput();
 
 	virtual std::string effect_type_id() const { return "YCbCrInput"; }
 

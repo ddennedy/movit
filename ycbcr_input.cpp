@@ -17,6 +17,9 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	  width(width),
 	  height(height)
 {
+	pbos[0] = pbos[1] = pbos[2] = 0;
+	texture_num[0] = texture_num[1] = texture_num[2] = 0;
+
 	pitch[0] = pitch[1] = pitch[2] = width;
 
 	assert(width % ycbcr_format.chroma_subsampling_x == 0);
@@ -30,6 +33,18 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	heights[2] = height / ycbcr_format.chroma_subsampling_y;
 
 	register_int("needs_mipmaps", &needs_mipmaps);
+}
+
+YCbCrInput::~YCbCrInput()
+{
+	if (pbos[0] != 0) {
+		glDeleteBuffers(3, pbos);
+		check_error();
+	}
+	if (texture_num[0] != 0) {
+		glDeleteTextures(3, texture_num);
+		check_error();
+	}
 }
 
 void YCbCrInput::finalize()
