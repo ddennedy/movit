@@ -87,7 +87,9 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 	}
 
 	EXPECT_LT(largest_difference, largest_difference_limit)
-		<< "Largest difference is in x=" << largest_diff_x << ", y=" << largest_diff_y;
+		<< "Largest difference is in x=" << largest_diff_x << ", y=" << largest_diff_y << ":\n"
+		<< "Reference: " << ref[largest_diff_y * width + largest_diff_x] << "\n"
+		<< "Result:    " << result[largest_diff_y * width + largest_diff_x];
 
 	float rms = sqrt(squared_difference) / (width * height);
 	EXPECT_LT(rms, rms_limit);
