@@ -268,9 +268,9 @@ TEST(EffectChainTest, MipmapGenerationWorks) {
 		0.25f,    0.25f,    0.25f,    0.25f,
 	};
 	float out_data[16 * 4];
-	EffectChainTester tester(data, 4, 16, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	EffectChainTester tester(data, 4, 16, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new MipmapNeedingEffect());
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, 16);
 }
