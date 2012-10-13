@@ -330,13 +330,27 @@ void EffectChain::construct_glsl_programs(Node *output)
 					start_new_phase = true;
 				}
 
-				if (deps[i]->outgoing_links.size() > 1 && deps[i]->effect->num_inputs() > 0) {
-					// More than one effect uses this as the input,
-					// and it is not a texture itself.
-					// The easiest thing to do (and probably also the safest
-					// performance-wise in most cases) is to bounce it to a texture
-					// and then let the next passes read from that.
-					start_new_phase = true;
+				if (deps[i]->outgoing_links.size() > 1) {
+					if (deps[i]->effect->num_inputs() > 0) {
+						// More than one effect uses this as the input,
+						// and it is not a texture itself.
+						// The easiest thing to do (and probably also the safest
+						// performance-wise in most cases) is to bounce it to a texture
+						// and then let the next passes read from that.
+						start_new_phase = true;
+					} else {
+						// For textures, we try to be slightly more clever;
+						// if none of our outputs need a bounce, we don't bounce
+						// but instead simply use the effect many times.
+						//
+						// Strictly speaking, we could bounce it for some outputs
+						// and use it directly for others, but the processing becomes
+						// somewhat simpler if the effect is only used in one such way.
+						for (unsigned j = 0; j < deps[i]->outgoing_links.size(); ++j) {
+							Node *rdep = deps[i]->outgoing_links[j];
+							start_new_phase |= rdep->effect->needs_texture_bounce();
+						}
+					}
 				}
 
 				if (deps[i]->effect->changes_output_size()) {
