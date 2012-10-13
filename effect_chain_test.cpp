@@ -267,9 +267,67 @@ TEST(EffectChainTest, MipmapGenerationWorks) {
 		1.0f,     1.0f,     1.0f,     1.0f,
 		0.25f,    0.25f,    0.25f,    0.25f,
 	};
-	float out_data[16 * 4];
+	float out_data[4 * 16];
 	EffectChainTester tester(data, 4, 16, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new MipmapNeedingEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 16);
+}
+
+TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
+	float data[] = {  // In 4x4 blocks.
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float expected_data[] = {  // Repeated four times horizontaly, interpolated vertically.
+		0.1250f, 0.1250f, 0.1250f, 0.1250f,
+		0.1250f, 0.1250f, 0.1250f, 0.1250f,
+		0.1211f, 0.1211f, 0.1211f, 0.1211f,
+		0.1133f, 0.1133f, 0.1133f, 0.1133f,
+		0.1055f, 0.1055f, 0.1055f, 0.1055f,
+		0.0977f, 0.0977f, 0.0977f, 0.0977f,
+		0.2070f, 0.2070f, 0.2070f, 0.2070f,
+		0.4336f, 0.4336f, 0.4336f, 0.4336f,
+		0.6602f, 0.6602f, 0.6602f, 0.6602f,
+		0.8867f, 0.8867f, 0.8867f, 0.8867f,
+		0.9062f, 0.9062f, 0.9062f, 0.9062f,
+		0.7188f, 0.7188f, 0.7188f, 0.7188f,
+		0.5312f, 0.5312f, 0.5312f, 0.5312f,
+		0.3438f, 0.3438f, 0.3438f, 0.3438f,
+		0.2500f, 0.2500f, 0.2500f, 0.2500f,
+		0.2500f, 0.2500f, 0.2500f, 0.2500f,
+	};
+	float out_data[4 * 16];
+
+	ResizeEffect *downscale = new ResizeEffect();
+	ASSERT_TRUE(downscale->set_int("width", 1));
+	ASSERT_TRUE(downscale->set_int("height", 4));
+
+	ResizeEffect *upscale = new ResizeEffect();
+	ASSERT_TRUE(upscale->set_int("width", 4));
+	ASSERT_TRUE(upscale->set_int("height", 16));
+
+	EffectChainTester tester(data, 4, 16, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->add_effect(downscale);
+	tester.get_chain()->add_effect(upscale);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, 16);
