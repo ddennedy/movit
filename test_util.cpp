@@ -67,6 +67,10 @@ void EffectChainTester::run(float *out_data, GLenum format, ColorSpace color_spa
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glReadPixels(0, 0, width, height, format, GL_FLOAT, out_data);
 
+	if (format == GL_RGBA) {
+		width *= 4;
+	}
+
 	// Flip upside-down to compensate for different origin.
 	for (unsigned y = 0; y < height / 2; ++y) {
 		unsigned flip_y = height - y - 1;
