@@ -31,7 +31,6 @@ void UnsharpMaskEffect::rewrite_graph(EffectChain *graph, Node *self)
 }
 
 bool UnsharpMaskEffect::set_float(const std::string &key, float value) {
-	printf("%s = %f\n", key.c_str(), value);
 	if (key == "amount") {
 		bool ok = mix->set_float("strength_first", 1.0f + value);
 		return ok && mix->set_float("strength_second", -value);
