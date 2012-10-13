@@ -764,6 +764,7 @@ void EffectChain::fix_output_color_space()
 		conversion->effect->set_int("destination_space", output_format.color_space);
 		conversion->output_color_space = output_format.color_space;
 		connect_nodes(output, conversion);
+		propagate_gamma_and_color_space();
 	}
 }
 
