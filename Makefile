@@ -20,6 +20,7 @@ TESTS += gamma_expansion_effect_test
 TESTS += gamma_compression_effect_test
 TESTS += saturation_effect_test
 TESTS += deconvolution_sharpen_effect_test
+TESTS += blur_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -69,6 +70,8 @@ gamma_compression_effect_test: gamma_compression_effect_test.o $(TEST_OBJS) libm
 saturation_effect_test: saturation_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 deconvolution_sharpen_effect_test: deconvolution_sharpen_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+blur_effect_test: blur_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)

@@ -6,6 +6,7 @@
 #include "flat_input.h"
 #include "gtest/gtest.h"
 #include "mirror_effect.h"
+#include "resize_effect.h"
 #include "opengl.h"
 #include "test_util.h"
 
