@@ -9,6 +9,7 @@ enum ColorSpace {
 	COLORSPACE_REC_709 = 0,  // Same as sRGB.
 	COLORSPACE_REC_601_525 = 1,
 	COLORSPACE_REC_601_625 = 2,
+	COLORSPACE_XYZ = 3,  // Mostly useful for testing and debugging.
 };
 
 enum GammaCurve {

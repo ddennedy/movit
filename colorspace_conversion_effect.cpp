@@ -25,6 +25,13 @@ ColorSpaceConversionEffect::ColorSpaceConversionEffect()
 
 void get_xyz_matrix(ColorSpace space, Matrix3x3 m)
 {
+	if (space == COLORSPACE_XYZ) {
+		m[0] = 1.0f; m[3] = 0.0f; m[6] = 0.0f;
+		m[1] = 0.0f; m[4] = 1.0f; m[7] = 0.0f;
+		m[2] = 0.0f; m[5] = 0.0f; m[8] = 1.0f;
+		return;
+	}
+
 	double x_R, x_G, x_B;
 	double y_R, y_G, y_B;
 	double Y_R, Y_G, Y_B;
