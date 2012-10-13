@@ -114,12 +114,16 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 	} else {
 		float sum = 0.0f;
 		for (unsigned i = 0; i < NUM_TAPS + 1; ++i) {
-			float z = i / radius;
-
 			// Gaussian blur is a common, but maybe not the prettiest choice;
 			// it can feel a bit too blurry in the fine detail and too little
 			// long-tail. This is a simple logistic distribution, which has
 			// a narrower peak but longer tails.
+			//
+			// We interpret the radius as sigma, similar to Gaussian blur.
+			// Wikipedia says that sigma² = pi² s² / 3, which yields:
+			const float s = (sqrt(3.0) / M_PI) * radius;
+			float z = i / (2.0 * s);
+
 			weight[i] = 1.0f / (cosh(z) * cosh(z));
 
 			if (i == 0) {
