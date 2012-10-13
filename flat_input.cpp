@@ -107,7 +107,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 		// Re-upload the texture from the PBO.
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 		check_error();
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_FLOAT, BUFFER_OFFSET(0));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, BUFFER_OFFSET(0));
 		check_error();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();
