@@ -34,6 +34,12 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	check_error();
 }
 
+EffectChainTester::~EffectChainTester()
+{
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteTextures(1, &texnum);
+}
+
 Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve)
 {
 	ImageFormat format;

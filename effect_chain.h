@@ -48,7 +48,7 @@ private:
 
 // A rendering phase; a single GLSL program rendering a single quad.
 struct Phase {
-	GLint glsl_program_num;
+	GLint glsl_program_num, vertex_shader, fragment_shader;
 	bool input_needs_mipmaps;
 
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
@@ -62,6 +62,7 @@ struct Phase {
 class EffectChain {
 public:
 	EffectChain(float aspect_nom, float aspect_denom);  // E.g., 16.0f, 9.0f for 16:9.
+	~EffectChain();
 
 	// User API:
 	// input, effects, output, finalize need to come in that specific order.

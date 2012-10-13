@@ -21,7 +21,28 @@
 EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
+	  fbo(0),
 	  finalized(false) {}
+
+EffectChain::~EffectChain()
+{
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		if (nodes[i]->output_texture != 0) {
+			glDeleteTextures(1, &nodes[i]->output_texture);
+		}
+		delete nodes[i]->effect;
+		delete nodes[i];
+	}
+	for (unsigned i = 0; i < phases.size(); ++i) {
+		glDeleteProgram(phases[i]->glsl_program_num);
+		glDeleteShader(phases[i]->vertex_shader);
+		glDeleteShader(phases[i]->fragment_shader);
+		delete phases[i];
+	}
+	if (fbo != 0) {
+		glDeleteFramebuffers(1, &fbo);
+	}
+}
 
 Input *EffectChain::add_input(Input *input)
 {
@@ -49,6 +70,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->effect_id = effect_id;
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
+	node->output_texture = 0;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
@@ -267,6 +289,8 @@ Phase *EffectChain::compile_glsl_program(
 
 	Phase *phase = new Phase;
 	phase->glsl_program_num = glsl_program_num;
+	phase->vertex_shader = vs_obj;
+	phase->fragment_shader = fs_obj;
 	phase->input_needs_mipmaps = input_needs_mipmaps;
 	phase->inputs = true_inputs;
 	phase->effects = effects;

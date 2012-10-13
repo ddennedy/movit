@@ -11,5 +11,7 @@ int main(int argc, char **argv) {
 	SDL_WM_SetCaption("OpenGL window for unit test", NULL);
 
 	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	int err = RUN_ALL_TESTS();
+	SDL_Quit();
+	exit(err);
 }

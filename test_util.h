@@ -6,6 +6,8 @@
 class EffectChainTester {
 public:
 	EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve);
+	~EffectChainTester();
+	
 	EffectChain *get_chain() { return &chain; }
 	Input *add_input(const float *data, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve);
 	void run(float *out_data, GLenum format, ColorSpace color_space, GammaCurve gamma_curve);
