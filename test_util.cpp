@@ -68,7 +68,7 @@ void EffectChainTester::run(float *out_data, GLenum format, ColorSpace color_spa
 	}
 }
 
-void expect_equal(const float *ref, const float *result, unsigned width, unsigned height)
+void expect_equal(const float *ref, const float *result, unsigned width, unsigned height, float largest_difference_limit, float rms_limit)
 {
 	float largest_difference = -1.0f;
 	float squared_difference = 0.0f;
@@ -80,9 +80,6 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 			squared_difference += diff * diff;
 		}
 	}
-
-	const float largest_difference_limit = 1.5 / 255.0;
-	const float rms_limit = 0.2 / 255.0;
 
 	EXPECT_LT(largest_difference, largest_difference_limit);
 

@@ -16,6 +16,6 @@ private:
 	unsigned width, height;
 };
 
-void expect_equal(const float *ref, const float *result, unsigned width, unsigned height);
+void expect_equal(const float *ref, const float *result, unsigned width, unsigned height, float largest_difference_limit = 1.5 / 255.0, float rms_limit = 0.2 / 255.0);
 
 #endif  // !defined(_TEST_UTIL_H)
