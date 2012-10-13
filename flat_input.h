@@ -8,6 +8,7 @@
 class FlatInput : public Input {
 public:
 	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height);
+	~FlatInput();
 
 	virtual std::string effect_type_id() const { return "FlatInput"; }
 

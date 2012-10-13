@@ -50,6 +50,8 @@ void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const 
 
 class Effect {
 public:
+	virtual ~Effect() {}
+
 	// An identifier for this type of effect, mostly used for debug output
 	// (but some special names, like "ColorSpaceConversionEffect", holds special
 	// meaning). Same as the class name is fine.

@@ -9,6 +9,8 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	: image_format(image_format),
           pixel_format(pixel_format),
 	  type(type),
+	  pbo(0),
+	  texture_num(0),
 	  needs_update(false),
 	  finalized(false),
 	  output_linear_gamma(false),
@@ -20,6 +22,18 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	assert(type == GL_FLOAT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
+}
+
+FlatInput::~FlatInput()
+{
+	if (pbo != 0) {
+		glDeleteBuffers(1, &pbo);
+		check_error();
+	}
+	if (texture_num != 0) {
+		glDeleteTextures(1, &texture_num);
+		check_error();
+	}
 }
 
 void FlatInput::finalize()
