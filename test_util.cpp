@@ -72,16 +72,22 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 {
 	float largest_difference = -1.0f;
 	float squared_difference = 0.0f;
+	int largest_diff_x = -1, largest_diff_y = -1;
 
 	for (unsigned y = 0; y < height; ++y) {
 		for (unsigned x = 0; x < width; ++x) {
 			float diff = ref[y * width + x] - result[y * width + x];
-			largest_difference = std::max(largest_difference, fabsf(diff));
+			if (fabs(diff) > largest_difference) {
+				largest_difference = fabs(diff);
+				largest_diff_x = x;
+				largest_diff_y = y;
+			}
 			squared_difference += diff * diff;
 		}
 	}
 
-	EXPECT_LT(largest_difference, largest_difference_limit);
+	EXPECT_LT(largest_difference, largest_difference_limit)
+		<< "Largest difference is in x=" << largest_diff_x << ", y=" << largest_diff_y;
 
 	float rms = sqrt(squared_difference) / (width * height);
 	EXPECT_LT(rms, rms_limit);
