@@ -12,7 +12,14 @@ LDFLAGS += -fprofile-arcs -ftest-coverage
 endif
 
 DEMO_OBJS=demo.o
-TESTS=effect_chain_test mix_effect_test gamma_expansion_effect_test gamma_compression_effect_test saturation_effect_test deconvolution_sharpen_effect_test
+
+# Unit tests.
+TESTS=effect_chain_test
+TESTS += mix_effect_test
+TESTS += gamma_expansion_effect_test
+TESTS += gamma_compression_effect_test
+TESTS += saturation_effect_test
+TESTS += deconvolution_sharpen_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
