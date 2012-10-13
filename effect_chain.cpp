@@ -394,7 +394,23 @@ void EffectChain::output_dot(const char *filename)
 
 	fprintf(fp, "digraph G {\n");
 	for (unsigned i = 0; i < nodes.size(); ++i) {
-		fprintf(fp, "  n%ld [label=\"%s\"];\n", (long)nodes[i], nodes[i]->effect->effect_type_id().c_str());
+		// Find out which phase this event belongs to.
+		int in_phase = -1;
+		for (unsigned j = 0; j < phases.size(); ++j) {
+			const Phase* p = phases[j];
+			if (std::find(p->effects.begin(), p->effects.end(), nodes[i]) != p->effects.end()) {
+				assert(in_phase == -1);
+				in_phase = j;
+			}
+		}
+
+		if (in_phase == -1) {
+			fprintf(fp, "  n%ld [label=\"%s\"];\n", (long)nodes[i], nodes[i]->effect->effect_type_id().c_str());
+		} else {
+			fprintf(fp, "  n%ld [label=\"%s\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
+				(long)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
+				(in_phase % 8) + 1);
+		}
 		for (unsigned j = 0; j < nodes[i]->outgoing_links.size(); ++j) {
 			std::vector<std::string> labels;
 
@@ -933,6 +949,8 @@ void EffectChain::finalize()
 	
 	// Construct all needed GLSL programs, starting at the output.
 	construct_glsl_programs(find_output_node());
+
+	output_dot("step11-split-to-phases.dot");
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.
