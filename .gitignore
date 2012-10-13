@@ -15,4 +15,5 @@ mix_effect_test
 saturation_effect_test
 deconvolution_sharpen_effect_test
 blur_effect_test
+unsharp_mask_effect_test
 chain-*.frag
