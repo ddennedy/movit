@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include "deconvolution_sharpen_effect.h"
 
-TEST(DeconvolutionSharpenEffect, IdentityTransformDoesNothing) {
+TEST(DeconvolutionSharpenEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;
 
 	float data[size * size] = {
@@ -27,7 +27,7 @@ TEST(DeconvolutionSharpenEffect, IdentityTransformDoesNothing) {
 	expect_equal(data, out_data, size, size);
 }
 
-TEST(DeconvolutionSharpenEffect, DeconvolvesCircularBlur) {
+TEST(DeconvolutionSharpenEffectTest, DeconvolvesCircularBlur) {
 	const int size = 13;
 
 	// Matches exactly a circular blur kernel with radius 2.0.
@@ -76,7 +76,7 @@ TEST(DeconvolutionSharpenEffect, DeconvolvesCircularBlur) {
 	expect_equal(expected_data, out_data, size, size, 0.15f, 0.005f);
 }
 
-TEST(DeconvolutionSharpenEffect, DeconvolvesGaussianBlur) {
+TEST(DeconvolutionSharpenEffectTest, DeconvolvesGaussianBlur) {
 	const int size = 13;
 	const float sigma = 0.5f;
 
@@ -125,7 +125,7 @@ TEST(DeconvolutionSharpenEffect, DeconvolvesGaussianBlur) {
 	expect_equal(expected_data, out_data, size, size);
 }
 
-TEST(DeconvolutionSharpenEffect, NoiseAndCorrelationControlsReduceNoiseBoosting) {
+TEST(DeconvolutionSharpenEffectTest, NoiseAndCorrelationControlsReduceNoiseBoosting) {
 	const int size = 13;
 	const float sigma = 0.5f;
 
