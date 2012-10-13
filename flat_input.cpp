@@ -85,6 +85,8 @@ void FlatInput::finalize()
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texture_num);
 	check_error();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 	check_error();
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);

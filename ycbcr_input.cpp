@@ -49,6 +49,9 @@ YCbCrInput::~YCbCrInput()
 
 void YCbCrInput::finalize()
 {
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	check_error();
+
 	// Create PBOs to hold the textures holding the input image, and then the texture itself.
 	glGenBuffers(3, pbos);
 	check_error();

@@ -154,7 +154,6 @@ int main(int argc, char **argv)
 	SDL_WM_SetCaption("OpenGL window", NULL);
 	
 	// geez	
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
 	unsigned img_w, img_h;
