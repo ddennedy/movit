@@ -204,3 +204,73 @@ TEST(EffectChainTest, IdentityThroughRec709) {
 
 	expect_equal(data, out_data, 256, 1);
 }
+
+// Effectively scales down its input linearly by 4x (and repeating it),
+// which is not attainable without mipmaps.
+class MipmapNeedingEffect : public Effect {
+public:
+	MipmapNeedingEffect() {}
+	virtual bool needs_mipmaps() const { return true; }
+	virtual std::string effect_type_id() const { return "MipmapNeedingEffect"; }
+	std::string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		check_error();
+	}
+};
+
+TEST(EffectChainTest, MipmapGenerationWorks) {
+	float data[] = {  // In 4x4 blocks.
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float expected_data[] = {  // Repeated four times each way.
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+	};
+	float out_data[16 * 4];
+	EffectChainTester tester(data, 4, 16, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.get_chain()->add_effect(new MipmapNeedingEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_REC_709);
+
+	expect_equal(expected_data, out_data, 4, 16);
+}
