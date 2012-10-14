@@ -82,7 +82,7 @@ void YCbCrInput::finalize()
 		check_error();
 	}
 
-	needs_update = false;
+	needs_update = true;
 	finalized = true;
 }
 	
