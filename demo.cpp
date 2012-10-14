@@ -144,7 +144,7 @@ void write_ppm(const char *filename, unsigned char *screenbuf)
 
 int main(int argc, char **argv)
 {
-	int quit = 0;
+	bool quit = false;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
@@ -186,7 +186,8 @@ int main(int argc, char **argv)
 
 	make_hsv_wheel_texture();
 
-	int frame = 0, screenshot = 0;
+	int frame = 0;
+	bool screenshot = false;
 #if _POSIX_C_SOURCE >= 199309L
 	struct timespec start, now;
 	clock_gettime(CLOCK_MONOTONIC, &start);
@@ -199,11 +200,11 @@ int main(int argc, char **argv)
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
-				quit = 1;
+				quit = true;
 			} else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-				quit = 1;
+				quit = true;
 			} else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F1) {
-				screenshot = 1;
+				screenshot = true;
 			} else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
 				mouse(event.button.x, event.button.y);
 			} else if (event.type == SDL_MOUSEMOTION && (event.motion.state & SDL_BUTTON(1))) {
@@ -255,7 +256,7 @@ int main(int argc, char **argv)
 			sprintf(filename, "frame%05d.ppm", frame);
 			write_ppm(filename, screenbuf);
 			printf("Screenshot: %s\n", filename);
-			screenshot = 0;
+			screenshot = false;
 		}
 		glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
 		check_error();
