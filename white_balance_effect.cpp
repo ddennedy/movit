@@ -72,11 +72,8 @@ static const Matrix3x3 xyz_to_lms_matrix = {
  */
 static void compute_lms_scaling_factors(float x, float y, float z, float *scale_l, float *scale_m, float *scale_s)
 {
-	Matrix3x3 xyz_to_rgb_matrix;
-	invert_3x3_matrix(rgb_to_xyz_matrix, xyz_to_rgb_matrix);
-
 	float l, m, s;
-	multiply_3x3_matrix_float3(xyz_to_rgb_matrix, x, y, z, &l, &m, &s);
+	multiply_3x3_matrix_float3(xyz_to_lms_matrix, x, y, z, &l, &m, &s);
 
 	*scale_l = y / l;
 	*scale_m = *scale_l * (l / m);
