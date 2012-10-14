@@ -27,6 +27,7 @@ TESTS += diffusion_effect_test
 TESTS += white_balance_effect_test
 TESTS += lift_gamma_gain_effect_test
 TESTS += flat_input_test
+TESTS += ycbcr_input_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -90,6 +91,8 @@ white_balance_effect_test: white_balance_effect_test.o $(TEST_OBJS) libmovit.a
 lift_gamma_gain_effect_test: lift_gamma_gain_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 flat_input_test: flat_input_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+ycbcr_input_test: ycbcr_input_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
