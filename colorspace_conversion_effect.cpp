@@ -73,7 +73,7 @@ void get_xyz_matrix(ColorSpace space, Matrix3x3 m)
 	// Some algebraic fiddling yields (unsurprisingly):
 	//
 	//   X_R = (x_R / y_R) Y_R
-	//   Z_R = (z_R / y_R) Z_R
+	//   Z_R = (z_R / y_R) Y_R
 	//
 	// We also know that since RGB=(1,1,1) should give us the
 	// D65 illuminant, we must have
