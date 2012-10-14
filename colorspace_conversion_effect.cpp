@@ -13,6 +13,7 @@ double rec601_525_y_R = 0.340, rec601_525_y_G = 0.595, rec601_525_y_B = 0.070;
 double rec601_625_x_R = 0.640, rec601_625_x_G = 0.290, rec601_625_x_B = 0.150;
 double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
 
+// The D65 white point. Given in both Rec. 601 and 709.
 double d65_x = 0.3127, d65_y = 0.3290;
 
 ColorSpaceConversionEffect::ColorSpaceConversionEffect()
