@@ -658,7 +658,7 @@ void EffectChain::propagate_gamma_and_color_space()
 			continue;
 		}
 
-		ColorSpace color_space = node->incoming_links[0]->output_color_space;
+		Colorspace color_space = node->incoming_links[0]->output_color_space;
 		GammaCurve gamma_curve = node->incoming_links[0]->output_gamma_curve;
 		for (unsigned j = 1; j < node->incoming_links.size(); ++j) {
 			if (node->incoming_links[j]->output_color_space != color_space) {
@@ -671,7 +671,7 @@ void EffectChain::propagate_gamma_and_color_space()
 
 		// The conversion effects already have their outputs set correctly,
 		// so leave them alone.
-		if (node->effect->effect_type_id() != "ColorSpaceConversionEffect") {
+		if (node->effect->effect_type_id() != "ColorspaceConversionEffect") {
 			node->output_color_space = color_space;
 		}		
 		if (node->effect->effect_type_id() != "GammaCompressionEffect" &&
@@ -725,7 +725,7 @@ void EffectChain::fix_internal_color_spaces()
 				if (input->output_color_space == COLORSPACE_sRGB) {
 					continue;
 				}
-				Node *conversion = add_node(new ColorSpaceConversionEffect());
+				Node *conversion = add_node(new ColorspaceConversionEffect());
 				conversion->effect->set_int("source_space", input->output_color_space);
 				conversion->effect->set_int("destination_space", COLORSPACE_sRGB);
 				conversion->output_color_space = COLORSPACE_sRGB;
@@ -759,7 +759,7 @@ void EffectChain::fix_output_color_space()
 {
 	Node *output = find_output_node();
 	if (output->output_color_space != output_format.color_space) {
-		Node *conversion = add_node(new ColorSpaceConversionEffect());
+		Node *conversion = add_node(new ColorspaceConversionEffect());
 		conversion->effect->set_int("source_space", output->output_color_space);
 		conversion->effect->set_int("destination_space", output_format.color_space);
 		conversion->output_color_space = output_format.color_space;

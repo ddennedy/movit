@@ -40,7 +40,7 @@ private:
 	Phase *phase;
 
 	// Used during the building of the effect chain.
-	ColorSpace output_color_space;
+	Colorspace output_color_space;
 	GammaCurve output_gamma_curve;
 
 	friend class EffectChain;

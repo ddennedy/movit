@@ -16,7 +16,7 @@ double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
 // The D65 white point. Given in both Rec. 601 and 709.
 double d65_x = 0.3127, d65_y = 0.3290;
 
-ColorSpaceConversionEffect::ColorSpaceConversionEffect()
+ColorspaceConversionEffect::ColorspaceConversionEffect()
 	: source_space(COLORSPACE_sRGB),
 	  destination_space(COLORSPACE_sRGB)
 {
@@ -24,7 +24,7 @@ ColorSpaceConversionEffect::ColorSpaceConversionEffect()
 	register_int("destination_space", (int *)&destination_space);
 }
 
-void get_xyz_matrix(ColorSpace space, Matrix3x3 m)
+void get_xyz_matrix(Colorspace space, Matrix3x3 m)
 {
 	if (space == COLORSPACE_XYZ) {
 		m[0] = 1.0f; m[3] = 0.0f; m[6] = 0.0f;
@@ -121,7 +121,7 @@ void get_xyz_matrix(ColorSpace space, Matrix3x3 m)
 	m[2] = Z_R; m[5] = Z_G; m[8] = Z_B;
 }
 
-std::string ColorSpaceConversionEffect::output_fragment_shader()
+std::string ColorspaceConversionEffect::output_fragment_shader()
 {
 	// Create a matrix to convert from source space -> XYZ,
 	// another matrix to convert from XYZ -> destination space,

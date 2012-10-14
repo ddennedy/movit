@@ -53,7 +53,7 @@ public:
 	virtual ~Effect() {}
 
 	// An identifier for this type of effect, mostly used for debug output
-	// (but some special names, like "ColorSpaceConversionEffect", holds special
+	// (but some special names, like "ColorspaceConversionEffect", holds special
 	// meaning). Same as the class name is fine.
 	virtual std::string effect_type_id() const = 0;
 

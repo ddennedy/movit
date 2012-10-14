@@ -3,7 +3,7 @@
 
 enum MovitPixelFormat { FORMAT_RGB, FORMAT_RGBA, FORMAT_BGR, FORMAT_BGRA, FORMAT_GRAYSCALE };
 
-enum ColorSpace {
+enum Colorspace {
 	COLORSPACE_INVALID = -1,  // For internal use.
 	COLORSPACE_sRGB = 0,
 	COLORSPACE_REC_709 = 0,  // Same as sRGB.
@@ -26,7 +26,7 @@ enum YCbCrLumaCoefficients {
 };
 
 struct ImageFormat {
-	ColorSpace color_space;
+	Colorspace color_space;
 	GammaCurve gamma_curve;
 };
 

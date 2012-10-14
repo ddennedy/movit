@@ -31,7 +31,7 @@ public:
 
 	virtual unsigned get_width() const = 0;
 	virtual unsigned get_height() const = 0;
-	virtual ColorSpace get_color_space() const = 0;
+	virtual Colorspace get_color_space() const = 0;
 	virtual GammaCurve get_gamma_curve() const = 0;
 };
 

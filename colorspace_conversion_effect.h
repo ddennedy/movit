@@ -11,16 +11,16 @@
 #include "effect.h"
 #include "effect_chain.h"
 
-class ColorSpaceConversionEffect : public Effect {
+class ColorspaceConversionEffect : public Effect {
 public:
-	ColorSpaceConversionEffect();
-	virtual std::string effect_type_id() const { return "ColorSpaceConversionEffect"; }
+	ColorspaceConversionEffect();
+	virtual std::string effect_type_id() const { return "ColorspaceConversionEffect"; }
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }
 
 private:
-	ColorSpace source_space, destination_space;
+	Colorspace source_space, destination_space;
 };
 
 #endif // !defined(_COLORSPACE_CONVERSION_EFFECT_H)

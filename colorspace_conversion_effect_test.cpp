@@ -1,10 +1,10 @@
-// Unit tests for ColorSpaceConversionEffect.
+// Unit tests for ColorspaceConversionEffect.
 
 #include "test_util.h"
 #include "gtest/gtest.h"
 #include "colorspace_conversion_effect.h"
 
-TEST(ColorSpaceConversionEffectTest, Reversible) {
+TEST(ColorspaceConversionEffectTest, Reversible) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
 		1.0f, 1.0f, 1.0f, 1.0f,
@@ -27,7 +27,7 @@ TEST(ColorSpaceConversionEffectTest, Reversible) {
 	expect_equal(data, out_data, 4, 6);
 }
 
-TEST(ColorSpaceConversionEffectTest, sRGB_Primaries) {
+TEST(ColorspaceConversionEffectTest, sRGB_Primaries) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
 		1.0f, 1.0f, 1.0f, 1.0f,
@@ -85,7 +85,7 @@ TEST(ColorSpaceConversionEffectTest, sRGB_Primaries) {
 	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
 }
 
-TEST(ColorSpaceConversionEffectTest, Rec601_525_Primaries) {
+TEST(ColorspaceConversionEffectTest, Rec601_525_Primaries) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
 		1.0f, 1.0f, 1.0f, 1.0f,
@@ -135,7 +135,7 @@ TEST(ColorSpaceConversionEffectTest, Rec601_525_Primaries) {
 	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
 }
 
-TEST(ColorSpaceConversionEffectTest, Rec601_625_Primaries) {
+TEST(ColorspaceConversionEffectTest, Rec601_625_Primaries) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
 		1.0f, 1.0f, 1.0f, 1.0f,
@@ -185,7 +185,7 @@ TEST(ColorSpaceConversionEffectTest, Rec601_625_Primaries) {
 	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
 }
 
-TEST(ColorSpaceConversionEffectTest, sRGBToRec601_525) {
+TEST(ColorspaceConversionEffectTest, sRGBToRec601_525) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
 		1.0f, 1.0f, 1.0f, 1.0f,

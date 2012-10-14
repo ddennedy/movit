@@ -153,8 +153,8 @@ TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {
 	Node *node = effect->invert_node;
 	ASSERT_EQ(1, node->incoming_links.size());
 	ASSERT_EQ(1, node->outgoing_links.size());
-	EXPECT_EQ("ColorSpaceConversionEffect", node->incoming_links[0]->effect->effect_type_id());
-	EXPECT_EQ("ColorSpaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
+	EXPECT_EQ("ColorspaceConversionEffect", node->incoming_links[0]->effect->effect_type_id());
+	EXPECT_EQ("ColorspaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
 	expect_equal(expected_data, out_data, 3, 2);
 }

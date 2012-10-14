@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve)
+EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height)
 {
 	add_input(data, pixel_format, color_space, gamma_curve);
@@ -42,7 +42,7 @@ EffectChainTester::~EffectChainTester()
 	check_error();
 }
 
-Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, ColorSpace color_space, GammaCurve gamma_curve)
+Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
 {
 	ImageFormat format;
 	format.color_space = color_space;
@@ -54,7 +54,7 @@ Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_fo
 	return input;
 }
 
-void EffectChainTester::run(float *out_data, GLenum format, ColorSpace color_space, GammaCurve gamma_curve)
+void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve)
 {
 	ImageFormat image_format;
 	image_format.color_space = color_space;
