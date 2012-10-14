@@ -23,6 +23,7 @@ TESTS += saturation_effect_test
 TESTS += deconvolution_sharpen_effect_test
 TESTS += blur_effect_test
 TESTS += unsharp_mask_effect_test
+TESTS += diffusion_effect_test
 
 # Core.
 LIB_OBJS=util.o widgets.o effect.o effect_chain.o
@@ -78,6 +79,8 @@ deconvolution_sharpen_effect_test: deconvolution_sharpen_effect_test.o $(TEST_OB
 blur_effect_test: blur_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 unsharp_mask_effect_test: unsharp_mask_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+diffusion_effect_test: diffusion_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
