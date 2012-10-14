@@ -18,6 +18,7 @@ TESTS=effect_chain_test
 TESTS += mix_effect_test
 TESTS += gamma_expansion_effect_test
 TESTS += gamma_compression_effect_test
+TESTS += colorspace_conversion_effect_test
 TESTS += saturation_effect_test
 TESTS += deconvolution_sharpen_effect_test
 TESTS += blur_effect_test
@@ -67,6 +68,8 @@ mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
 gamma_expansion_effect_test: gamma_expansion_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 gamma_compression_effect_test: gamma_compression_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+colorspace_conversion_effect_test: colorspace_conversion_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 saturation_effect_test: saturation_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
