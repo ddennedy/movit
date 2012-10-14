@@ -5,11 +5,15 @@
 
 class EffectChainTester {
 public:
-	EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
+	EffectChainTester(const float *data, unsigned width, unsigned height,
+	                  MovitPixelFormat pixel_format = FORMAT_GRAYSCALE,
+	                  Colorspace color_space = COLORSPACE_sRGB,
+	                  GammaCurve gamma_curve = GAMMA_LINEAR);
 	~EffectChainTester();
 	
 	EffectChain *get_chain() { return &chain; }
 	Input *add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
+	Input *add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
 	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
 
 private:

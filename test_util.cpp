@@ -7,10 +7,13 @@
 
 #include <algorithm>
 
-EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
+EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
+                                     MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height)
 {
-	add_input(data, pixel_format, color_space, gamma_curve);
+	if (data != NULL) {
+		add_input(data, pixel_format, color_space, gamma_curve);
+	}
 
 	glGenTextures(1, &texnum);
 	check_error();
@@ -49,6 +52,18 @@ Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_fo
 	format.gamma_curve = gamma_curve;
 
 	FlatInput *input = new FlatInput(format, pixel_format, GL_FLOAT, width, height);
+	input->set_pixel_data(data);
+	chain.add_input(input);
+	return input;
+}
+
+Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
+{
+	ImageFormat format;
+	format.color_space = color_space;
+	format.gamma_curve = gamma_curve;
+
+	FlatInput *input = new FlatInput(format, pixel_format, GL_UNSIGNED_BYTE, width, height);
 	input->set_pixel_data(data);
 	chain.add_input(input);
 	return input;

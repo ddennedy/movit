@@ -135,6 +135,31 @@ TEST(EffectChainTest, RewritingWorksAndGammaConversionsAreInserted) {
 	expect_equal(expected_data, out_data, 3, 2);
 }
 
+TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
+	unsigned char data[] = {
+		0, 64,
+		128, 255,
+	};
+	float expected_data[4] = {
+		1.0f, 0.9771f,
+		0.8983f, 0.0f,
+	};
+	float out_data[2];
+	EffectChainTester tester(NULL, 2, 2);
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	RewritingToInvertEffect *effect = new RewritingToInvertEffect();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	Node *node = effect->invert_node;
+	ASSERT_EQ(1, node->incoming_links.size());
+	ASSERT_EQ(1, node->outgoing_links.size());
+	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
+	EXPECT_EQ("GammaCompressionEffect", node->outgoing_links[0]->effect->effect_type_id());
+
+	expect_equal(expected_data, out_data, 2, 2);
+}
+
 TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {
 	float data[] = {
 		0.0f, 0.25f, 0.3f,
@@ -237,6 +262,23 @@ TEST(EffectChainTest, IdentityThroughsRGBConversions) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	expect_equal(data, out_data, 256, 1);
+}
+
+// Same, but uses the forward sRGB table from the GPU.
+TEST(EffectChainTest, IdentityThroughGPUsRGBConversions) {
+	unsigned char data[256];
+	float expected_data[256];
+	for (unsigned i = 0; i < 256; ++i) {
+		data[i] = i;
+		expected_data[i] = i / 255.0;
+	};
+	float out_data[256];
+	EffectChainTester tester(NULL, 256, 1);
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.get_chain()->add_effect(new IdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	expect_equal(expected_data, out_data, 256, 1);
 }
 
 // Same, for the Rec. 601/709 gamma curve.
