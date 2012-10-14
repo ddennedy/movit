@@ -22,3 +22,5 @@ white_balance_effect_test
 lift_gamma_gain_effect_test
 flat_input_test
 chain-*.frag
+movit.info
+coverage/

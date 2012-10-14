@@ -111,6 +111,7 @@ DEPS=$(OBJS:.o=.d)
 
 clean:
 	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step-*.dot
+	$(RM) -r movit.info coverage/
 
 check: $(TESTS)
 	FAIL=0; \
@@ -119,4 +120,10 @@ check: $(TESTS)
 	done; \
 	exit $$FAIL
 
-.PHONY: clean check all
+# You need to build with COVERAGE=1 to use this target.
+coverage: check
+	lcov -d . -c -o movit.info
+	lcov --remove movit.info '*_test.cpp' '*/test_util.{cpp,h}' -o movit.info
+	genhtml -o coverage movit.info
+
+.PHONY: coverage clean check all
