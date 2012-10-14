@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <Eigen/Core>
 
 #include "opengl.h"
 
@@ -19,9 +20,6 @@ void hsv2rgb(float h, float s, float v, float *r, float *g, float *b);
 // (ie. color luminance is as if S=0).
 void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b);
 
-// Column major (same as OpenGL).
-typedef double Matrix3x3[9];
-
 // Read a file from disk and return its contents.
 // Dies if the file does not exist.
 std::string read_file(const std::string &filename);
@@ -30,17 +28,11 @@ std::string read_file(const std::string &filename);
 // and return the object number.
 GLuint compile_shader(const std::string &shader_src, GLenum type);
 
-// Compute a * b.
-void multiply_3x3_matrices(const Matrix3x3 a, const Matrix3x3 b, Matrix3x3 result);
-
-// Compute M * [x0 x1 x2]'.
-void multiply_3x3_matrix_float3(const Matrix3x3 M, float x0, float x1, float x2, float *y0, float *y1, float *y2);
-
-// Compute m^-1. Result is undefined if the matrix is singular or near-singular.
-void invert_3x3_matrix(const Matrix3x3 m, Matrix3x3 result);
-
 // Print a 3x3 matrix to standard output. Useful for debugging.
-void print_3x3_matrix(const Matrix3x3 m);
+void print_3x3_matrix(const Eigen::Matrix3d &m);
+
+// Output a GLSL 3x3 matrix declaration.
+std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 
 #ifdef NDEBUG
 #define check_error()

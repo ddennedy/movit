@@ -1,9 +1,13 @@
 #include <string.h>
 #include <assert.h>
 
+#include <Eigen/LU>
+
 #include "ycbcr_input.h"
 #include "util.h"
 #include "opengl.h"
+
+using namespace Eigen;
 
 YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        const YCbCrFormat &ycbcr_format,
@@ -175,38 +179,29 @@ std::string YCbCrInput::output_fragment_shader()
 	}
 
 	// Matrix to convert RGB to YCbCr. See e.g. Rec. 601.
-	Matrix3x3 rgb_to_ycbcr;
-	rgb_to_ycbcr[0] = coeff[0];
-	rgb_to_ycbcr[3] = coeff[1];
-	rgb_to_ycbcr[6] = coeff[2];
+	Matrix3d rgb_to_ycbcr;
+	rgb_to_ycbcr(0,0) = coeff[0];
+	rgb_to_ycbcr(0,1) = coeff[1];
+	rgb_to_ycbcr(0,2) = coeff[2];
 
 	float cb_fac = (224.0 / 219.0) / (coeff[0] + coeff[1] + 1.0f - coeff[2]);
-	rgb_to_ycbcr[1] = -coeff[0] * cb_fac;
-	rgb_to_ycbcr[4] = -coeff[1] * cb_fac;
-	rgb_to_ycbcr[7] = (1.0f - coeff[2]) * cb_fac;
+	rgb_to_ycbcr(1,0) = -coeff[0] * cb_fac;
+	rgb_to_ycbcr(1,1) = -coeff[1] * cb_fac;
+	rgb_to_ycbcr(1,2) = (1.0f - coeff[2]) * cb_fac;
 
 	float cr_fac = (224.0 / 219.0) / (1.0f - coeff[0] + coeff[1] + coeff[2]);
-	rgb_to_ycbcr[2] = (1.0f - coeff[0]) * cr_fac;
-	rgb_to_ycbcr[5] = -coeff[1] * cr_fac;
-	rgb_to_ycbcr[8] = -coeff[2] * cr_fac;
+	rgb_to_ycbcr(2,0) = (1.0f - coeff[0]) * cr_fac;
+	rgb_to_ycbcr(2,1) = -coeff[1] * cr_fac;
+	rgb_to_ycbcr(2,2) = -coeff[2] * cr_fac;
 
 	// Inverting the matrix gives us what we need to go from YCbCr back to RGB.
-	Matrix3x3 ycbcr_to_rgb;
-	invert_3x3_matrix(rgb_to_ycbcr, ycbcr_to_rgb);
+	Matrix3d ycbcr_to_rgb = rgb_to_ycbcr.inverse();
 
 	std::string frag_shader;
 
-	char buf[1024];
-	sprintf(buf,
-		"const mat3 PREFIX(inv_ycbcr_matrix) = mat3(\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f);\n",
-		ycbcr_to_rgb[0], ycbcr_to_rgb[1], ycbcr_to_rgb[2],
-		ycbcr_to_rgb[3], ycbcr_to_rgb[4], ycbcr_to_rgb[5],
-		ycbcr_to_rgb[6], ycbcr_to_rgb[7], ycbcr_to_rgb[8]);
-	frag_shader = buf;
+	frag_shader = output_glsl_mat3("PREFIX(inv_ycbcr_matrix)", ycbcr_to_rgb);
 
+	char buf[256];
 	sprintf(buf, "const vec3 PREFIX(offset) = vec3(%.8f, %.8f, %.8f);\n",
 		offset[0], offset[1], offset[2]);
 	frag_shader += buf;

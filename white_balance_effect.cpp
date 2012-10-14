@@ -1,42 +1,44 @@
 #include <math.h>
 #include <assert.h>
 
+#include <Eigen/LU>
+
 #include "white_balance_effect.h"
 #include "util.h"
 #include "opengl.h"
 
+using namespace Eigen;
+
 namespace {
 
 // Temperature is in Kelvin. Formula from http://en.wikipedia.org/wiki/Planckian_locus#Approximation .
-void convert_color_temperature_to_xyz(float T, float *x, float *y, float *z)
+Vector3d convert_color_temperature_to_xyz(float T)
 {
 	double invT = 1.0 / T;
-	double xc, yc;
+	double x, y;
 
 	assert(T >= 1000.0f);
 	assert(T <= 15000.0f);
 
 	if (T <= 4000.0f) {
-		xc = ((-0.2661239e9 * invT - 0.2343580e6) * invT + 0.8776956e3) * invT + 0.179910;
+		x = ((-0.2661239e9 * invT - 0.2343580e6) * invT + 0.8776956e3) * invT + 0.179910;
 	} else {
-		xc = ((-3.0258469e9 * invT + 2.1070379e6) * invT + 0.2226347e3) * invT + 0.240390;
+		x = ((-3.0258469e9 * invT + 2.1070379e6) * invT + 0.2226347e3) * invT + 0.240390;
 	}
 
 	if (T <= 2222.0f) {
-		yc = ((-1.1063814 * xc - 1.34811020) * xc + 2.18555832) * xc - 0.20219683;
+		y = ((-1.1063814 * x - 1.34811020) * x + 2.18555832) * x - 0.20219683;
 	} else if (T <= 4000.0f) {
-		yc = ((-0.9549476 * xc - 1.37418593) * xc + 2.09137015) * xc - 0.16748867;
+		y = ((-0.9549476 * x - 1.37418593) * x + 2.09137015) * x - 0.16748867;
 	} else {
-		yc = (( 3.0817580 * xc - 5.87338670) * xc + 3.75112997) * xc - 0.37001483;
+		y = (( 3.0817580 * x - 5.87338670) * x + 3.75112997) * x - 0.37001483;
 	}
 
-	*x = xc;
-	*y = yc;
-	*z = 1.0 - xc - yc;
+	return Vector3d(x, y, 1.0 - x - y);
 }
 
 // Assuming sRGB primaries, from Wikipedia.
-static const Matrix3x3 rgb_to_xyz_matrix = {
+double rgb_to_xyz_matrix[9] = {
 	0.4124, 0.2126, 0.0193, 
 	0.3576, 0.7152, 0.1192,
 	0.1805, 0.0722, 0.9505,
@@ -54,7 +56,7 @@ static const Matrix3x3 rgb_to_xyz_matrix = {
  * in the first place) assumes the D65 illuminant, and so the D65 illuminant
  * also gives R=G=B in sRGB.
  */
-static const Matrix3x3 xyz_to_lms_matrix = {
+const double xyz_to_lms_matrix[9] = {
 	 0.4002, -0.2263,    0.0,
 	 0.7076,  1.1653,    0.0,
 	-0.0808,  0.0457, 0.9182,
@@ -70,14 +72,18 @@ static const Matrix3x3 xyz_to_lms_matrix = {
  * for the reference color. Since L'=M'=S' and the Y row of the LMS-to-XYZ matrix
  * sums to unity, we know that Y'=L', and it's easy to find the fL that sets Y'=Y.
  */
-static void compute_lms_scaling_factors(float x, float y, float z, float *scale_l, float *scale_m, float *scale_s)
+Vector3d compute_lms_scaling_factors(const Vector3d &xyz)
 {
-	float l, m, s;
-	multiply_3x3_matrix_float3(xyz_to_lms_matrix, x, y, z, &l, &m, &s);
+	Vector3d lms = Map<const Matrix3d>(xyz_to_lms_matrix) * xyz;
+	double l = lms[0];
+	double m = lms[1];
+	double s = lms[2];
 
-	*scale_l = y / l;
-	*scale_m = *scale_l * (l / m);
-	*scale_s = *scale_l * (l / s);
+	double scale_l = xyz[1] / l;
+	double scale_m = scale_l * (l / m);
+	double scale_s = scale_l * (l / s);
+
+	return Vector3d(scale_l, scale_m, scale_s);
 }
 
 }  // namespace
@@ -97,14 +103,9 @@ std::string WhiteBalanceEffect::output_fragment_shader()
 
 void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
-	float x, y, z;
-	multiply_3x3_matrix_float3(rgb_to_xyz_matrix, neutral_color.r, neutral_color.g, neutral_color.b, &x, &y, &z);
-
-	float l, m, s;
-	multiply_3x3_matrix_float3(xyz_to_lms_matrix, x, y, z, &l, &m, &s);
-
-	float l_scale, m_scale, s_scale;
-	compute_lms_scaling_factors(x, y, z, &l_scale, &m_scale, &s_scale);
+	Vector3d rgb(neutral_color.r, neutral_color.g, neutral_color.b);
+	Vector3d xyz = Map<const Matrix3d>(rgb_to_xyz_matrix) * rgb;
+	Vector3d lms_scale = compute_lms_scaling_factors(xyz);
 
 	/*
 	 * Now apply the color balance. Simply put, we find the chromacity point
@@ -114,37 +115,26 @@ void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string
 	 * since the D65 illuminant does not exactly match the results of T=6500K);
 	 * we normalize so that T=6500K really is a no-op.
 	 */
-	float white_x, white_y, white_z, l_scale_white, m_scale_white, s_scale_white;
-	convert_color_temperature_to_xyz(output_color_temperature, &white_x, &white_y, &white_z);
-	compute_lms_scaling_factors(white_x, white_y, white_z, &l_scale_white, &m_scale_white, &s_scale_white);
-	
-	float ref_x, ref_y, ref_z, l_scale_ref, m_scale_ref, s_scale_ref;
-	convert_color_temperature_to_xyz(6500.0f, &ref_x, &ref_y, &ref_z);
-	compute_lms_scaling_factors(ref_x, ref_y, ref_z, &l_scale_ref, &m_scale_ref, &s_scale_ref);
-	
-	l_scale *= l_scale_ref / l_scale_white;
-	m_scale *= m_scale_ref / m_scale_white;
-	s_scale *= s_scale_ref / s_scale_white;
+	Vector3d white_xyz = convert_color_temperature_to_xyz(output_color_temperature);
+	Vector3d lms_scale_white = compute_lms_scaling_factors(white_xyz);
+
+	Vector3d ref_xyz = convert_color_temperature_to_xyz(6500.0f);
+	Vector3d lms_scale_ref = compute_lms_scaling_factors(ref_xyz);
+
+	lms_scale[0] *= lms_scale_ref[0] / lms_scale_white[0];
+	lms_scale[1] *= lms_scale_ref[1] / lms_scale_white[1];
+	lms_scale[2] *= lms_scale_ref[2] / lms_scale_white[2];
 	
 	/*
 	 * Concatenate all the different linear operations into a single 3x3 matrix.
 	 * Note that since we postmultiply our vectors, the order of the matrices
 	 * has to be the opposite of the execution order.
 	 */
-	Matrix3x3 lms_to_xyz_matrix, xyz_to_rgb_matrix;
-	invert_3x3_matrix(xyz_to_lms_matrix, lms_to_xyz_matrix);
-	invert_3x3_matrix(rgb_to_xyz_matrix, xyz_to_rgb_matrix);
-
-	Matrix3x3 temp, temp2, corr_matrix;
-	Matrix3x3 lms_scale_matrix = {
-		l_scale,    0.0f,    0.0f,
-		   0.0f, m_scale,    0.0f,
-		   0.0f,    0.0f, s_scale,
-	};
-	multiply_3x3_matrices(xyz_to_rgb_matrix, lms_to_xyz_matrix, temp);
-	multiply_3x3_matrices(temp, lms_scale_matrix, temp2);
-	multiply_3x3_matrices(temp2, xyz_to_lms_matrix, temp);
-	multiply_3x3_matrices(temp, rgb_to_xyz_matrix, corr_matrix);
-
+	Matrix3d corr_matrix =
+		Map<const Matrix3d>(rgb_to_xyz_matrix).inverse() *
+		Map<const Matrix3d>(xyz_to_lms_matrix).inverse() *
+		lms_scale.asDiagonal() *
+		Map<const Matrix3d>(xyz_to_lms_matrix) *
+		Map<const Matrix3d>(rgb_to_xyz_matrix);
 	set_uniform_mat3(glsl_program_num, prefix, "correction_matrix", corr_matrix);
 }

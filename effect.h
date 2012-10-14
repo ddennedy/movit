@@ -16,6 +16,8 @@
 
 #include <assert.h>
 
+#include <Eigen/Core>
+
 #include "opengl.h"
 #include "util.h"
 
@@ -45,7 +47,7 @@ void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
-void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Matrix3x3 matrix);
+void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Eigen::Matrix3d &matrix);
 
 class Effect {
 public:

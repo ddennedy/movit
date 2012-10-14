@@ -102,52 +102,25 @@ GLuint compile_shader(const std::string &shader_src, GLenum type)
 	return obj;
 }
 
-void multiply_3x3_matrices(const Matrix3x3 a, const Matrix3x3 b, Matrix3x3 result)
+void print_3x3_matrix(const Eigen::Matrix3d& m)
 {
-        result[0] = a[0] * b[0] + a[3] * b[1] + a[6] * b[2];
-        result[1] = a[1] * b[0] + a[4] * b[1] + a[7] * b[2];
-        result[2] = a[2] * b[0] + a[5] * b[1] + a[8] * b[2];
-
-        result[3] = a[0] * b[3] + a[3] * b[4] + a[6] * b[5];
-        result[4] = a[1] * b[3] + a[4] * b[4] + a[7] * b[5];
-        result[5] = a[2] * b[3] + a[5] * b[4] + a[8] * b[5];
-
-        result[6] = a[0] * b[6] + a[3] * b[7] + a[6] * b[8];
-        result[7] = a[1] * b[6] + a[4] * b[7] + a[7] * b[8];
-        result[8] = a[2] * b[6] + a[5] * b[7] + a[8] * b[8];
-}
-
-void multiply_3x3_matrix_float3(const Matrix3x3 M, float x0, float x1, float x2, float *y0, float *y1, float *y2)
-{
-	*y0 = M[0] * x0 + M[3] * x1 + M[6] * x2;
-	*y1 = M[1] * x0 + M[4] * x1 + M[7] * x2;
-	*y2 = M[2] * x0 + M[5] * x1 + M[8] * x2;
-}
-
-void invert_3x3_matrix(const Matrix3x3 m, Matrix3x3 result)
-{
-	double inv_det = 1.0 / (
-		m[6] * m[1] * m[5] - m[6] * m[2] * m[4] -
-		m[3] * m[1] * m[8] + m[3] * m[2] * m[7] +
-		m[0] * m[4] * m[8] - m[0] * m[5] * m[7]);
-
-	result[0] = inv_det * (m[4] * m[8] - m[5] * m[7]);
-	result[1] = inv_det * (m[2] * m[7] - m[1] * m[8]);
-	result[2] = inv_det * (m[1] * m[5] - m[2] * m[4]);
-
-	result[3] = inv_det * (m[6] * m[5] - m[3] * m[8]);
-	result[4] = inv_det * (m[0] * m[8] - m[6] * m[2]);
-	result[5] = inv_det * (m[3] * m[2] - m[0] * m[5]);
-
-	result[6] = inv_det * (m[3] * m[7] - m[6] * m[4]);
-	result[7] = inv_det * (m[6] * m[1] - m[0] * m[7]);
-	result[8] = inv_det * (m[0] * m[4] - m[3] * m[1]);
-}
-
-void print_3x3_matrix(const Matrix3x3 m)
-{
-	printf("%6.4f %6.4f %6.4f\n", m[0], m[3], m[6]);
-	printf("%6.4f %6.4f %6.4f\n", m[1], m[4], m[7]);
-	printf("%6.4f %6.4f %6.4f\n", m[2], m[5], m[8]);
+	printf("%6.4f %6.4f %6.4f\n", m(0,0), m(0,1), m(0,2));
+	printf("%6.4f %6.4f %6.4f\n", m(1,0), m(1,1), m(1,2));
+	printf("%6.4f %6.4f %6.4f\n", m(2,0), m(2,1), m(2,2));
 	printf("\n");
+}
+
+std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m)
+{
+	char buf[1024];
+	sprintf(buf,
+		"const mat3 %s = mat3(\n"
+		"    %.8f, %.8f, %.8f,\n"
+		"    %.8f, %.8f, %.8f,\n"
+		"    %.8f, %.8f, %.8f);\n\n",
+		name.c_str(),
+		m(0,0), m(1,0), m(2,0),
+		m(0,1), m(1,1), m(2,1),
+		m(0,2), m(1,2), m(2,2));
+	return buf;
 }

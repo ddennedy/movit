@@ -1,7 +1,11 @@
 #include <assert.h>
 
+#include <Eigen/LU>
+
 #include "colorspace_conversion_effect.h"
 #include "util.h"
+
+using namespace Eigen;
 
 // Color coordinates from Rec. 709; sRGB uses the same primaries.
 double rec709_x_R = 0.640,  rec709_x_G = 0.300,  rec709_x_B = 0.150;
@@ -24,13 +28,10 @@ ColorspaceConversionEffect::ColorspaceConversionEffect()
 	register_int("destination_space", (int *)&destination_space);
 }
 
-void get_xyz_matrix(Colorspace space, Matrix3x3 m)
+Matrix3d get_xyz_matrix(Colorspace space)
 {
 	if (space == COLORSPACE_XYZ) {
-		m[0] = 1.0f; m[3] = 0.0f; m[6] = 0.0f;
-		m[1] = 0.0f; m[4] = 1.0f; m[7] = 0.0f;
-		m[2] = 0.0f; m[5] = 0.0f; m[8] = 1.0f;
-		return;
+		return Matrix3d::Identity();
 	}
 
 	double x_R, x_G, x_B;
@@ -60,9 +61,11 @@ void get_xyz_matrix(Colorspace space, Matrix3x3 m)
 
 	// Find the XYZ coordinates of D65 (white point for both Rec. 601 and 709),
 	// normalized so that Y=1.
-	double d65_X = d65_x / d65_y;
-	double d65_Y = 1.0;
-	double d65_Z = (1.0 - d65_x - d65_y) / d65_y;
+	Vector3d d65_XYZ(
+		d65_x / d65_y,
+		1.0,
+		(1.0 - d65_x - d65_y) / d65_y
+	);
 
 	// We have, for each primary (example is with red):
 	//
@@ -91,34 +94,37 @@ void get_xyz_matrix(Colorspace space, Matrix3x3 m)
 	//
 	// Which we can solve for (Y_R, Y_G, Y_B) by inverting a 3x3 matrix.
 
-	Matrix3x3 temp, inverted;
-	temp[0] = x_R / y_R;
-	temp[3] = x_G / y_G;
-	temp[6] = x_B / y_B;
+	Matrix3d temp;
+	temp(0,0) = x_R / y_R;
+	temp(0,1) = x_G / y_G;
+	temp(0,2) = x_B / y_B;
 
-	temp[1] = 1.0;
-	temp[4] = 1.0;
-	temp[7] = 1.0;
+	temp(1,0) = 1.0;
+	temp(1,1) = 1.0;
+	temp(1,2) = 1.0;
 
-	temp[2] = z_R / y_R;
-	temp[5] = z_G / y_G;
-	temp[8] = z_B / y_B;
+	temp(2,0) = z_R / y_R;
+	temp(2,1) = z_G / y_G;
+	temp(2,2) = z_B / y_B;
 
-	invert_3x3_matrix(temp, inverted);
-	float Y_R, Y_G, Y_B;
-	multiply_3x3_matrix_float3(inverted, d65_X, d65_Y, d65_Z, &Y_R, &Y_G, &Y_B);
+	Vector3d Y_RGB = temp.inverse() * d65_XYZ;
 
 	// Now convert xyY -> XYZ.
-	double X_R = temp[0] * Y_R;
-	double Z_R = temp[2] * Y_R;
-	double X_G = temp[3] * Y_G;
-	double Z_G = temp[5] * Y_G;
-	double X_B = temp[6] * Y_B;
-	double Z_B = temp[8] * Y_B;
+	double X_R = temp(0,0) * Y_RGB[0];
+	double Z_R = temp(2,0) * Y_RGB[0];
 
-	m[0] = X_R; m[3] = X_G; m[6] = X_B;
-	m[1] = Y_R; m[4] = Y_G; m[7] = Y_B;
-	m[2] = Z_R; m[5] = Z_G; m[8] = Z_B;
+	double X_G = temp(0,1) * Y_RGB[1];
+	double Z_G = temp(2,1) * Y_RGB[1];
+
+	double X_B = temp(0,2) * Y_RGB[2];
+	double Z_B = temp(2,2) * Y_RGB[2];
+
+	Matrix3d m;
+	m(0,0) = X_R;      m(0,1) = X_G;      m(0,2) = X_B;
+	m(1,0) = Y_RGB[0]; m(1,1) = Y_RGB[1]; m(1,2) = Y_RGB[2];
+	m(2,0) = Z_R;      m(2,1) = Z_G;      m(2,2) = Z_B;
+
+	return m;
 }
 
 std::string ColorspaceConversionEffect::output_fragment_shader()
@@ -129,26 +135,10 @@ std::string ColorspaceConversionEffect::output_fragment_shader()
 	//
 	// Since we right-multiply the RGB column vector, the matrix
 	// concatenation order needs to be the opposite of the operation order.
-	Matrix3x3 m;
+	Matrix3d source_space_to_xyz = get_xyz_matrix(source_space);
+	Matrix3d xyz_to_destination_space = get_xyz_matrix(destination_space).inverse();
+	Matrix3d m = xyz_to_destination_space * source_space_to_xyz;
 
-	Matrix3x3 source_space_to_xyz;
-	Matrix3x3 destination_space_to_xyz;
-	Matrix3x3 xyz_to_destination_space;
-
-	get_xyz_matrix(source_space, source_space_to_xyz);
-	get_xyz_matrix(destination_space, destination_space_to_xyz);
-	invert_3x3_matrix(destination_space_to_xyz, xyz_to_destination_space);
-	
-	multiply_3x3_matrices(xyz_to_destination_space, source_space_to_xyz, m);
-
-	char buf[1024];
-	sprintf(buf,
-		"const mat3 PREFIX(conversion_matrix) = mat3(\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f);\n\n",
-		m[0], m[1], m[2],
-		m[3], m[4], m[5],
-		m[6], m[7], m[8]);
-	return buf + read_file("colorspace_conversion_effect.frag");
+	return output_glsl_mat3("PREFIX(conversion_matrix)", m) +
+		read_file("colorspace_conversion_effect.frag");
 }
