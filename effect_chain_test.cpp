@@ -135,8 +135,32 @@ TEST(EffectChainTest, RewritingWorksAndGammaConversionsAreInserted) {
 	expect_equal(expected_data, out_data, 3, 2);
 }
 
+TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f,
+		0.75f, 1.0f, 1.0f,
+	};
+	float expected_data[6] = {
+		1.0f, 0.75f, 0.7f,
+		0.25f, 0.0f, 0.0f,
+	};
+	float out_data[6];
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_REC_601_525, GAMMA_LINEAR);
+	RewritingToInvertEffect *effect = new RewritingToInvertEffect();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RED, COLORSPACE_REC_601_525, GAMMA_LINEAR);
+
+	Node *node = effect->invert_node;
+	ASSERT_EQ(1, node->incoming_links.size());
+	ASSERT_EQ(1, node->outgoing_links.size());
+	EXPECT_EQ("ColorSpaceConversionEffect", node->incoming_links[0]->effect->effect_type_id());
+	EXPECT_EQ("ColorSpaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
+
+	expect_equal(expected_data, out_data, 3, 2);
+}
+
 // Like RewritingToInvertEffect, but splicing in a MirrorEffect instead,
-// which does not need linear light.
+// which does not need linear light or sRGB primaries.
 class RewritingToMirrorEffect : public Effect {
 public:
 	RewritingToMirrorEffect() {}
@@ -168,6 +192,29 @@ TEST(EffectChainTest, NoGammaConversionsWhenLinearLightNotNeeded) {
 	RewritingToMirrorEffect *effect = new RewritingToMirrorEffect();
 	tester.get_chain()->add_effect(effect);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	Node *node = effect->mirror_node;
+	ASSERT_EQ(1, node->incoming_links.size());
+	EXPECT_EQ(0, node->outgoing_links.size());
+	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
+
+	expect_equal(expected_data, out_data, 3, 2);
+}
+
+TEST(EffectChainTest, NoColorspaceConversionsWhensRGBPrimariesNotNeeded) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f,
+		0.75f, 1.0f, 1.0f,
+	};
+	float expected_data[6] = {
+		0.3f, 0.25f, 0.0f,
+		1.0f, 1.0f, 0.75f,
+	};
+	float out_data[6];
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_REC_601_525, GAMMA_LINEAR);
+	RewritingToMirrorEffect *effect = new RewritingToMirrorEffect();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RED, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 
 	Node *node = effect->mirror_node;
 	ASSERT_EQ(1, node->incoming_links.size());
