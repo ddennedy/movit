@@ -19,5 +19,6 @@ blur_effect_test
 unsharp_mask_effect_test
 diffusion_effect_test
 white_balance_effect_test
+lift_gamma_gain_effect_test
 flat_input_test
 chain-*.frag
