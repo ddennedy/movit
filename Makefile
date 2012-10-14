@@ -24,6 +24,7 @@ TESTS += deconvolution_sharpen_effect_test
 TESTS += blur_effect_test
 TESTS += unsharp_mask_effect_test
 TESTS += diffusion_effect_test
+TESTS += white_balance_effect_test
 TESTS += flat_input_test
 
 # Core.
@@ -82,6 +83,8 @@ blur_effect_test: blur_effect_test.o $(TEST_OBJS) libmovit.a
 unsharp_mask_effect_test: unsharp_mask_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 diffusion_effect_test: diffusion_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+white_balance_effect_test: white_balance_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 flat_input_test: flat_input_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
