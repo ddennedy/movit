@@ -9,7 +9,7 @@
 
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
-	: chain(width, height), width(width), height(height)
+	: chain(width, height), width(width), height(height), finalized(false)
 {
 	if (data != NULL) {
 		add_input(data, pixel_format, color_space, gamma_curve);
@@ -71,11 +71,14 @@ Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat 
 
 void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve)
 {
-	ImageFormat image_format;
-	image_format.color_space = color_space;
-	image_format.gamma_curve = gamma_curve;
-	chain.add_output(image_format);
-	chain.finalize();
+	if (!finalized) {
+		ImageFormat image_format;
+		image_format.color_space = color_space;
+		image_format.gamma_curve = gamma_curve;
+		chain.add_output(image_format);
+		chain.finalize();
+		finalized = true;
+	}
 
 	chain.render_to_fbo(fbo, width, height);
 
