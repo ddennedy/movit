@@ -213,22 +213,45 @@ std::string YCbCrInput::output_fragment_shader()
 	// sample is *, and subsampling is 3x3, the situation with chroma
 	// center in (0.5, 0.5) looks approximately like this:
 	//
-	//   X     X
-	//      *   
-  	//   X     X
+	//   X   X
+	//     *   
+  	//   X   X
 	//
 	// If, on the other hand, chroma center is in (0.0, 0.5) (common
 	// for e.g. MPEG-4), the figure changes to:
 	//
-	//   X     X
+	//   X   X
 	//   *      
-  	//   X     X
+  	//   X   X
 	//
-	// Obviously, the chroma plane here needs to be moved to the left,
-	// which means _adding_ 0.5 to the texture coordinates when sampling
-	// chroma.
-	float chroma_offset_x = (0.5f - ycbcr_format.chroma_x_position) / widths[1];
-	float chroma_offset_y = (0.5f - ycbcr_format.chroma_y_position) / heights[1];
+	// In other words, (0.0, 0.0) means that the chroma sample is exactly
+	// co-sited on top of the top-left luma sample. Note, however, that
+	// this is _not_ 0.5 texels to the left, since the OpenGL's texel center
+	// is in (0.5, 0.5); it is in (0.25, 0.25). In a sense, the four luma samples
+	// define a square where chroma position (0.0, 0.0) is in texel position
+	// (0.25, 0.25) and chroma position (1.0, 1.0) is in texel position (0.75, 0.75)
+	// (the outer border shows the borders of the texel itself, ie. from
+	// (0, 0) to (1, 1)):
+	//
+	//  ---------
+	// |         |
+	// |  X---X  |
+	// |  | * |  |
+  	// |  X---X  |
+	// |         |
+	//  ---------
+	//
+	// Also note that if we have no subsampling, the square will have zero
+	// area and the chroma position does not matter at all.
+	float chroma_x_local_position =
+		(0.5 + ycbcr_format.chroma_x_position * (ycbcr_format.chroma_subsampling_x - 1)) /
+		ycbcr_format.chroma_subsampling_x;
+	float chroma_y_local_position =
+		(0.5 + ycbcr_format.chroma_y_position * (ycbcr_format.chroma_subsampling_y - 1)) /
+		ycbcr_format.chroma_subsampling_y;
+
+	float chroma_offset_x = (0.5f - chroma_x_local_position) / widths[1];
+	float chroma_offset_y = (0.5f - chroma_y_local_position) / heights[1];
 	sprintf(buf, "const vec2 PREFIX(chroma_offset) = vec2(%.8f, %.8f);\n",
 		chroma_offset_x, chroma_offset_y);
 	frag_shader += buf;
