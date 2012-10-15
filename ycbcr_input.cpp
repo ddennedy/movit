@@ -24,12 +24,10 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	pbos[0] = pbos[1] = pbos[2] = 0;
 	texture_num[0] = texture_num[1] = texture_num[2] = 0;
 
-	pitch[0] = pitch[1] = pitch[2] = width;
-
 	assert(width % ycbcr_format.chroma_subsampling_x == 0);
-	widths[0] = width;
-	widths[1] = width / ycbcr_format.chroma_subsampling_x;
-	widths[2] = width / ycbcr_format.chroma_subsampling_x;
+	pitch[0] = widths[0] = width;
+	pitch[1] = widths[1] = width / ycbcr_format.chroma_subsampling_x;
+	pitch[2] = widths[2] = width / ycbcr_format.chroma_subsampling_x;
 
 	assert(height % ycbcr_format.chroma_subsampling_y == 0);
 	heights[0] = height;
