@@ -253,12 +253,20 @@ std::string YCbCrInput::output_fragment_shader()
 		scale[0], scale[1], scale[2]);
 	frag_shader += buf;
 
-	float chroma_offset_x = compute_chroma_offset(
-		ycbcr_format.chroma_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
-	float chroma_offset_y = compute_chroma_offset(
-		ycbcr_format.chroma_y_position, ycbcr_format.chroma_subsampling_y, heights[1]);
-	sprintf(buf, "const vec2 PREFIX(chroma_offset) = vec2(%.8f, %.8f);\n",
-		chroma_offset_x, chroma_offset_y);
+	float cb_offset_x = compute_chroma_offset(
+		ycbcr_format.cb_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
+	float cb_offset_y = compute_chroma_offset(
+		ycbcr_format.cb_y_position, ycbcr_format.chroma_subsampling_y, heights[1]);
+	sprintf(buf, "const vec2 PREFIX(cb_offset) = vec2(%.8f, %.8f);\n",
+		cb_offset_x, cb_offset_y);
+	frag_shader += buf;
+
+	float cr_offset_x = compute_chroma_offset(
+		ycbcr_format.cr_x_position, ycbcr_format.chroma_subsampling_x, widths[2]);
+	float cr_offset_y = compute_chroma_offset(
+		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
+	sprintf(buf, "const vec2 PREFIX(cr_offset) = vec2(%.8f, %.8f);\n",
+		cr_offset_x, cr_offset_y);
 	frag_shader += buf;
 
 	frag_shader += read_file("ycbcr_input.frag");

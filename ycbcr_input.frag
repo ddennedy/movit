@@ -10,8 +10,8 @@ vec4 FUNCNAME(vec2 tc) {
 
 	vec3 ycbcr;
 	ycbcr.x = texture2D(PREFIX(tex_y), tc).x;
-	ycbcr.y = texture2D(PREFIX(tex_cb), tc + PREFIX(chroma_offset)).x;
-	ycbcr.z = texture2D(PREFIX(tex_cr), tc + PREFIX(chroma_offset)).x;
+	ycbcr.y = texture2D(PREFIX(tex_cb), tc + PREFIX(cb_offset)).x;
+	ycbcr.z = texture2D(PREFIX(tex_cr), tc + PREFIX(cr_offset)).x;
 
 	ycbcr -= PREFIX(offset);
 	ycbcr *= PREFIX(scale);

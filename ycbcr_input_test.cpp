@@ -40,8 +40,10 @@ TEST(YCbCrInput, Simple444) {
 	ycbcr_format.full_range = false;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
-	ycbcr_format.chroma_x_position = 0.5f;
-	ycbcr_format.chroma_y_position = 0.5f;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
 
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(0, y);
@@ -92,8 +94,10 @@ TEST(YCbCrInput, FullRangeRec601) {
 	ycbcr_format.full_range = true;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
-	ycbcr_format.chroma_x_position = 0.5f;
-	ycbcr_format.chroma_y_position = 0.5f;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
 
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(0, y);
@@ -143,8 +147,10 @@ TEST(YCbCrInput, Rec709) {
 	ycbcr_format.full_range = false;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
-	ycbcr_format.chroma_x_position = 0.5f;
-	ycbcr_format.chroma_y_position = 0.5f;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
 
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(0, y);
@@ -202,8 +208,10 @@ TEST(YCbCrInput, Subsampling420) {
 	ycbcr_format.full_range = false;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 2;
-	ycbcr_format.chroma_x_position = 0.5f;
-	ycbcr_format.chroma_y_position = 0.5f;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
 
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(0, y);
@@ -261,8 +269,10 @@ TEST(YCbCrInput, Subsampling420WithNonCenteredSamples) {
 	ycbcr_format.full_range = false;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 2;
-	ycbcr_format.chroma_x_position = 0.0f;
-	ycbcr_format.chroma_y_position = 0.5f;
+	ycbcr_format.cb_x_position = 0.0f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.0f;
+	ycbcr_format.cr_y_position = 0.5f;
 
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(0, y);
@@ -275,4 +285,75 @@ TEST(YCbCrInput, Subsampling420WithNonCenteredSamples) {
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
 	// so we need some leeway.
 	expect_equal(expected_data, out_data, width, height, 0.01, 0.001);
+}
+
+// Yes, some 4:2:2 formats actually have this craziness.
+TEST(YCbCrInput, DifferentCbAndCrPositioning) {
+	const int width = 4;
+	const int height = 4;
+
+	unsigned char y[width * height] = {
+		126, 126, 126, 126,
+		126, 126, 126, 126,
+		126, 126, 126, 126,
+		126, 126, 126, 126,
+	};
+	unsigned char cb[(width/2) * height] = {
+		64, 128,
+		128, 192,
+		128, 128,
+		128, 128,
+	};
+	unsigned char cr[(width/2) * height] = {
+		48, 128,
+		128, 208,
+		128, 128,
+		128, 128,
+	};
+
+	// Chroma samples in this csae are always co-sited with a luma sample;
+	// their associated color values and position are marked off in comments.
+	float expected_data_blue[width * height] = {
+		   0.000 /* 0.0 */, 0.250,           0.500 /* 0.5 */, 0.500, 
+		   0.500 /* 0.5 */, 0.750,           1.000 /* 1.0 */, 1.000, 
+		   0.500 /* 0.5 */, 0.500,           0.500 /* 0.5 */, 0.500, 
+		   0.500 /* 0.5 */, 0.500,           0.500 /* 0.5 */, 0.500, 
+	};
+	float expected_data_red[width * height] = {
+		   0.000,           0.000 /* 0.0 */, 0.250,           0.500 /* 0.5 */, 
+		   0.500,           0.500 /* 0.5 */, 0.750,           1.000 /* 1.0 */, 
+		   0.500,           0.500 /* 0.5 */, 0.500,           0.500 /* 0.5 */, 
+		   0.500,           0.500 /* 0.5 */, 0.500,           0.500 /* 0.5 */, 
+	};
+	float out_data[width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.chroma_subsampling_x = 2;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.0f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 1.0f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	expect_equal(expected_data_red, out_data, width, height, 0.02, 0.002);
+
+	tester.run(out_data, GL_BLUE, COLORSPACE_sRGB, GAMMA_sRGB);
+	expect_equal(expected_data_blue, out_data, width, height, 0.01, 0.001);
 }

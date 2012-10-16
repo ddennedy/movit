@@ -22,7 +22,8 @@ struct YCbCrFormat {
 
 	// Positioning of the chroma samples. MPEG-1 and JPEG is (0.5, 0.5);
 	// MPEG-2 and newer typically are (0.0, 0.5).
-	float chroma_x_position, chroma_y_position;
+	float cb_x_position, cb_y_position;
+	float cr_x_position, cr_y_position;
 };
 
 class YCbCrInput : public Input {
