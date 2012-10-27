@@ -40,6 +40,51 @@ unsigned gcd(unsigned a, unsigned b)
 	return a;
 }
 
+unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsigned max_samples_saved)
+{
+	unsigned num_samples_saved = 0;
+	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
+		// Copy the sample directly; it will be overwritten later if we can combine.
+		if (dst != NULL) {
+			dst[j * 2 + 0] = src[i * 2 + 0];
+			dst[j * 2 + 1] = src[i * 2 + 1];
+		}
+
+		if (i == num_src_samples - 1) {
+			// Last sample; cannot combine.
+			continue;
+		}
+		if (num_samples_saved == max_samples_saved) {
+			// We could maybe save more here, but other rows can't, so don't bother.
+			continue;
+		}
+
+		float w1 = src[i * 2 + 0];
+		float w2 = src[(i + 1) * 2 + 0];
+		if (w1 * w2 < 0.0f) {
+			// Differing signs; cannot combine.
+			continue;
+		}
+
+		float pos1 = src[i * 2 + 1];
+		float pos2 = src[(i + 1) * 2 + 1];
+		assert(pos2 > pos1);
+
+		float offset, total_weight;
+		combine_two_samples(w1, w2, &offset, &total_weight);
+
+		// OK, we can combine this and the next sample.
+		if (dst != NULL) {
+			dst[j * 2 + 0] = total_weight;
+			dst[j * 2 + 1] = pos1 + offset * (pos2 - pos1);
+		}
+
+		++i;  // Skip the next sample.
+		++num_samples_saved;
+	}
+	return num_samples_saved;
+}
+
 }  // namespace
 
 ResampleEffect::ResampleEffect()
@@ -153,8 +198,6 @@ std::string SingleResamplePassEffect::output_fragment_shader()
 //
 // For horizontal scaling, we fill in the exact same texture;
 // the shader just interprets is differently.
-//
-// TODO: Support optimization using free linear sampling, like in BlurEffect.
 void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
 	unsigned src_size, dst_size;
@@ -231,7 +274,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	// Thus, the kernel width will vary with how much we scale.
 	float radius_scaling_factor = std::min(float(dst_size) / float(src_size), 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
-	src_samples = int_radius * 2 + 1;
+	int src_samples = int_radius * 2 + 1;
 	float *weights = new float[dst_samples * src_samples * 2];
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
@@ -248,6 +291,31 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 		}
 	}
 
+	// Now make use of the bilinear filtering in the GPU to reduce the number of samples
+	// we need to make. This is a bit more complex than BlurEffect since we cannot combine
+	// two neighboring samples if their weights have differing signs, so we first need to
+	// figure out the maximum number of samples. Then, we downconvert all the weights to
+	// that number -- we could have gone for a variable-length system, but this is simpler,
+	// and the gains would probably be offset by the extra cost of checking when to stop.
+	//
+	// The greedy strategy for combining samples is optimal.
+	src_bilinear_samples = 0;
+	for (unsigned y = 0; y < dst_samples; ++y) {
+		unsigned num_samples_saved = combine_samples(weights + (y * src_samples) * 2, NULL, src_samples, UINT_MAX);
+		src_bilinear_samples = std::max<int>(src_bilinear_samples, src_samples - num_samples_saved);
+	}
+
+	// Now that we know the right width, actually combine the samples.
+	float *bilinear_weights = new float[dst_samples * src_bilinear_samples * 2];
+	for (unsigned y = 0; y < dst_samples; ++y) {
+		unsigned num_samples_saved = combine_samples(
+			weights + (y * src_samples) * 2,
+			bilinear_weights + (y * src_bilinear_samples) * 2,
+			src_samples,
+			src_samples - src_bilinear_samples);
+		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
+	}	
+
 	// Encode as a two-component texture. Note the GL_REPEAT.
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
@@ -259,10 +327,11 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_samples, dst_samples, 0, GL_RG, GL_FLOAT, weights);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_FLOAT, bilinear_weights);
 	check_error();
 
 	delete[] weights;
+	delete[] bilinear_weights;
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
@@ -287,13 +356,13 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::
 
 	set_uniform_int(glsl_program_num, prefix, "sample_tex", *sampler_num);
 	++sampler_num;
-	set_uniform_int(glsl_program_num, prefix, "num_samples", src_samples);
+	set_uniform_int(glsl_program_num, prefix, "num_samples", src_bilinear_samples);
 	set_uniform_float(glsl_program_num, prefix, "num_loops", num_loops);
 	set_uniform_float(glsl_program_num, prefix, "slice_height", slice_height);
 
 	// Instructions for how to convert integer sample numbers to positions in the weight texture.
-	set_uniform_float(glsl_program_num, prefix, "sample_x_scale", 1.0f / src_samples);
-	set_uniform_float(glsl_program_num, prefix, "sample_x_offset", 0.5f / src_samples);
+	set_uniform_float(glsl_program_num, prefix, "sample_x_scale", 1.0f / src_bilinear_samples);
+	set_uniform_float(glsl_program_num, prefix, "sample_x_offset", 0.5f / src_bilinear_samples);
 
 	// We specifically do not want mipmaps on the input texture;
 	// they break minification.
