@@ -3,8 +3,10 @@
 
 uniform sampler2D PREFIX(sample_tex);
 uniform int PREFIX(num_samples);
+uniform float PREFIX(num_loops);
 uniform float PREFIX(sample_x_scale);
 uniform float PREFIX(sample_x_offset);
+uniform float PREFIX(slice_height);
 
 // Sample a single weight. First fetch information about where to sample
 // and the weight from sample_tex, and then read the pixel itself.
@@ -13,16 +15,16 @@ vec4 PREFIX(do_sample)(vec2 tc, int i)
 	vec2 sample_tc;
 	sample_tc.x = float(i) * PREFIX(sample_x_scale) + PREFIX(sample_x_offset);
 #if DIRECTION_VERTICAL
-	sample_tc.y = tc.y;
+	sample_tc.y = tc.y * PREFIX(num_loops);
 #else
-	sample_tc.y = tc.x;
+	sample_tc.y = tc.x * PREFIX(num_loops);
 #endif
 	vec2 sample = texture2D(PREFIX(sample_tex), sample_tc).rg;
 
 #if DIRECTION_VERTICAL
-	tc.y = sample.g;
+	tc.y = sample.g + floor(sample_tc.y) * PREFIX(slice_height);
 #else
-	tc.x = sample.g;
+	tc.x = sample.g + floor(sample_tc.y) * PREFIX(slice_height);
 #endif
 	return vec4(sample.r) * INPUT(tc);
 }

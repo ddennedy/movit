@@ -87,7 +87,8 @@ private:
 	GLuint texnum;
 	int input_width, input_height, output_width, output_height;
 	int last_input_width, last_input_height, last_output_width, last_output_height;
-	int src_samples;
+	int src_samples, num_loops;
+	float slice_height;
 };
 
 #endif // !defined(_RESAMPLE_EFFECT_H)

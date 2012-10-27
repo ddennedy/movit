@@ -29,6 +29,17 @@ float lanczos_weight(float x, float a)
 	}
 }
 
+// Euclid's algorithm, from Wikipedia.
+unsigned gcd(unsigned a, unsigned b)
+{
+	while (b != 0) {
+		unsigned t = b;
+		b = a % b;
+		a = t;
+	}
+	return a;
+}
+
 }  // namespace
 
 ResampleEffect::ResampleEffect()
@@ -143,7 +154,6 @@ std::string SingleResamplePassEffect::output_fragment_shader()
 // For horizontal scaling, we fill in the exact same texture;
 // the shader just interprets is differently.
 //
-// TODO: Support optimization of wrapping the sample texture.
 // TODO: Support optimization using free linear sampling, like in BlurEffect.
 void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
@@ -159,6 +169,16 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	} else {
 		assert(false);
 	}
+
+
+	// For many resamplings (e.g. 640 -> 1280), we will end up with the same
+	// set of samples over and over again in a loop. Thus, we can compute only
+	// the first such loop, and then ask the card to repeat the texture for us.
+	// This is both easier on the texture cache and lowers our CPU cost for
+	// generating the kernel somewhat.
+	num_loops = gcd(src_size, dst_size);
+	slice_height = 1.0f / num_loops;
+	unsigned dst_samples = dst_size / num_loops;
 
 	// Sample the kernel in the right place. A diagram with a triangular kernel
 	// (corresponding to linear filtering, and obviously with radius 1)
@@ -212,8 +232,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	float radius_scaling_factor = std::min(float(dst_size) / float(src_size), 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	src_samples = int_radius * 2 + 1;
-	float *weights = new float[dst_size * src_samples * 2];
-	for (unsigned y = 0; y < dst_size; ++y) {
+	float *weights = new float[dst_samples * src_samples * 2];
+	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
 		// compensating for differing pixel centers as the scale changes.
 		float center_src_y = (y + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
@@ -228,8 +248,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 		}
 	}
 
-	// Encode as a two-component texture. Note the GL_REPEAT, which is not relevant
-	// right now, but will be later.
+	// Encode as a two-component texture. Note the GL_REPEAT.
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texnum);
@@ -240,11 +259,10 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_samples, dst_size, 0, GL_RG, GL_FLOAT, weights);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_samples, dst_samples, 0, GL_RG, GL_FLOAT, weights);
 	check_error();
 
 	delete[] weights;
-
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
@@ -270,6 +288,8 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::
 	set_uniform_int(glsl_program_num, prefix, "sample_tex", *sampler_num);
 	++sampler_num;
 	set_uniform_int(glsl_program_num, prefix, "num_samples", src_samples);
+	set_uniform_float(glsl_program_num, prefix, "num_loops", num_loops);
+	set_uniform_float(glsl_program_num, prefix, "slice_height", slice_height);
 
 	// Instructions for how to convert integer sample numbers to positions in the weight texture.
 	set_uniform_float(glsl_program_num, prefix, "sample_x_scale", 1.0f / src_samples);
