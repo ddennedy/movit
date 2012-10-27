@@ -162,13 +162,8 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 		float w2 = weight[base_pos + 1];
 
 		float offset, total_weight;
-		if (w1 + w2 < 1e-6) {
-			offset = 0.5f;
-			total_weight = 0.0f;
-		} else {
-			offset = w2 / (w1 + w2);
-			total_weight = w1 + w2;
-		}
+		combine_two_samples(w1, w2, &offset, &total_weight);
+
 		float x = 0.0f, y = 0.0f;
 
 		if (direction == HORIZONTAL) {

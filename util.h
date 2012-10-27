@@ -34,6 +34,22 @@ void print_3x3_matrix(const Eigen::Matrix3d &m);
 // Output a GLSL 3x3 matrix declaration.
 std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 
+// Calculate where to sample, and with what weight, if one wants to use
+// the GPU's bilinear hardware to sample w1 * x[0] + w2 * x[1].
+static inline void combine_two_samples(float w1, float w2, float *offset, float *total_weight)
+{
+	assert(w1 * w2 >= 0.0f);  // Should not have differing signs.
+	if (fabs(w1 + w2) < 1e-6) {
+		*offset = 0.5f;
+		*total_weight = 0.0f;
+	} else {
+		*offset = w2 / (w1 + w2);
+		*total_weight = w1 + w2;
+	}
+	assert(*offset >= 0.0f);
+	assert(*offset <= 1.0f);
+}
+
 #ifdef NDEBUG
 #define check_error()
 #else
