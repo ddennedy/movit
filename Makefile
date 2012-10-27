@@ -26,6 +26,7 @@ TESTS += unsharp_mask_effect_test
 TESTS += diffusion_effect_test
 TESTS += white_balance_effect_test
 TESTS += lift_gamma_gain_effect_test
+TESTS += resample_effect_test
 TESTS += flat_input_test
 TESTS += ycbcr_input_test
 
@@ -51,6 +52,7 @@ LIB_OBJS += glow_effect.o
 LIB_OBJS += unsharp_mask_effect.o
 LIB_OBJS += mix_effect.o
 LIB_OBJS += resize_effect.o
+LIB_OBJS += resample_effect.o
 LIB_OBJS += deconvolution_sharpen_effect.o
 LIB_OBJS += sandbox_effect.o
 
@@ -89,6 +91,8 @@ diffusion_effect_test: diffusion_effect_test.o $(TEST_OBJS) libmovit.a
 white_balance_effect_test: white_balance_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 lift_gamma_gain_effect_test: lift_gamma_gain_effect_test.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+resample_effect_test: resample_effect_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 flat_input_test: flat_input_test.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
