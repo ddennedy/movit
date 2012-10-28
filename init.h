@@ -2,8 +2,8 @@
 #define _INIT_H
 
 // Initialize the library; in particular, will query the GPU for information
-// that is needed by various components. (In time, for instance, we will query
-// about extensions here.)
+// that is needed by various components. For instance, it verifies that
+// we have all the OpenGL extensions we need.
 void init_movit();
 
 // GPU features. These are not intended for end-user use.
@@ -17,5 +17,8 @@ extern bool movit_initialized;
 //
 // We currently don't bother to test above 2^10.
 extern float movit_texel_subpixel_precision;
+
+// Whether the GPU in use supports GL_EXT_texture_sRGB.
+extern bool movit_srgb_textures_supported;
 
 #endif  // !defined(_INIT_H)

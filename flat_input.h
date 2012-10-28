@@ -2,6 +2,7 @@
 #define _FLAT_INPUT_H 1
 
 #include "input.h"
+#include "init.h"
 
 // A FlatInput is the normal, “classic” case of an input, where everything
 // comes from a single 2D array with chunky pixels.
@@ -17,9 +18,9 @@ public:
 	// mipmap generation) at that point.
 	void finalize();
 
-	// TODO: Check that we actually have the required extension.
 	virtual bool can_output_linear_gamma() const {
-		return (type == GL_UNSIGNED_BYTE &&
+		return (movit_srgb_textures_supported &&
+		        type == GL_UNSIGNED_BYTE &&
 		        (image_format.gamma_curve == GAMMA_LINEAR ||
 		         image_format.gamma_curve == GAMMA_sRGB));
 	}
