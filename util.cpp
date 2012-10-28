@@ -124,3 +124,17 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m)
 		m(0,2), m(1,2), m(2,2));
 	return buf;
 }
+
+void combine_two_samples(float w1, float w2, float *offset, float *total_weight)
+{
+	assert(w1 * w2 >= 0.0f);  // Should not have differing signs.
+	if (fabs(w1 + w2) < 1e-6) {
+		*offset = 0.5f;
+		*total_weight = 0.0f;
+	} else {
+		*offset = w2 / (w1 + w2);
+		*total_weight = w1 + w2;
+	}
+	assert(*offset >= 0.0f);
+	assert(*offset <= 1.0f);
+}
