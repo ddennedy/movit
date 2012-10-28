@@ -11,8 +11,8 @@ UnsharpMaskEffect::UnsharpMaskEffect()
 	: blur(new BlurEffect),
 	  mix(new MixEffect)
 {
-	mix->set_float("strength_first", 1.0f);
-	mix->set_float("strength_second", -0.3f);
+	CHECK(mix->set_float("strength_first", 1.0f));
+	CHECK(mix->set_float("strength_second", -0.3f));
 }
 
 void UnsharpMaskEffect::rewrite_graph(EffectChain *graph, Node *self)

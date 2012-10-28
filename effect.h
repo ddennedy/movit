@@ -179,10 +179,10 @@ public:
 
 	// Set a parameter; intended to be called from user code.
 	// Neither of these take ownership of the pointer.
-	virtual bool set_int(const std::string&, int value);
-	virtual bool set_float(const std::string &key, float value);
-	virtual bool set_vec2(const std::string &key, const float *values);
-	virtual bool set_vec3(const std::string &key, const float *values);
+	virtual bool set_int(const std::string&, int value) MUST_CHECK_RESULT;
+	virtual bool set_float(const std::string &key, float value) MUST_CHECK_RESULT;
+	virtual bool set_vec2(const std::string &key, const float *values) MUST_CHECK_RESULT;
+	virtual bool set_vec3(const std::string &key, const float *values) MUST_CHECK_RESULT;
 
 protected:
 	// Register a parameter. Whenever set_*() is called with the same key,

@@ -16,9 +16,9 @@ BlurEffect::BlurEffect()
 {
 	// The first blur pass will forward resolution information to us.
 	hpass = new SingleBlurPassEffect(this);
-	hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL);
+	CHECK(hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL));
 	vpass = new SingleBlurPassEffect(NULL);
-	vpass->set_int("direction", SingleBlurPassEffect::VERTICAL);
+	CHECK(vpass->set_int("direction", SingleBlurPassEffect::VERTICAL));
 
 	update_radius();
 }

@@ -222,8 +222,8 @@ int main(int argc, char **argv)
 		//vignette_effect->set_float("inner_radius", inner_radius);
 		//vignette_effect->set_vec2("center", (float[]){ 0.7f, 0.5f });
 
-		diffusion_effect->set_float("radius", blur_radius);
-		diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount);
+		CHECK(diffusion_effect->set_float("radius", blur_radius));
+		CHECK(diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount));
 
 		input->set_pixel_data(src_img);
 		chain.render_to_screen();

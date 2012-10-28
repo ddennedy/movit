@@ -12,10 +12,10 @@ GlowEffect::GlowEffect()
 	  cutoff(new HighlightCutoffEffect),
 	  mix(new MixEffect)
 {
-	blur->set_float("radius", 20.0f);
-	mix->set_float("strength_first", 1.0f);
-	mix->set_float("strength_second", 1.0f);
-	cutoff->set_float("cutoff", 0.2f);
+	CHECK(blur->set_float("radius", 20.0f));
+	CHECK(mix->set_float("strength_first", 1.0f));
+	CHECK(mix->set_float("strength_second", 1.0f));
+	CHECK(cutoff->set_float("cutoff", 0.2f));
 }
 
 void GlowEffect::rewrite_graph(EffectChain *graph, Node *self)

@@ -103,9 +103,9 @@ ResampleEffect::ResampleEffect()
 
 	// The first blur pass will forward resolution information to us.
 	hpass = new SingleResamplePassEffect(this);
-	hpass->set_int("direction", SingleResamplePassEffect::HORIZONTAL);
+	CHECK(hpass->set_int("direction", SingleResamplePassEffect::HORIZONTAL));
 	vpass = new SingleResamplePassEffect(NULL);
-	vpass->set_int("direction", SingleResamplePassEffect::VERTICAL);
+	CHECK(vpass->set_int("direction", SingleResamplePassEffect::VERTICAL));
 
 	update_size();
 }

@@ -259,7 +259,7 @@ Phase *EffectChain::compile_glsl_program(
 	for (unsigned i = 0; i < effects.size(); ++i) {
 		Node *node = effects[i];
 		if (node->effect->num_inputs() == 0) {
-			node->effect->set_int("needs_mipmaps", input_needs_mipmaps);
+			CHECK(node->effect->set_int("needs_mipmaps", input_needs_mipmaps));
 		}
 	}
 	frag_shader += std::string("#define INPUT ") + effects.back()->effect_id + "\n";
@@ -726,8 +726,8 @@ void EffectChain::fix_internal_color_spaces()
 					continue;
 				}
 				Node *conversion = add_node(new ColorspaceConversionEffect());
-				conversion->effect->set_int("source_space", input->output_color_space);
-				conversion->effect->set_int("destination_space", COLORSPACE_sRGB);
+				CHECK(conversion->effect->set_int("source_space", input->output_color_space));
+				CHECK(conversion->effect->set_int("destination_space", COLORSPACE_sRGB));
 				conversion->output_color_space = COLORSPACE_sRGB;
 				insert_node_between(input, conversion, node);
 			}
@@ -760,8 +760,8 @@ void EffectChain::fix_output_color_space()
 	Node *output = find_output_node();
 	if (output->output_color_space != output_format.color_space) {
 		Node *conversion = add_node(new ColorspaceConversionEffect());
-		conversion->effect->set_int("source_space", output->output_color_space);
-		conversion->effect->set_int("destination_space", output_format.color_space);
+		CHECK(conversion->effect->set_int("source_space", output->output_color_space));
+		CHECK(conversion->effect->set_int("destination_space", output_format.color_space));
 		conversion->output_color_space = output_format.color_space;
 		connect_nodes(output, conversion);
 		propagate_gamma_and_color_space();
@@ -841,7 +841,7 @@ void EffectChain::fix_internal_gamma_by_asking_inputs(unsigned step)
 			}
 
 			for (unsigned i = 0; i < nonlinear_inputs.size(); ++i) {
-				nonlinear_inputs[i]->effect->set_int("output_linear_gamma", 1);
+				CHECK(nonlinear_inputs[i]->effect->set_int("output_linear_gamma", 1));
 				nonlinear_inputs[i]->output_gamma_curve = GAMMA_LINEAR;
 			}
 
@@ -879,7 +879,7 @@ void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
 			if (node->incoming_links.empty()) {
 				assert(node->outgoing_links.empty());
 				Node *conversion = add_node(new GammaExpansionEffect());
-				conversion->effect->set_int("source_curve", node->output_gamma_curve);
+				CHECK(conversion->effect->set_int("source_curve", node->output_gamma_curve));
 				conversion->output_gamma_curve = GAMMA_LINEAR;
 				connect_nodes(node, conversion);
 			}
@@ -893,7 +893,7 @@ void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
 					continue;
 				}
 				Node *conversion = add_node(new GammaExpansionEffect());
-				conversion->effect->set_int("source_curve", input->output_gamma_curve);
+				CHECK(conversion->effect->set_int("source_curve", input->output_gamma_curve));
 				conversion->output_gamma_curve = GAMMA_LINEAR;
 				insert_node_between(input, conversion, node);
 			}
@@ -928,7 +928,7 @@ void EffectChain::fix_output_gamma()
 	Node *output = find_output_node();
 	if (output->output_gamma_curve != output_format.gamma_curve) {
 		Node *conversion = add_node(new GammaCompressionEffect());
-		conversion->effect->set_int("destination_curve", output_format.gamma_curve);
+		CHECK(conversion->effect->set_int("destination_curve", output_format.gamma_curve));
 		conversion->output_gamma_curve = output_format.gamma_curve;
 		connect_nodes(output, conversion);
 	}
