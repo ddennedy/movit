@@ -1,3 +1,4 @@
+#include "init.h"
 #include "test_util.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
@@ -11,6 +12,8 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height), finalized(false)
 {
+	init_movit();
+
 	if (data != NULL) {
 		add_input(data, pixel_format, color_space, gamma_curve);
 	}

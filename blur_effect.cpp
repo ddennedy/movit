@@ -162,7 +162,7 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 		float w2 = weight[base_pos + 1];
 
 		float offset, total_weight;
-		combine_two_samples(w1, w2, &offset, &total_weight);
+		combine_two_samples(w1, w2, &offset, &total_weight, NULL);
 
 		float x = 0.0f, y = 0.0f;
 

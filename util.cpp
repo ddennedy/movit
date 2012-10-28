@@ -5,6 +5,7 @@
 #include <math.h>
 #include "util.h"
 #include "opengl.h"
+#include "init.h"
 
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 {
@@ -125,16 +126,44 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m)
 	return buf;
 }
 
-void combine_two_samples(float w1, float w2, float *offset, float *total_weight)
+void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error)
 {
+	assert(movit_initialized);
 	assert(w1 * w2 >= 0.0f);  // Should not have differing signs.
+	float z;  // Just a shorter name for offset.
 	if (fabs(w1 + w2) < 1e-6) {
-		*offset = 0.5f;
-		*total_weight = 0.0f;
+		z = 0.5f;
 	} else {
-		*offset = w2 / (w1 + w2);
-		*total_weight = w1 + w2;
+		z = w2 / (w1 + w2);
 	}
+
+	// Round to the minimum number of bits we have measured earlier.
+	// The card will do this for us anyway, but if we know what the real z
+	// is, we can pick a better total_weight below.
+	z = lrintf(z / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;
+	
+	// Choose total weight w so that we minimize total squared error
+	// for the effective weights:
+	//
+	//   e = (w(1-z) - a)² + (wz - b)²
+	//
+	// Differentiating by w and setting equal to zero:
+	//
+	//   2(w(1-z) - a)(1-z) + 2(wz - b)z = 0
+	//   w(1-z)² - a(1-z) + wz² - bz = 0
+	//   w((1-z)² + z²) = a(1-z) + bz
+	//   w = (a(1-z) + bz) / ((1-z)² + z²)
+	//
+	// If z had infinite precision, this would simply reduce to w = w1 + w2.
+	*total_weight = (w1 * (1 - z) + w2 * z) / (z * z + (1 - z) * (1 - z));
+	*offset = z;
+
+	if (sum_sq_error != NULL) {
+		float err1 = *total_weight * (1 - z) - w1;
+		float err2 = *total_weight * z - w2;
+		*sum_sq_error = err1 * err1 + err2 * err2;
+	}
+
 	assert(*offset >= 0.0f);
 	assert(*offset <= 1.0f);
 }

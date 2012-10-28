@@ -36,7 +36,12 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 
 // Calculate where to sample, and with what weight, if one wants to use
 // the GPU's bilinear hardware to sample w1 * x[0] + w2 * x[1].
-void combine_two_samples(float w1, float w2, float *offset, float *total_weight);
+//
+// Note that since the GPU might have limited precision in its linear
+// interpolation, the effective weights might be different from the ones you
+// asked for. sum_sq_error, if not NULL, will contain the sum of the
+// (estimated) squared errors of the two weights.
+void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error);
 
 #ifdef NDEBUG
 #define check_error()

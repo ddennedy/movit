@@ -31,7 +31,7 @@ TESTS += flat_input_test
 TESTS += ycbcr_input_test
 
 # Core.
-LIB_OBJS=util.o widgets.o effect.o effect_chain.o
+LIB_OBJS=util.o widgets.o effect.o effect_chain.o init.o
 
 # Inputs.
 LIB_OBJS += flat_input.o

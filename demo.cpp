@@ -18,6 +18,7 @@
 #include <SDL/SDL_opengl.h>
 #include <SDL/SDL_image.h>
 
+#include "init.h"
 #include "effect.h"
 #include "effect_chain.h"
 #include "util.h"
@@ -152,14 +153,16 @@ int main(int argc, char **argv)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_SetVideoMode(WIDTH, HEIGHT, 0, SDL_OPENGL);
 	SDL_WM_SetCaption("OpenGL window", NULL);
-	
-	// geez	
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
+	init_movit();
+	printf("GPU texture subpixel precision: about %.1f bits\n",
+		log2(1.0f / movit_texel_subpixel_precision));
+	
 	unsigned img_w, img_h;
 	unsigned char *src_img = load_image("blg_wheels_woman_1.jpg", &img_w, &img_h);
 
 	EffectChain chain(WIDTH, HEIGHT);
+	glViewport(0, 0, WIDTH, HEIGHT);
 
 	ImageFormat inout_format;
 	inout_format.color_space = COLORSPACE_sRGB;
