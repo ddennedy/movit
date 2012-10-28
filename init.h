@@ -11,11 +11,17 @@ void init_movit();
 // Whether init_movit() has been called.
 extern bool movit_initialized;
 
-// An estimate on the number of different levels the linear texture interpolation
-// of the GPU can deliver. My Intel card seems to be limited to 2^6 levels here,
-// while a modern nVidia card (GTX 550 Ti) seem to use 2^8.
+// An estimate on the smallest values the linear texture interpolation
+// of the GPU can distinguish between, i.e., for a GPU with N-bit
+// texture subpixel precision, this value will be 2^-N.
 //
-// We currently don't bother to test above 2^10.
+// From reading the little specs that exist and through practical tests,
+// the broad picture seems to be that Intel cards have 6-bit precision,
+// nVidia cards have 8-bit, and Radeon cards have 6-bit before R6xx
+// (at least when not using trilinear sampling), but can reach
+// 8-bit precision on R6xx or newer in some (unspecified) cases.
+//
+// We currently don't bother to test for more than 1024 levels.
 extern float movit_texel_subpixel_precision;
 
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
