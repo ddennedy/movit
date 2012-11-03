@@ -4,6 +4,7 @@
 
 #include "colorspace_conversion_effect.h"
 #include "util.h"
+#include "d65.h"
 
 using namespace Eigen;
 
@@ -16,9 +17,6 @@ static const double rec601_525_x_R = 0.630, rec601_525_x_G = 0.310, rec601_525_x
 static const double rec601_525_y_R = 0.340, rec601_525_y_G = 0.595, rec601_525_y_B = 0.070;
 static const double rec601_625_x_R = 0.640, rec601_625_x_G = 0.290, rec601_625_x_B = 0.150;
 static const double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
-
-// The D65 white point. Given in both Rec. 601 and 709.
-static const double d65_x = 0.3127, d65_y = 0.3290;
 
 ColorspaceConversionEffect::ColorspaceConversionEffect()
 	: source_space(COLORSPACE_sRGB),
@@ -64,7 +62,7 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	Vector3d d65_XYZ(
 		d65_x / d65_y,
 		1.0,
-		(1.0 - d65_x - d65_y) / d65_y
+		d65_z / d65_y
 	);
 
 	// We have, for each primary (example is with red):
