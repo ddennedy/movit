@@ -53,9 +53,9 @@ double rgb_to_xyz_matrix[9] = {
  * (Hunt-Pointer-Estevez, or HPE) for the actual perception post-adaptation. 
  *
  * CIECAM02 chromatic adaptation, while related to the transformation we want,
- * is a more complex phenomenon that depends on factors like the total luminance
- * (in cd/m²) of the illuminant, and can no longer be implemented by just scaling
- * each component in LMS space linearly. The simpler way out is to use the HPE matrix,
+ * is a more complex phenomenon that depends on factors like the viewing conditions
+ * (e.g. amount of surrounding light), and can no longer be implemented by just scaling
+ * each component in LMS space. The simpler way out is to use the HPE matrix,
  * which is intended to be close to the actual cone response; this results in
  * the “von Kries transformation” when we couple it with normalization in LMS space.
  *
