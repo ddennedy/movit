@@ -8,17 +8,17 @@
 using namespace Eigen;
 
 // Color coordinates from Rec. 709; sRGB uses the same primaries.
-double rec709_x_R = 0.640,  rec709_x_G = 0.300,  rec709_x_B = 0.150;
-double rec709_y_R = 0.330,  rec709_y_G = 0.600,  rec709_y_B = 0.060;
+static const double rec709_x_R = 0.640, rec709_x_G = 0.300, rec709_x_B = 0.150;
+static const double rec709_y_R = 0.330, rec709_y_G = 0.600, rec709_y_B = 0.060;
 
 // Color coordinates from Rec. 601. (Separate for 525- and 625-line systems.)
-double rec601_525_x_R = 0.630, rec601_525_x_G = 0.310, rec601_525_x_B = 0.155;
-double rec601_525_y_R = 0.340, rec601_525_y_G = 0.595, rec601_525_y_B = 0.070;
-double rec601_625_x_R = 0.640, rec601_625_x_G = 0.290, rec601_625_x_B = 0.150;
-double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
+static const double rec601_525_x_R = 0.630, rec601_525_x_G = 0.310, rec601_525_x_B = 0.155;
+static const double rec601_525_y_R = 0.340, rec601_525_y_G = 0.595, rec601_525_y_B = 0.070;
+static const double rec601_625_x_R = 0.640, rec601_625_x_G = 0.290, rec601_625_x_B = 0.150;
+static const double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
 
 // The D65 white point. Given in both Rec. 601 and 709.
-double d65_x = 0.3127, d65_y = 0.3290;
+static const double d65_x = 0.3127, d65_y = 0.3290;
 
 ColorspaceConversionEffect::ColorspaceConversionEffect()
 	: source_space(COLORSPACE_sRGB),
