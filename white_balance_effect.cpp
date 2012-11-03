@@ -39,7 +39,7 @@ Vector3d convert_color_temperature_to_xyz(float T)
 }
 
 // Assuming sRGB primaries, from Wikipedia.
-double rgb_to_xyz_matrix[9] = {
+const double rgb_to_xyz_matrix[9] = {
 	0.4124, 0.2126, 0.0193, 
 	0.3576, 0.7152, 0.1192,
 	0.1805, 0.0722, 0.9505,
