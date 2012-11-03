@@ -67,41 +67,34 @@ double rgb_to_xyz_matrix[9] = {
  * The actual perceptual differences were found to be minor, though.
  * We use the Bradford tranformation matrix from that page, and compute the
  * inverse ourselves. (The Bradford matrix is also used in CMCCAT97.) 
- *
- * We normalize the Bradford fundamentals to D65, which means that the standard
- * D65 illuminant (x=0.31271, y=0.32902, z=1-y-x) gives L=M=S under this
- * transformation. This makes sense because sRGB (which is used to derive
- * those XYZ values in the first place) assumes the D65 illuminant, and so the
- * D65 illuminant also gives R=G=B in sRGB. (We could also have done this
- * step separately in XYZ space, but we'd have to do it to all colors we
- * wanted scaled to LMS.)
  */
 const double xyz_to_lms_matrix[9] = {
-	 0.8951 / d65_X, -0.7502 / d65_X,  0.0389 / d65_X,
-	 0.2664,          1.7135,         -0.0685,
-	-0.1614 / d65_Z,  0.0367 / d65_Z,  1.0296 / d65_Z,
+	 0.7328, -0.7036,  0.0030,
+	 0.4296,  1.6975,  0.0136,
+	-0.1624,  0.0061,  0.9834,
 };
 
 /*
- * For a given reference color (given in XYZ space),
- * compute scaling factors for L, M and S. What we want at the output is equal L, M and S
- * for the reference color (making it a neutral illuminant), or sL ref_L = sM ref_M = sS ref_S.
- * This removes two degrees of freedom for our system, and we only need to find fL.
+ * For a given reference color (given in XYZ space), compute scaling factors
+ * for L, M and S. What we want at the output is turning the reference color
+ * into a scaled version of the D65 illuminant (giving it R=G=B in sRGB), or
+ * 
+ *   (sL ref_L, sM ref_M, sS ref_S) = (s d65_L, s d65_M, s d65_S)
  *
+ * This removes two degrees of freedom from our system, and we only need to find s.
  * A reasonable last constraint would be to preserve Y, approximately the brightness,
- * for the reference color. Since L'=M'=S' and the Y row of the LMS-to-XYZ matrix
- * sums to unity, we know that Y'=L', and it's easy to find the fL that sets Y'=Y.
+ * for the reference color. Thus, we choose our D65 illuminant's Y such that it is
+ * equal to the reference color's Y, and the rest is easy.
  */
-Vector3d compute_lms_scaling_factors(const Vector3d &xyz)
+Vector3d compute_lms_scaling_factors(const Vector3d &ref_xyz)
 {
-	Vector3d lms = Map<const Matrix3d>(xyz_to_lms_matrix) * xyz;
-	double l = lms[0];
-	double m = lms[1];
-	double s = lms[2];
+	Vector3d ref_lms = Map<const Matrix3d>(xyz_to_lms_matrix) * ref_xyz;
+	Vector3d d65_lms = Map<const Matrix3d>(xyz_to_lms_matrix) *
+		(ref_xyz[1] * Vector3d(d65_X, d65_Y, d65_Z));  // d65_Y = 1.0.
 
-	double scale_l = xyz[1] / l;
-	double scale_m = scale_l * (l / m);
-	double scale_s = scale_l * (l / s);
+	double scale_l = d65_lms[0] / ref_lms[0];
+	double scale_m = d65_lms[1] / ref_lms[1];
+	double scale_s = d65_lms[2] / ref_lms[2];
 
 	return Vector3d(scale_l, scale_m, scale_s);
 }
