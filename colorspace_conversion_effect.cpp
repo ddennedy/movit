@@ -57,14 +57,6 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	double z_G = 1.0 - x_G - y_G;
 	double z_B = 1.0 - x_B - y_B;
 
-	// Find the XYZ coordinates of D65 (white point for both Rec. 601 and 709),
-	// normalized so that Y=1.
-	Vector3d d65_XYZ(
-		d65_x / d65_y,
-		1.0,
-		d65_z / d65_y
-	);
-
 	// We have, for each primary (example is with red):
 	//
 	//   X_R / (X_R + Y_R + Z_R) = x_R
@@ -105,6 +97,7 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	temp(2,1) = z_G / y_G;
 	temp(2,2) = z_B / y_B;
 
+	Vector3d d65_XYZ(d65_X, d65_Y, d65_Z);
 	Vector3d Y_RGB = temp.inverse() * d65_XYZ;
 
 	// Now convert xyY -> XYZ.
