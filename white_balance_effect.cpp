@@ -6,6 +6,7 @@
 #include "white_balance_effect.h"
 #include "util.h"
 #include "opengl.h"
+#include "d65.h"
 
 using namespace Eigen;
 
@@ -45,21 +46,40 @@ double rgb_to_xyz_matrix[9] = {
 };
 
 /*
- * There are several different LMS spaces, at least according to Wikipedia.
- * Through practical testing, I've found most of them (like the CIECAM02 model)
- * to yield a result that is too reddish in practice, possibly because they
- * are intended for different illuminants than what sRGB assumes. 
+ * There are several different perceptual color spaces with different intended
+ * uses; for instance, CIECAM02 uses one space (CAT02) for purposes of computing
+ * chromatic adaptation (the effect that the human eye perceives an object as
+ * the same color even under differing illuminants), but a different space
+ * (Hunt-Pointer-Estevez, or HPE) for the actual perception post-adaptation. 
  *
- * This is the RLAB space, normalized to D65, which means that the standard
- * D65 illuminant (x=0.31271, y=0.32902, z=1-y-x) gives L=M=S under this transformation.
- * This makes sense because sRGB (which is used to derive those XYZ values
- * in the first place) assumes the D65 illuminant, and so the D65 illuminant
- * also gives R=G=B in sRGB.
+ * CIECAM02 chromatic adaptation, while related to the transformation we want,
+ * is a more complex phenomenon that depends on factors like the total luminance
+ * (in cd/m²) of the illuminant, and can no longer be implemented by just scaling
+ * each component in LMS space linearly. The simpler way out is to use the HPE matrix,
+ * which is intended to be close to the actual cone response; this results in
+ * the “von Kries transformation” when we couple it with normalization in LMS space.
+ *
+ * http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html compares
+ * von Kries transformation with using another matrix, the Bradford matrix,
+ * and generally finds that the Bradford method gives a better result,
+ * as in giving better matches with the true result (as calculated using
+ * spectral matching) when converting between various CIE illuminants.
+ * The actual perceptual differences were found to be minor, though.
+ * We use the Bradford tranformation matrix from that page, and compute the
+ * inverse ourselves. (The Bradford matrix is also used in CMCCAT97.) 
+ *
+ * We normalize the Bradford fundamentals to D65, which means that the standard
+ * D65 illuminant (x=0.31271, y=0.32902, z=1-y-x) gives L=M=S under this
+ * transformation. This makes sense because sRGB (which is used to derive
+ * those XYZ values in the first place) assumes the D65 illuminant, and so the
+ * D65 illuminant also gives R=G=B in sRGB. (We could also have done this
+ * step separately in XYZ space, but we'd have to do it to all colors we
+ * wanted scaled to LMS.)
  */
 const double xyz_to_lms_matrix[9] = {
-	 0.4002, -0.2263,    0.0,
-	 0.7076,  1.1653,    0.0,
-	-0.0808,  0.0457, 0.9182,
+	 0.8951 / d65_X, -0.7502 / d65_X,  0.0389 / d65_X,
+	 0.2664,          1.7135,         -0.0685,
+	-0.1614 / d65_Z,  0.0367 / d65_Z,  1.0296 / d65_Z,
 };
 
 /*
@@ -124,7 +144,7 @@ void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string
 	lms_scale[0] *= lms_scale_ref[0] / lms_scale_white[0];
 	lms_scale[1] *= lms_scale_ref[1] / lms_scale_white[1];
 	lms_scale[2] *= lms_scale_ref[2] / lms_scale_white[2];
-	
+
 	/*
 	 * Concatenate all the different linear operations into a single 3x3 matrix.
 	 * Note that since we postmultiply our vectors, the order of the matrices
