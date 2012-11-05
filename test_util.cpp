@@ -106,6 +106,24 @@ void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_spa
 	vertical_flip(out_data, width, height);
 }
 
+void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve)
+{
+	if (!finalized) {
+		finalize_chain(color_space, gamma_curve);
+	}
+
+	chain.render_to_fbo(fbo, width, height);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_data);
+
+	if (format == GL_RGBA) {
+		width *= 4;
+	}
+
+	vertical_flip(out_data, width, height);
+}
+
 void EffectChainTester::finalize_chain(Colorspace color_space, GammaCurve gamma_curve)
 {
 	assert(!finalized);

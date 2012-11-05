@@ -15,6 +15,7 @@ public:
 	Input *add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
 	Input *add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
 	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
+	void run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
 
 private:
 	void finalize_chain(Colorspace color_space, GammaCurve gamma_curve);
