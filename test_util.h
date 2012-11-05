@@ -8,7 +8,8 @@ public:
 	EffectChainTester(const float *data, unsigned width, unsigned height,
 	                  MovitPixelFormat pixel_format = FORMAT_GRAYSCALE,
 	                  Colorspace color_space = COLORSPACE_sRGB,
-	                  GammaCurve gamma_curve = GAMMA_LINEAR);
+	                  GammaCurve gamma_curve = GAMMA_LINEAR,
+	                  GLenum framebuffer_format = GL_RGBA16F_ARB);
 	~EffectChainTester();
 	
 	EffectChain *get_chain() { return &chain; }
