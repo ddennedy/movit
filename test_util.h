@@ -17,6 +17,8 @@ public:
 	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
 
 private:
+	void finalize_chain(Colorspace color_space, GammaCurve gamma_curve);
+
 	EffectChain chain;
 	GLuint fbo, texnum;
 	unsigned width, height;

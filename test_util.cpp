@@ -8,6 +8,22 @@
 
 #include <algorithm>
 
+namespace {
+
+// Flip upside-down to compensate for different origin.
+template<class T>
+void vertical_flip(T *data, unsigned width, unsigned height)
+{
+	for (unsigned y = 0; y < height / 2; ++y) {
+		unsigned flip_y = height - y - 1;
+		for (unsigned x = 0; x < width; ++x) {
+			std::swap(data[y * width + x], data[flip_y * width + x]);
+		}
+	}
+}
+
+}  // namespace
+
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
 	: chain(width, height), width(width), height(height), finalized(false)
@@ -75,12 +91,7 @@ Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat 
 void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve)
 {
 	if (!finalized) {
-		ImageFormat image_format;
-		image_format.color_space = color_space;
-		image_format.gamma_curve = gamma_curve;
-		chain.add_output(image_format);
-		chain.finalize();
-		finalized = true;
+		finalize_chain(color_space, gamma_curve);
 	}
 
 	chain.render_to_fbo(fbo, width, height);
@@ -92,13 +103,18 @@ void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_spa
 		width *= 4;
 	}
 
-	// Flip upside-down to compensate for different origin.
-	for (unsigned y = 0; y < height / 2; ++y) {
-		unsigned flip_y = height - y - 1;
-		for (unsigned x = 0; x < width; ++x) {
-			std::swap(out_data[y * width + x], out_data[flip_y * width + x]);
-		}
-	}
+	vertical_flip(out_data, width, height);
+}
+
+void EffectChainTester::finalize_chain(Colorspace color_space, GammaCurve gamma_curve)
+{
+	assert(!finalized);
+	ImageFormat image_format;
+	image_format.color_space = color_space;
+	image_format.gamma_curve = gamma_curve;
+	chain.add_output(image_format);
+	chain.finalize();
+	finalized = true;
 }
 
 void expect_equal(const float *ref, const float *result, unsigned width, unsigned height, float largest_difference_limit, float rms_limit)
