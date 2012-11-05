@@ -181,3 +181,18 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 		}
 	}
 }
+
+void expect_equal(const unsigned char *ref, const unsigned char *result, unsigned width, unsigned height, unsigned largest_difference_limit, float rms_limit)
+{
+	float *ref_float = new float[width * height];
+	float *result_float = new float[width * height];
+
+	for (unsigned y = 0; y < height; ++y) {
+		for (unsigned x = 0; x < width; ++x) {
+			ref_float[y * width + x] = ref[y * width + x];
+			result_float[y * width + x] = result[y * width + x];
+		}
+	}
+
+	expect_equal(ref_float, result_float, width, height, largest_difference_limit, rms_limit);
+}
