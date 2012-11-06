@@ -59,6 +59,7 @@ private:
 
 	int width, height, num_bits;
 	int last_width, last_height, last_num_bits;
+	int texture_width, texture_height;
 
 	GLuint texnum;
 	bool need_texture_update;

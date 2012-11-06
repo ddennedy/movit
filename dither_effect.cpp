@@ -47,11 +47,17 @@ void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &pr
 	float *dither_noise = new float[width * height];
 	float dither_double_amplitude = 1.0f / (1 << num_bits);
 
+	// We don't need a strictly nonrepeating dither; reducing the resolution
+	// to max 128x128 saves a lot of texture bandwidth, without causing any
+	// noticeable harm to the dither's performance.
+	texture_width = std::min(width, 128);
+	texture_height = std::min(height, 128);
+
 	// Using the resolution as a seed gives us a consistent dither from frame to frame.
 	// It also gives a different dither for e.g. different aspect ratios, which _feels_
 	// good, but probably shouldn't matter.
 	unsigned seed = (width << 16) ^ height;
-	for (int i = 0; i < width * height; ++i) {
+	for (int i = 0; i < texture_width * texture_height; ++i) {
 		seed = lcg_rand(seed);
 		float normalized_rand = seed * (1.0f / (1U << 31)) - 0.5;  // [-0.5, 0.5>
 		dither_noise[i] = dither_double_amplitude * normalized_rand;
@@ -63,11 +69,13 @@ void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &pr
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16F_ARB, width, height, 0, GL_LUMINANCE, GL_FLOAT, dither_noise);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16F_ARB, texture_width, texture_height, 0, GL_LUMINANCE, GL_FLOAT, dither_noise);
 	check_error();
 
 	delete[] dither_noise;
@@ -91,4 +99,10 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const std::string &pref
 
 	set_uniform_int(glsl_program_num, prefix, "dither_tex", *sampler_num);
 	++sampler_num;
+
+	// In theory, we should adjust for the texel centers that have moved here as well,
+	// but since we use GL_NEAREST and we don't really care a lot what texel we sample,
+	// we don't have to worry about it.	
+	float tc_scale[] = { float(width) / float(texture_width), float(height) / float(texture_height) };
+	set_uniform_vec2(glsl_program_num, prefix, "tc_scale", tc_scale);
 }
