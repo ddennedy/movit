@@ -90,7 +90,17 @@ public:
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
 	void add_output(const ImageFormat &format);
+
+	// Set number of output bits, to scale the dither.
+	// 8 is the right value for most outputs.
+	// The default, 0, is a special value that means no dither.
+	void set_dither_bits(unsigned num_bits)
+	{
+		this->num_dither_bits = num_bits;
+	}
+
 	void finalize();
+
 
 	//void render(unsigned char *src, unsigned char *dst);
 	void render_to_screen()
@@ -168,19 +178,22 @@ private:
 	void fix_internal_gamma_by_asking_inputs(unsigned step);
 	void fix_internal_gamma_by_inserting_nodes(unsigned step);
 	void fix_output_gamma();
+	void add_dither_if_needed();
 
 	float aspect_nom, aspect_denom;
 	ImageFormat output_format;
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;
+	Effect *dither_effect;
 
 	std::vector<Input *> inputs;  // Also contained in nodes.
 
 	GLuint fbo;
 	std::vector<Phase *> phases;
 
-	GLenum format, bytes_per_pixel;
+	GLenum format;
+	unsigned bytes_per_pixel, num_dither_bits;
 	bool finalized;
 };
 

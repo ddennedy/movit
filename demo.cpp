@@ -178,6 +178,7 @@ int main(int argc, char **argv)
 	//sandbox_effect->set_float("parm", 42.0f);
 	//chain.add_effect(new MirrorEffect());
 	chain.add_output(inout_format);
+	chain.set_dither_bits(8);
 	chain.finalize();
 
 	// generate a PBO to hold the data we read back with glReadPixels()

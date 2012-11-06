@@ -15,13 +15,16 @@
 #include "gamma_expansion_effect.h"
 #include "gamma_compression_effect.h"
 #include "colorspace_conversion_effect.h"
+#include "dither_effect.h"
 #include "input.h"
 #include "opengl.h"
 
 EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
+	  dither_effect(NULL),
 	  fbo(0),
+	  num_dither_bits(0),
 	  finalized(false) {}
 
 EffectChain::~EffectChain()
@@ -933,6 +936,22 @@ void EffectChain::fix_output_gamma()
 		connect_nodes(output, conversion);
 	}
 }
+	
+// If the user has requested dither, add a DitherEffect right at the end
+// (after GammaCompressionEffect etc.). This needs to be done after everything else,
+// since dither is about the only effect that can _not_ be done in linear space.
+void EffectChain::add_dither_if_needed()
+{
+	if (num_dither_bits == 0) {
+		return;
+	}
+	Node *output = find_output_node();
+	Node *dither = add_node(new DitherEffect());
+	CHECK(dither->effect->set_int("num_bits", num_dither_bits));
+	connect_nodes(output, dither);
+
+	dither_effect = dither->effect;
+}
 
 // Find the output node. This is, simply, one that has no outgoing links.
 // If there are multiple ones, the graph is malformed (we do not support
@@ -984,12 +1003,16 @@ void EffectChain::finalize()
 	fix_internal_gamma_by_asking_inputs(8);
 	fix_internal_gamma_by_inserting_nodes(9);
 
-	output_dot("step10-final.dot");
+	output_dot("step10-before-dither.dot");
+
+	add_dither_if_needed();
+
+	output_dot("step11-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
 	construct_glsl_programs(find_output_node());
 
-	output_dot("step11-split-to-phases.dot");
+	output_dot("step12-split-to-phases.dot");
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.
@@ -1126,6 +1149,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
 			check_error();
 			glViewport(x, y, width, height);
+			if (dither_effect != NULL) {
+				CHECK(dither_effect->set_int("output_width", width));
+				CHECK(dither_effect->set_int("output_height", height));
+			}
 		} else {
 			Node *output_node = phases[phase]->effects.back();
 			glFramebufferTexture2D(
