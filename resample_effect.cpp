@@ -74,9 +74,12 @@ unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsig
 		float offset, total_weight, sum_sq_error;
 		combine_two_samples(w1, w2, &offset, &total_weight, &sum_sq_error);
 
-		// If the interpolation error is larger than that of one level
-		// at 8-bit precision, don't combine.
-		if (sum_sq_error > 1.0f / (256.0f * 256.0f)) {
+		// If the interpolation error is larger than that of about sqrt(2) of
+		// a level at 8-bit precision, don't combine. (You'd think 1.0 was enough,
+		// but since the artifacts are not really random, they can get quite
+		// visible. On the other hand, going to 0.25f, I can see no change at
+		// all with 8-bit output, so it would not seem to be worth it.)
+		if (sum_sq_error > 0.5f / (256.0f * 256.0f)) {
 			continue;
 		}
 
