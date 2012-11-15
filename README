@@ -1,0 +1,203 @@
+<!-- Author's note; this was intended to become a home page at some point,
+     but I'm not interested enough in grokking HTML right now, so it became
+     the README instead. Most of it should be valid Markdown. -->
+
+Announcing Movit
+================
+
+Movit is the Modern Video Toolkit, notwithstanding that anything that's
+called “modern” usually isn't, and it's really not a toolkit.
+
+Movit aims to be a _high-quality_, _high-performance_, _open-source_
+library for video filters. It is currently in alpha stage.
+
+
+TL;DR, please give me download link and system demands
+======================================================
+
+OK, you need
+
+* A C++98 compiler. GCC will do. (I haven't tried Windows, but it
+  works fine on Linux and OS X, and Movit is not very POSIX-bound.)
+* GNU Make.
+* A GPU capable of running GLSL fragment shaders,
+  process floating-point textures, and a few other things. If your machine
+  is less than five years old _and you have the appropriate drivers_
+  (don't complain to me if it doesn't work with Nouveau, please),
+  you're home free.
+* The [Eigen 3] and [Google Test] libraries. (The library itself
+  depends only on the former, but you probably want to run the unit tests.)
+
+Movit has been tested with Intel GPUs with the Mesa drivers
+(you'll probably need at least Mesa 8.0), Radeon 3850 and GeForce GTX 550
+on Linux with the manufacturer's drivers, and with GeForce 8800 on OS X.
+Again, most likely, GPU compatibility shouldn't be a big issue. See below
+for performance estimates.
+
+
+Still TL;DR, please give me the list of filters
+===============================================
+
+Blur, diffusion, glow, lift/gamma/gain (color correction), mirror,
+mix (add two inputs), scale (bilinear and Lanczos), sharpen
+(both by unsharp mask and by Wiener filters), saturation (or desaturation),
+vignette, and white balance.
+
+Yes, that's a short list. But they all look great, are fast and don't give
+you any nasty surprises. (I'd love to include denoise, deinterlace and
+framerate up-/downconversion to the list, but doing them well are
+all research-grade problems, and Movit is currently not there.)
+
+
+TL;DR, but I am interested in a programming example instead
+===========================================================
+
+Assuming you have an OpenGL context already set up:
+
+<code>
+  EffectChain chain(1280, 720);
+
+  ImageFormat inout_format;
+  inout_format.color_space = COLORSPACE_sRGB;
+  inout_format.gamma_curve = GAMMA_sRGB;
+  FlatInput *input = knew FlatInput(inout_format, FORMAT_BGRA, GL_UNSIGNED_BYTE, 1280, 720));
+  chain.add_input(input);
+
+  Effect *saturation_effect = chain.add_effect(new SaturationEffect());
+  saturation_effect->set_float("saturation", 0.7f);
+
+  Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
+  const float gain[] = { 0.8f, 1.0f, 1.0f };
+  lift_gamma_gain_effect->set_vec3("gain", &gain);
+
+  chain.add_output(inout_format);
+  chain.finalize();
+
+  for ( ;; ) {
+    // Do whatever you need here to decode the next frame into <pixels>.
+    input->set_pixel_data(pixels);
+    chain.render_to_screen();
+  }
+</code>
+
+
+OK, I can read a bit. What do you mean by “modern”?
+===================================================
+
+Backwards compatibility is fine and all, but sometimes we can do better
+by observing that the world has moved on. In particular:
+
+* It's 2012, so people want to edit HD video.
+* It's 2012, so everybody has a GPU.
+* It's 2012, so everybody has a working C++ compiler.
+  (Even Microsoft fixed theirs around 2003!)
+
+While from a programming standpoint I'd love to say that it's 2012
+and interlacing does no longer exist, but that's not true (and interlacing,
+hated as it might be, is actually a useful and underrated technique for
+bandwidth reduction in broadcast video). Movit will eventually provide
+limited support for working with interlaced video, but currently does not.
+
+
+What do you mean by “high-performance”?
+=======================================
+
+Today, you can hardly get a _cellphone_ without a multi-core, SIMD-capable
+CPU, and a GPU. Yet, almost all open-source pixel processing I've seen
+is written using straight-up single-threaded, scalar C! Clearly there is
+room for improvement here, and that improvement is sorely needed.
+We want to edit 1080p video, not watch slideshows.
+
+Movit has chosen to run all pixel processing on the GPU, using GLSL—OpenCL is
+way too young, and CUDA is single-vendor (and also surprisingly hard to
+get good performance from for anything nontrivial). While “run on the GPU”
+does not equal “infinite speed” (I am fairly certain that for many common
+filters, I can beat the Intel-based GPU in my laptop with multithreaded SSE
+code on the CPU—especially as moving the data to and from the GPU has a cost that is not
+to be taken lightly), GPU programming is probably the _simplest_ way of writing
+highly parallel code, and it also frees the CPU to do other things like video
+decoding.
+
+Exactly what speeds you can expect is of course highly dependent on
+your GPU and the exact filter chain you are running. As a rule of thumb,
+you can run a reasonable filter chain (a lift/gamma/gain operation,
+a bit of diffusion, maybe a vignette) at 720p in around 30 fps on a two-year-old
+Intel laptop. If you have a somewhat newer Intel card, you can do 1080p
+video without much problems. And on a mid-range nVidia card of today
+(GTX 550 Ti), you can probably process 4K movies directly.
+
+
+What do you mean by “high-quality”?
+===================================
+
+Movit aims to be high-quality in two important aspects, namely _code quality_
+and _output quality_. (Unfortunately, documentation quality is not on the
+list yet. Sorry.)
+
+
+High-quality output?
+====================
+
+Movit works internally in linear floating-point all the way, strongly
+reducing interim round-off and clipping errors. Furthermore, Movit is
+(weakly) colorspace-aware. Why do colorspaces matter? Well, here's a video frame from a typical
+camera, which records in Rec. 709 (the typical HDTV color space), and here's the 
+same frame misinterpreted as Rec. 601 (the typical SDTV color space):
+
+[insert picture here]
+
+The difference might be subtle, but would you like that color cast?
+Maybe you could correct for it manually, but what if it happened on output
+instead of on input? And I can promise you that once we move to more
+wide-gamut color spaces, like the one in Rec. 2020 (used for UHDTV), the
+difference will be anything but subtle. As of [why working in linear
+light matters](http://www.4p8.com/eric.brasseur/gamma.html),
+others have explained it better than I can; note also
+that this makes Movit future-proof when the world moves towards 10-
+and 12-bit color precision. The extra power from the GPU makes all of this
+simple, so do we not need to make too many concessions for the sake of speed.
+
+Movit does not currently do ICC profiles or advanced gamut mapping;
+if you have out-of-gamut colors, they will clip. Sorry.
+
+
+OK, and high-quality code?
+==========================
+
+Image processing code can be surprisingly subtle; it's easy to write
+code that looks right, but that makes subtle artifacts that explode
+when processed further in a later step. (Or code that simply never
+worked, just that nobody cared to look at the output when a given
+parameter was set. I've seen that, too.)
+
+Movit tries to counteract this by three different strategies:
+
+* First, _look at the output_. Does it look good? Really?
+  Even if you zoom in on the results? Don't settle for “meh, I'm 
+  sure that's the best it can get”.
+* Second, _keep things simple_. Movit does not aim for including
+  every possible video effect under the sun (there are [others out there]
+  that want that); the [YAGNI] principle is applied quite strongly throughout
+  the code. It's much better to write less code but actually
+  understand what it does; whenever I can replace some magic matrix
+  or obscure formula from the web with a clean calculation and a descriptive
+  comment on top, it makes me a bit happier. (Most of the time,
+  it turns out that I had used the matrix or formula in a wrong
+  way anyway. My degree is in multimedia signal processing, but it
+  does not mean I have a deep understanding of everything people do
+  in graphics.)
+* Third, _have unit tests_. Tests are boring, but they are unforgiving
+  (much more unforgiving than your eye), and they keep stuff from breaking
+  afterwards. Almost every single test I wrote has uncovered bugs in Movit,
+  so they have already paid for themselves.
+
+There is, of course, always room for improvement. I'm sure you can find
+things that are stupid, little-thought-out, or buggy. If so, please let me
+know.
+
+
+What do you mean by “open-source”?
+==================================
+
+Movit is licensed under the [GNU GPL](http://www.gnu.org/licenses/gpl.html),
+either version 2 or (at your option) any later version.
