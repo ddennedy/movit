@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 		log2(1.0f / movit_texel_subpixel_precision));
 	
 	unsigned img_w, img_h;
-	unsigned char *src_img = load_image("blg_wheels_woman_1.jpg", &img_w, &img_h);
+	unsigned char *src_img = load_image(argc > 1 ? argv[1] : "blg_wheels_woman_1.jpg", &img_w, &img_h);
 
 	EffectChain chain(WIDTH, HEIGHT);
 	glViewport(0, 0, WIDTH, HEIGHT);
