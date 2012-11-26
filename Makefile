@@ -1,8 +1,13 @@
 GTEST_DIR = /usr/src/gtest
 
+EIGEN_CXXFLAGS := $(shell pkg-config --cflags eigen3)
+ifeq ($(EIGEN_CXXFLAGS),)
+$(error Empty EIGEN_CXXFLAGS. You probably need to install Eigen3)
+endif
+
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(shell pkg-config --cflags eigen3 )
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS)
 LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
 RANLIB=ranlib
 
