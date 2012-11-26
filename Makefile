@@ -90,7 +90,7 @@ libmovit.a: $(LIB_OBJS)
 	$(RANLIB) $@
 
 %.o: %.cpp
-	$(CXX) -MMD $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
