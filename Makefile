@@ -75,37 +75,7 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
 
 # Unit tests.
-effect_chain_test: effect_chain_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-mix_effect_test: mix_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-gamma_expansion_effect_test: gamma_expansion_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-gamma_compression_effect_test: gamma_compression_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-colorspace_conversion_effect_test: colorspace_conversion_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-saturation_effect_test: saturation_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-deconvolution_sharpen_effect_test: deconvolution_sharpen_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-blur_effect_test: blur_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-unsharp_mask_effect_test: unsharp_mask_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-diffusion_effect_test: diffusion_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-white_balance_effect_test: white_balance_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-lift_gamma_gain_effect_test: lift_gamma_gain_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-resample_effect_test: resample_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-dither_effect_test: dither_effect_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-flat_input_test: flat_input_test.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
-ycbcr_input_test: ycbcr_input_test.o $(TEST_OBJS) libmovit.a
+$(TESTS): %: %.o $(TEST_OBJS) libmovit.a
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
