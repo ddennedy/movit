@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+#include <string>
 
 #include "init.h"
 #include "util.h"
@@ -6,6 +7,11 @@
 bool movit_initialized = false;
 float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
+
+// The rules for objects with nontrivial constructors in static scope
+// are somewhat convoluted, and easy to mess up. We simply have a
+// pointer instead (and never care to clean it up).
+std::string *movit_data_directory = NULL;
 
 namespace {
 
@@ -148,11 +154,13 @@ void check_extensions()
 
 }  // namespace
 
-void init_movit()
+void init_movit(const std::string& data_directory)
 {
 	if (movit_initialized) {
 		return;
 	}
+
+	movit_data_directory = new std::string(data_directory);
 
 	glewInit();
 

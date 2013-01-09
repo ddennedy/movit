@@ -1,10 +1,17 @@
 #ifndef _INIT_H
 #define _INIT_H
 
+#include <string>
+
 // Initialize the library; in particular, will query the GPU for information
 // that is needed by various components. For instance, it verifies that
 // we have all the OpenGL extensions we need.
-void init_movit();
+//
+// The parameter gives which directory to read .frag files from.
+// This is a temporary hack until we add something more solid.
+// If you call init_movit() twice with different values for data_directory,
+// only the first will count.
+void init_movit(const std::string& data_directory);
 
 // GPU features. These are not intended for end-user use.
 

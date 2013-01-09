@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 	SDL_SetVideoMode(WIDTH, HEIGHT, 0, SDL_OPENGL);
 	SDL_WM_SetCaption("OpenGL window", NULL);
 
-	init_movit();
+	init_movit(".");
 	printf("GPU texture subpixel precision: about %.1f bits\n",
 		log2(1.0f / movit_texel_subpixel_precision));
 	

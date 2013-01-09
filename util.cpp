@@ -7,6 +7,8 @@
 #include "util.h"
 #include "init.h"
 
+extern std::string *movit_data_directory;
+
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 {
 	if (h < 0.0f) {
@@ -65,10 +67,12 @@ void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b)
 
 std::string read_file(const std::string &filename)
 {
+	const std::string full_pathname = *movit_data_directory + "/" + filename;
+
 	static char buf[131072];
-	FILE *fp = fopen(filename.c_str(), "r");
+	FILE *fp = fopen(full_pathname.c_str(), "r");
 	if (fp == NULL) {
-		perror(filename.c_str());
+		perror(full_pathname.c_str());
 		exit(1);
 	}
 
