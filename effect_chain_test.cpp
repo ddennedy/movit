@@ -2,12 +2,13 @@
 //
 // Note that this also contains the tests for some of the simpler effects.
 
+#include <GL/glew.h>
+
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
 #include "mirror_effect.h"
 #include "resize_effect.h"
-#include "opengl.h"
 #include "test_util.h"
 
 TEST(EffectChainTest, EmptyChain) {

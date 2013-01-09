@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include <algorithm>
 #include <set>
@@ -17,7 +18,6 @@
 #include "colorspace_conversion_effect.h"
 #include "dither_effect.h"
 #include "input.h"
-#include "opengl.h"
 
 EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),

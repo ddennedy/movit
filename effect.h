@@ -18,7 +18,7 @@
 
 #include <Eigen/Core>
 
-#include "opengl.h"
+#include <GL/glew.h>
 #include "util.h"
 
 class EffectChain;

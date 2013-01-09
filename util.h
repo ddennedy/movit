@@ -9,7 +9,7 @@
 #include <string>
 #include <Eigen/Core>
 
-#include "opengl.h"
+#include <GL/glew.h>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 

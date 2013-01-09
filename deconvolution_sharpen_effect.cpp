@@ -5,12 +5,12 @@
 
 #include <math.h>
 #include <assert.h>
+#include <GL/glew.h>
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
 
 #include "deconvolution_sharpen_effect.h"
 #include "util.h"
-#include "opengl.h"
 
 using namespace Eigen;
 

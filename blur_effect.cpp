@@ -1,10 +1,10 @@
 #include <math.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include "blur_effect.h"
 #include "effect_chain.h"
 #include "util.h"
-#include "opengl.h"
 
 // Must match blur_effect.frag.
 #define NUM_TAPS 16

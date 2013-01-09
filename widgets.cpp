@@ -1,8 +1,8 @@
 #include <math.h>
+#include <GL/glew.h>
 
 #include "widgets.h"
 #include "util.h"
-#include "opengl.h"
 
 #define HSV_WHEEL_SIZE 128
 

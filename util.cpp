@@ -1,10 +1,10 @@
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include <assert.h>
+#include <GL/glew.h>
 
-#include <math.h>
 #include "util.h"
-#include "opengl.h"
 #include "init.h"
 
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)

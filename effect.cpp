@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <GL/glew.h>
+
 #include "effect.h"
 #include "effect_chain.h"
 #include "util.h"
-
-#include "opengl.h"
 
 GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key)
 {

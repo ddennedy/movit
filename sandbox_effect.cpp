@@ -1,9 +1,9 @@
 #include <math.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include "sandbox_effect.h"
 #include "util.h"
-#include "opengl.h"
 
 SandboxEffect::SandboxEffect()
 	: parm(0.0f)

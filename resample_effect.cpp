@@ -3,11 +3,11 @@
 
 #include <math.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include "resample_effect.h"
 #include "effect_chain.h"
 #include "util.h"
-#include "opengl.h"
 
 namespace {
 

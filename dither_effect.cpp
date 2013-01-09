@@ -1,9 +1,9 @@
 #include <math.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include "dither_effect.h"
 #include "util.h"
-#include "opengl.h"
 
 namespace {
 

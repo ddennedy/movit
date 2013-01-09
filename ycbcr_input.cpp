@@ -1,11 +1,11 @@
 #include <string.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include <Eigen/LU>
 
 #include "ycbcr_input.h"
 #include "util.h"
-#include "opengl.h"
 
 using namespace Eigen;
 

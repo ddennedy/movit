@@ -1,9 +1,9 @@
 #include <string.h>
 #include <assert.h>
+#include <GL/glew.h>
 
 #include "flat_input.h"
 #include "util.h"
-#include "opengl.h"
 
 FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
 	: image_format(image_format),

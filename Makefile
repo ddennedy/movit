@@ -5,10 +5,20 @@ ifeq ($(EIGEN_CXXFLAGS),)
 $(error Empty EIGEN_CXXFLAGS. You probably need to install Eigen3)
 endif
 
+GLEW_CXXFLAGS := $(shell pkg-config --cflags glew)
+ifeq ($(GLEW_CXXFLAGS),)
+$(error Empty GLEW_CXXFLAGS. You probably need to install GLEW)
+endif
+
+GLEW_LIBS := $(shell pkg-config --libs glew)
+ifeq ($(GLEW_LIBS),)
+$(error Empty GLEW_LIBS. You probably need to install GLEW)
+endif
+
 CC=gcc
 CXX=g++
-CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS)
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS) $(GLEW_CXXFLAGS)
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread $(GLEW_LIBS)
 RANLIB=ranlib
 
 ifeq ($(COVERAGE),1)

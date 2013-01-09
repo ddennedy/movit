@@ -1,8 +1,8 @@
 #include <math.h>
+#include <GL/glew.h>
 
 #include "vignette_effect.h"
 #include "util.h"
-#include "opengl.h"
 
 VignetteEffect::VignetteEffect()
 	: center(0.5f, 0.5f),
