@@ -268,6 +268,7 @@ Phase *EffectChain::compile_glsl_program(
 	frag_shader += std::string("#define INPUT ") + effects.back()->effect_id + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
+#ifndef NDEBUG
 	// Output shader to a temporary file, for easier debugging.
 	static int compiled_shader_num = 0;
 	char filename[256];
@@ -279,6 +280,7 @@ Phase *EffectChain::compile_glsl_program(
 	}
 	fprintf(fp, "%s\n", frag_shader.c_str());
 	fclose(fp);
+#endif
 	
 	GLuint glsl_program_num = glCreateProgram();
 	GLuint vs_obj = compile_shader(read_file("vs.vert"), GL_VERTEX_SHADER);
@@ -427,6 +429,10 @@ void EffectChain::construct_glsl_programs(Node *output)
 
 void EffectChain::output_dot(const char *filename)
 {
+#ifdef NDEBUG
+	return;
+#endif
+
 	FILE *fp = fopen(filename, "w");
 	if (fp == NULL) {
 		perror(filename);
