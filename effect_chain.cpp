@@ -18,6 +18,7 @@
 #include "colorspace_conversion_effect.h"
 #include "dither_effect.h"
 #include "input.h"
+#include "init.h"
 
 EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),
@@ -268,19 +269,19 @@ Phase *EffectChain::compile_glsl_program(
 	frag_shader += std::string("#define INPUT ") + effects.back()->effect_id + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
-#ifndef NDEBUG
-	// Output shader to a temporary file, for easier debugging.
-	static int compiled_shader_num = 0;
-	char filename[256];
-	sprintf(filename, "chain-%03d.frag", compiled_shader_num++);
-	FILE *fp = fopen(filename, "w");
-	if (fp == NULL) {
-		perror(filename);
-		exit(1);
+	if (movit_debug_level == MOVIT_DEBUG_ON) {
+		// Output shader to a temporary file, for easier debugging.
+		static int compiled_shader_num = 0;
+		char filename[256];
+		sprintf(filename, "chain-%03d.frag", compiled_shader_num++);
+		FILE *fp = fopen(filename, "w");
+		if (fp == NULL) {
+			perror(filename);
+			exit(1);
+		}
+		fprintf(fp, "%s\n", frag_shader.c_str());
+		fclose(fp);
 	}
-	fprintf(fp, "%s\n", frag_shader.c_str());
-	fclose(fp);
-#endif
 	
 	GLuint glsl_program_num = glCreateProgram();
 	GLuint vs_obj = compile_shader(read_file("vs.vert"), GL_VERTEX_SHADER);
@@ -429,9 +430,9 @@ void EffectChain::construct_glsl_programs(Node *output)
 
 void EffectChain::output_dot(const char *filename)
 {
-#ifdef NDEBUG
-	return;
-#endif
+	if (movit_debug_level != MOVIT_DEBUG_ON) {
+		return;
+	}
 
 	FILE *fp = fopen(filename, "w");
 	if (fp == NULL) {

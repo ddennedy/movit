@@ -3,20 +3,33 @@
 
 #include <string>
 
+enum MovitDebugLevel {
+	MOVIT_DEBUG_OFF = 0,
+	MOVIT_DEBUG_ON = 1,
+};
+
 // Initialize the library; in particular, will query the GPU for information
 // that is needed by various components. For instance, it verifies that
 // we have all the OpenGL extensions we need.
 //
-// The parameter gives which directory to read .frag files from.
+// The first parameter gives which directory to read .frag files from.
 // This is a temporary hack until we add something more solid.
-// If you call init_movit() twice with different values for data_directory,
+//
+// The second parameter specifies whether debugging is on or off.
+// If it is on, Movit will write intermediate graphs and the final
+// generated shaders to the current directory.
+//
+// If you call init_movit() twice with different parameters,
 // only the first will count.
-void init_movit(const std::string& data_directory);
+void init_movit(const std::string& data_directory, MovitDebugLevel debug_level);
 
 // GPU features. These are not intended for end-user use.
 
 // Whether init_movit() has been called.
 extern bool movit_initialized;
+
+// The current debug level.
+extern MovitDebugLevel movit_debug_level;
 
 // An estimate on the smallest values the linear texture interpolation
 // of the GPU can distinguish between, i.e., for a GPU with N-bit

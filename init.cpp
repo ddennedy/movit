@@ -5,6 +5,7 @@
 #include "util.h"
 
 bool movit_initialized = false;
+MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
 
@@ -154,13 +155,14 @@ void check_extensions()
 
 }  // namespace
 
-void init_movit(const std::string& data_directory)
+void init_movit(const std::string& data_directory, MovitDebugLevel debug_level)
 {
 	if (movit_initialized) {
 		return;
 	}
 
 	movit_data_directory = new std::string(data_directory);
+	movit_debug_level = debug_level;
 
 	glewInit();
 

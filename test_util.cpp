@@ -29,7 +29,7 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
                                      GLenum framebuffer_format)
 	: chain(width, height), width(width), height(height), finalized(false)
 {
-	init_movit(".");
+	init_movit(".", MOVIT_DEBUG_ON);
 
 	if (data != NULL) {
 		add_input(data, pixel_format, color_space, gamma_curve);
