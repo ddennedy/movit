@@ -1005,7 +1005,7 @@ void EffectChain::finalize()
 	output_dot("step1-rewritten.dot");
 
 	find_color_spaces_for_inputs();
-	output_dot("step2-propagated.dot");
+	output_dot("step2-input-colorspace.dot");
 
 	propagate_gamma_and_color_space();
 	output_dot("step3-propagated.dot");
