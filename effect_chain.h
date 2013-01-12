@@ -167,6 +167,7 @@ private:
 	void topological_sort_visit_node(Node *node, std::set<Node *> *visited_nodes, std::vector<Node *> *sorted_list);
 
 	// Used during finalize().
+	void find_color_spaces_for_inputs();
 	void propagate_gamma_and_color_space();
 	Node *find_output_node();
 

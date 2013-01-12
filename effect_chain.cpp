@@ -51,10 +51,7 @@ EffectChain::~EffectChain()
 Input *EffectChain::add_input(Input *input)
 {
 	inputs.push_back(input);
-
-	Node *node = add_node(input);
-	node->output_color_space = input->get_color_space();
-	node->output_gamma_curve = input->get_gamma_curve();
+	add_node(input);
 	return input;
 }
 
@@ -648,6 +645,21 @@ void EffectChain::topological_sort_visit_node(Node *node, std::set<Node *> *visi
 	sorted_list->push_back(node);
 }
 
+void EffectChain::find_color_spaces_for_inputs()
+{
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		if (node->incoming_links.size() == 0) {
+			Input *input = static_cast<Input *>(node->effect);
+			node->output_color_space = input->get_color_space();
+			node->output_gamma_curve = input->get_gamma_curve();
+		}
+	}
+}
+
 // Propagate gamma and color space information as far as we can in the graph.
 // The rules are simple: Anything where all the inputs agree, get that as
 // output as well. Anything else keeps having *_INVALID.
@@ -992,8 +1004,11 @@ void EffectChain::finalize()
 	}
 	output_dot("step1-rewritten.dot");
 
-	propagate_gamma_and_color_space();
+	find_color_spaces_for_inputs();
 	output_dot("step2-propagated.dot");
+
+	propagate_gamma_and_color_space();
+	output_dot("step3-propagated.dot");
 
 	fix_internal_color_spaces();
 	fix_output_color_space();

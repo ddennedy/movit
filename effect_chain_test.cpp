@@ -185,6 +185,61 @@ TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {
 	expect_equal(expected_data, out_data, 3, 2);
 }
 
+// A fake input that can change its output colorspace and gamma between instantiation
+// and finalize.
+class UnknownColorspaceInput : public FlatInput {
+public:
+	UnknownColorspaceInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
+	    : FlatInput(format, pixel_format, type, width, height),
+	      overridden_color_space(format.color_space),
+	      overridden_gamma_curve(format.gamma_curve) {}
+	virtual std::string effect_type_id() const { return "UnknownColorspaceInput"; }
+
+	void set_color_space(Colorspace colorspace) {
+		overridden_color_space = colorspace;
+	}
+	void set_gamma_curve(GammaCurve gamma_curve) {
+		overridden_gamma_curve = gamma_curve;
+	}
+	Colorspace get_color_space() const { return overridden_color_space; }
+	GammaCurve get_gamma_curve() const { return overridden_gamma_curve; }
+
+private:
+	Colorspace overridden_color_space;
+	GammaCurve overridden_gamma_curve;
+};
+
+TEST(EffectChainTester, HandlesInputChangingColorspace) {
+	const int size = 4;
+
+	float data[size] = {
+		0.0,
+		0.5,
+		0.7,
+		1.0,
+	};
+	float out_data[size];
+
+	EffectChainTester tester(NULL, 4, 1, FORMAT_GRAYSCALE);
+
+	// First say that we have sRGB, linear input.
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	UnknownColorspaceInput *input = new UnknownColorspaceInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 1);
+	input->set_pixel_data(data);
+	tester.get_chain()->add_input(input);
+
+	// Now we change to Rec. 601 input.
+	input->set_color_space(COLORSPACE_REC_601_625);
+	input->set_gamma_curve(GAMMA_REC_601);
+
+	// Now ask for Rec. 601 output. Thus, our chain should now be a no-op.
+	tester.run(out_data, GL_RED, COLORSPACE_REC_601_625, GAMMA_REC_601);
+	expect_equal(data, out_data, 4, 1);
+}
+
 // Like RewritingToInvertEffect, but splicing in a MirrorEffect instead,
 // which does not need linear light or sRGB primaries.
 class RewritingToMirrorEffect : public Effect {
