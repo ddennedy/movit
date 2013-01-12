@@ -31,6 +31,7 @@ DEMO_OBJS=demo.o
 # Unit tests.
 TESTS=effect_chain_test
 TESTS += mix_effect_test
+TESTS += overlay_effect_test
 TESTS += gamma_expansion_effect_test
 TESTS += gamma_compression_effect_test
 TESTS += colorspace_conversion_effect_test
@@ -67,6 +68,7 @@ LIB_OBJS += diffusion_effect.o
 LIB_OBJS += glow_effect.o
 LIB_OBJS += unsharp_mask_effect.o
 LIB_OBJS += mix_effect.o
+LIB_OBJS += overlay_effect.o
 LIB_OBJS += resize_effect.o
 LIB_OBJS += resample_effect.o
 LIB_OBJS += dither_effect.o
