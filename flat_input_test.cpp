@@ -77,6 +77,37 @@ TEST(FlatInput, RGBA) {
 	expect_equal(expected_data, out_data, 4, size);
 }
 
+// Note: The sRGB conversion itself is tested in EffectChainTester,
+// since it also wants to test the chain building itself.
+// Here, we merely test that alpha is left alone; the test will usually
+// run using the sRGB OpenGL extension, but might be run with a
+// GammaExpansionEffect if the card/driver happens not to support that.
+TEST(FlatInput, AlphaIsNotModifiedBySRGBConversion) {
+	const int size = 5;
+
+	unsigned char data[4 * size] = {
+		0, 0, 0, 0,
+		0, 0, 0, 63,
+		0, 0, 0, 127,
+		0, 0, 0, 191,
+		0, 0, 0, 255,
+	};
+	float expected_data[4 * size] = {
+		0, 0, 0, 0.0 / 255.0,
+		0, 0, 0, 63.0 / 255.0,
+		0, 0, 0, 127.0 / 255.0,
+		0, 0, 0, 191.0 / 255.0,
+		0, 0, 0, 255.0 / 255.0,
+	};
+	float out_data[4 * size];
+
+        EffectChainTester tester(NULL, 1, size);
+        tester.add_input(data, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, size);
+}
+
 TEST(FlatInput, BGR) {
 	const int size = 5;
 

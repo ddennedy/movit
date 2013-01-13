@@ -34,6 +34,21 @@ TEST(GammaExpansionEffectTest, sRGB_RampAlwaysIncreases) {
 	}
 }
 
+TEST(GammaExpansionEffectTest, sRGB_AlphaIsUnchanged) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.25f,
+		0.0f, 0.0f, 0.0f, 0.5f,
+		0.0f, 0.0f, 0.0f, 0.75f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+	};
+	float out_data[5 * 4];
+	EffectChainTester tester(data, 5, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, 5, 1);
+}
+
 TEST(GammaExpansionEffectTest, Rec709_KeyValues) {
 	float data[] = {
 		0.0f, 1.0f,
@@ -62,4 +77,19 @@ TEST(GammaExpansionEffectTest, Rec709_RampAlwaysIncreases) {
 		EXPECT_GT(out_data[i], out_data[i - 1])
 		   << "No increase between " << i-1 << " and " << i;
 	}
+}
+
+TEST(GammaExpansionEffectTest, Rec709_AlphaIsUnchanged) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.25f,
+		0.0f, 0.0f, 0.0f, 0.5f,
+		0.0f, 0.0f, 0.0f, 0.75f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+	};
+	float out_data[5 * 4];
+	EffectChainTester tester(data, 5, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, 5, 1);
 }

@@ -44,7 +44,7 @@ void FlatInput::finalize()
 		internal_format = GL_RGBA16F_ARB;
 	} else if (output_linear_gamma) {
 		assert(type == GL_UNSIGNED_BYTE);
-		internal_format = GL_SRGB8;
+		internal_format = GL_SRGB8_ALPHA8;
 	} else {
 		assert(type == GL_UNSIGNED_BYTE);
 		internal_format = GL_RGBA8;
