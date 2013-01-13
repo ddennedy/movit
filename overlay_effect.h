@@ -5,7 +5,7 @@
 // (If both images are the same aspect and the top image has alpha=1.0
 // for all pixels, you will not see anything of the one on the bottom.)
 //
-// This is the “atop” operation from Porter-Duff blending, also used
+// This is the “over” operation from Porter-Duff blending, also used
 // when merging layers in e.g. GIMP or Photoshop.
 //
 // The first input is the bottom, and the second is the top.
