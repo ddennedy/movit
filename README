@@ -27,6 +27,8 @@ OK, you need
   you're home free.
 * The [Eigen 3] and [Google Test] libraries. (The library itself
   depends only on the former, but you probably want to run the unit tests.)
+* The [GLEW] library, for dealing with OpenGL extensions on various
+  platforms.
 
 Movit has been tested with Intel GPUs with the Mesa drivers
 (you'll probably need at least Mesa 8.0), Radeon 3850 and GeForce GTX 550
