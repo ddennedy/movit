@@ -112,11 +112,14 @@ clean:
 	$(RM) -r movit.info coverage/
 
 check: $(TESTS)
-	FAIL=0; \
+	FAILED_TESTS=""; \
 	for TEST in $(TESTS); do \
-	    ./$$TEST || FAIL=1; \
+	    ./$$TEST || FAILED_TESTS="$$TEST $$FAILED_TESTS"; \
 	done; \
-	exit $$FAIL
+	if [ "$$FAILED_TESTS" ]; then \
+		echo Failed tests: $$FAILED_TESTS; \
+		exit 1; \
+	fi
 
 # You need to build with COVERAGE=1 to use this target.
 coverage: check
