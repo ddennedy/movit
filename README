@@ -41,7 +41,7 @@ Still TL;DR, please give me the list of filters
 ===============================================
 
 Blur, diffusion, glow, lift/gamma/gain (color correction), mirror,
-mix (add two inputs), overlay (the Porter-Duff “atop” operation),
+mix (add two inputs), overlay (the Porter-Duff “over” operation),
 scale (bilinear and Lanczos), sharpen (both by unsharp mask and by
 Wiener filters), saturation (or desaturation), vignette, and white balance.
 
