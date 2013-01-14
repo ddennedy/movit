@@ -30,9 +30,6 @@
 #include "lift_gamma_gain_effect.h"
 #include "saturation_effect.h"
 #include "diffusion_effect.h"
-#include "overlay_effect.h"
-#include "resample_effect.h"
-#include "resize_effect.h"
 
 unsigned char result[WIDTH * HEIGHT * 4];
 
@@ -129,15 +126,6 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 
 	SDL_FreeSurface(img);
 
-	unsigned char *x = (unsigned char *)converted->pixels;
-	for (int i = 0; i < img->w * img->h; ++i) {
-		if (x[i * 4 + 3] == 0) {
-			x[i * 4 + 0] = 255;
-			x[i * 4 + 1] = 255;
-			x[i * 4 + 2] = 255;
-		}
-	}
-
 	return (unsigned char *)converted->pixels;
 }
 
@@ -179,47 +167,13 @@ int main(int argc, char **argv)
 
 	ImageFormat inout_format;
 	inout_format.color_space = COLORSPACE_sRGB;
-	inout_format.gamma_curve = GAMMA_LINEAR;
+	inout_format.gamma_curve = GAMMA_sRGB;
 
 	FlatInput *input = new FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, img_w, img_h);
 	chain.add_input(input);
-
-	unsigned char *src_overlay1 = load_image("overlay1.png", &img_w, &img_h);
-#if 0
-	float *src_bleh = new float[img_w * img_h * 4];
-	for (int i = 0; i < img_w * img_h; ++i) {
-		float r = src_overlay1[i * 4 + 0] / 255.0f;
-		float g = src_overlay1[i * 4 + 1] / 255.0f;
-		float b = src_overlay1[i * 4 + 2] / 255.0f;
-		float a = src_overlay1[i * 4 + 3] / 255.0f;
-	//	src_bleh[i * 4 + 0] = r * a;
-	//	src_bleh[i * 4 + 1] = g * a;
-	//	src_bleh[i * 4 + 2] = b * a;
-		src_bleh[i * 4 + 0] = r;
-		src_bleh[i * 4 + 1] = g;
-		src_bleh[i * 4 + 2] = b;
-		src_bleh[i * 4 + 3] = a;
-	}
-	FlatInput *overlay1 = new FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_FLOAT, img_w, img_h);
-#endif
-	FlatInput *overlay1 = new FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, img_w, img_h);
-	chain.add_input(overlay1);
-
-	unsigned char *src_overlay2 = load_image("overlay2.png", &img_w, &img_h);
-	FlatInput *overlay2 = new FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, img_w, img_h);
-	chain.add_input(overlay2);
-
-	Effect *mix1 = chain.add_effect(new OverlayEffect(), overlay2, overlay1);
-	//Effect *mix1_resized = chain.add_effect(new ResampleEffect(), mix1);
-	Effect *mix1_resized = chain.add_effect(new ResizeEffect(), mix1);
-	CHECK(mix1_resized->set_int("width", 1280));
-	CHECK(mix1_resized->set_int("height", 720));
-	Effect *mix2 = chain.add_effect(new OverlayEffect(), input, mix1_resized);
-//	Effect *mix2 = chain.add_effect(new OverlayEffect(), input, overlay1);
-
-	//Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
-	//Effect *saturation_effect = chain.add_effect(new SaturationEffect());
-	//Effect *diffusion_effect = chain.add_effect(new DiffusionEffect());
+	Effect *lift_gamma_gain_effect = chain.add_effect(new LiftGammaGainEffect());
+	Effect *saturation_effect = chain.add_effect(new SaturationEffect());
+	Effect *diffusion_effect = chain.add_effect(new DiffusionEffect());
 	//Effect *vignette_effect = chain.add_effect(new VignetteEffect());
 	//Effect *sandbox_effect = chain.add_effect(new SandboxEffect());
 	//sandbox_effect->set_float("parm", 42.0f);
@@ -265,18 +219,15 @@ int main(int argc, char **argv)
 
 		++frame;
 
-		//update_hsv(lift_gamma_gain_effect, saturation_effect);
+		update_hsv(lift_gamma_gain_effect, saturation_effect);
 		//vignette_effect->set_float("radius", radius);
 		//vignette_effect->set_float("inner_radius", inner_radius);
 		//vignette_effect->set_vec2("center", (float[]){ 0.7f, 0.5f });
 
-		//CHECK(diffusion_effect->set_float("radius", blur_radius));
-		//CHECK(diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount));
+		CHECK(diffusion_effect->set_float("radius", blur_radius));
+		CHECK(diffusion_effect->set_float("blurred_mix_amount", blurred_mix_amount));
 
 		input->set_pixel_data(src_img);
-		overlay1->set_pixel_data(src_overlay1);
-		//overlay1->set_pixel_data(src_bleh);
-		overlay2->set_pixel_data(src_overlay2);
 		chain.render_to_screen();
 		
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
