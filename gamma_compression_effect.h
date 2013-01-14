@@ -20,6 +20,10 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 
+	// Actually needs postmultiplied input as well as outputting it.
+	// EffectChain will take care of that.
+	virtual AlphaHandling alpha_handling() const { return OUTPUT_ALPHA_POSTMULTIPLIED; }
+
 private:
 	GammaCurve destination_curve;
 	float compression_curve[COMPRESSION_CURVE_SIZE];

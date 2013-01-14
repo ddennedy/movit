@@ -17,7 +17,7 @@ TEST(WhiteBalanceEffectTest, GrayNeutralDoesNothing) {
 	};
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *white_balance_effect = tester.get_chain()->add_effect(new WhiteBalanceEffect());
 	ASSERT_TRUE(white_balance_effect->set_vec3("neutral_color", neutral));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -36,7 +36,7 @@ TEST(WhiteBalanceEffectTest, SettingReddishNeutralColorNeutralizesReddishColor) 
 	};
 
 	float out_data[3 * 4];
-	EffectChainTester tester(data, 1, 3, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 3, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *white_balance_effect = tester.get_chain()->add_effect(new WhiteBalanceEffect());
 	ASSERT_TRUE(white_balance_effect->set_vec3("neutral_color", neutral));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -73,7 +73,7 @@ TEST(WhiteBalanceEffectTest, HigherColorTemperatureIncreasesBlue) {
 	};
 
 	float out_data[2 * 4];
-	EffectChainTester tester(data, 1, 2, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 2, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *white_balance_effect = tester.get_chain()->add_effect(new WhiteBalanceEffect());
 	ASSERT_TRUE(white_balance_effect->set_float("output_color_temperature", 10000.0f));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);

@@ -20,6 +20,11 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual unsigned num_inputs() const { return 2; }
+
+	// Actually, if either image has blank alpha, our output will have
+	// blank alpha, too. However, understanding that would require changes
+	// to EffectChain, so postpone that optimization for later.
+	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED; }
 };
 
 #endif // !defined(_OVERLAY_EFFECT_H)

@@ -14,7 +14,7 @@ TEST(LiftGammaGainEffectTest, DefaultIsNoop) {
 	};
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new LiftGammaGainEffect());
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
@@ -39,7 +39,7 @@ TEST(LiftGammaGainEffectTest, Gain) {
 	};
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *lgg_effect = tester.get_chain()->add_effect(new LiftGammaGainEffect());
 	ASSERT_TRUE(lgg_effect->set_vec3("gain", gain));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -65,7 +65,7 @@ TEST(LiftGammaGainEffectTest, LiftIsDoneInApproximatelysRGB) {
 	};
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	Effect *lgg_effect = tester.get_chain()->add_effect(new LiftGammaGainEffect());
 	ASSERT_TRUE(lgg_effect->set_vec3("lift", lift));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
@@ -85,7 +85,7 @@ TEST(LiftGammaGainEffectTest, Gamma22IsApproximatelysRGB) {
 	float gamma[3] = { 2.2f, 2.2f, 2.2f };
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	Effect *lgg_effect = tester.get_chain()->add_effect(new LiftGammaGainEffect());
 	ASSERT_TRUE(lgg_effect->set_vec3("gamma", gamma));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);

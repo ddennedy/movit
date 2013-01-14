@@ -43,7 +43,7 @@ TEST(GammaExpansionEffectTest, sRGB_AlphaIsUnchanged) {
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 5, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	EffectChainTester tester(data, 5, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data, out_data, 5, 1);
@@ -88,7 +88,7 @@ TEST(GammaExpansionEffectTest, Rec709_AlphaIsUnchanged) {
 		0.0f, 0.0f, 0.0f, 1.0f,
 	};
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 5, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_REC_709);
+	EffectChainTester tester(data, 5, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_REC_709);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data, out_data, 5, 1);

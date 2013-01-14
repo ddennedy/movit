@@ -15,11 +15,11 @@ public:
 	EffectChain *get_chain() { return &chain; }
 	Input *add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
 	Input *add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
-	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
-	void run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve);
+	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_POSTMULTIPLIED);
+	void run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_POSTMULTIPLIED);
 
 private:
-	void finalize_chain(Colorspace color_space, GammaCurve gamma_curve);
+	void finalize_chain(Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format);
 
 	EffectChain chain;
 	GLuint fbo, texnum;

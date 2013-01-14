@@ -11,6 +11,21 @@
 class EffectChain;
 class Phase;
 
+// For internal use within Node.
+enum AlphaType {
+	ALPHA_INVALID = -1,
+	ALPHA_BLANK,
+	ALPHA_PREMULTIPLIED,
+	ALPHA_POSTMULTIPLIED,
+};
+
+// Whether you want pre- or postmultiplied alpha in the output
+// (see effect.h for a discussion of pre- versus postmultiplied alpha).
+enum OutputAlphaFormat {
+	OUTPUT_ALPHA_PREMULTIPLIED,
+	OUTPUT_ALPHA_POSTMULTIPLIED,
+};
+
 // A node in the graph; basically an effect and some associated information.
 class Node {
 public:
@@ -42,6 +57,7 @@ private:
 	// Used during the building of the effect chain.
 	Colorspace output_color_space;
 	GammaCurve output_gamma_curve;
+	AlphaType output_alpha_type;
 
 	friend class EffectChain;
 };
@@ -89,7 +105,7 @@ public:
 	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
-	void add_output(const ImageFormat &format);
+	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
 	// Set number of output bits, to scale the dither.
 	// 8 is the right value for most outputs.
@@ -168,12 +184,17 @@ private:
 
 	// Used during finalize().
 	void find_color_spaces_for_inputs();
+	void propagate_alpha();
 	void propagate_gamma_and_color_space();
 	Node *find_output_node();
 
 	bool node_needs_colorspace_fix(Node *node);
 	void fix_internal_color_spaces();
 	void fix_output_color_space();
+
+	bool node_needs_alpha_fix(Node *node);
+	void fix_internal_alpha(unsigned step);
+	void fix_output_alpha();
 
 	bool node_needs_gamma_fix(Node *node);
 	void fix_internal_gamma_by_asking_inputs(unsigned step);
@@ -183,6 +204,7 @@ private:
 
 	float aspect_nom, aspect_denom;
 	ImageFormat output_format;
+	OutputAlphaFormat output_alpha_format;
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;

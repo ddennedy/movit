@@ -71,7 +71,7 @@ TEST(FlatInput, RGBA) {
 	};
 	float out_data[4 * size];
 
-	EffectChainTester tester(data, 1, size, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, size, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, size);
@@ -102,7 +102,7 @@ TEST(FlatInput, AlphaIsNotModifiedBySRGBConversion) {
 	float out_data[4 * size];
 
         EffectChainTester tester(NULL, 1, size);
-        tester.add_input(data, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+        tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, size);
@@ -152,7 +152,7 @@ TEST(FlatInput, BGRA) {
 	};
 	float out_data[4 * size];
 
-	EffectChainTester tester(data, 1, size, FORMAT_BGRA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, size, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, size);

@@ -1,6 +1,8 @@
 #ifndef _FLAT_INPUT_H
 #define _FLAT_INPUT_H 1
 
+#include <assert.h>
+
 #include "input.h"
 #include "init.h"
 
@@ -23,6 +25,22 @@ public:
 		        type == GL_UNSIGNED_BYTE &&
 		        (image_format.gamma_curve == GAMMA_LINEAR ||
 		         image_format.gamma_curve == GAMMA_sRGB));
+	}
+	virtual AlphaHandling alpha_handling() const {
+		switch (pixel_format) {
+		case FORMAT_RGBA_PREMULTIPLIED_ALPHA:
+		case FORMAT_BGRA_PREMULTIPLIED_ALPHA:
+			return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED;
+		case FORMAT_RGBA_POSTMULTIPLIED_ALPHA:
+		case FORMAT_BGRA_POSTMULTIPLIED_ALPHA:
+			return OUTPUT_ALPHA_POSTMULTIPLIED;
+		case FORMAT_RGB:
+		case FORMAT_BGR:
+		case FORMAT_GRAYSCALE:
+			return OUTPUT_BLANK_ALPHA;
+		default:
+			assert(false);
+		}
 	}
 
 	std::string output_fragment_shader();

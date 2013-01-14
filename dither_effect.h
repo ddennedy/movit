@@ -52,6 +52,11 @@ public:
 	virtual std::string effect_type_id() const { return "DitherEffect"; }
 	std::string output_fragment_shader();
 
+	// Note that if we did error diffusion, we'd actually want to diffuse the
+	// premultiplied error. However, we need to do dithering in the same
+	// space as quantization, whether that be pre- or postmultiply.
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 private:

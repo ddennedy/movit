@@ -78,6 +78,49 @@ public:
 	// in a linear fashion.
 	virtual bool needs_srgb_primaries() const { return true; }
 
+	// How this effect handles alpha, ie. what it outputs in its
+	// alpha channel. The choices are basically blank (alpha is always 1.0),
+	// premultiplied and postmultiplied.
+	//
+	// Premultiplied alpha is when the alpha value has been be multiplied
+	// into the three color components, so e.g. 100% red at 50% alpha
+	// would be (0.5, 0.0, 0.0, 0.5) instead of (1.0, 0.0, 0.0, 0.5)
+	// as it is stored in most image formats (postmultiplied alpha).
+	// The multiplication is taken to have happened in linear light.
+	// This is the most natural format for processing, and the default in
+	// most of Movit (just like linear light is).
+	//
+	// If you set INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED, all of your inputs
+	// (if any) are guaranteed to also be in premultiplied alpha.
+	// Otherwise, you can get postmultiplied or premultiplied alpha;
+	// you won't know. If you have multiple inputs, you will get the same
+	// (pre- or postmultiplied) for all inputs, although most likely,
+	// you will want to combine them in a premultiplied fashion anyway
+	// in that case.
+	enum AlphaHandling {
+		// Always outputs blank alpha (ie. alpha=1.0). Only appropriate
+		// for inputs that do not output an alpha channel.
+		// Blank alpha is special in that it can be treated as both
+		// pre- and postmultiplied.
+		OUTPUT_BLANK_ALPHA,
+
+		// Always outputs premultiplied alpha. As noted above,
+		// you will then also get all inputs in premultiplied alpha.
+		// If you set this, you should also set needs_linear_light().
+		INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED,
+
+		// Always outputs postmultiplied alpha. Only appropriate for inputs.
+		OUTPUT_ALPHA_POSTMULTIPLIED,
+
+		// Keeps the type of alpha unchanged from input to output.
+		// Usually appropriate if you process all color channels
+		// in a linear fashion, and do not change alpha.
+		//
+		// Does not make sense for inputs.
+		DONT_CARE_ALPHA_TYPE,
+	};
+	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED; }
+
 	// Whether this effect expects its input to come directly from
 	// a texture. If this is true, the framework will not chain the
 	// input from other effects, but will store the results of the

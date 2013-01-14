@@ -16,6 +16,8 @@
 #include "gamma_expansion_effect.h"
 #include "gamma_compression_effect.h"
 #include "colorspace_conversion_effect.h"
+#include "alpha_multiplication_effect.h"
+#include "alpha_division_effect.h"
 #include "dither_effect.h"
 #include "input.h"
 #include "init.h"
@@ -55,9 +57,10 @@ Input *EffectChain::add_input(Input *input)
 	return input;
 }
 
-void EffectChain::add_output(const ImageFormat &format)
+void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)
 {
 	output_format = format;
+	output_alpha_format = alpha_format;
 }
 
 Node *EffectChain::add_node(Effect *effect)
@@ -71,6 +74,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->effect_id = effect_id;
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
+	node->output_alpha_type = ALPHA_INVALID;
 	node->output_texture = 0;
 
 	nodes.push_back(node);
@@ -494,6 +498,20 @@ void EffectChain::output_dot(const char *filename)
 				break;
 			}
 
+			switch (nodes[i]->output_alpha_type) {
+			case ALPHA_INVALID:
+				labels.push_back("alpha[invalid]");
+				break;
+			case ALPHA_BLANK:
+				labels.push_back("alpha[blank]");
+				break;
+			case ALPHA_POSTMULTIPLIED:
+				labels.push_back("alpha[postmult]");
+				break;
+			default:
+				break;
+			}
+
 			if (labels.empty()) {
 				fprintf(fp, "  n%ld -> n%ld;\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j]);
 			} else {
@@ -656,6 +674,22 @@ void EffectChain::find_color_spaces_for_inputs()
 			Input *input = static_cast<Input *>(node->effect);
 			node->output_color_space = input->get_color_space();
 			node->output_gamma_curve = input->get_gamma_curve();
+
+			Effect::AlphaHandling alpha_handling = input->alpha_handling();
+			switch (alpha_handling) {
+			case Effect::OUTPUT_BLANK_ALPHA:
+				node->output_alpha_type = ALPHA_BLANK;
+				break;
+			case Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED:
+				node->output_alpha_type = ALPHA_PREMULTIPLIED;
+				break;
+			case Effect::OUTPUT_ALPHA_POSTMULTIPLIED:
+				node->output_alpha_type = ALPHA_POSTMULTIPLIED;
+				break;
+			case Effect::DONT_CARE_ALPHA_TYPE:
+			default:
+				assert(false);
+			}
 		}
 	}
 }
@@ -700,6 +734,129 @@ void EffectChain::propagate_gamma_and_color_space()
 		    node->effect->effect_type_id() != "GammaExpansionEffect") {
 			node->output_gamma_curve = gamma_curve;
 		}		
+	}
+}
+
+// Propagate alpha information as far as we can in the graph.
+// Similar to propagate_gamma_and_color_space().
+void EffectChain::propagate_alpha()
+{
+	// We depend on going through the nodes in order.
+	sort_nodes_topologically();
+
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		assert(node->incoming_links.size() == node->effect->num_inputs());
+		if (node->incoming_links.size() == 0) {
+			assert(node->output_alpha_type != ALPHA_INVALID);
+			continue;
+		}
+
+		// The alpha multiplication/division effects are special cases.
+		if (node->effect->effect_type_id() == "AlphaMultiplicationEffect") {
+			assert(node->incoming_links.size() == 1);
+			assert(node->incoming_links[0]->output_alpha_type == ALPHA_POSTMULTIPLIED);
+			node->output_alpha_type = ALPHA_PREMULTIPLIED;
+			continue;
+		}
+		if (node->effect->effect_type_id() == "AlphaDivisionEffect") {
+			assert(node->incoming_links.size() == 1);
+			assert(node->incoming_links[0]->output_alpha_type == ALPHA_PREMULTIPLIED);
+			node->output_alpha_type = ALPHA_POSTMULTIPLIED;
+			continue;
+		}
+
+		// GammaCompressionEffect and GammaExpansionEffect are also a special case,
+		// because they are the only one that _need_ postmultiplied alpha.
+		if (node->effect->effect_type_id() == "GammaCompressionEffect" ||
+		    node->effect->effect_type_id() == "GammaExpansionEffect") {
+			assert(node->incoming_links.size() == 1);
+			if (node->incoming_links[0]->output_alpha_type == ALPHA_BLANK) {
+				node->output_alpha_type = ALPHA_BLANK;
+			} else if (node->incoming_links[0]->output_alpha_type == ALPHA_POSTMULTIPLIED) {
+				node->output_alpha_type = ALPHA_POSTMULTIPLIED;
+			} else {
+				node->output_alpha_type = ALPHA_INVALID;
+			}
+			continue;
+		}
+
+		// Only inputs can have unconditional alpha output (OUTPUT_BLANK_ALPHA
+		// or OUTPUT_ALPHA_POSTMULTIPLIED), and they have already been
+		// taken care of above. Rationale: Even if you could imagine
+		// e.g. an effect that took in an image and set alpha=1.0
+		// unconditionally, it wouldn't make any sense to have it as
+		// e.g. OUTPUT_BLANK_ALPHA, since it wouldn't know whether it
+		// got its input pre- or postmultiplied, so it wouldn't know
+		// whether to divide away the old alpha or not.
+		Effect::AlphaHandling alpha_handling = node->effect->alpha_handling();
+		assert(alpha_handling == Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED ||
+		       alpha_handling == Effect::DONT_CARE_ALPHA_TYPE);
+
+		// If the node has multiple inputs, check that they are all valid and
+		// the same.
+		bool any_invalid = false;
+		bool any_premultiplied = false;
+		bool any_postmultiplied = false;
+
+		for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+			switch (node->incoming_links[j]->output_alpha_type) {
+			case ALPHA_INVALID:
+				any_invalid = true;
+				break;
+			case ALPHA_BLANK:
+				// Blank is good as both pre- and postmultiplied alpha,
+				// so just ignore it.
+				break;
+			case ALPHA_PREMULTIPLIED:
+				any_premultiplied = true;
+				break;
+			case ALPHA_POSTMULTIPLIED:
+				any_postmultiplied = true;
+				break;
+			default:
+				assert(false);
+			}
+		}
+
+		if (any_invalid) {
+			node->output_alpha_type = ALPHA_INVALID;
+			continue;
+		}
+
+		// Inputs must be of the same type.
+		if (any_premultiplied && any_postmultiplied) {
+			node->output_alpha_type = ALPHA_INVALID;
+			continue;
+		}
+
+		if (alpha_handling == Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED) {
+			// If the effect has asked for premultiplied alpha, check that it has got it.
+			if (any_postmultiplied) {
+				node->output_alpha_type = ALPHA_INVALID;
+			} else {
+				// In some rare cases, it might be advantageous to say
+				// that blank input alpha yields blank output alpha.
+				// However, this would cause a more complex Effect interface
+				// an effect would need to guarantee that it doesn't mess with
+				// blank alpha), so this is the simplest.
+				node->output_alpha_type = ALPHA_PREMULTIPLIED;
+			}
+		} else {
+			// OK, all inputs are the same, and this effect is not going
+			// to change it.
+			assert(alpha_handling == Effect::DONT_CARE_ALPHA_TYPE);
+			if (any_premultiplied) {
+				node->output_alpha_type = ALPHA_PREMULTIPLIED;
+			} else if (any_postmultiplied) {
+				node->output_alpha_type = ALPHA_POSTMULTIPLIED;
+			} else {
+				node->output_alpha_type = ALPHA_BLANK;
+			}
+		}
 	}
 }
 
@@ -762,7 +919,7 @@ void EffectChain::fix_internal_color_spaces()
 		}
 	
 		char filename[256];
-		sprintf(filename, "step3-colorspacefix-iter%u.dot", ++colorspace_propagation_pass);
+		sprintf(filename, "step5-colorspacefix-iter%u.dot", ++colorspace_propagation_pass);
 		output_dot(filename);
 		assert(colorspace_propagation_pass < 100);
 	} while (found_any);
@@ -776,6 +933,87 @@ void EffectChain::fix_internal_color_spaces()
 	}
 }
 
+bool EffectChain::node_needs_alpha_fix(Node *node)
+{
+	if (node->disabled) {
+		return false;
+	}
+
+	// propagate_alpha() has already set our output to ALPHA_INVALID if the
+	// inputs differ or we are otherwise in mismatch, so we can rely on that.
+	return (node->output_alpha_type == ALPHA_INVALID);
+}
+
+// Fix up alpha so that there are no ALPHA_INVALID nodes left in
+// the graph. Similar to fix_internal_color_spaces().
+void EffectChain::fix_internal_alpha(unsigned step)
+{
+	unsigned alpha_propagation_pass = 0;
+	bool found_any;
+	do {
+		found_any = false;
+		for (unsigned i = 0; i < nodes.size(); ++i) {
+			Node *node = nodes[i];
+			if (!node_needs_alpha_fix(node)) {
+				continue;
+			}
+
+			// If we need to fix up GammaExpansionEffect, then clearly something
+			// is wrong, since the combination of premultiplied alpha and nonlinear inputs
+			// is meaningless.
+			assert(node->effect->effect_type_id() != "GammaExpansionEffect");
+
+			AlphaType desired_type = ALPHA_PREMULTIPLIED;
+
+			// GammaCompressionEffect is special; it needs postmultiplied alpha.
+			if (node->effect->effect_type_id() == "GammaCompressionEffect") {
+				assert(node->incoming_links.size() == 1);
+				assert(node->incoming_links[0]->output_alpha_type == ALPHA_PREMULTIPLIED);
+				desired_type = ALPHA_POSTMULTIPLIED;
+			}
+
+			// Go through each input that is not premultiplied alpha, and insert
+			// a conversion before it.
+			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+				Node *input = node->incoming_links[j];
+				assert(input->output_alpha_type != ALPHA_INVALID);
+				if (input->output_alpha_type == desired_type ||
+				    input->output_alpha_type == ALPHA_BLANK) {
+					continue;
+				}
+				Node *conversion;
+				if (desired_type == ALPHA_PREMULTIPLIED) {
+					conversion = add_node(new AlphaMultiplicationEffect());
+				} else {
+					conversion = add_node(new AlphaDivisionEffect());
+				}
+				conversion->output_alpha_type = desired_type;
+				insert_node_between(input, conversion, node);
+			}
+
+			// Re-sort topologically, and propagate the new information.
+			propagate_gamma_and_color_space();
+			propagate_alpha();
+			
+			found_any = true;
+			break;
+		}
+	
+		char filename[256];
+		sprintf(filename, "step%u-alphafix-iter%u.dot", step, ++alpha_propagation_pass);
+		output_dot(filename);
+		assert(alpha_propagation_pass < 100);
+	} while (found_any);
+
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		Node *node = nodes[i];
+		if (node->disabled) {
+			continue;
+		}
+		assert(node->output_alpha_type != ALPHA_INVALID);
+	}
+}
+
 // Make so that the output is in the desired color space.
 void EffectChain::fix_output_color_space()
 {
@@ -786,6 +1024,32 @@ void EffectChain::fix_output_color_space()
 		CHECK(conversion->effect->set_int("destination_space", output_format.color_space));
 		conversion->output_color_space = output_format.color_space;
 		connect_nodes(output, conversion);
+		propagate_alpha();
+		propagate_gamma_and_color_space();
+	}
+}
+
+// Make so that the output is in the desired pre-/postmultiplication alpha state.
+void EffectChain::fix_output_alpha()
+{
+	Node *output = find_output_node();
+	assert(output->output_alpha_type != ALPHA_INVALID);
+	if (output->output_alpha_type == ALPHA_BLANK) {
+		// No alpha output, so we don't care.
+		return;
+	}
+	if (output->output_alpha_type == ALPHA_PREMULTIPLIED &&
+	    output_alpha_format == OUTPUT_ALPHA_POSTMULTIPLIED) {
+		Node *conversion = add_node(new AlphaDivisionEffect());
+		connect_nodes(output, conversion);
+		propagate_alpha();
+		propagate_gamma_and_color_space();
+	}
+	if (output->output_alpha_type == ALPHA_POSTMULTIPLIED &&
+	    output_alpha_format == OUTPUT_ALPHA_PREMULTIPLIED) {
+		Node *conversion = add_node(new AlphaMultiplicationEffect());
+		connect_nodes(output, conversion);
+		propagate_alpha();
 		propagate_gamma_and_color_space();
 	}
 }
@@ -921,6 +1185,7 @@ void EffectChain::fix_internal_gamma_by_inserting_nodes(unsigned step)
 			}
 
 			// Re-sort topologically, and propagate the new information.
+			propagate_alpha();
 			propagate_gamma_and_color_space();
 			
 			found_any = true;
@@ -1007,34 +1272,46 @@ void EffectChain::finalize()
 	find_color_spaces_for_inputs();
 	output_dot("step2-input-colorspace.dot");
 
+	propagate_alpha();
+	output_dot("step3-propagated-alpha.dot");
+
 	propagate_gamma_and_color_space();
-	output_dot("step3-propagated.dot");
+	output_dot("step4-propagated-all.dot");
 
 	fix_internal_color_spaces();
+	fix_internal_alpha(6);
 	fix_output_color_space();
-	output_dot("step4-output-colorspacefix.dot");
+	output_dot("step7-output-colorspacefix.dot");
+	fix_output_alpha();
+	output_dot("step8-output-alphafix.dot");
 
 	// Note that we need to fix gamma after colorspace conversion,
 	// because colorspace conversions might create needs for gamma conversions.
 	// Also, we need to run an extra pass of fix_internal_gamma() after 
-	// fixing the output gamma, as we only have conversions to/from linear.
-	fix_internal_gamma_by_asking_inputs(5);
-	fix_internal_gamma_by_inserting_nodes(6);
+	// fixing the output gamma, as we only have conversions to/from linear,
+	// and fix_internal_alpha() since GammaCompressionEffect needs
+	// postmultiplied input.
+	fix_internal_gamma_by_asking_inputs(9);
+	fix_internal_gamma_by_inserting_nodes(10);
 	fix_output_gamma();
-	output_dot("step7-output-gammafix.dot");
-	fix_internal_gamma_by_asking_inputs(8);
-	fix_internal_gamma_by_inserting_nodes(9);
+	output_dot("step11-output-gammafix.dot");
+	propagate_alpha();
+	output_dot("step12-output-alpha-propagated.dot");
+	fix_internal_alpha(13);
+	output_dot("step14-output-alpha-fixed.dot");
+	fix_internal_gamma_by_asking_inputs(15);
+	fix_internal_gamma_by_inserting_nodes(16);
 
-	output_dot("step10-before-dither.dot");
+	output_dot("step17-before-dither.dot");
 
 	add_dither_if_needed();
 
-	output_dot("step11-final.dot");
+	output_dot("step18-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
 	construct_glsl_programs(find_output_node());
 
-	output_dot("step12-split-to-phases.dot");
+	output_dot("step19-split-to-phases.dot");
 
 	// If we have more than one phase, we need intermediate render-to-texture.
 	// Construct an FBO, and then as many textures as we need.

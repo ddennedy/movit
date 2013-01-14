@@ -16,11 +16,11 @@ TEST(ColorspaceConversionEffectTest, Reversible) {
 	float temp_data[4 * 6], out_data[4 * 6];
 
 	{
-		EffectChainTester tester(data, 1, 6, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+		EffectChainTester tester(data, 1, 6, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 		tester.run(temp_data, GL_RGBA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 	}
 	{
-		EffectChainTester tester(temp_data, 1, 6, FORMAT_RGBA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
+		EffectChainTester tester(temp_data, 1, 6, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 		tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	}
 
@@ -37,7 +37,7 @@ TEST(ColorspaceConversionEffectTest, sRGB_Primaries) {
 	};
 	float out_data[4 * 5];
 
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_XYZ, GAMMA_LINEAR);
 
 	// Black should stay black.
@@ -95,7 +95,7 @@ TEST(ColorspaceConversionEffectTest, Rec601_525_Primaries) {
 	};
 	float out_data[4 * 5];
 
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_XYZ, GAMMA_LINEAR);
 
 	// Black should stay black.
@@ -145,7 +145,7 @@ TEST(ColorspaceConversionEffectTest, Rec601_625_Primaries) {
 	};
 	float out_data[4 * 5];
 
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA, COLORSPACE_REC_601_625, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_REC_601_625, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_XYZ, GAMMA_LINEAR);
 
 	// Black should stay black.
@@ -221,7 +221,7 @@ TEST(ColorspaceConversionEffectTest, sRGBToRec601_525) {
 	};
 	float out_data[4 * 6];
 
-	EffectChainTester tester(data, 1, 6, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 6, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, 6);

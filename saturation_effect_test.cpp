@@ -9,7 +9,7 @@ TEST(SaturationEffectTest, SaturationOneIsPassThrough) {
 		1.0f, 0.5f, 0.75f, 0.6f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data, 1, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *saturation_effect = tester.get_chain()->add_effect(new SaturationEffect());
 	ASSERT_TRUE(saturation_effect->set_float("saturation", 1.0f));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -34,7 +34,7 @@ TEST(SaturationEffectTest, SaturationZeroRemovesColorButPreservesAlpha) {
 	};
 
 	float out_data[5 * 4];
-	EffectChainTester tester(data, 5, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 5, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *saturation_effect = tester.get_chain()->add_effect(new SaturationEffect());
 	ASSERT_TRUE(saturation_effect->set_float("saturation", 0.0f));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -55,7 +55,7 @@ TEST(SaturationEffectTest, DoubleSaturation) {
 	};
 
 	float out_data[3 * 4];
-	EffectChainTester tester(data, 3, 1, FORMAT_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 3, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *saturation_effect = tester.get_chain()->add_effect(new SaturationEffect());
 	ASSERT_TRUE(saturation_effect->set_float("saturation", 2.0f));
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);

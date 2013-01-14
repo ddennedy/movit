@@ -13,6 +13,7 @@ class SaturationEffect : public Effect {
 public:
 	SaturationEffect();
 	virtual std::string effect_type_id() const { return "SaturationEffect"; }
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 	std::string output_fragment_shader();
 
 private:

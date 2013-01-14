@@ -62,7 +62,7 @@ Assuming you have an OpenGL context already set up:
   ImageFormat inout_format;
   inout_format.color_space = COLORSPACE_sRGB;
   inout_format.gamma_curve = GAMMA_sRGB;
-  FlatInput *input = knew FlatInput(inout_format, FORMAT_BGRA, GL_UNSIGNED_BYTE, 1280, 720));
+  FlatInput *input = knew FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, 1280, 720));
   chain.add_input(input);
 
   Effect *saturation_effect = chain.add_effect(new SaturationEffect());
@@ -72,7 +72,7 @@ Assuming you have an OpenGL context already set up:
   const float gain[] = { 0.8f, 1.0f, 1.0f };
   lift_gamma_gain_effect->set_vec3("gain", &gain);
 
-  chain.add_output(inout_format);
+  chain.add_output(inout_format, OUTPUT_POSTMULTIPLIED_ALPHA);
   chain.finalize();
 
   for ( ;; ) {

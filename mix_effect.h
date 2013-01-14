@@ -1,7 +1,8 @@
 #ifndef _MIX_EFFECT_H
 #define _MIX_EFFECT_H 1
 
-// Combine two images: a*x + b*y. (If you set a within [0,1] and b=1-a, you will get a fade.)
+// Combine two images: a*x + b*y. If you set a within [0,1] and b=1-a,
+// you will get a fade; if not, you may get surprising results (consider alpha).
 
 #include "effect.h"
 

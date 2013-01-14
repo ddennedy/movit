@@ -18,6 +18,7 @@ public:
 	std::string output_fragment_shader();
 
 	virtual bool needs_srgb_primaries() const { return false; }
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 
 private:
 	Colorspace source_space, destination_space;

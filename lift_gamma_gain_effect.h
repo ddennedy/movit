@@ -16,6 +16,9 @@
 // rest of the curve relatively little. Thus, we actually convert to gamma 2.2
 // before lift, and then back again afterwards. (Gain and gamma are,
 // up to constants, commutative with the de-gamma operation.)
+//
+// Also, gamma is a case where we would not want premultiplied alpha.
+// Thus, we have to divide away alpha first, and then re-multiply it back later.
 
 #include "effect.h"
 

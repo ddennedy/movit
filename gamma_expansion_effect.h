@@ -21,6 +21,10 @@ public:
 	virtual bool needs_linear_light() const { return false; }
 	virtual bool needs_srgb_primaries() const { return false; }
 
+	// Actually processes its input in a nonlinear fashion,
+	// but does not touch alpha, and we are a special case anyway.
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+
 private:
 	GammaCurve source_curve;
 	float expansion_curve[EXPANSION_CURVE_SIZE];
