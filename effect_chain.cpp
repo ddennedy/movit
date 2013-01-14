@@ -317,7 +317,7 @@ void EffectChain::construct_glsl_programs(Node *output)
 {
 	// Which effects have already been completed in this phase?
 	// We need to keep track of it, as an effect with multiple outputs
-	// could otherwise be calculate multiple times.
+	// could otherwise be calculated multiple times.
 	std::set<Node *> completed_effects;
 
 	// Effects in the current phase, as well as inputs (outputs from other phases
