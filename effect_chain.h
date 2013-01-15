@@ -179,8 +179,17 @@ private:
 	// Some of the graph algorithms assume that the nodes array is sorted
 	// topologically (inputs are always before outputs), but some operations
 	// (like graph rewriting) can change that. This function restores that order.
-	void sort_nodes_topologically();
-	void topological_sort_visit_node(Node *node, std::set<Node *> *visited_nodes, std::vector<Node *> *sorted_list);
+	void sort_all_nodes_topologically();
+
+	// Do the actual topological sort. <nodes> must be a connected, acyclic subgraph;
+	// links that go to nodes not in the set will be ignored.
+	std::vector<Node *> topological_sort(const std::vector<Node *> &nodes);
+
+	// Utility function used by topological_sort() to do a depth-first search.
+	// The reason why we store nodes left to visit instead of a more conventional
+	// list of nodes to visit is that we want to be able to limit ourselves to
+	// a subgraph instead of all nodes. The set thus serves a dual purpose.
+	void topological_sort_visit_node(Node *node, std::set<Node *> *nodes_left_to_visit, std::vector<Node *> *sorted_list);
 
 	// Used during finalize().
 	void find_color_spaces_for_inputs();

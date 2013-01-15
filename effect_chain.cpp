@@ -229,8 +229,10 @@ Phase *EffectChain::compile_glsl_program(
 		frag_shader += "\n";
 	}
 
-	for (unsigned i = 0; i < effects.size(); ++i) {
-		Node *node = effects[i];
+	std::vector<Node *> sorted_effects = topological_sort(effects);
+
+	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
+		Node *node = sorted_effects[i];
 
 		if (node->incoming_links.size() == 1) {
 			frag_shader += std::string("#define INPUT ") + node->incoming_links[0]->effect_id + "\n";
@@ -261,13 +263,13 @@ Phase *EffectChain::compile_glsl_program(
 
 		input_needs_mipmaps |= node->effect->needs_mipmaps();
 	}
-	for (unsigned i = 0; i < effects.size(); ++i) {
-		Node *node = effects[i];
+	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
+		Node *node = sorted_effects[i];
 		if (node->effect->num_inputs() == 0) {
 			CHECK(node->effect->set_int("needs_mipmaps", input_needs_mipmaps));
 		}
 	}
-	frag_shader += std::string("#define INPUT ") + effects.back()->effect_id + "\n";
+	frag_shader += std::string("#define INPUT ") + sorted_effects.back()->effect_id + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
 	if (movit_debug_level == MOVIT_DEBUG_ON) {
@@ -300,7 +302,7 @@ Phase *EffectChain::compile_glsl_program(
 	phase->fragment_shader = fs_obj;
 	phase->input_needs_mipmaps = input_needs_mipmaps;
 	phase->inputs = true_inputs;
-	phase->effects = effects;
+	phase->effects = sorted_effects;
 
 	return phase;
 }
@@ -343,8 +345,12 @@ void EffectChain::construct_glsl_programs(Node *output)
 			Node *node = effects_todo_this_phase.top();
 			effects_todo_this_phase.pop();
 
-			// This should currently only happen for effects that are phase outputs,
-			// and we throw those out separately below.
+			// This should currently only happen for effects that are inputs
+			// (either true inputs or phase outputs). We special-case inputs,
+			// and then deduplicate phase outputs in compile_glsl_program().
+			if (node->effect->num_inputs() == 0 && completed_effects.count(node)) {
+				continue;
+			}
 			assert(completed_effects.count(node) == 0);
 
 			this_phase_effects.push_back(node);
@@ -638,27 +644,30 @@ void EffectChain::find_output_size(Phase *phase)
 	phase->output_height = best_width * aspect_denom / aspect_nom;
 }
 
-void EffectChain::sort_nodes_topologically()
+void EffectChain::sort_all_nodes_topologically()
 {
-	std::set<Node *> visited_nodes;
-	std::vector<Node *> sorted_list;
-	for (unsigned i = 0; i < nodes.size(); ++i) {
-		if (nodes[i]->incoming_links.size() == 0) {
-			topological_sort_visit_node(nodes[i], &visited_nodes, &sorted_list);
-		}
-	}
-	reverse(sorted_list.begin(), sorted_list.end());
-	nodes = sorted_list;
+	nodes = topological_sort(nodes);
 }
 
-void EffectChain::topological_sort_visit_node(Node *node, std::set<Node *> *visited_nodes, std::vector<Node *> *sorted_list)
+std::vector<Node *> EffectChain::topological_sort(const std::vector<Node *> &nodes)
 {
-	if (visited_nodes->count(node) != 0) {
+	std::set<Node *> nodes_left_to_visit(nodes.begin(), nodes.end());
+	std::vector<Node *> sorted_list;
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		topological_sort_visit_node(nodes[i], &nodes_left_to_visit, &sorted_list);
+	}
+	reverse(sorted_list.begin(), sorted_list.end());
+	return sorted_list;
+}
+
+void EffectChain::topological_sort_visit_node(Node *node, std::set<Node *> *nodes_left_to_visit, std::vector<Node *> *sorted_list)
+{
+	if (nodes_left_to_visit->count(node) == 0) {
 		return;
 	}
-	visited_nodes->insert(node);
+	nodes_left_to_visit->erase(node);
 	for (unsigned i = 0; i < node->outgoing_links.size(); ++i) {
-		topological_sort_visit_node(node->outgoing_links[i], visited_nodes, sorted_list);
+		topological_sort_visit_node(node->outgoing_links[i], nodes_left_to_visit, sorted_list);
 	}
 	sorted_list->push_back(node);
 }
@@ -700,7 +709,7 @@ void EffectChain::find_color_spaces_for_inputs()
 void EffectChain::propagate_gamma_and_color_space()
 {
 	// We depend on going through the nodes in order.
-	sort_nodes_topologically();
+	sort_all_nodes_topologically();
 
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		Node *node = nodes[i];
@@ -742,7 +751,7 @@ void EffectChain::propagate_gamma_and_color_space()
 void EffectChain::propagate_alpha()
 {
 	// We depend on going through the nodes in order.
-	sort_nodes_topologically();
+	sort_all_nodes_topologically();
 
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		Node *node = nodes[i];

@@ -594,3 +594,69 @@ TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 
 	expect_equal(expected_data, out_data, 4, 16);
 }
+
+// An effect that multiplies with a constant. Used below.
+class MultiplyEffect : public Effect {
+public:
+	MultiplyEffect() { register_float("factor", &factor); }
+	virtual std::string effect_type_id() const { return "MultiplyEffect"; }
+	std::string output_fragment_shader() { return read_file("multiply.frag"); }
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+
+private:
+	float factor;
+};
+
+// An effect that adds its two inputs together. Used below.
+class AddEffect : public Effect {
+public:
+	AddEffect() {}
+	virtual std::string effect_type_id() const { return "AddEffect"; }
+	std::string output_fragment_shader() { return read_file("add.frag"); }
+	virtual unsigned num_inputs() const { return 2; }
+	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+};
+
+// Constructs the graph
+//
+//             FlatInput               |
+//            /         \              |
+//  MultiplyEffect  MultiplyEffect     |
+//            \         /              |
+//             AddEffect               |
+//
+// and verifies that it gives the correct output.
+TEST(EffectChainTest, DiamondGraph) {
+	float data[] = {
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	float expected_data[] = {
+		2.5f, 2.5f,
+		2.5f, 0.0f,
+	};
+	float out_data[2 * 2];
+
+	MultiplyEffect *mul_half = new MultiplyEffect();
+	ASSERT_TRUE(mul_half->set_float("factor", 0.5f));
+	
+	MultiplyEffect *mul_two = new MultiplyEffect();
+	ASSERT_TRUE(mul_two->set_float("factor", 2.0f));
+
+	EffectChainTester tester(NULL, 2, 2);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input->set_pixel_data(data);
+
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(mul_half, input);
+	tester.get_chain()->add_effect(mul_two, input);
+	tester.get_chain()->add_effect(new AddEffect(), mul_half, mul_two);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 2, 2);
+}
