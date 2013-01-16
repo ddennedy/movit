@@ -451,21 +451,26 @@ void EffectChain::output_dot(const char *filename)
 	fprintf(fp, "  output [shape=box label=\"(output)\"];\n");
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		// Find out which phase this event belongs to.
-		int in_phase = -1;
+		std::vector<int> in_phases;
 		for (unsigned j = 0; j < phases.size(); ++j) {
 			const Phase* p = phases[j];
 			if (std::find(p->effects.begin(), p->effects.end(), nodes[i]) != p->effects.end()) {
-				assert(in_phase == -1);
-				in_phase = j;
+				in_phases.push_back(j);
 			}
 		}
 
-		if (in_phase == -1) {
+		if (in_phases.empty()) {
 			fprintf(fp, "  n%ld [label=\"%s\"];\n", (long)nodes[i], nodes[i]->effect->effect_type_id().c_str());
-		} else {
+		} else if (in_phases.size() == 1) {
 			fprintf(fp, "  n%ld [label=\"%s\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
 				(long)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
-				(in_phase % 8) + 1);
+				(in_phases[0] % 8) + 1);
+		} else {
+			// If we had new enough Graphviz, style="wedged" would probably be ideal here.
+			// But alas.
+			fprintf(fp, "  n%ld [label=\"%s [in multiple phases]\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
+				(long)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
+				(in_phases[0] % 8) + 1);
 		}
 
 		char from_node_id[256];
