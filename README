@@ -22,8 +22,7 @@ OK, you need
 * GNU Make.
 * A GPU capable of running GLSL fragment shaders,
   process floating-point textures, and a few other things. If your machine
-  is less than five years old _and you have the appropriate drivers_
-  (don't complain to me if it doesn't work with Nouveau, please),
+  is less than five years old _and you have the appropriate drivers_,
   you're home free.
 * The [Eigen 3] and [Google Test] libraries. (The library itself
   depends only on the former, but you probably want to run the unit tests.)
