@@ -317,7 +317,7 @@ Phase *EffectChain::compile_glsl_program(
 // without any explicit recursion.
 void EffectChain::construct_glsl_programs(Node *output)
 {
-	// Which effects have already been completed in this phase?
+	// Which effects have already been completed?
 	// We need to keep track of it, as an effect with multiple outputs
 	// could otherwise be calculated multiple times.
 	std::set<Node *> completed_effects;
@@ -348,10 +348,13 @@ void EffectChain::construct_glsl_programs(Node *output)
 			// This should currently only happen for effects that are inputs
 			// (either true inputs or phase outputs). We special-case inputs,
 			// and then deduplicate phase outputs in compile_glsl_program().
-			if (node->effect->num_inputs() == 0 && completed_effects.count(node)) {
-				continue;
+			if (node->effect->num_inputs() == 0) {
+				if (find(this_phase_effects.begin(), this_phase_effects.end(), node) != this_phase_effects.end()) {
+					continue;
+				}
+			} else {
+				assert(completed_effects.count(node) == 0);
 			}
-			assert(completed_effects.count(node) == 0);
 
 			this_phase_effects.push_back(node);
 			completed_effects.insert(node);

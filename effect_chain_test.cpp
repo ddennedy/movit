@@ -51,6 +51,7 @@ public:
 	virtual std::string effect_type_id() const { return "IdentityEffect"; }
 	std::string output_fragment_shader() { return read_file("identity.frag"); }
 	bool needs_texture_bounce() const { return true; }
+	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 };
 
 TEST(EffectChainTest, TextureBouncePreservesIdentity) {
@@ -636,6 +637,55 @@ TEST(EffectChainTest, DiamondGraph) {
 	tester.get_chain()->add_effect(mul_half, input);
 	tester.get_chain()->add_effect(mul_two, input);
 	tester.get_chain()->add_effect(new AddEffect(), mul_half, mul_two);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 2, 2);
+}
+
+// Constructs the graph
+//
+//             FlatInput                     |
+//            /         \                    |
+//  MultiplyEffect  MultiplyEffect           |
+//         \             |                   |
+//          \    BouncingIdentityEffect      |  
+//            \         /                    |
+//             AddEffect                     |
+//
+// and verifies that it gives the correct output.
+TEST(EffectChainTest, DiamondGraphWithOneInputUsedInTwoPhases) {
+	float data[] = {
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	float expected_data[] = {
+		2.5f, 2.5f,
+		2.5f, 0.0f,
+	};
+	float out_data[2 * 2];
+
+	MultiplyEffect *mul_half = new MultiplyEffect();
+	ASSERT_TRUE(mul_half->set_float("factor", 0.5f));
+	
+	MultiplyEffect *mul_two = new MultiplyEffect();
+	ASSERT_TRUE(mul_two->set_float("factor", 2.0f));
+	
+	BouncingIdentityEffect *bounce = new BouncingIdentityEffect();
+
+	EffectChainTester tester(NULL, 2, 2);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input->set_pixel_data(data);
+
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(mul_half, input);
+	tester.get_chain()->add_effect(mul_two, input);
+	tester.get_chain()->add_effect(bounce, mul_two);
+	tester.get_chain()->add_effect(new AddEffect(), mul_half, bounce);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
