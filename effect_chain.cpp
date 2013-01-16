@@ -727,6 +727,10 @@ void EffectChain::find_color_spaces_for_inputs()
 			default:
 				assert(false);
 			}
+
+			if (node->output_alpha_type == ALPHA_PREMULTIPLIED) {
+				assert(node->output_gamma_curve == GAMMA_LINEAR);
+			}
 		}
 	}
 }
