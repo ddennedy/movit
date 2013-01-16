@@ -448,6 +448,7 @@ void EffectChain::output_dot(const char *filename)
 	}
 
 	fprintf(fp, "digraph G {\n");
+	fprintf(fp, "  output [shape=box label=\"(output)\"];\n");
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		// Find out which phase this event belongs to.
 		int in_phase = -1;
@@ -466,72 +467,99 @@ void EffectChain::output_dot(const char *filename)
 				(long)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
 				(in_phase % 8) + 1);
 		}
+
+		char from_node_id[256];
+		snprintf(from_node_id, 256, "n%ld", (long)nodes[i]);
+
 		for (unsigned j = 0; j < nodes[i]->outgoing_links.size(); ++j) {
-			std::vector<std::string> labels;
+			char to_node_id[256];
+			snprintf(to_node_id, 256, "n%ld", (long)nodes[i]->outgoing_links[j]);
 
-			if (nodes[i]->outgoing_links[j]->effect->needs_texture_bounce()) {
-				labels.push_back("needs_bounce");
-			}
-			if (nodes[i]->effect->changes_output_size()) {
-				labels.push_back("resize");
-			}
+			std::vector<std::string> labels = get_labels_for_edge(nodes[i], nodes[i]->outgoing_links[j]);
+			output_dot_edge(fp, from_node_id, to_node_id, labels);
+		}
 
-			switch (nodes[i]->output_color_space) {
-			case COLORSPACE_INVALID:
-				labels.push_back("spc[invalid]");
-				break;
-			case COLORSPACE_REC_601_525:
-				labels.push_back("spc[rec601-525]");
-				break;
-			case COLORSPACE_REC_601_625:
-				labels.push_back("spc[rec601-625]");
-				break;
-			default:
-				break;
-			}
-
-			switch (nodes[i]->output_gamma_curve) {
-			case GAMMA_INVALID:
-				labels.push_back("gamma[invalid]");
-				break;
-			case GAMMA_sRGB:
-				labels.push_back("gamma[sRGB]");
-				break;
-			case GAMMA_REC_601:  // and GAMMA_REC_709
-				labels.push_back("gamma[rec601/709]");
-				break;
-			default:
-				break;
-			}
-
-			switch (nodes[i]->output_alpha_type) {
-			case ALPHA_INVALID:
-				labels.push_back("alpha[invalid]");
-				break;
-			case ALPHA_BLANK:
-				labels.push_back("alpha[blank]");
-				break;
-			case ALPHA_POSTMULTIPLIED:
-				labels.push_back("alpha[postmult]");
-				break;
-			default:
-				break;
-			}
-
-			if (labels.empty()) {
-				fprintf(fp, "  n%ld -> n%ld;\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j]);
-			} else {
-				std::string label = labels[0];
-				for (unsigned k = 1; k < labels.size(); ++k) {
-					label += ", " + labels[k];
-				}
-				fprintf(fp, "  n%ld -> n%ld [label=\"%s\"];\n", (long)nodes[i], (long)nodes[i]->outgoing_links[j], label.c_str());
-			}
+		if (nodes[i]->outgoing_links.empty() && !nodes[i]->disabled) {
+			// Output node.
+			std::vector<std::string> labels = get_labels_for_edge(nodes[i], NULL);
+			output_dot_edge(fp, from_node_id, "output", labels);
 		}
 	}
 	fprintf(fp, "}\n");
 
 	fclose(fp);
+}
+
+std::vector<std::string> EffectChain::get_labels_for_edge(const Node *from, const Node *to)
+{
+	std::vector<std::string> labels;
+
+	if (to != NULL && to->effect->needs_texture_bounce()) {
+		labels.push_back("needs_bounce");
+	}
+	if (from->effect->changes_output_size()) {
+		labels.push_back("resize");
+	}
+
+	switch (from->output_color_space) {
+	case COLORSPACE_INVALID:
+		labels.push_back("spc[invalid]");
+		break;
+	case COLORSPACE_REC_601_525:
+		labels.push_back("spc[rec601-525]");
+		break;
+	case COLORSPACE_REC_601_625:
+		labels.push_back("spc[rec601-625]");
+		break;
+	default:
+		break;
+	}
+
+	switch (from->output_gamma_curve) {
+	case GAMMA_INVALID:
+		labels.push_back("gamma[invalid]");
+		break;
+	case GAMMA_sRGB:
+		labels.push_back("gamma[sRGB]");
+		break;
+	case GAMMA_REC_601:  // and GAMMA_REC_709
+		labels.push_back("gamma[rec601/709]");
+		break;
+	default:
+		break;
+	}
+
+	switch (from->output_alpha_type) {
+	case ALPHA_INVALID:
+		labels.push_back("alpha[invalid]");
+		break;
+	case ALPHA_BLANK:
+		labels.push_back("alpha[blank]");
+		break;
+	case ALPHA_POSTMULTIPLIED:
+		labels.push_back("alpha[postmult]");
+		break;
+	default:
+		break;
+	}
+
+	return labels;
+}
+
+void EffectChain::output_dot_edge(FILE *fp,
+                                  const std::string &from_node_id,
+                                  const std::string &to_node_id,
+                                  const std::vector<std::string> &labels)
+{
+	if (labels.empty()) {
+		fprintf(fp, "  %s -> %s;\n", from_node_id.c_str(), to_node_id.c_str());
+	} else {
+		std::string label = labels[0];
+		for (unsigned k = 1; k < labels.size(); ++k) {
+			label += ", " + labels[k];
+		}
+		fprintf(fp, "  %s -> %s [label=\"%s\"];\n", from_node_id.c_str(), to_node_id.c_str(), label.c_str());
+	}
 }
 
 unsigned EffectChain::fit_rectangle_to_aspect(unsigned width, unsigned height)

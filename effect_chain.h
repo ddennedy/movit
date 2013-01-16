@@ -175,6 +175,11 @@ private:
 	// Output the current graph to the given file in a Graphviz-compatible format;
 	// only useful for debugging.
 	void output_dot(const char *filename);
+	std::vector<std::string> get_labels_for_edge(const Node *from, const Node *to);
+	void output_dot_edge(FILE *fp,
+	                     const std::string &from_node_id,
+	                     const std::string &to_node_id,
+			     const std::vector<std::string> &labels);
 
 	// Some of the graph algorithms assume that the nodes array is sorted
 	// topologically (inputs are always before outputs), but some operations
