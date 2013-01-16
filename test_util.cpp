@@ -196,4 +196,7 @@ void expect_equal(const unsigned char *ref, const unsigned char *result, unsigne
 	}
 
 	expect_equal(ref_float, result_float, width, height, largest_difference_limit, rms_limit);
+
+	delete[] ref_float;
+	delete[] result_float;
 }
