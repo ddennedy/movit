@@ -57,6 +57,17 @@ void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const 
 	check_error();
 }
 
+void set_uniform_vec4(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values)
+{
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
+		return;
+	}
+	check_error();
+	glUniform4fv(location, 1, values);
+	check_error();
+}
+
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values)
 {
 	GLint location = get_uniform_location(glsl_program_num, prefix, key);
@@ -124,6 +135,15 @@ bool Effect::set_vec3(const std::string &key, const float *values)
 	return true;
 }
 
+bool Effect::set_vec4(const std::string &key, const float *values)
+{
+	if (params_vec4.count(key) == 0) {
+		return false;
+	}
+	memcpy(params_vec4[key], values, sizeof(float) * 4);
+	return true;
+}
+
 void Effect::register_int(const std::string &key, int *value)
 {
 	assert(params_int.count(key) == 0);
@@ -146,6 +166,12 @@ void Effect::register_vec3(const std::string &key, float *values)
 {
 	assert(params_vec3.count(key) == 0);
 	params_vec3[key] = values;
+}
+
+void Effect::register_vec4(const std::string &key, float *values)
+{
+	assert(params_vec4.count(key) == 0);
+	params_vec4[key] = values;
 }
 
 void Effect::register_1d_texture(const std::string &key, float *values, size_t size)
@@ -202,6 +228,13 @@ std::string Effect::output_convenience_uniforms() const
 		sprintf(buf, "uniform vec3 PREFIX(%s);\n", it->first.c_str());
 		output.append(buf);
 	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec4.begin();
+	     it != params_vec4.end();
+	     ++it) {
+		char buf[256];
+		sprintf(buf, "uniform vec4 PREFIX(%s);\n", it->first.c_str());
+		output.append(buf);
+	}
 	for (std::map<std::string, Texture1D>::const_iterator it = params_tex_1d.begin();
 	     it != params_tex_1d.end();
 	     ++it) {
@@ -228,6 +261,11 @@ void Effect::set_gl_state(GLuint glsl_program_num, const std::string& prefix, un
 	     it != params_vec3.end();
 	     ++it) {
 		set_uniform_vec3(glsl_program_num, prefix, it->first, it->second);
+	}
+	for (std::map<std::string, float*>::const_iterator it = params_vec4.begin();
+	     it != params_vec4.end();
+	     ++it) {
+		set_uniform_vec4(glsl_program_num, prefix, it->first, it->second);
 	}
 
 	for (std::map<std::string, Texture1D>::iterator it = params_tex_1d.begin();

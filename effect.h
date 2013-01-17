@@ -40,12 +40,21 @@ struct RGBTriplet {
 	float r, g, b;
 };
 
+// Can alias on a float[4].
+struct RGBATriplet {
+	RGBATriplet(float r, float g, float b, float a)
+		: r(r), g(g), b(b), a(a) {}
+
+	float r, g, b, a;
+};
+
 // Convenience functions that deal with prepending the prefix.
 GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key);
 void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value);
 void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value);
 void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
+void set_uniform_vec4(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
 void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Eigen::Matrix3d &matrix);
 
@@ -226,6 +235,7 @@ public:
 	virtual bool set_float(const std::string &key, float value) MUST_CHECK_RESULT;
 	virtual bool set_vec2(const std::string &key, const float *values) MUST_CHECK_RESULT;
 	virtual bool set_vec3(const std::string &key, const float *values) MUST_CHECK_RESULT;
+	virtual bool set_vec4(const std::string &key, const float *values) MUST_CHECK_RESULT;
 
 protected:
 	// Register a parameter. Whenever set_*() is called with the same key,
@@ -238,10 +248,11 @@ protected:
 	// Thus, ints that you register will _not_ be converted to GLSL uniforms.
 	void register_int(const std::string &key, int *value);
 
-	// These correspond directly to float/vec2/vec3 in GLSL.
+	// These correspond directly to float/vec2/vec3/vec4 in GLSL.
 	void register_float(const std::string &key, float *value);
 	void register_vec2(const std::string &key, float *values);
 	void register_vec3(const std::string &key, float *values);
+	void register_vec4(const std::string &key, float *values);
 
 	// This will register a 1D texture, which will be bound to a sampler
 	// when your GLSL code runs (so it corresponds 1:1 to a sampler2D uniform
@@ -266,6 +277,7 @@ private:
 	std::map<std::string, float *> params_float;
 	std::map<std::string, float *> params_vec2;
 	std::map<std::string, float *> params_vec3;
+	std::map<std::string, float *> params_vec4;
 	std::map<std::string, Texture1D> params_tex_1d;
 };
 
