@@ -19,6 +19,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 #include <SDL/SDL_image.h>
+#include <png.h>
 
 #include "init.h"
 #include "effect.h"
@@ -129,19 +130,32 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	return (unsigned char *)converted->pixels;
 }
 
-void write_ppm(const char *filename, unsigned char *screenbuf)
+void write_png(const char *filename, unsigned char *screenbuf)
 {
-	FILE *fp = fopen(filename, "w");
-	fprintf(fp, "P6\n%d %d\n255\n", WIDTH, HEIGHT);
-	for (unsigned y = 0; y < HEIGHT; ++y) {
-		unsigned char *srcptr = screenbuf + ((HEIGHT - y - 1) * WIDTH) * 4;
-		for (unsigned x = 0; x < WIDTH; ++x) {
-			fputc(srcptr[x * 4 + 2], fp);
-			fputc(srcptr[x * 4 + 1], fp);
-			fputc(srcptr[x * 4 + 0], fp);
-		}
+	FILE *fp = fopen(filename, "wb");
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		fclose(fp);
+		fprintf(stderr, "Write to %s failed; exiting.\n", filename);
+		exit(1);
 	}
+
+	png_set_IHDR(png_ptr, info_ptr, WIDTH, HEIGHT, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+	png_bytep *row_pointers = new png_bytep[HEIGHT];
+	for (unsigned y = 0; y < HEIGHT; ++y) {
+		row_pointers[y] = screenbuf + ((HEIGHT - y - 1) * WIDTH) * 4;
+	}
+
+	png_init_io(png_ptr, fp);
+	png_set_rows(png_ptr, info_ptr, row_pointers);
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, png_voidp_NULL);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
+
+	delete[] row_pointers;
 }
 
 int main(int argc, char **argv)
@@ -149,6 +163,7 @@ int main(int argc, char **argv)
 	bool quit = false;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -258,8 +273,8 @@ int main(int argc, char **argv)
 		check_error();
 		if (screenshot) {
 			char filename[256];
-			sprintf(filename, "frame%05d.ppm", frame);
-			write_ppm(filename, screenbuf);
+			sprintf(filename, "frame%05d.png", frame);
+			write_png(filename, screenbuf);
 			printf("Screenshot: %s\n", filename);
 			screenshot = false;
 		}
