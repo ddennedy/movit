@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <locale.h>
 #include <assert.h>
 #include <GL/glew.h>
 
@@ -1307,6 +1308,10 @@ Node *EffectChain::find_output_node()
 
 void EffectChain::finalize()
 {
+	// Save the current locale, and set it to C, so that we can output decimal
+	// numbers with printf and be sure to get them in the format mandated by GLSL.
+	char *saved_locale = setlocale(LC_NUMERIC, "C");
+
 	// Output the graph as it is before we do any conversions on it.
 	output_dot("step0-start.dot");
 
@@ -1399,6 +1404,7 @@ void EffectChain::finalize()
 	assert(phases[0]->inputs.empty());
 	
 	finalized = true;
+	setlocale(LC_NUMERIC, saved_locale);
 }
 
 void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height)
