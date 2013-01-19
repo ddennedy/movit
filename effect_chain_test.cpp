@@ -102,7 +102,7 @@ public:
 template<class T>
 class RewritingEffect : public Effect {
 public:
-	RewritingEffect() : effect(new T()) {}
+	RewritingEffect() : effect(new T()), replaced_node(NULL) {}
 	virtual std::string effect_type_id() const { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
 	std::string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
