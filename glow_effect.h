@@ -3,9 +3,6 @@
 
 // Glow: Cut out the highlights of the image (everything above a certain threshold),
 // blur them, and overlay them onto the original image.
-//
-// FIXME: This might be broken after MixEffect started working in premultiplied alpha.
-// We need to think about how this is going to work, and then add a test.
 
 #include "effect.h"
 

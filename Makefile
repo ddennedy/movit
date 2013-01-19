@@ -41,6 +41,7 @@ TESTS += saturation_effect_test
 TESTS += deconvolution_sharpen_effect_test
 TESTS += blur_effect_test
 TESTS += unsharp_mask_effect_test
+TESTS += glow_effect_test
 TESTS += diffusion_effect_test
 TESTS += white_balance_effect_test
 TESTS += lift_gamma_gain_effect_test
