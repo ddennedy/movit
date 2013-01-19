@@ -17,7 +17,8 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  needs_mipmaps(false),
 	  width(width),
 	  height(height),
-	  pitch(width)
+	  pitch(width),
+	  pixel_data(NULL)
 {
 	assert(type == GL_FLOAT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
