@@ -400,7 +400,7 @@ private:
 // which outputs blank alpha.
 class RewritingToBlueInput : public Input {
 public:
-	RewritingToBlueInput() { register_int("needs_mipmaps", &needs_mipmaps); }
+	RewritingToBlueInput() : blue_node(NULL) { register_int("needs_mipmaps", &needs_mipmaps); }
 	virtual std::string effect_type_id() const { return "RewritingToBlueInput"; }
 	std::string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
