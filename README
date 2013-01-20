@@ -61,7 +61,7 @@ Assuming you have an OpenGL context already set up:
   ImageFormat inout_format;
   inout_format.color_space = COLORSPACE_sRGB;
   inout_format.gamma_curve = GAMMA_sRGB;
-  FlatInput *input = knew FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, 1280, 720));
+  FlatInput *input = new FlatInput(inout_format, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_UNSIGNED_BYTE, 1280, 720));
   chain.add_input(input);
 
   Effect *saturation_effect = chain.add_effect(new SaturationEffect());
