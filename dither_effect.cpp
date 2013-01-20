@@ -85,6 +85,10 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const std::string &pref
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
+	assert(width > 0);
+	assert(height > 0);
+	assert(num_bits > 0);
+
 	if (width != last_width || height != last_height || num_bits != last_num_bits) {
 		update_texture(glsl_program_num, prefix, sampler_num);
 		last_width = width;
