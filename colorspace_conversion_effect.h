@@ -12,8 +12,12 @@
 #include "effect_chain.h"
 
 class ColorspaceConversionEffect : public Effect {
-public:
+private:
+	// Should not be instantiated by end users.
 	ColorspaceConversionEffect();
+	friend class EffectChain;
+
+public:
 	virtual std::string effect_type_id() const { return "ColorspaceConversionEffect"; }
 	std::string output_fragment_shader();
 

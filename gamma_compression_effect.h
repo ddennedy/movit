@@ -13,8 +13,12 @@
 #define COMPRESSION_CURVE_SIZE 4096
 
 class GammaCompressionEffect : public Effect {
-public:
+private:
+	// Should not be instantiated by end users.
 	GammaCompressionEffect();
+	friend class EffectChain;
+
+public:
 	virtual std::string effect_type_id() const { return "GammaCompressionEffect"; }
 	std::string output_fragment_shader();
 

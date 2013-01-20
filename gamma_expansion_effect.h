@@ -13,8 +13,12 @@
 #define EXPANSION_CURVE_SIZE 256
 
 class GammaExpansionEffect : public Effect {
-public:
+private:
+	// Should not be instantiated by end users.
 	GammaExpansionEffect();
+	friend class EffectChain;
+
+public:
 	virtual std::string effect_type_id() const { return "GammaExpansionEffect"; }
 	std::string output_fragment_shader();
 

@@ -46,8 +46,13 @@
 #include "effect.h"
 
 class DitherEffect : public Effect {
-public:
+private:
+	// Should not be instantiated by end users;
+	// call EffectChain::set_dither_bits() instead.
 	DitherEffect();
+	friend class EffectChain;
+
+public:
 	~DitherEffect();
 	virtual std::string effect_type_id() const { return "DitherEffect"; }
 	std::string output_fragment_shader();
