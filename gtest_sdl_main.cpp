@@ -1,3 +1,5 @@
+#define GTEST_HAS_EXCEPTIONS 0
+
 #include <SDL/SDL.h>
 #include "gtest/gtest.h"
 
