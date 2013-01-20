@@ -348,6 +348,11 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
+	assert(input_width > 0);
+	assert(input_height > 0);
+	assert(output_width > 0);
+	assert(output_height > 0);
+
 	if (input_width != last_input_width ||
 	    input_height != last_input_height ||
 	    output_width != last_output_width ||
