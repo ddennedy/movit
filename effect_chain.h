@@ -229,8 +229,7 @@ private:
 	GLuint fbo;
 	std::vector<Phase *> phases;
 
-	GLenum format;
-	unsigned bytes_per_pixel, num_dither_bits;
+	unsigned num_dither_bits;
 	bool finalized;
 };
 
