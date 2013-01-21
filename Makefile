@@ -1,4 +1,4 @@
-GTEST_DIR = /usr/src/gtest
+GTEST_DIR ?= /usr/src/gtest
 
 EIGEN_CXXFLAGS := $(shell pkg-config --cflags eigen3)
 ifeq ($(EIGEN_CXXFLAGS),)
