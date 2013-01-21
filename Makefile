@@ -18,7 +18,7 @@ endif
 CC=gcc
 CXX=g++
 CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS) $(GLEW_CXXFLAGS)
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread $(GLEW_LIBS)
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread -lpng $(GLEW_LIBS)
 RANLIB=ranlib
 
 ifeq ($(COVERAGE),1)
