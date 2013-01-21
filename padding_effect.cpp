@@ -46,14 +46,14 @@ void PaddingEffect::set_gl_state(GLuint glsl_program_num, const std::string &pre
 	// than losing a pixel in the common cases of integer shift.
 	// Thus the 1e-3 fudge factors.
 	float texcoord_min[2] = {
-		(0.5f - 1e-3) / input_width,
-		(0.5f - 1e-3) / input_height
+		float((0.5f - 1e-3) / input_width),
+		float((0.5f - 1e-3) / input_height)
 	};
 	set_uniform_vec2(glsl_program_num, prefix, "texcoord_min", texcoord_min);
 
 	float texcoord_max[2] = {
-		1.0f - (0.5f - 1e-3) / input_width,
-		1.0f - (0.5f - 1e-3) / input_height
+		float(1.0f - (0.5f - 1e-3) / input_width),
+		float(1.0f - (0.5f - 1e-3) / input_height)
 	};
 	set_uniform_vec2(glsl_program_num, prefix, "texcoord_max", texcoord_max);
 }
