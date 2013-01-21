@@ -18,7 +18,7 @@ namespace {
 
 void measure_texel_subpixel_precision()
 {
-	static const unsigned width = 1024;
+	static const unsigned width = 4096;
 
 	// Generate a destination texture to render to, and an FBO.
 	GLuint dst_texnum, fbo;
