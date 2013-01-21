@@ -42,7 +42,7 @@ TEST(OverlayEffectTest, BottomDominatesTopWhenTopIsTransparent) {
 	expect_equal(data_a, out_data, 4, 1);
 }
 
-TEST(OverlayEffectTest, ZeroAlphaBecomesAllZero) {
+TEST(OverlayEffectTest, ZeroAlphaRemainsZeroAlpha) {
 	float data_a[] = {
 		0.0f, 0.25f, 0.5f, 0.0f
 	};
@@ -60,7 +60,7 @@ TEST(OverlayEffectTest, ZeroAlphaBecomesAllZero) {
 	tester.get_chain()->add_effect(new OverlayEffect(), input1, input2);
 	tester.run(out_data, GL_BGRA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	expect_equal(expected_data, out_data, 4, 1);
+	EXPECT_FLOAT_EQ(0.0f, expected_data[3]);
 }
 
 // This is tested against what Photoshop does: (255,0,128, 0.25) over (128,255,0, 0.5)
