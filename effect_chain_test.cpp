@@ -149,7 +149,7 @@ TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 		1.0f, 0.9771f,
 		0.8983f, 0.0f,
 	};
-	float out_data[2];
+	float out_data[4];
 	EffectChainTester tester(NULL, 2, 2);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 	RewritingEffect<InvertEffect> *effect = new RewritingEffect<InvertEffect>();
