@@ -50,5 +50,5 @@ TEST(DitherEffectTest, SinusoidBelowOneLevelComesThrough) {
 		sum += 2.0 * (int(out_data[i]) - 0.2*255.0) * sin(i * frequency);
 	}
 
-	EXPECT_NEAR(amplitude, sum / (size * 255.0f), 1e-5);
+	EXPECT_NEAR(amplitude, sum / (size * 255.0f), 1.1e-5);
 }
