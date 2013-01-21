@@ -151,7 +151,7 @@ void write_png(const char *filename, unsigned char *screenbuf)
 
 	png_init_io(png_ptr, fp);
 	png_set_rows(png_ptr, info_ptr, row_pointers);
-	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, png_voidp_NULL);
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, NULL);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
 
