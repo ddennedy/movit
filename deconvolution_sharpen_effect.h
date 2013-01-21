@@ -29,6 +29,9 @@ public:
 	virtual std::string effect_type_id() const { return "DeconvolutionSharpenEffect"; }
 	std::string output_fragment_shader();
 
+	// Samples a lot of times from its input.
+	virtual bool needs_texture_bounce() const { return true; }
+
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height)
 	{
 		this->width = width;
