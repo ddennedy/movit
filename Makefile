@@ -1,4 +1,4 @@
-GTEST_DIR = /usr/src/gtest
+GTEST_DIR ?= /usr/src/gtest
 
 EIGEN_CXXFLAGS := $(shell pkg-config --cflags eigen3)
 ifeq ($(EIGEN_CXXFLAGS),)
@@ -15,10 +15,20 @@ ifeq ($(GLEW_LIBS),)
 $(error Empty GLEW_LIBS. You probably need to install GLEW)
 endif
 
+SDL_CXXFLAGS := $(shell sdl-config --cflags)
+ifeq ($(SDL_CXXFLAGS),)
+$(error Empty SDL_CXXFLAGS. You probably need to install SDL)
+endif
+
+SDL_LIBS := $(shell sdl-config --libs)
+ifeq ($(SDL_LIBS),)
+$(error Empty SDL_LIBS. You probably need to install SDL)
+endif
+
 CC=gcc
 CXX=g++
 CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS) $(GLEW_CXXFLAGS)
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread $(GLEW_LIBS)
+LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread -lpng $(GLEW_LIBS) $(SDL_LIBS)
 RANLIB=ranlib
 
 ifeq ($(COVERAGE),1)

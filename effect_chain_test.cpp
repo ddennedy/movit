@@ -149,7 +149,7 @@ TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 		1.0f, 0.9771f,
 		0.8983f, 0.0f,
 	};
-	float out_data[2];
+	float out_data[4];
 	EffectChainTester tester(NULL, 2, 2);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 	RewritingEffect<InvertEffect> *effect = new RewritingEffect<InvertEffect>();
@@ -344,7 +344,7 @@ TEST(EffectChainTest, IdentityThroughAlphaConversions) {
 		0.0f, 0.2f, 0.2f, 0.3f,
 		0.1f, 0.0f, 1.0f, 1.0f,
 	};
-	float out_data[6];
+	float out_data[4 * size];
 	EffectChainTester tester(data, size, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->add_effect(new IdentityEffect());
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);

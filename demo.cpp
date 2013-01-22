@@ -151,7 +151,7 @@ void write_png(const char *filename, unsigned char *screenbuf)
 
 	png_init_io(png_ptr, fp);
 	png_set_rows(png_ptr, info_ptr, row_pointers);
-	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, png_voidp_NULL);
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, NULL);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
 
@@ -162,7 +162,10 @@ int main(int argc, char **argv)
 {
 	bool quit = false;
 
-	SDL_Init(SDL_INIT_EVERYTHING);
+	if (SDL_Init(SDL_INIT_EVERYTHING) == -1) {
+		fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+		exit(1);
+	}
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);

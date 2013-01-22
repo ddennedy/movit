@@ -5,7 +5,10 @@
 
 int main(int argc, char **argv) {
 	// Set up an OpenGL context using SDL.
-	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+		fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+		exit(1);
+	}
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
