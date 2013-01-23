@@ -571,16 +571,30 @@ void EffectChain::output_dot_edge(FILE *fp,
 	}
 }
 
-unsigned EffectChain::fit_rectangle_to_aspect(unsigned width, unsigned height)
+void EffectChain::size_rectangle_to_fit(unsigned width, unsigned height, unsigned *output_width, unsigned *output_height)
 {
+	unsigned scaled_width, scaled_height;
+
 	if (float(width) * aspect_denom >= float(height) * aspect_nom) {
 		// Same aspect, or W/H > aspect (image is wider than the frame).
-		// In either case, keep width.
-		return width;
+		// In either case, keep width, and adjust height.
+		scaled_width = width;
+		scaled_height = lrintf(width * aspect_denom / aspect_nom);
 	} else {
 		// W/H < aspect (image is taller than the frame), so keep height,
-		// and adjust width correspondingly.
-		return lrintf(height * aspect_nom / aspect_denom);
+		// and adjust width.
+		scaled_width = lrintf(height * aspect_nom / aspect_denom);
+		scaled_height = height;
+	}
+
+	// We should be consistently larger or smaller then the existing choice,
+	// since we have the same aspect.
+	assert(!(scaled_width < *output_width && scaled_height > *output_height));
+	assert(!(scaled_height < *output_height && scaled_width > *output_width));
+
+	if (scaled_width >= *output_width && scaled_height >= *output_height) {
+		*output_width = scaled_width;
+		*output_height = scaled_height;
 	}
 }
 
@@ -652,17 +666,15 @@ void EffectChain::find_output_size(Phase *phase)
 		return;
 	}
 
+	unsigned output_width = 0, output_height = 0;
+
 	// If not, look at the input phases and textures.
 	// We select the largest one (by fit into the current aspect).
-	unsigned best_width = 0;
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
 		Node *input = phase->inputs[i];
 		assert(input->phase->output_width != 0);
 		assert(input->phase->output_height != 0);
-		unsigned width = fit_rectangle_to_aspect(input->phase->output_width, input->phase->output_height);
-		if (width > best_width) {
-			best_width = width;
-		}
+		size_rectangle_to_fit(input->phase->output_width, input->phase->output_height, &output_width, &output_height);
 	}
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Effect *effect = phase->effects[i]->effect;
@@ -671,14 +683,12 @@ void EffectChain::find_output_size(Phase *phase)
 		}
 
 		Input *input = static_cast<Input *>(effect);
-		unsigned width = fit_rectangle_to_aspect(input->get_width(), input->get_height());
-		if (width > best_width) {
-			best_width = width;
-		}
+		size_rectangle_to_fit(input->get_width(), input->get_height(), &output_width, &output_height);
 	}
-	assert(best_width != 0);
-	phase->output_width = best_width;
-	phase->output_height = best_width * aspect_denom / aspect_nom;
+	assert(output_width != 0);
+	assert(output_height != 0);
+	phase->output_width = output_width;
+	phase->output_height = output_height;
 }
 
 void EffectChain::sort_all_nodes_topologically()

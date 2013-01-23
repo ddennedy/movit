@@ -756,3 +756,62 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneColorspaceConversion) {
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("ColorspaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
 }
+
+// An effect that does nothing, but requests texture bounce and stores
+// its input size.
+class SizeStoringEffect : public BouncingIdentityEffect {
+public:
+	SizeStoringEffect() : input_width(-1), input_height(-1) {}
+	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
+		assert(input_num == 0);
+		input_width = width;
+		input_height = height;
+	}
+
+	int input_width, input_height;
+};
+
+TEST(EffectChainTest, AspectRatioConversion) {
+	float data1[4 * 3] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float data2[7 * 7] = {
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	};
+
+	// The right conversion here is that the 7x7 image decides the size,
+	// since it is the biggest, so everything is scaled up to 9x7
+	// (keep the height, round the width 9.333 to 9). 
+	float out_data[9 * 7];
+	
+	EffectChainTester tester(NULL, 4, 3);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 3);
+	input1->set_pixel_data(data1);
+	
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 7, 7);
+	input2->set_pixel_data(data2);
+
+	SizeStoringEffect *input_store = new SizeStoringEffect();
+
+	tester.get_chain()->add_input(input1);
+	tester.get_chain()->add_input(input2);
+	tester.get_chain()->add_effect(new AddEffect(), input1, input2);
+	tester.get_chain()->add_effect(input_store);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	EXPECT_EQ(9, input_store->input_width);
+	EXPECT_EQ(7, input_store->input_height);
+}
