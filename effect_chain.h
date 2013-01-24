@@ -9,7 +9,7 @@
 #include "input.h"
 
 class EffectChain;
-class Phase;
+struct Phase;
 
 // For internal use within Node.
 enum AlphaType {
