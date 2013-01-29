@@ -666,10 +666,49 @@ void EffectChain::find_output_size(Phase *phase)
 		return;
 	}
 
+	// If all effects have the same size, use that.
 	unsigned output_width = 0, output_height = 0;
+	bool all_inputs_same_size = true;
 
-	// If not, look at the input phases and textures.
-	// We select the largest one (by fit into the current aspect).
+	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
+		Node *input = phase->inputs[i];
+		assert(input->phase->output_width != 0);
+		assert(input->phase->output_height != 0);
+		if (output_width == 0 && output_height == 0) {
+			output_width = input->phase->output_width;
+			output_height = input->phase->output_height;
+		} else if (output_width != input->phase->output_width ||
+		           output_height != input->phase->output_height) {
+			all_inputs_same_size = false;
+		}
+	}
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Effect *effect = phase->effects[i]->effect;
+		if (effect->num_inputs() != 0) {
+			continue;
+		}
+
+		Input *input = static_cast<Input *>(effect);
+		if (output_width == 0 && output_height == 0) {
+			output_width = input->get_width();
+			output_height = input->get_height();
+		} else if (output_width != input->get_width() ||
+		           output_height != input->get_height()) {
+			all_inputs_same_size = false;
+		}
+	}
+
+	if (all_inputs_same_size) {
+		assert(output_width != 0);
+		assert(output_height != 0);
+		phase->output_width = output_width;
+		phase->output_height = output_height;
+		return;
+	}
+
+	// If not, fit all the inputs into the current aspect, and select the largest one. 
+	output_width = 0;
+	output_height = 0;
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
 		Node *input = phase->inputs[i];
 		assert(input->phase->output_width != 0);

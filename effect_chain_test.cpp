@@ -771,6 +771,37 @@ public:
 	int input_width, input_height;
 };
 
+TEST(EffectChainTest, SameInputsGiveSameOutputs) {
+	float data[2 * 2] = {
+		0.0f, 0.0f,
+		0.0f, 0.0f,
+	};
+	float out_data[2 * 2];
+	
+	EffectChainTester tester(NULL, 4, 3);  // Note non-square aspect.
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input1->set_pixel_data(data);
+	
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input2->set_pixel_data(data);
+
+	SizeStoringEffect *input_store = new SizeStoringEffect();
+
+	tester.get_chain()->add_input(input1);
+	tester.get_chain()->add_input(input2);
+	tester.get_chain()->add_effect(new AddEffect(), input1, input2);
+	tester.get_chain()->add_effect(input_store);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	EXPECT_EQ(2, input_store->input_width);
+	EXPECT_EQ(2, input_store->input_height);
+}
+
 TEST(EffectChainTest, AspectRatioConversion) {
 	float data1[4 * 3] = {
 		0.0f, 0.0f, 0.0f, 0.0f,
