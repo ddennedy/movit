@@ -767,6 +767,7 @@ public:
 		input_width = width;
 		input_height = height;
 	}
+	virtual std::string effect_type_id() const { return "SizeStoringEffect"; }
 
 	int input_width, input_height;
 };
