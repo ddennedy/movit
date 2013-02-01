@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 	//Effect *sandbox_effect = chain.add_effect(new SandboxEffect());
 	//sandbox_effect->set_float("parm", 42.0f);
 	//chain.add_effect(new MirrorEffect());
-	chain.add_output(inout_format, OUTPUT_ALPHA_POSTMULTIPLIED);
+	chain.add_output(inout_format, OUTPUT_POSTMULTIPLIED_ALPHA);
 	chain.set_dither_bits(8);
 	chain.finalize();
 

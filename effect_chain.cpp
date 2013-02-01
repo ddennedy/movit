@@ -776,10 +776,10 @@ void EffectChain::find_color_spaces_for_inputs()
 			case Effect::OUTPUT_BLANK_ALPHA:
 				node->output_alpha_type = ALPHA_BLANK;
 				break;
-			case Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED:
+			case Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA:
 				node->output_alpha_type = ALPHA_PREMULTIPLIED;
 				break;
-			case Effect::OUTPUT_ALPHA_POSTMULTIPLIED:
+			case Effect::OUTPUT_POSTMULTIPLIED_ALPHA:
 				node->output_alpha_type = ALPHA_POSTMULTIPLIED;
 				break;
 			case Effect::DONT_CARE_ALPHA_TYPE:
@@ -885,7 +885,7 @@ void EffectChain::propagate_alpha()
 		}
 
 		// Only inputs can have unconditional alpha output (OUTPUT_BLANK_ALPHA
-		// or OUTPUT_ALPHA_POSTMULTIPLIED), and they have already been
+		// or OUTPUT_POSTMULTIPLIED_ALPHA), and they have already been
 		// taken care of above. Rationale: Even if you could imagine
 		// e.g. an effect that took in an image and set alpha=1.0
 		// unconditionally, it wouldn't make any sense to have it as
@@ -893,7 +893,7 @@ void EffectChain::propagate_alpha()
 		// got its input pre- or postmultiplied, so it wouldn't know
 		// whether to divide away the old alpha or not.
 		Effect::AlphaHandling alpha_handling = node->effect->alpha_handling();
-		assert(alpha_handling == Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED ||
+		assert(alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA ||
 		       alpha_handling == Effect::DONT_CARE_ALPHA_TYPE);
 
 		// If the node has multiple inputs, check that they are all valid and
@@ -933,7 +933,7 @@ void EffectChain::propagate_alpha()
 			continue;
 		}
 
-		if (alpha_handling == Effect::INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED) {
+		if (alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA) {
 			// If the effect has asked for premultiplied alpha, check that it has got it.
 			if (any_postmultiplied) {
 				node->output_alpha_type = ALPHA_INVALID;
@@ -1141,7 +1141,7 @@ void EffectChain::fix_output_alpha()
 		return;
 	}
 	if (output->output_alpha_type == ALPHA_PREMULTIPLIED &&
-	    output_alpha_format == OUTPUT_ALPHA_POSTMULTIPLIED) {
+	    output_alpha_format == OUTPUT_POSTMULTIPLIED_ALPHA) {
 		Node *conversion = add_node(new AlphaDivisionEffect());
 		connect_nodes(output, conversion);
 		propagate_alpha();

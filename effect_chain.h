@@ -23,7 +23,7 @@ enum AlphaType {
 // (see effect.h for a discussion of pre- versus postmultiplied alpha).
 enum OutputAlphaFormat {
 	OUTPUT_ALPHA_PREMULTIPLIED,
-	OUTPUT_ALPHA_POSTMULTIPLIED,
+	OUTPUT_POSTMULTIPLIED_ALPHA,
 };
 
 // A node in the graph; basically an effect and some associated information.

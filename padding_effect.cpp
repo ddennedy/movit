@@ -96,7 +96,7 @@ Effect::AlphaHandling PaddingEffect::alpha_handling() const
 	if (border_color.r == 0.0 && border_color.g == 0.0 && border_color.b == 0.0) {
 		return DONT_CARE_ALPHA_TYPE;
 	}
-	return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED;
+	return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA;
 }
 	
 void PaddingEffect::get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const

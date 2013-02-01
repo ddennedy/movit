@@ -99,7 +99,7 @@ public:
 	// This is the most natural format for processing, and the default in
 	// most of Movit (just like linear light is).
 	//
-	// If you set INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED, all of your inputs
+	// If you set INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA, all of your inputs
 	// (if any) are guaranteed to also be in premultiplied alpha.
 	// Otherwise, you can get postmultiplied or premultiplied alpha;
 	// you won't know. If you have multiple inputs, you will get the same
@@ -113,13 +113,13 @@ public:
 		// pre- and postmultiplied.
 		OUTPUT_BLANK_ALPHA,
 
+		// Always outputs postmultiplied alpha. Only appropriate for inputs.
+		OUTPUT_POSTMULTIPLIED_ALPHA,
+
 		// Always outputs premultiplied alpha. As noted above,
 		// you will then also get all inputs in premultiplied alpha.
 		// If you set this, you should also set needs_linear_light().
-		INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED,
-
-		// Always outputs postmultiplied alpha. Only appropriate for inputs.
-		OUTPUT_ALPHA_POSTMULTIPLIED,
+		INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA,
 
 		// Keeps the type of alpha unchanged from input to output.
 		// Usually appropriate if you process all color channels
@@ -128,7 +128,7 @@ public:
 		// Does not make sense for inputs.
 		DONT_CARE_ALPHA_TYPE,
 	};
-	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED; }
+	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA; }
 
 	// Whether this effect expects its input to come directly from
 	// a texture. If this is true, the framework will not chain the

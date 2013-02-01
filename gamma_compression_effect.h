@@ -26,7 +26,7 @@ public:
 
 	// Actually needs postmultiplied input as well as outputting it.
 	// EffectChain will take care of that.
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_ALPHA_POSTMULTIPLIED; }
+	virtual AlphaHandling alpha_handling() const { return OUTPUT_POSTMULTIPLIED_ALPHA; }
 
 private:
 	GammaCurve destination_curve;
