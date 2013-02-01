@@ -64,10 +64,14 @@ void BlurEffect::update_radius()
 	bool ok = hpass->set_float("radius", adjusted_radius);
 	ok |= hpass->set_int("width", mipmap_width);
 	ok |= hpass->set_int("height", mipmap_height);
+	ok |= hpass->set_int("virtual_width", mipmap_width);
+	ok |= hpass->set_int("virtual_height", mipmap_height);
 
 	ok |= vpass->set_float("radius", adjusted_radius);
 	ok |= vpass->set_int("width", mipmap_width);
 	ok |= vpass->set_int("height", mipmap_height);
+	ok |= vpass->set_int("virtual_width", input_width);
+	ok |= vpass->set_int("virtual_height", input_height);
 
 	assert(ok);
 }
@@ -92,6 +96,8 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	register_int("direction", (int *)&direction);
 	register_int("width", &width);
 	register_int("height", &height);
+	register_int("virtual_width", &virtual_width);
+	register_int("virtual_height", &virtual_height);
 }
 
 std::string SingleBlurPassEffect::output_fragment_shader()

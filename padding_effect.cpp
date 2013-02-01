@@ -99,10 +99,10 @@ Effect::AlphaHandling PaddingEffect::alpha_handling() const
 	return INPUT_AND_OUTPUT_ALPHA_PREMULTIPLIED;
 }
 	
-void PaddingEffect::get_output_size(unsigned *width, unsigned *height) const
+void PaddingEffect::get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const
 {
-	*width = output_width;
-	*height = output_height;
+	*virtual_width = *width = output_width;
+	*virtual_height = *height = output_height;
 }
 	
 void PaddingEffect::inform_input_size(unsigned input_num, unsigned width, unsigned height)

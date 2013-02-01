@@ -168,11 +168,16 @@ public:
 	virtual bool changes_output_size() const { return false; }
 
 	// If changes_output_size() is true, you must implement this to tell
-	// the framework what output size you want.
+	// the framework what output size you want. Also, you can set a
+	// virtual width/height, which is the size the next effect (if any)
+	// will _think_ your data is in. This is primarily useful if you are
+	// relying on getting OpenGL's bilinear resizing for free; otherwise,
+	// your virtual_width/virtual_height should be the same as width/height.
 	//
 	// Note that it is explicitly allowed to change width and height
 	// from frame to frame; EffectChain will reallocate textures as needed.
-	virtual void get_output_size(unsigned *width, unsigned *height) const {
+	virtual void get_output_size(unsigned *width, unsigned *height,
+	                             unsigned *virtual_width, unsigned *virtual_height) const {
 		assert(false);
 	}
 

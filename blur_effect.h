@@ -66,9 +66,11 @@ public:
 	}
 	virtual bool changes_output_size() const { return true; }
 
-	virtual void get_output_size(unsigned *width, unsigned *height) const {
+	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const {
 		*width = this->width;
 		*height = this->height;
+		*virtual_width = this->virtual_width;
+		*virtual_height = this->virtual_height;
 	}
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
@@ -80,7 +82,7 @@ private:
 	BlurEffect *parent;
 	float radius;
 	Direction direction;
-	int width, height;
+	int width, height, virtual_width, virtual_height;
 };
 
 #endif // !defined(_BLUR_EFFECT_H)

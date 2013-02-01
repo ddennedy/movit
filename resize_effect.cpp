@@ -13,8 +13,8 @@ std::string ResizeEffect::output_fragment_shader()
 	return read_file("identity.frag");
 }
 
-void ResizeEffect::get_output_size(unsigned *width, unsigned *height) const
+void ResizeEffect::get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const
 {
-	*width = this->width;
-	*height = this->height;
+	*virtual_width = *width = this->width;
+	*virtual_height = *height = this->height;
 }

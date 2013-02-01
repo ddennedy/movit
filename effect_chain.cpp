@@ -618,8 +618,8 @@ void EffectChain::inform_input_sizes(Phase *phase)
 	}
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
 		Node *input = phase->inputs[i];
-		input->output_width = input->phase->output_width;
-		input->output_height = input->phase->output_height;
+		input->output_width = input->phase->virtual_output_width;
+		input->output_height = input->phase->virtual_output_height;
 		assert(input->output_width != 0);
 		assert(input->output_height != 0);
 	}
@@ -662,7 +662,8 @@ void EffectChain::find_output_size(Phase *phase)
 
 	// If the last effect explicitly sets an output size, use that.
 	if (output_node->effect->changes_output_size()) {
-		output_node->effect->get_output_size(&phase->output_width, &phase->output_height);
+		output_node->effect->get_output_size(&phase->output_width, &phase->output_height,
+		                                     &phase->virtual_output_width, &phase->virtual_output_height);
 		return;
 	}
 
@@ -675,10 +676,10 @@ void EffectChain::find_output_size(Phase *phase)
 		assert(input->phase->output_width != 0);
 		assert(input->phase->output_height != 0);
 		if (output_width == 0 && output_height == 0) {
-			output_width = input->phase->output_width;
-			output_height = input->phase->output_height;
-		} else if (output_width != input->phase->output_width ||
-		           output_height != input->phase->output_height) {
+			output_width = input->phase->virtual_output_width;
+			output_height = input->phase->virtual_output_height;
+		} else if (output_width != input->phase->virtual_output_width ||
+		           output_height != input->phase->virtual_output_height) {
 			all_inputs_same_size = false;
 		}
 	}
@@ -701,8 +702,8 @@ void EffectChain::find_output_size(Phase *phase)
 	if (all_inputs_same_size) {
 		assert(output_width != 0);
 		assert(output_height != 0);
-		phase->output_width = output_width;
-		phase->output_height = output_height;
+		phase->virtual_output_width = phase->output_width = output_width;
+		phase->virtual_output_height = phase->output_height = output_height;
 		return;
 	}
 
@@ -726,8 +727,8 @@ void EffectChain::find_output_size(Phase *phase)
 	}
 	assert(output_width != 0);
 	assert(output_height != 0);
-	phase->output_width = output_width;
-	phase->output_height = output_height;
+	phase->virtual_output_width = phase->output_width = output_width;
+	phase->virtual_output_height = phase->output_height = output_height;
 }
 
 void EffectChain::sort_all_nodes_topologically()

@@ -72,7 +72,7 @@ struct Phase {
 	std::vector<Node *> inputs;
 
 	std::vector<Node *> effects;  // In order.
-	unsigned output_width, output_height;
+	unsigned output_width, output_height, virtual_output_width, virtual_output_height;
 };
 
 class EffectChain {

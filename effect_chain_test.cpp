@@ -847,3 +847,53 @@ TEST(EffectChainTest, AspectRatioConversion) {
 	EXPECT_EQ(9, input_store->input_width);
 	EXPECT_EQ(7, input_store->input_height);
 }
+
+// An effect that does nothing except changing its output sizes.
+class VirtualResizeEffect : public Effect {
+public:
+	VirtualResizeEffect(int width, int height, int virtual_width, int virtual_height)
+		: width(width),
+		  height(height),
+		  virtual_width(virtual_width),
+		  virtual_height(virtual_height) {}
+	virtual std::string effect_type_id() const { return "VirtualResizeEffect"; }
+	std::string output_fragment_shader() { return read_file("identity.frag"); }
+
+	virtual bool changes_output_size() const { return true; }
+
+	virtual void get_output_size(unsigned *width, unsigned *height,
+	                             unsigned *virtual_width, unsigned *virtual_height) const {
+		*width = this->width;
+		*height = this->height;
+		*virtual_width = this->virtual_width;
+		*virtual_height = this->virtual_height;
+	}
+
+private:
+	int width, height, virtual_width, virtual_height;
+};
+
+TEST(EffectChainTest, VirtualSizeIsSentOnToInputs) {
+	const int size = 2, bigger_size = 3;
+	float data[size * size] = {
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+	};
+	float out_data[size * size];
+	
+	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	SizeStoringEffect *size_store = new SizeStoringEffect();
+
+	tester.get_chain()->add_effect(new VirtualResizeEffect(size, size, bigger_size, bigger_size));
+	tester.get_chain()->add_effect(size_store);
+	tester.get_chain()->add_effect(new VirtualResizeEffect(size, size, size, size));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	EXPECT_EQ(bigger_size, size_store->input_width);
+	EXPECT_EQ(bigger_size, size_store->input_height);
+
+	// If the resize is implemented as non-virtual, we'll fail here,
+	// since bilinear scaling from 2x2 → 3x3 → 2x2 is not very exact.
+	expect_equal(data, out_data, size, size);
+}

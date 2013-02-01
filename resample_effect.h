@@ -70,9 +70,9 @@ public:
 	}
 	virtual bool changes_output_size() const { return true; }
 
-	virtual void get_output_size(unsigned *width, unsigned *height) const {
-		*width = this->output_width;
-		*height = this->output_height;
+	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const {
+		*virtual_width = *width = this->output_width;
+		*virtual_height = *height = this->output_height;
 	}
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);

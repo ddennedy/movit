@@ -19,7 +19,7 @@ public:
 	virtual bool needs_mipmaps() const { return true; }
 
 	virtual bool changes_output_size() const { return true; }
-	virtual void get_output_size(unsigned *width, unsigned *height) const;
+	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
 
 private:
 	int width, height;
