@@ -28,7 +28,8 @@ endif
 CC=gcc
 CXX=g++
 CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include $(EIGEN_CXXFLAGS) $(GLEW_CXXFLAGS)
-LDFLAGS=-lSDL -lSDL_image -lGL -lrt -lpthread -lpng $(GLEW_LIBS) $(SDL_LIBS)
+LDFLAGS=$(GLEW_LIBS) $(SDL_LIBS)
+DEMO_LDFLAGS=-lSDL_image -lrt -lpthread -lpng
 RANLIB=ranlib
 
 ifeq ($(COVERAGE),1)
@@ -111,7 +112,7 @@ OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
 demo: libmovit.a $(DEMO_OBJS)
-	$(CXX) -o demo $(DEMO_OBJS) libmovit.a $(LDFLAGS)
+	$(CXX) -o demo $(DEMO_OBJS) libmovit.a $(LDFLAGS) $(DEMO_LDFLAGS)
 
 # The library itself.
 libmovit.a: $(LIB_OBJS)
