@@ -1,5 +1,3 @@
-#include <math.h>
-#include <assert.h>
 #include <GL/glew.h>
 
 #include "sandbox_effect.h"

@@ -12,6 +12,9 @@
 // You may not change it after calling finalize(), since that could change the
 // graph (need_linear_light() etc. depend on the border color you choose).
 
+#include <GL/glew.h>
+#include <string>
+
 #include "effect.h"
 
 class PaddingEffect : public Effect {

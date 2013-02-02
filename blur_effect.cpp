@@ -1,6 +1,7 @@
-#include <math.h>
-#include <assert.h>
 #include <GL/glew.h>
+#include <assert.h>
+#include <math.h>
+#include <algorithm>
 
 #include "blur_effect.h"
 #include "effect_chain.h"

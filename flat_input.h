@@ -1,10 +1,14 @@
 #ifndef _FLAT_INPUT_H
 #define _FLAT_INPUT_H 1
 
+#include <GL/glew.h>
 #include <assert.h>
+#include <string>
 
-#include "input.h"
+#include "effect.h"
+#include "image_format.h"
 #include "init.h"
+#include "input.h"
 
 // A FlatInput is the normal, “classic” case of an input, where everything
 // comes from a single 2D array with chunky pixels.

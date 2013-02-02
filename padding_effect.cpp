@@ -1,5 +1,5 @@
-#include <math.h>
 #include <GL/glew.h>
+#include <assert.h>
 
 #include "padding_effect.h"
 #include "util.h"

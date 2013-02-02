@@ -3,9 +3,10 @@
 // Pretty much the inverse of the GammaExpansionEffect tests;
 // EffectChainTest tests that they are actually inverses.
 
-#include "test_util.h"
+#include <GL/glew.h>
 #include "gtest/gtest.h"
-#include "gamma_expansion_effect.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(GammaCompressionEffectTest, sRGB_KeyValues) {
 	float data[] = {

@@ -12,9 +12,15 @@
 // where we first blur the picture, and then overlay it on the original
 // using the original as a matte.
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <string>
+
 #include "effect.h"
 
 class BlurEffect;
+class EffectChain;
+class Node;
 class OverlayMatteEffect;
 
 class DiffusionEffect : public Effect {

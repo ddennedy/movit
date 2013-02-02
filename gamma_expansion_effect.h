@@ -7,8 +7,11 @@
 //
 // Currently supports sRGB and Rec. 601/709.
 
+#include <string>
+
 #include "effect.h"
 #include "effect_chain.h"
+#include "image_format.h"
 
 #define EXPANSION_CURVE_SIZE 256
 

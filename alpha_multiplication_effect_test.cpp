@@ -1,7 +1,11 @@
 // Unit tests for AlphaMultiplicationEffect.
 
-#include "test_util.h"
+#include <GL/glew.h>
+
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(AlphaMultiplicationEffectTest, SimpleTest) {
 	const int size = 3;

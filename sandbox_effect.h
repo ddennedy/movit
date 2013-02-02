@@ -8,6 +8,9 @@
 // throwaway code. When you're happy, you can do a bit of search and replace
 // to give it a proper name and its own place in the build system.
 
+#include <GL/glew.h>
+#include <string>
+
 #include "effect.h"
 
 class SandboxEffect : public Effect {

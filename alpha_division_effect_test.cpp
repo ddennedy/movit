@@ -1,7 +1,9 @@
 // Unit tests for AlphaDivisionEffect.
 
-#include "test_util.h"
+#include <GL/glew.h>
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(AlphaDivisionEffectTest, SimpleTest) {
 	const int size = 2;

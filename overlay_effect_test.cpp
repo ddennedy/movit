@@ -1,8 +1,13 @@
 // Unit tests for OverlayEffect.
 
-#include "test_util.h"
+#include <GL/glew.h>
+
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "input.h"
 #include "overlay_effect.h"
+#include "test_util.h"
 
 TEST(OverlayEffectTest, TopDominatesBottomWhenNoAlpha) {
 	float data_a[] = {

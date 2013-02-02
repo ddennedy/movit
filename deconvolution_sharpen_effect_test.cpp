@@ -1,8 +1,13 @@
 // Unit tests for DeconvolutionSharpenEffect.
 
-#include "test_util.h"
-#include "gtest/gtest.h"
+#include <math.h>
+#include <stdlib.h>
+
 #include "deconvolution_sharpen_effect.h"
+#include "effect_chain.h"
+#include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(DeconvolutionSharpenEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;

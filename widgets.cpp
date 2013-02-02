@@ -1,5 +1,5 @@
-#include <math.h>
 #include <GL/glew.h>
+#include <math.h>
 
 #include "widgets.h"
 #include "util.h"

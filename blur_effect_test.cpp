@@ -1,9 +1,12 @@
 // Unit tests for BlurEffect.
 #include <math.h>
+#include <string.h>
 
-#include "test_util.h"
-#include "gtest/gtest.h"
 #include "blur_effect.h"
+#include "effect_chain.h"
+#include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(BlurEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;

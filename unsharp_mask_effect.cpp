@@ -1,10 +1,10 @@
-#include <math.h>
 #include <assert.h>
+#include <vector>
 
-#include "unsharp_mask_effect.h"
 #include "blur_effect.h"
-#include "mix_effect.h"
 #include "effect_chain.h"
+#include "mix_effect.h"
+#include "unsharp_mask_effect.h"
 #include "util.h"
 
 UnsharpMaskEffect::UnsharpMaskEffect()

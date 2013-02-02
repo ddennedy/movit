@@ -1,8 +1,11 @@
 // Unit tests for FlatInput.
 
-#include "test_util.h"
-#include "gtest/gtest.h"
+#include <stddef.h>
+
+#include "effect_chain.h"
 #include "flat_input.h"
+#include "gtest/gtest.h"
+#include "test_util.h"
 
 TEST(FlatInput, SimpleGrayscale) {
 	const int size = 4;

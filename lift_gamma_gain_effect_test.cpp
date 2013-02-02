@@ -1,8 +1,10 @@
 // Unit tests for LiftGammaGainEffect.
 
-#include "test_util.h"
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
 #include "lift_gamma_gain_effect.h"
+#include "test_util.h"
 
 TEST(LiftGammaGainEffectTest, DefaultIsNoop) {
 	float data[] = {

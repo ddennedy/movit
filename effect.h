@@ -10,15 +10,14 @@
 // effect instance; use the macro PREFIX() around your identifiers to
 // automatically prepend that prefix.
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <stddef.h>
+#include <Eigen/Core>
 #include <map>
 #include <string>
 #include <vector>
 
-#include <assert.h>
-
-#include <Eigen/Core>
-
-#include <GL/glew.h>
 #include "util.h"
 
 class EffectChain;

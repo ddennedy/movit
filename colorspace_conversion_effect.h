@@ -8,8 +8,11 @@
 // We don't do any fancy gamut mapping or similar; colors that are out-of-gamut
 // will simply stay out-of-gamut, and probably clip in the output stage.
 
+#include <string>
+
 #include "effect.h"
 #include "effect_chain.h"
+#include "image_format.h"
 
 class ColorspaceConversionEffect : public Effect {
 private:

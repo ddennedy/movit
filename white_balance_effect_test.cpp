@@ -1,7 +1,11 @@
 // Unit tests for WhiteBalanceEffect.
 
-#include "test_util.h"
+#include <iomanip>
+
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 #include "white_balance_effect.h"
 
 TEST(WhiteBalanceEffectTest, GrayNeutralDoesNothing) {

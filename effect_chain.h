@@ -1,14 +1,20 @@
 #ifndef _EFFECT_CHAIN_H
 #define _EFFECT_CHAIN_H 1
 
+#include <GL/glew.h>
+#include <stdio.h>
+#include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "effect.h"
 #include "image_format.h"
 #include "input.h"
 
+class Effect;
 class EffectChain;
+class Input;
 struct Phase;
 
 // For internal use within Node.

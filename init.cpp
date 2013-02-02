@@ -1,4 +1,7 @@
 #include <GL/glew.h>
+#include <assert.h>
+#include <stddef.h>
+#include <algorithm>
 #include <string>
 
 #include "init.h"

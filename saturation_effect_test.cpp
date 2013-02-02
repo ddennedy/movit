@@ -1,8 +1,12 @@
 // Unit tests for SaturationEffect.
 
-#include "test_util.h"
+#include <GL/glew.h>
+
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
 #include "saturation_effect.h"
+#include "test_util.h"
 
 TEST(SaturationEffectTest, SaturationOneIsPassThrough) {
 	float data[] = {

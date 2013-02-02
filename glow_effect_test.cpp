@@ -2,9 +2,11 @@
 
 #include <math.h>
 
-#include "test_util.h"
-#include "gtest/gtest.h"
+#include "effect_chain.h"
 #include "glow_effect.h"
+#include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(GlowEffectTest, NoAmountDoesNothing) {
 	const int size = 4;

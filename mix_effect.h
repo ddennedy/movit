@@ -4,6 +4,8 @@
 // Combine two images: a*x + b*y. If you set a within [0,1] and b=1-a,
 // you will get a fade; if not, you may get surprising results (consider alpha).
 
+#include <string>
+
 #include "effect.h"
 
 class MixEffect : public Effect {

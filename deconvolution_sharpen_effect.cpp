@@ -2,12 +2,15 @@
 // Since all of our signals are symmetrical, discrete correlation and convolution
 // is the same operation, and so we won't make a difference in notation.
 
-
-#include <math.h>
-#include <assert.h>
-#include <GL/glew.h>
 #include <Eigen/Dense>
 #include <Eigen/Cholesky>
+#include <GL/glew.h>
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <algorithm>
+#include <new>
 
 #include "deconvolution_sharpen_effect.h"
 #include "util.h"

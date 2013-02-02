@@ -1,7 +1,11 @@
 #ifndef _TEST_UTIL_H
 #define _TEST_UTIL_H 1
 
+#include <GL/glew.h>
 #include "effect_chain.h"
+#include "image_format.h"
+
+class Input;
 
 class EffectChainTester {
 public:

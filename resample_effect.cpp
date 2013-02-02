@@ -1,12 +1,15 @@
 // Three-lobed Lanczos, the most common choice.
 #define LANCZOS_RADIUS 3.0
 
-#include <math.h>
-#include <assert.h>
 #include <GL/glew.h>
+#include <assert.h>
+#include <limits.h>
+#include <math.h>
+#include <stdio.h>
+#include <algorithm>
 
-#include "resample_effect.h"
 #include "effect_chain.h"
+#include "resample_effect.h"
 #include "util.h"
 
 namespace {

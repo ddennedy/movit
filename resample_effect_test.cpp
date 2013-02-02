@@ -1,9 +1,14 @@
 // Unit tests for ResampleEffect.
 
-#include "test_util.h"
-#include "gtest/gtest.h"
-#include "resample_effect.h"
+#include <math.h>
+#include <iomanip>
+
+#include "effect_chain.h"
 #include "flat_input.h"
+#include "gtest/gtest.h"
+#include "image_format.h"
+#include "resample_effect.h"
+#include "test_util.h"
 
 namespace {
 

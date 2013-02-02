@@ -7,6 +7,8 @@
 // (saturation=1). Extrapolating that curve further (ie., saturation > 1)
 // gives us increased saturation if so desired.
 
+#include <string>
+
 #include "effect.h"
 
 class SaturationEffect : public Effect {

@@ -4,6 +4,9 @@
 // A circular vignette, falling off as cos² of the distance from the center
 // (the classic formula for approximating a real lens).
 
+#include <GL/glew.h>
+#include <string>
+
 #include "effect.h"
 
 class VignetteEffect : public Effect {

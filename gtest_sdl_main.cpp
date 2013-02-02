@@ -1,6 +1,11 @@
 #define GTEST_HAS_EXCEPTIONS 0
 
 #include <SDL/SDL.h>
+#include <SDL/SDL_error.h>
+#include <SDL/SDL_video.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "gtest/gtest.h"
 
 int main(int argc, char **argv) {

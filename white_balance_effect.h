@@ -3,6 +3,9 @@
 
 // Color correction in LMS color space.
 
+#include <GL/glew.h>
+#include <string>
+
 #include "effect.h"
 
 class WhiteBalanceEffect : public Effect {

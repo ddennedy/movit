@@ -1,8 +1,10 @@
 // Unit tests for ColorspaceConversionEffect.
 
-#include "test_util.h"
-#include "gtest/gtest.h"
+#include <GL/glew.h>
+
 #include "colorspace_conversion_effect.h"
+#include "gtest/gtest.h"
+#include "test_util.h"
 
 TEST(ColorspaceConversionEffectTest, Reversible) {
 	float data[] = {

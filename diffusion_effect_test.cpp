@@ -1,8 +1,10 @@
 // Unit tests for DiffusionEffect.
 
-#include "test_util.h"
-#include "gtest/gtest.h"
 #include "diffusion_effect.h"
+#include "effect_chain.h"
+#include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(DiffusionEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;

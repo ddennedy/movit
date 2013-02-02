@@ -1,12 +1,11 @@
-#include <math.h>
-#include <assert.h>
-#include <GL/glew.h>
-
+#include <Eigen/Core>
 #include <Eigen/LU>
+#include <GL/glew.h>
+#include <assert.h>
 
-#include "white_balance_effect.h"
-#include "util.h"
 #include "d65.h"
+#include "util.h"
+#include "white_balance_effect.h"
 
 using namespace Eigen;
 

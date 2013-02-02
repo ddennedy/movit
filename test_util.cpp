@@ -1,12 +1,17 @@
-#include "init.h"
-#include "test_util.h"
+#include <assert.h>
+#include <gtest/gtest-message.h>
+#include <math.h>
+#include <stdio.h>
+#include <algorithm>
+#include <ostream>
+
 #include "flat_input.h"
 #include "gtest/gtest.h"
+#include "init.h"
+#include "test_util.h"
+#include "util.h"
 
-#include <stdio.h>
-#include <math.h>
-
-#include <algorithm>
+class Input;
 
 namespace {
 

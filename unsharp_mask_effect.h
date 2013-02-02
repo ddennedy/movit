@@ -10,10 +10,16 @@
 // See DeconvolutionSharpenEffect for a different, possibly better
 // sharpening algorithm.
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <string>
+
 #include "effect.h"
 
 class BlurEffect;
+class EffectChain;
 class MixEffect;
+class Node;
 
 class UnsharpMaskEffect : public Effect {
 public:

@@ -1,10 +1,10 @@
 #include <assert.h>
-
+#include <Eigen/Core>
 #include <Eigen/LU>
 
 #include "colorspace_conversion_effect.h"
-#include "util.h"
 #include "d65.h"
+#include "util.h"
 
 using namespace Eigen;
 

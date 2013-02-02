@@ -19,9 +19,11 @@
 //
 //   Jain, Anil K.: “Fundamentals of Digital Image Processing”, Prentice Hall, 1988.
 
-#include "effect.h"
-
+#include <GL/glew.h>
 #include <Eigen/Dense>
+#include <string>
+
+#include "effect.h"
 
 class DeconvolutionSharpenEffect : public Effect {
 public:

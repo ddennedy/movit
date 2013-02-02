@@ -4,11 +4,17 @@
 // Glow: Cut out the highlights of the image (everything above a certain threshold),
 // blur them, and overlay them onto the original image.
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <string>
+
 #include "effect.h"
 
 class BlurEffect;
-class MixEffect;
+class EffectChain;
 class HighlightCutoffEffect;
+class MixEffect;
+class Node;
 
 class GlowEffect : public Effect {
 public:

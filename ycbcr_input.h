@@ -5,6 +5,12 @@
 // imprecisely, called “YUV”), which is typically what you get from a video decoder.
 // It upsamples planes as needed, using the default linear upsampling OpenGL gives you.
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <string>
+
+#include "effect.h"
+#include "image_format.h"
 #include "input.h"
 
 struct YCbCrFormat {

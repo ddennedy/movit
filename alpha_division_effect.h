@@ -3,6 +3,8 @@
 
 // Convert premultiplied alpha to postmultiplied alpha, simply by multiplying.
 
+#include <string>
+
 #include "effect.h"
 
 class AlphaDivisionEffect : public Effect {

@@ -1,8 +1,11 @@
 // Unit tests for YCbCrInput.
 // FIXME: This class really ought to support mipmaps.
 
-#include "test_util.h"
+#include <stddef.h>
+
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "test_util.h"
 #include "ycbcr_input.h"
 
 TEST(YCbCrInput, Simple444) {

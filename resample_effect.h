@@ -15,8 +15,15 @@
 // which is what the user is intended to use, instantiates two copies of
 // SingleResamplePassEffect behind the scenes).
 
+#include <GL/glew.h>
+#include <assert.h>
+#include <stddef.h>
+#include <string>
+
 #include "effect.h"
 
+class EffectChain;
+class Node;
 class SingleResamplePassEffect;
 
 class ResampleEffect : public Effect {

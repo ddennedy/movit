@@ -10,6 +10,8 @@
 //
 // The first input is the bottom, and the second is the top.
 
+#include <string>
+
 #include "effect.h"
 
 class OverlayEffect : public Effect {

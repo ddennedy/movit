@@ -3,6 +3,8 @@
 
 // A simple horizontal mirroring.
 
+#include <string>
+
 #include "effect.h"
 
 class MirrorEffect : public Effect {

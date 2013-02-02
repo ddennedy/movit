@@ -3,13 +3,11 @@
 
 // Various utilities.
 
+#include <GL/glew.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <string>
 #include <Eigen/Core>
-
-#include <GL/glew.h>
+#include <string>
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 

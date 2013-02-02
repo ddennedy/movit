@@ -1,6 +1,6 @@
-#include <math.h>
-#include <assert.h>
 #include <GL/glew.h>
+#include <assert.h>
+#include <algorithm>
 
 #include "dither_effect.h"
 #include "util.h"

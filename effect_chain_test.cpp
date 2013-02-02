@@ -3,13 +3,18 @@
 // Note that this also contains the tests for some of the simpler effects.
 
 #include <GL/glew.h>
+#include <assert.h>
+#include <stddef.h>
 
+#include "effect.h"
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
+#include "input.h"
 #include "mirror_effect.h"
 #include "resize_effect.h"
 #include "test_util.h"
+#include "util.h"
 
 TEST(EffectChainTest, EmptyChain) {
 	float data[] = {

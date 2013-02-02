@@ -1,9 +1,12 @@
 // Unit tests for DitherEffect.
 
+#include <GL/glew.h>
 #include <math.h>
 
-#include "test_util.h"
+#include "effect_chain.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "test_util.h"
 
 TEST(DitherEffectTest, NoDitherOnExactValues) {
 	const int size = 4;

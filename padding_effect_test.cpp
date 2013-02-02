@@ -1,9 +1,14 @@
 // Unit tests for AlphaMultiplicationEffect.
 
-#include "test_util.h"
+#include <stddef.h>
+
+#include "effect_chain.h"
 #include "flat_input.h"
-#include "padding_effect.h"
 #include "gtest/gtest.h"
+#include "image_format.h"
+#include "padding_effect.h"
+#include "test_util.h"
+#include "util.h"
 
 TEST(PaddingEffectTest, SimpleCenter) {
 	float data[2 * 2] = {

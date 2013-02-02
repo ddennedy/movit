@@ -4,33 +4,37 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
-#include <string.h>
-#include <math.h>
-#include <time.h>
-#include <sys/time.h>
-#include <assert.h>
-
-#include <string>
-#include <vector>
-#include <map>
-
 #include <GL/glew.h>
-
 #include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
+#include <SDL/SDL_error.h>
+#include <SDL/SDL_events.h>
 #include <SDL/SDL_image.h>
+#include <SDL/SDL_keyboard.h>
+#include <SDL/SDL_keysym.h>
+#include <SDL/SDL_mouse.h>
+#include <SDL/SDL_video.h>
+#include <assert.h>
+#include <features.h>
+#include <math.h>
 #include <png.h>
+#include <pngconf.h>
+#include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
 
-#include "init.h"
+#include "diffusion_effect.h"
 #include "effect.h"
 #include "effect_chain.h"
-#include "util.h"
-#include "widgets.h"
-
 #include "flat_input.h"
+#include "image_format.h"
+#include "init.h"
 #include "lift_gamma_gain_effect.h"
 #include "saturation_effect.h"
-#include "diffusion_effect.h"
+#include "util.h"
+#include "widgets.h"
 
 unsigned char result[WIDTH * HEIGHT * 4];
 

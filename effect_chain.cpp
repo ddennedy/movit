@@ -1,27 +1,29 @@
 #define GL_GLEXT_PROTOTYPES 1
 
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <locale.h>
-#include <assert.h>
 #include <GL/glew.h>
-
+#include <assert.h>
+#include <locale.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <algorithm>
 #include <set>
 #include <stack>
 #include <vector>
 
-#include "util.h"
-#include "effect_chain.h"
-#include "gamma_expansion_effect.h"
-#include "gamma_compression_effect.h"
-#include "colorspace_conversion_effect.h"
-#include "alpha_multiplication_effect.h"
 #include "alpha_division_effect.h"
+#include "alpha_multiplication_effect.h"
+#include "colorspace_conversion_effect.h"
 #include "dither_effect.h"
-#include "input.h"
+#include "effect.h"
+#include "effect_chain.h"
+#include "gamma_compression_effect.h"
+#include "gamma_expansion_effect.h"
 #include "init.h"
+#include "input.h"
+#include "util.h"
 
 EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),

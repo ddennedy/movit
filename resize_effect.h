@@ -5,6 +5,8 @@
 // (set by the two integer parameters "width" and "height").
 // Mostly useful as part of other algorithms.
 
+#include <string>
+
 #include "effect.h"
 
 class ResizeEffect : public Effect {

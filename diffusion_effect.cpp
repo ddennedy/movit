@@ -1,8 +1,8 @@
-#include <math.h>
 #include <assert.h>
+#include <vector>
 
-#include "diffusion_effect.h"
 #include "blur_effect.h"
+#include "diffusion_effect.h"
 #include "effect_chain.h"
 #include "util.h"
 
