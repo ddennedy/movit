@@ -5,6 +5,7 @@
 
 #include "blur_effect.h"
 #include "effect_chain.h"
+#include "effect_util.h"
 #include "util.h"
 
 // Must match blur_effect.frag.

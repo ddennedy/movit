@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <assert.h>
 
+#include "effect_util.h"
 #include "padding_effect.h"
 #include "util.h"
 

@@ -4,7 +4,6 @@
 
 #include <GL/glew.h>
 #include <assert.h>
-#include <stddef.h>
 
 #include "effect.h"
 #include "effect_chain.h"

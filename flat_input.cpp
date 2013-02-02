@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <GL/glew.h>
 
+#include "effect_util.h"
 #include "flat_input.h"
 #include "util.h"
 

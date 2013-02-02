@@ -3,7 +3,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
-#include <ostream>
 
 #include "flat_input.h"
 #include "gtest/gtest.h"

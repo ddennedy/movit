@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "effect_util.h"
 #include "util.h"
 #include "ycbcr_input.h"
 

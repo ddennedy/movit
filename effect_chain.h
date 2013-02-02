@@ -8,12 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "effect.h"
 #include "image_format.h"
-#include "input.h"
 
 class Effect;
-class EffectChain;
 class Input;
 struct Phase;
 

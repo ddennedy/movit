@@ -11,7 +11,6 @@
 #include <string>
 
 #include "effect.h"
-#include "effect_chain.h"
 #include "image_format.h"
 
 class ColorspaceConversionEffect : public Effect {

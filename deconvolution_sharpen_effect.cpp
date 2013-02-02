@@ -13,6 +13,7 @@
 #include <new>
 
 #include "deconvolution_sharpen_effect.h"
+#include "effect_util.h"
 #include "util.h"
 
 using namespace Eigen;

@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <math.h>
 
+#include "effect_util.h"
 #include "lift_gamma_gain_effect.h"
 #include "util.h"
 

@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "effect_chain.h"
+#include "effect_util.h"
 #include "resample_effect.h"
 #include "util.h"
 

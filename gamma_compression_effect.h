@@ -10,7 +10,6 @@
 #include <string>
 
 #include "effect.h"
-#include "effect_chain.h"
 #include "image_format.h"
 
 #define COMPRESSION_CURVE_SIZE 4096

@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <math.h>
 
+#include "effect_util.h"
 #include "vignette_effect.h"
 #include "util.h"
 

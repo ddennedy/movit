@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "dither_effect.h"
+#include "effect_util.h"
 #include "util.h"
 
 namespace {

@@ -13,10 +13,8 @@
 #include <GL/glew.h>
 #include <assert.h>
 #include <stddef.h>
-#include <Eigen/Core>
 #include <map>
 #include <string>
-#include <vector>
 
 #include "util.h"
 
@@ -46,16 +44,6 @@ struct RGBATriplet {
 
 	float r, g, b, a;
 };
-
-// Convenience functions that deal with prepending the prefix.
-GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key);
-void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value);
-void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value);
-void set_uniform_vec2(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
-void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
-void set_uniform_vec4(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
-void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
-void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Eigen::Matrix3d &matrix);
 
 class Effect {
 public:
