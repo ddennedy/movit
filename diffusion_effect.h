@@ -44,6 +44,7 @@ public:
 	OverlayMatteEffect();
 	virtual std::string effect_type_id() const { return "OverlayMatteEffect"; }
 	std::string output_fragment_shader();
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	unsigned num_inputs() const { return 2; }
 

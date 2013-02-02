@@ -99,7 +99,8 @@ public:
 	// This is the most natural format for processing, and the default in
 	// most of Movit (just like linear light is).
 	//
-	// If you set INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA, all of your inputs
+	// If you set INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA or
+	// INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK, all of your inputs
 	// (if any) are guaranteed to also be in premultiplied alpha.
 	// Otherwise, you can get postmultiplied or premultiplied alpha;
 	// you won't know. If you have multiple inputs, you will get the same
@@ -121,9 +122,19 @@ public:
 		// If you set this, you should also set needs_linear_light().
 		INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA,
 
-		// Keeps the type of alpha unchanged from input to output.
-		// Usually appropriate if you process all color channels
-		// in a linear fashion, and do not change alpha.
+		// Like INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA, but also guarantees
+		// that if you get blank alpha in, you also keep blank alpha out.
+		// This is a somewhat weaker guarantee than DONT_CARE_ALPHA_TYPE,
+		// but is still useful in many situations, and appropriate when
+		// e.g. you don't touch alpha at all.
+		//
+		// Does not make sense for inputs.
+		INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK,
+
+		// Keeps the type of alpha (premultiplied, postmultiplied, blank)
+		// unchanged from input to output. Usually appropriate if you
+		// process all color channels in a linear fashion, do not change
+		// alpha, and do not produce any new pixels thare have alpha != 1.0.
 		//
 		// Does not make sense for inputs.
 		DONT_CARE_ALPHA_TYPE,

@@ -39,6 +39,7 @@ public:
 	}
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 private:
 	// Input size.

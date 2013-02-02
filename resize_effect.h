@@ -17,6 +17,7 @@ public:
 	// in case we need to scale down a lot.
 	virtual bool need_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	virtual bool changes_output_size() const { return true; }
 	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;

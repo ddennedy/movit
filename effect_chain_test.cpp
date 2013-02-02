@@ -448,6 +448,64 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 	expect_equal(data, out_data, 4, size);
 }
 
+// An effect that does nothing, and specifies that it preserves blank alpha.
+class BlankAlphaPreservingEffect : public Effect {
+public:
+	BlankAlphaPreservingEffect() {}
+	virtual std::string effect_type_id() const { return "BlankAlphaPreservingEffect"; }
+	std::string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+};
+
+TEST(EffectChainTest, NoAlphaConversionsWithBlankAlphaPreservingEffect) {
+	const int size = 3;
+	float data[4 * size] = {
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	float out_data[4 * size];
+	EffectChainTester tester(NULL, size, 1);
+	tester.get_chain()->add_input(new BlueInput());
+	tester.get_chain()->add_effect(new BlankAlphaPreservingEffect());
+	RewritingEffect<MirrorEffect> *effect = new RewritingEffect<MirrorEffect>();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+
+	Node *node = effect->replaced_node;
+	EXPECT_EQ(1, node->incoming_links.size());
+	EXPECT_EQ(0, node->outgoing_links.size());
+
+	expect_equal(data, out_data, 4, size);
+}
+
+// This is the counter-test to NoAlphaConversionsWithBlankAlphaPreservingEffect;
+// just to be sure that with a normal INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA effect,
+// an alpha conversion _should_ be inserted at the very end. (There is some overlap
+// with other tests.)
+TEST(EffectChainTest, AlphaConversionsWithNonBlankAlphaPreservingEffect) {
+	const int size = 3;
+	float data[4 * size] = {
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	float out_data[4 * size];
+	EffectChainTester tester(NULL, size, 1);
+	tester.get_chain()->add_input(new BlueInput());
+	tester.get_chain()->add_effect(new IdentityEffect());  // Not BlankAlphaPreservingEffect.
+	RewritingEffect<MirrorEffect> *effect = new RewritingEffect<MirrorEffect>();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+
+	Node *node = effect->replaced_node;
+	EXPECT_EQ(1, node->incoming_links.size());
+	EXPECT_EQ(1, node->outgoing_links.size());
+	EXPECT_EQ("AlphaDivisionEffect", node->outgoing_links[0]->effect->effect_type_id());
+
+	expect_equal(data, out_data, 4, size);
+}
+
 // Effectively scales down its input linearly by 4x (and repeating it),
 // which is not attainable without mipmaps.
 class MipmapNeedingEffect : public Effect {

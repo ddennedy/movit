@@ -782,6 +782,7 @@ void EffectChain::find_color_spaces_for_inputs()
 			case Effect::OUTPUT_POSTMULTIPLIED_ALPHA:
 				node->output_alpha_type = ALPHA_POSTMULTIPLIED;
 				break;
+			case Effect::INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK:
 			case Effect::DONT_CARE_ALPHA_TYPE:
 			default:
 				assert(false);
@@ -894,6 +895,7 @@ void EffectChain::propagate_alpha()
 		// whether to divide away the old alpha or not.
 		Effect::AlphaHandling alpha_handling = node->effect->alpha_handling();
 		assert(alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA ||
+		       alpha_handling == Effect::INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK ||
 		       alpha_handling == Effect::DONT_CARE_ALPHA_TYPE);
 
 		// If the node has multiple inputs, check that they are all valid and
@@ -933,16 +935,16 @@ void EffectChain::propagate_alpha()
 			continue;
 		}
 
-		if (alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA) {
+		if (alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA ||
+		    alpha_handling == Effect::INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK) {
 			// If the effect has asked for premultiplied alpha, check that it has got it.
 			if (any_postmultiplied) {
 				node->output_alpha_type = ALPHA_INVALID;
+			} else if (!any_premultiplied &&
+			           alpha_handling == Effect::INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK) {
+				// Blank input alpha, and the effect preserves blank alpha.
+				node->output_alpha_type = ALPHA_BLANK;
 			} else {
-				// In some rare cases, it might be advantageous to say
-				// that blank input alpha yields blank output alpha.
-				// However, this would cause a more complex Effect interface
-				// an effect would need to guarantee that it doesn't mess with
-				// blank alpha), so this is the simplest.
 				node->output_alpha_type = ALPHA_PREMULTIPLIED;
 			}
 		} else {

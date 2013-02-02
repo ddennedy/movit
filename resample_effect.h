@@ -29,6 +29,7 @@ public:
 	// down quite a lot.
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_srgb_primaries() const { return false; }
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 
