@@ -240,16 +240,6 @@ MatrixXf central_convolve(const MatrixXf &a, const MatrixXf &b)
 	return result;
 }
 
-void print_matrix(const MatrixXf &m)
-{
-	for (int y = 0; y < m.rows(); ++y) {
-		for (int x = 0; x < m.cols(); ++x) {
-			printf("%7.4f ", m(x, y));
-		}
-		printf("\n");
-	}
-}
-
 }  // namespace
 
 void DeconvolutionSharpenEffect::update_deconvolution_kernel()
