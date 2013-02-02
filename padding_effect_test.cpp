@@ -34,7 +34,7 @@ TEST(PaddingEffectTest, SimpleCenter) {
 	CHECK(effect->set_float("left", 1.0f));
 	CHECK(effect->set_float("top", 1.0f));
 
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 4, 4);
 }
 
@@ -70,7 +70,7 @@ TEST(PaddingEffectTest, WhiteBorderColor) {
 	RGBATriplet border_color(1.0f, 1.0f, 1.0f, 1.0f);
 	CHECK(effect->set_vec4("border_color", (float *)&border_color));
 
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 4, 4);
 }
 
@@ -103,7 +103,7 @@ TEST(PaddingEffectTest, BorderColorIsInLinearGamma) {
 	RGBATriplet border_color(0.2f, 0.4f, 0.6f, 0.8f);  // Same as the pixel in data[].
 	CHECK(effect->set_vec4("border_color", (float *)&border_color));
 
-	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_625, GAMMA_REC_601, OUTPUT_POSTMULTIPLIED_ALPHA);
+	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_625, GAMMA_REC_601, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 	expect_equal(expected_data, out_data, 4, 2);
 }
 
@@ -134,7 +134,7 @@ TEST(PaddingEffectTest, DifferentXAndYOffset) {
 	CHECK(effect->set_float("left", 2.0f));
 	CHECK(effect->set_float("top", 1.0f));
 
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 3, 3);
 }
 
@@ -166,7 +166,7 @@ TEST(PaddingEffectTest, NonIntegerOffset) {
 	CHECK(effect->set_float("left", 0.25f));
 	CHECK(effect->set_float("top", 0.0f));
 
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 5, 2);
 }
 
@@ -196,6 +196,6 @@ TEST(PaddingEffectTest, Crop) {
 	CHECK(effect->set_float("left", -1.0f));
 	CHECK(effect->set_float("top", -1.0f));
 
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 1, 1);
 }

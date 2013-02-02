@@ -439,7 +439,7 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 	EffectChainTester tester(NULL, size, 1);
 	RewritingToBlueInput *input = new RewritingToBlueInput();
 	tester.get_chain()->add_input(input);
-	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 
 	Node *node = input->blue_node;
 	EXPECT_EQ(0, node->incoming_links.size());

@@ -17,7 +17,7 @@ TEST(AlphaMultiplicationEffectTest, SimpleTest) {
 	};
 	float out_data[4 * size];
 	EffectChainTester tester(data, 1, size, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
-	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_PREMULTIPLIED);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 
 	expect_equal(expected_data, out_data, 4, size);
 }

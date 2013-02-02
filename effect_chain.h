@@ -22,8 +22,8 @@ enum AlphaType {
 // Whether you want pre- or postmultiplied alpha in the output
 // (see effect.h for a discussion of pre- versus postmultiplied alpha).
 enum OutputAlphaFormat {
-	OUTPUT_ALPHA_PREMULTIPLIED,
-	OUTPUT_POSTMULTIPLIED_ALPHA,
+	OUTPUT_ALPHA_FORMAT_PREMULTIPLIED,
+	OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED,
 };
 
 // A node in the graph; basically an effect and some associated information.

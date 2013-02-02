@@ -1141,14 +1141,14 @@ void EffectChain::fix_output_alpha()
 		return;
 	}
 	if (output->output_alpha_type == ALPHA_PREMULTIPLIED &&
-	    output_alpha_format == OUTPUT_POSTMULTIPLIED_ALPHA) {
+	    output_alpha_format == OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED) {
 		Node *conversion = add_node(new AlphaDivisionEffect());
 		connect_nodes(output, conversion);
 		propagate_alpha();
 		propagate_gamma_and_color_space();
 	}
 	if (output->output_alpha_type == ALPHA_POSTMULTIPLIED &&
-	    output_alpha_format == OUTPUT_ALPHA_PREMULTIPLIED) {
+	    output_alpha_format == OUTPUT_ALPHA_FORMAT_PREMULTIPLIED) {
 		Node *conversion = add_node(new AlphaMultiplicationEffect());
 		connect_nodes(output, conversion);
 		propagate_alpha();
