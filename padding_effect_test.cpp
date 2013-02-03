@@ -72,7 +72,7 @@ TEST(PaddingEffectTest, WhiteBorderColor) {
 	CHECK(effect->set_float("left", 1.0f));
 	CHECK(effect->set_float("top", 1.0f));
 
-	RGBATriplet border_color(1.0f, 1.0f, 1.0f, 1.0f);
+	RGBATuple border_color(1.0f, 1.0f, 1.0f, 1.0f);
 	CHECK(effect->set_vec4("border_color", (float *)&border_color));
 
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
@@ -105,7 +105,7 @@ TEST(PaddingEffectTest, BorderColorIsInLinearGamma) {
 	CHECK(effect->set_float("left", 0.0f));
 	CHECK(effect->set_float("top", 0.0f));
 
-	RGBATriplet border_color(0.2f, 0.4f, 0.6f, 0.8f);  // Same as the pixel in data[].
+	RGBATuple border_color(0.2f, 0.4f, 0.6f, 0.8f);  // Same as the pixel in data[].
 	CHECK(effect->set_vec4("border_color", (float *)&border_color));
 
 	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_625, GAMMA_REC_601, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);

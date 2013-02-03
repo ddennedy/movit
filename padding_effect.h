@@ -33,7 +33,7 @@ public:
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 
 private:
-	RGBATriplet border_color;
+	RGBATuple border_color;
 	int input_width, input_height;
 	int output_width, output_height;
 	float top, left;

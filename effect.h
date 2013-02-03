@@ -38,8 +38,8 @@ struct RGBTriplet {
 };
 
 // Can alias on a float[4].
-struct RGBATriplet {
-	RGBATriplet(float r, float g, float b, float a)
+struct RGBATuple {
+	RGBATuple(float r, float g, float b, float a)
 		: r(r), g(g), b(b), a(a) {}
 
 	float r, g, b, a;
