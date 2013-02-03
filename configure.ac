@@ -11,5 +11,5 @@ PKG_CHECK_MODULES([SDL], [sdl])
 PKG_CHECK_MODULES([SDL_image], [SDL_image])
 PKG_CHECK_MODULES([libpng], [libpng12])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile movit.pc])
 AC_OUTPUT

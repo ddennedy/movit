@@ -1,0 +1,14 @@
+# Movit pkg-config source file.
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: movit
+Description: Movit is a library for high-quality, high-performance video filters.
+Version: git
+Requires:
+Conflicts:
+Libs: -lmovit -lGLEW
+Cflags: -I${includedir}/movit @Eigen3_CFLAGS@ @GLEW_CFLAGS@

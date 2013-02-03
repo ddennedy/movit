@@ -133,5 +133,7 @@ install: libmovit.a
 	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
 	$(MKDIR) -p $(datadir)/movit/
 	$(INSTALL) -m 0644 $(SHADERS) $(datadir)/movit/
+	$(MKDIR) -p $(libdir)/pkgconfig/
+	$(INSTALL) -m 644 movit.pc $(libdir)/pkgconfig/
 
 .PHONY: coverage clean check all install

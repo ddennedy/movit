@@ -40,3 +40,4 @@ config.log
 config.status
 configure
 Makefile
+movit.pc
