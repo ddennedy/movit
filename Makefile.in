@@ -97,6 +97,9 @@ clean:
 	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step*.dot chain*.frag
 	$(RM) -r movit.info coverage/
 
+distclean: clean
+	$(RM) Makefile movit.pc config.status config.log
+
 check: $(TESTS)
 	FAILED_TESTS=""; \
 	for TEST in $(TESTS); do \
@@ -136,4 +139,4 @@ install: libmovit.a
 	$(MKDIR) -p $(libdir)/pkgconfig/
 	$(INSTALL) -m 644 movit.pc $(libdir)/pkgconfig/
 
-.PHONY: coverage clean check all install
+.PHONY: coverage clean distclean check all install
