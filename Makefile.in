@@ -103,7 +103,7 @@ distclean: clean
 check: $(TESTS)
 	FAILED_TESTS=""; \
 	for TEST in $(TESTS); do \
-	    ./$$TEST || FAILED_TESTS="$$TEST $$FAILED_TESTS"; \
+		./$$TEST || FAILED_TESTS="$$TEST $$FAILED_TESTS"; \
 	done; \
 	if [ "$$FAILED_TESTS" ]; then \
 		echo Failed tests: $$FAILED_TESTS; \
