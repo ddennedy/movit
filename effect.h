@@ -16,7 +16,7 @@
 #include <map>
 #include <string>
 
-#include "util.h"
+#include "defs.h"
 
 class EffectChain;
 class Node;

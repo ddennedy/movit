@@ -47,12 +47,6 @@ void combine_two_samples(float w1, float w2, float *offset, float *total_weight,
 #define check_error() { int err = glGetError(); if (err != GL_NO_ERROR) { printf("GL error 0x%x at %s:%d\n", err, __FILE__, __LINE__); exit(1); } }
 #endif
 
-#ifdef __GNUC__
-#define MUST_CHECK_RESULT __attribute__((warn_unused_result))
-#else
-#define MUST_CHECK_RESULT 
-#endif
-
 // CHECK() is like assert(), but retains any side effects no matter the compilation mode.
 #ifdef NDEBUG
 #define CHECK(x) (void)(x)
