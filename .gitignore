@@ -32,3 +32,10 @@ ycbcr_input_test
 chain-*.frag
 movit.info
 coverage/
+aclocal.m4
+autogen.sh
+autom4te.cache/
+config.h.in
+config.log
+config.status
+configure

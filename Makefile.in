@@ -1,0 +1,137 @@
+GTEST_DIR ?= /usr/src/gtest
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+includedir = @includedir@
+libdir = @libdir@
+datarootdir = @datarootdir@
+datadir = @datadir@
+
+CC=gcc
+CXX=g++
+CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
+LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@
+DEMO_LDFLAGS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
+RANLIB=ranlib
+INSTALL=install
+MKDIR=mkdir
+
+ifeq ($(COVERAGE),1)
+CXXFLAGS += -fprofile-arcs -ftest-coverage
+LDFLAGS += -fprofile-arcs -ftest-coverage
+endif
+
+DEMO_OBJS=demo.o
+
+# Inputs.
+TESTED_INPUTS = flat_input
+TESTED_INPUTS += ycbcr_input
+
+INPUTS = $(TESTED_INPUTS) $(UNTESTED_INPUTS)
+
+# Effects.
+TESTED_EFFECTS = lift_gamma_gain_effect
+TESTED_EFFECTS += white_balance_effect
+TESTED_EFFECTS += gamma_expansion_effect
+TESTED_EFFECTS += gamma_compression_effect
+TESTED_EFFECTS += colorspace_conversion_effect
+TESTED_EFFECTS += alpha_multiplication_effect
+TESTED_EFFECTS += alpha_division_effect
+TESTED_EFFECTS += saturation_effect
+TESTED_EFFECTS += blur_effect
+TESTED_EFFECTS += diffusion_effect
+TESTED_EFFECTS += glow_effect
+TESTED_EFFECTS += unsharp_mask_effect
+TESTED_EFFECTS += mix_effect
+TESTED_EFFECTS += overlay_effect
+TESTED_EFFECTS += padding_effect
+TESTED_EFFECTS += resample_effect
+TESTED_EFFECTS += dither_effect
+TESTED_EFFECTS += deconvolution_sharpen_effect
+
+UNTESTED_EFFECTS = sandbox_effect
+UNTESTED_EFFECTS += mirror_effect
+UNTESTED_EFFECTS += resize_effect
+UNTESTED_EFFECTS += vignette_effect
+
+EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
+
+# Unit tests.
+TESTS=effect_chain_test $(TESTED_INPUTS:=_test) $(TESTED_EFFECTS:=_test)
+
+LIB_OBJS=effect_util.o util.o widgets.o effect.o effect_chain.o init.o $(INPUTS:=.o) $(EFFECTS:=.o)
+
+# Default target:
+all: $(TESTS) demo
+
+# Google Test and other test library functions.
+TEST_OBJS = gtest-all.o gtest_sdl_main.o test_util.o
+
+gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+gtest_sdl_main.o: gtest_sdl_main.cpp
+	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+
+# Unit tests.
+$(TESTS): %: %.o $(TEST_OBJS) libmovit.a
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
+
+# A small demo program.
+demo: libmovit.a $(DEMO_OBJS)
+	$(CXX) -o demo $(DEMO_OBJS) libmovit.a $(LDFLAGS) $(DEMO_LDFLAGS)
+
+# The library itself.
+libmovit.a: $(LIB_OBJS)
+	$(AR) rc $@ $(LIB_OBJS)
+	$(RANLIB) $@
+
+%.o: %.cpp
+	$(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+
+DEPS=$(OBJS:.o=.d)
+-include $(DEPS)
+
+clean:
+	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step-*.dot
+	$(RM) -r movit.info coverage/
+
+check: $(TESTS)
+	FAILED_TESTS=""; \
+	for TEST in $(TESTS); do \
+	    ./$$TEST || FAILED_TESTS="$$TEST $$FAILED_TESTS"; \
+	done; \
+	if [ "$$FAILED_TESTS" ]; then \
+		echo Failed tests: $$FAILED_TESTS; \
+		exit 1; \
+	fi
+
+# You need to build with COVERAGE=1 to use this target.
+coverage: check
+	lcov -d . -c -o movit.info
+	lcov --remove movit.info '*_test.cpp' '*/test_util.{cpp,h}' -o movit.info
+	genhtml -o coverage movit.info
+
+HDRS = effect_chain.h effect.h input.h image_format.h init.h util.h
+HDRS += $(INPUTS:=.h)
+HDRS += $(EFFECTS:=.h)
+
+SHADERS = vs.vert header.frag footer.frag
+SHADERS += $(INPUTS:=.frag)
+SHADERS += $(EFFECTS:=.frag)
+SHADERS += highlight_cutoff_effect.frag
+SHADERS += overlay_matte_effect.frag
+
+# These purposefully do not exist.
+MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.frag resize_effect.frag
+SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
+
+install: libmovit.a
+	$(INSTALL) -m 0644 libmovit.a $(libdir)/
+	$(MKDIR) -p $(includedir)/movit/
+	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
+	$(MKDIR) -p $(datadir)/movit/
+	$(INSTALL) -m 0644 $(SHADERS) $(datadir)/movit/
+
+.PHONY: coverage clean check all install
