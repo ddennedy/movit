@@ -1,5 +1,5 @@
-#ifndef _LIFT_GAMMA_GAIN_EFFECT_H
-#define _LIFT_GAMMA_GAIN_EFFECT_H 1
+#ifndef _MOVIT_LIFT_GAMMA_GAIN_EFFECT_H
+#define _MOVIT_LIFT_GAMMA_GAIN_EFFECT_H 1
 
 // A simple lift/gamma/gain effect, used for color grading.
 //
@@ -38,4 +38,4 @@ private:
 	RGBTriplet lift, gamma, gain;
 };
 
-#endif // !defined(_LIFT_GAMMA_GAIN_EFFECT_H)
+#endif // !defined(_MOVIT_LIFT_GAMMA_GAIN_EFFECT_H)

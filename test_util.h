@@ -1,5 +1,5 @@
-#ifndef _TEST_UTIL_H
-#define _TEST_UTIL_H 1
+#ifndef _MOVIT_TEST_UTIL_H
+#define _MOVIT_TEST_UTIL_H 1
 
 #include <GL/glew.h>
 #include "effect_chain.h"
@@ -34,4 +34,4 @@ private:
 void expect_equal(const float *ref, const float *result, unsigned width, unsigned height, float largest_difference_limit = 1.5 / 255.0, float rms_limit = 0.2 / 255.0);
 void expect_equal(const unsigned char *ref, const unsigned char *result, unsigned width, unsigned height, unsigned largest_difference_limit = 1, float rms_limit = 0.2);
 
-#endif  // !defined(_TEST_UTIL_H)
+#endif  // !defined(_MOVIT_TEST_UTIL_H)

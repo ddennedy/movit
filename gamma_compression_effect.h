@@ -1,5 +1,5 @@
-#ifndef _GAMMA_COMPRESSION_EFFECT_H 
-#define _GAMMA_COMPRESSION_EFFECT_H 1
+#ifndef _MOVIT_GAMMA_COMPRESSION_EFFECT_H 
+#define _MOVIT_GAMMA_COMPRESSION_EFFECT_H 1
 
 // An effect to convert linear light to the given gamma curve,
 // typically inserted by the framework automatically at the end
@@ -35,4 +35,4 @@ private:
 	float compression_curve[COMPRESSION_CURVE_SIZE];
 };
 
-#endif // !defined(_GAMMA_COMPRESSION_EFFECT_H)
+#endif // !defined(_MOVIT_GAMMA_COMPRESSION_EFFECT_H)

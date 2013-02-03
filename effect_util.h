@@ -1,5 +1,5 @@
-#ifndef _EFFECT_UTIL_H
-#define _EFFECT_UTIL_H 1
+#ifndef _MOVIT_EFFECT_UTIL_H
+#define _MOVIT_EFFECT_UTIL_H 1
 
 // Utilities that are often useful for implementing Effect instances,
 // but don't need to be included from effect.h.
@@ -27,4 +27,4 @@ void set_uniform_vec4(GLuint glsl_program_num, const std::string &prefix, const 
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
 void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Eigen::Matrix3d &matrix);
 
-#endif // !defined(_EFFECT_UTIL_H)
+#endif // !defined(_MOVIT_EFFECT_UTIL_H)

@@ -1,5 +1,5 @@
-#ifndef _MIRROR_EFFECT_H
-#define _MIRROR_EFFECT_H 1
+#ifndef _MOVIT_MIRROR_EFFECT_H
+#define _MOVIT_MIRROR_EFFECT_H 1
 
 // A simple horizontal mirroring.
 
@@ -18,4 +18,4 @@ public:
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 };
 
-#endif // !defined(_MIRROR_EFFECT_H)
+#endif // !defined(_MOVIT_MIRROR_EFFECT_H)

@@ -1,5 +1,5 @@
-#ifndef _PADDING_EFFECT_H
-#define _PADDING_EFFECT_H 1
+#ifndef _MOVIT_PADDING_EFFECT_H
+#define _MOVIT_PADDING_EFFECT_H 1
 
 // Takes an image and pads it to fit a larger image, or crops it to fit a smaller one
 // (although the latter is implemented slightly less efficiently, and you cannot both
@@ -39,4 +39,4 @@ private:
 	float top, left;
 };
 
-#endif // !defined(_PADDING_EFFECT_H)
+#endif // !defined(_MOVIT_PADDING_EFFECT_H)

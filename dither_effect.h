@@ -1,5 +1,5 @@
-#ifndef _DITHER_EFFECT_H
-#define _DITHER_EFFECT_H 1
+#ifndef _MOVIT_DITHER_EFFECT_H
+#define _MOVIT_DITHER_EFFECT_H 1
 
 // Implements simple rectangular-PDF dither.
 //
@@ -78,4 +78,4 @@ private:
 	bool need_texture_update;
 };
 
-#endif // !defined(_DITHER_EFFECT_H)
+#endif // !defined(_MOVIT_DITHER_EFFECT_H)

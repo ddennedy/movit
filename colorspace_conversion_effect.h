@@ -1,5 +1,5 @@
-#ifndef _COLORSPACE_CONVERSION_EFFECT_H
-#define _COLORSPACE_CONVERSION_EFFECT_H 1
+#ifndef _MOVIT_COLORSPACE_CONVERSION_EFFECT_H
+#define _MOVIT_COLORSPACE_CONVERSION_EFFECT_H 1
 
 // An effect to convert between different color spaces.
 // Can convert freely between sRGB/Rec. 709 and the two different Rec. 601
@@ -30,4 +30,4 @@ private:
 	Colorspace source_space, destination_space;
 };
 
-#endif // !defined(_COLORSPACE_CONVERSION_EFFECT_H)
+#endif // !defined(_MOVIT_COLORSPACE_CONVERSION_EFFECT_H)

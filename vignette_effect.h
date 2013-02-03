@@ -1,5 +1,5 @@
-#ifndef _VIGNETTE_EFFECT_H
-#define _VIGNETTE_EFFECT_H 1
+#ifndef _MOVIT_VIGNETTE_EFFECT_H
+#define _MOVIT_VIGNETTE_EFFECT_H 1
 
 // A circular vignette, falling off as cos² of the distance from the center
 // (the classic formula for approximating a real lens).
@@ -25,4 +25,4 @@ private:
 	float radius, inner_radius;
 };
 
-#endif // !defined(_VIGNETTE_EFFECT_H)
+#endif // !defined(_MOVIT_VIGNETTE_EFFECT_H)

@@ -1,5 +1,5 @@
-#ifndef _UTIL_H
-#define _UTIL_H 1
+#ifndef _MOVIT_UTIL_H
+#define _MOVIT_UTIL_H 1
 
 // Various utilities.
 
@@ -60,4 +60,4 @@ void combine_two_samples(float w1, float w2, float *offset, float *total_weight,
 #define CHECK(x) do { bool ok = x; if (!ok) { fprintf(stderr, "%s:%d: %s: Assertion `%s' failed.\n", __FILE__, __LINE__, __PRETTY_FUNCTION__, #x); abort(); } } while (false)
 #endif
 
-#endif // !defined(_UTIL_H)
+#endif // !defined(_MOVIT_UTIL_H)

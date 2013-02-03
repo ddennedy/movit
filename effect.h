@@ -1,5 +1,5 @@
-#ifndef _EFFECT_H
-#define _EFFECT_H 1
+#ifndef _MOVIT_EFFECT_H
+#define _MOVIT_EFFECT_H 1
 
 // Effect is the base class for every effect. It basically represents a single
 // GLSL function, with an optional set of user-settable parameters.
@@ -284,4 +284,4 @@ private:
 	std::map<std::string, Texture1D> params_tex_1d;
 };
 
-#endif // !defined(_EFFECT_H)
+#endif // !defined(_MOVIT_EFFECT_H)

@@ -1,5 +1,5 @@
-#ifndef _RESAMPLE_EFFECT_H
-#define _RESAMPLE_EFFECT_H 1
+#ifndef _MOVIT_RESAMPLE_EFFECT_H
+#define _MOVIT_RESAMPLE_EFFECT_H 1
 
 // High-quality image resizing, either up or down.
 //
@@ -99,4 +99,4 @@ private:
 	float slice_height;
 };
 
-#endif // !defined(_RESAMPLE_EFFECT_H)
+#endif // !defined(_MOVIT_RESAMPLE_EFFECT_H)

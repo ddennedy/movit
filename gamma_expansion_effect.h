@@ -1,5 +1,5 @@
-#ifndef _GAMMA_EXPANSION_EFFECT_H 
-#define _GAMMA_EXPANSION_EFFECT_H 1
+#ifndef _MOVIT_GAMMA_EXPANSION_EFFECT_H 
+#define _MOVIT_GAMMA_EXPANSION_EFFECT_H 1
 
 // An effect to convert the given gamma curve into linear light,
 // typically inserted by the framework automatically at the beginning
@@ -36,4 +36,4 @@ private:
 	float expansion_curve[EXPANSION_CURVE_SIZE];
 };
 
-#endif // !defined(_GAMMA_EXPANSION_EFFECT_H)
+#endif // !defined(_MOVIT_GAMMA_EXPANSION_EFFECT_H)

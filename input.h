@@ -1,5 +1,5 @@
-#ifndef _INPUT_H
-#define _INPUT_H 1
+#ifndef _MOVIT_INPUT_H
+#define _MOVIT_INPUT_H 1
 
 #include <assert.h>
 
@@ -35,4 +35,4 @@ public:
 	virtual GammaCurve get_gamma_curve() const = 0;
 };
 
-#endif // !defined(_INPUT_H)
+#endif // !defined(_MOVIT_INPUT_H)

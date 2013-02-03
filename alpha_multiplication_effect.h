@@ -1,5 +1,5 @@
-#ifndef _ALPHA_MULTIPLICATION_EFFECT_H
-#define _ALPHA_MULTIPLICATION_EFFECT_H 1
+#ifndef _MOVIT_ALPHA_MULTIPLICATION_EFFECT_H
+#define _MOVIT_ALPHA_MULTIPLICATION_EFFECT_H 1
 
 // Convert postmultiplied alpha to premultiplied alpha, simply by multiplying.
 
@@ -14,4 +14,4 @@ public:
 	std::string output_fragment_shader();
 };
 
-#endif // !defined(_ALPHA_MULTIPLICATION_EFFECT_H)
+#endif // !defined(_MOVIT_ALPHA_MULTIPLICATION_EFFECT_H)

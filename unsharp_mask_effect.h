@@ -1,5 +1,5 @@
-#ifndef _UNSHARP_MASK_EFFECT_H
-#define _UNSHARP_MASK_EFFECT_H 1
+#ifndef _MOVIT_UNSHARP_MASK_EFFECT_H
+#define _MOVIT_UNSHARP_MASK_EFFECT_H 1
 
 // Unsharp mask is probably the most popular way of doing sharpening today,
 // although it does not always deliver the best results (it is very prone
@@ -43,4 +43,4 @@ private:
 	MixEffect *mix;
 };
 
-#endif // !defined(_UNSHARP_MASK_EFFECT_H)
+#endif // !defined(_MOVIT_UNSHARP_MASK_EFFECT_H)

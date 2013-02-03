@@ -1,5 +1,5 @@
-#ifndef _INIT_H
-#define _INIT_H
+#ifndef _MOVIT_INIT_H
+#define _MOVIT_INIT_H
 
 #include <string>
 
@@ -47,4 +47,4 @@ extern float movit_texel_subpixel_precision;
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
 
-#endif  // !defined(_INIT_H)
+#endif  // !defined(_MOVIT_INIT_H)

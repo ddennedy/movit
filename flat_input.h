@@ -1,5 +1,5 @@
-#ifndef _FLAT_INPUT_H
-#define _FLAT_INPUT_H 1
+#ifndef _MOVIT_FLAT_INPUT_H
+#define _MOVIT_FLAT_INPUT_H 1
 
 #include <GL/glew.h>
 #include <assert.h>
@@ -96,4 +96,4 @@ private:
 	const void *pixel_data;
 };
 
-#endif // !defined(_FLAT_INPUT_H)
+#endif // !defined(_MOVIT_FLAT_INPUT_H)

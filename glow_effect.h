@@ -1,5 +1,5 @@
-#ifndef _GLOW_EFFECT_H
-#define _GLOW_EFFECT_H 1
+#ifndef _MOVIT_GLOW_EFFECT_H
+#define _MOVIT_GLOW_EFFECT_H 1
 
 // Glow: Cut out the highlights of the image (everything above a certain threshold),
 // blur them, and overlay them onto the original image.
@@ -55,4 +55,4 @@ private:
 	float cutoff;
 };
 
-#endif // !defined(_GLOW_EFFECT_H)
+#endif // !defined(_MOVIT_GLOW_EFFECT_H)

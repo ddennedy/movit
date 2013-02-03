@@ -1,5 +1,5 @@
-#ifndef _RESIZE_EFFECT_H
-#define _RESIZE_EFFECT_H 1
+#ifndef _MOVIT_RESIZE_EFFECT_H
+#define _MOVIT_RESIZE_EFFECT_H 1
 
 // An effect that simply resizes the picture to a given output size
 // (set by the two integer parameters "width" and "height").
@@ -28,4 +28,4 @@ private:
 	int width, height;
 };
 
-#endif // !defined(_RESIZE_EFFECT_H)
+#endif // !defined(_MOVIT_RESIZE_EFFECT_H)

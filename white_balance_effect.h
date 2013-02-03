@@ -1,5 +1,5 @@
-#ifndef _WHITE_BALANCE_EFFECT_H
-#define _WHITE_BALANCE_EFFECT_H 1
+#ifndef _MOVIT_WHITE_BALANCE_EFFECT_H
+#define _MOVIT_WHITE_BALANCE_EFFECT_H 1
 
 // Color correction in LMS color space.
 
@@ -26,4 +26,4 @@ private:
 	float output_color_temperature;
 };
 
-#endif // !defined(_WHITE_BALANCE_EFFECT_H)
+#endif // !defined(_MOVIT_WHITE_BALANCE_EFFECT_H)

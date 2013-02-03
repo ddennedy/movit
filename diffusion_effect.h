@@ -1,5 +1,5 @@
-#ifndef _DIFFUSION_EFFECT_H
-#define _DIFFUSION_EFFECT_H 1
+#ifndef _MOVIT_DIFFUSION_EFFECT_H
+#define _MOVIT_DIFFUSION_EFFECT_H 1
 
 // There are many different effects that go under the name of "diffusion",
 // seemingly all of the inspired by the effect you get when you put a
@@ -59,4 +59,4 @@ private:
 };
 
 
-#endif // !defined(_DIFFUSION_EFFECT_H)
+#endif // !defined(_MOVIT_DIFFUSION_EFFECT_H)

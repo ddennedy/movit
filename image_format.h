@@ -1,5 +1,5 @@
-#ifndef _IMAGE_FORMAT_H
-#define _IMAGE_FORMAT_H 1
+#ifndef _MOVIT_IMAGE_FORMAT_H
+#define _MOVIT_IMAGE_FORMAT_H 1
 
 enum MovitPixelFormat {
 	FORMAT_RGB,
@@ -38,4 +38,4 @@ struct ImageFormat {
 	GammaCurve gamma_curve;
 };
 
-#endif  // !defined(_IMAGE_FORMAT_H)
+#endif  // !defined(_MOVIT_IMAGE_FORMAT_H)

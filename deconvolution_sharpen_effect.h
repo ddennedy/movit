@@ -1,5 +1,5 @@
-#ifndef _DECONVOLUTION_SHARPEN_EFFECT_H
-#define _DECONVOLUTION_SHARPEN_EFFECT_H 1
+#ifndef _MOVIT_DECONVOLUTION_SHARPEN_EFFECT_H
+#define _MOVIT_DECONVOLUTION_SHARPEN_EFFECT_H 1
 
 // DeconvolutionSharpenEffect is an effect that sharpens by way of deconvolution
 // (i.e., trying to reverse the blur kernel, as opposed to just boosting high
@@ -68,4 +68,4 @@ private:
 	void update_deconvolution_kernel();
 };
 
-#endif // !defined(_DECONVOLUTION_SHARPEN_EFFECT_H)
+#endif // !defined(_MOVIT_DECONVOLUTION_SHARPEN_EFFECT_H)

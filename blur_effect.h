@@ -1,5 +1,5 @@
-#ifndef _BLUR_EFFECT_H
-#define _BLUR_EFFECT_H 1
+#ifndef _MOVIT_BLUR_EFFECT_H
+#define _MOVIT_BLUR_EFFECT_H 1
 
 // A separable 2D blur implemented by a combination of mipmap filtering
 // and convolution (essentially giving a convolution with a piecewise linear
@@ -92,4 +92,4 @@ private:
 	int width, height, virtual_width, virtual_height;
 };
 
-#endif // !defined(_BLUR_EFFECT_H)
+#endif // !defined(_MOVIT_BLUR_EFFECT_H)

@@ -1,5 +1,5 @@
-#ifndef _D65_H
-#define _D65_H 1
+#ifndef _MOVIT_D65_H
+#define _MOVIT_D65_H 1
 
 // The D65 illuminant, which is the standard white point (ie. what you should get
 // for R=G=B=1) for almost all video color spaces in common use. It has a color
@@ -14,5 +14,5 @@ static const double d65_X = d65_x / d65_y;
 static const double d65_Y = 1.0;
 static const double d65_Z = d65_z / d65_y;
 
-#endif  // !defined(_D65_H)
+#endif  // !defined(_MOVIT_D65_H)
 

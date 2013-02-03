@@ -1,5 +1,5 @@
-#ifndef _EFFECT_CHAIN_H
-#define _EFFECT_CHAIN_H 1
+#ifndef _MOVIT_EFFECT_CHAIN_H
+#define _MOVIT_EFFECT_CHAIN_H 1
 
 #include <GL/glew.h>
 #include <stdio.h>
@@ -237,4 +237,4 @@ private:
 	bool finalized;
 };
 
-#endif // !defined(_EFFECT_CHAIN_H)
+#endif // !defined(_MOVIT_EFFECT_CHAIN_H)

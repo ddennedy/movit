@@ -1,5 +1,5 @@
-#ifndef _SANDBOX_EFFECT_H
-#define _SANDBOX_EFFECT_H 1
+#ifndef _MOVIT_SANDBOX_EFFECT_H
+#define _MOVIT_SANDBOX_EFFECT_H 1
 
 // This effect, by default, does nothing.
 //
@@ -25,4 +25,4 @@ private:
 	float parm;
 };
 
-#endif // !defined(_SANDBOX_EFFECT_H)
+#endif // !defined(_MOVIT_SANDBOX_EFFECT_H)

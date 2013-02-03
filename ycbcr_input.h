@@ -1,5 +1,5 @@
-#ifndef _YCBCR_INPUT_H
-#define _YCBCR_INPUT_H 1
+#ifndef _MOVIT_YCBCR_INPUT_H
+#define _MOVIT_YCBCR_INPUT_H 1
 
 // YCbCrInput is for handling planar 8-bit Y'CbCr (also sometimes, usually rather
 // imprecisely, called “YUV”), which is typically what you get from a video decoder.
@@ -96,4 +96,4 @@ private:
 	unsigned pitch[3];
 };
 
-#endif // !defined(_YCBCR_INPUT_H)
+#endif // !defined(_MOVIT_YCBCR_INPUT_H)

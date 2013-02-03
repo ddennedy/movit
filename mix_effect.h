@@ -1,5 +1,5 @@
-#ifndef _MIX_EFFECT_H
-#define _MIX_EFFECT_H 1
+#ifndef _MOVIT_MIX_EFFECT_H
+#define _MOVIT_MIX_EFFECT_H 1
 
 // Combine two images: a*x + b*y. If you set a within [0,1] and b=1-a,
 // you will get a fade; if not, you may get surprising results (consider alpha).
@@ -25,4 +25,4 @@ private:
 	float strength_first, strength_second;
 };
 
-#endif // !defined(_MIX_EFFECT_H)
+#endif // !defined(_MOVIT_MIX_EFFECT_H)

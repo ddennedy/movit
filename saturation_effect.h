@@ -1,5 +1,5 @@
-#ifndef _SATURATION_EFFECT_H
-#define _SATURATION_EFFECT_H 1
+#ifndef _MOVIT_SATURATION_EFFECT_H
+#define _MOVIT_SATURATION_EFFECT_H 1
 
 // A simple desaturation/saturation effect. We use the Rec. 709
 // definition of luminance (in linear light, of course) and linearly
@@ -22,4 +22,4 @@ private:
 	float saturation;
 };
 
-#endif // !defined(_SATURATION_EFFECT_H)
+#endif // !defined(_MOVIT_SATURATION_EFFECT_H)

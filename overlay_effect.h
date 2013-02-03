@@ -1,5 +1,5 @@
-#ifndef _OVERLAY_EFFECT_H
-#define _OVERLAY_EFFECT_H 1
+#ifndef _MOVIT_OVERLAY_EFFECT_H
+#define _MOVIT_OVERLAY_EFFECT_H 1
 
 // Put one image on top of another, using alpha where appropriate.
 // (If both images are the same aspect and the top image has alpha=1.0
@@ -31,4 +31,4 @@ public:
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 };
 
-#endif // !defined(_OVERLAY_EFFECT_H)
+#endif // !defined(_MOVIT_OVERLAY_EFFECT_H)
