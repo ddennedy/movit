@@ -7,9 +7,9 @@ libdir = @libdir@
 datarootdir = @datarootdir@
 datadir = @datadir@
 
-CC=gcc
-CXX=g++
-CXXFLAGS=-Wall -g -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
+CC=@CC@
+CXX=@CXX@
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
 LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@
 DEMO_LDFLAGS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
 RANLIB=ranlib

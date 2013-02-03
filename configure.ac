@@ -2,6 +2,7 @@ AC_INIT(movit, git)
 
 AC_CONFIG_SRCDIR(effect.cpp)
 
+AC_PROG_CC
 AC_PROG_CXX
 PKG_CHECK_MODULES([Eigen3], [eigen3])
 PKG_CHECK_MODULES([GLEW], [glew])
