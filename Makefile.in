@@ -116,7 +116,7 @@ coverage: check
 	lcov --remove movit.info '*_test.cpp' '*/test_util.{cpp,h}' -o movit.info
 	genhtml -o coverage movit.info
 
-HDRS = effect_chain.h effect.h input.h image_format.h init.h util.h
+HDRS = effect_chain.h effect.h input.h image_format.h init.h util.h defs.h
 HDRS += $(INPUTS:=.h)
 HDRS += $(EFFECTS:=.h)
 
