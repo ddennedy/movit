@@ -4,6 +4,9 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+shaderdir=@datadir@/movit
 
 Name: movit
 Description: Movit is a library for high-quality, high-performance video filters.
