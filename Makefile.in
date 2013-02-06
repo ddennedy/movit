@@ -6,6 +6,7 @@ includedir = @includedir@
 libdir = @libdir@
 datarootdir = @datarootdir@
 datadir = @datadir@
+with_demo_app = @with_demo_app@
 
 CC=@CC@
 CXX=@CXX@
@@ -62,7 +63,11 @@ TESTS=effect_chain_test $(TESTED_INPUTS:=_test) $(TESTED_EFFECTS:=_test)
 LIB_OBJS=effect_util.o util.o widgets.o effect.o effect_chain.o init.o $(INPUTS:=.o) $(EFFECTS:=.o)
 
 # Default target:
-all: $(TESTS) demo
+all: libmovit.a $(TESTS)
+
+ifeq ($(with_demo_app),yes)
+all: demo
+endif
 
 # Google Test and other test library functions.
 TEST_OBJS = gtest-all.o gtest_sdl_main.o test_util.o
