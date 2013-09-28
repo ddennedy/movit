@@ -94,3 +94,23 @@ TEST(LiftGammaGainEffectTest, Gamma22IsApproximatelysRGB) {
 
 	expect_equal(data, out_data, 4, 5);
 }
+
+TEST(LiftGammaGainEffectTest, OutOfGamutColorsAreClipped) {
+	float data[] = {
+		-0.5f, 0.3f, 0.0f, 1.0f,
+		 0.5f, 0.0f, 0.0f, 1.0f,
+		 0.0f, 1.5f, 0.5f, 0.3f,
+	};
+	float expected_data[] = {
+		 0.0f, 0.3f, 0.0f, 1.0f,  // Clipped to zero.
+		 0.5f, 0.0f, 0.0f, 1.0f,
+		 0.0f, 1.5f, 0.5f, 0.3f,
+	};
+
+	float out_data[3 * 4];
+	EffectChainTester tester(data, 1, 3, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->add_effect(new LiftGammaGainEffect());
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 3);
+}
