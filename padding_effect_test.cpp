@@ -204,3 +204,39 @@ TEST(PaddingEffectTest, Crop) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 	expect_equal(expected_data, out_data, 1, 1);
 }
+
+TEST(PaddingEffectTest, AlphaIsCorrectEvenWithNonLinearInputsAndOutputs) {
+	float data[2 * 1] = {
+		1.0f,
+		0.8f,
+	};
+	float expected_data[4 * 4] = {
+		1.0f, 1.0f, 1.0f, 0.5f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		0.8f, 0.8f, 0.8f, 1.0f,
+		1.0f, 1.0f, 1.0f, 0.5f,
+	};
+	float out_data[4 * 4];
+
+	EffectChainTester tester(NULL, 1, 4);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_REC_601_625;
+	format.gamma_curve = GAMMA_REC_709;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 1, 2);
+	input->set_pixel_data(data);
+	tester.get_chain()->add_input(input);
+
+	Effect *effect = tester.get_chain()->add_effect(new PaddingEffect());
+	CHECK(effect->set_int("width", 1));
+	CHECK(effect->set_int("height", 4));
+	CHECK(effect->set_float("left", 0.0f));
+	CHECK(effect->set_float("top", 1.0f));
+
+	RGBATuple border_color(1.0f, 1.0f, 1.0f, 0.5f);
+	CHECK(effect->set_vec4("border_color", (float *)&border_color));
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_625, GAMMA_REC_709, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+	expect_equal(expected_data, out_data, 4, 4);
+}

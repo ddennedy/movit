@@ -64,12 +64,16 @@ void PaddingEffect::set_gl_state(GLuint glsl_program_num, const std::string &pre
 // differently in different modes.
 
 // 0.0 and 1.0 are interpreted the same, no matter the gamma ramp.
-// Alpha is not affected by gamma.
+// Alpha is not affected by gamma per se, but the combination of
+// premultiplied alpha and non-linear gamma curve does not make sense,
+// so if could possibly be converting blank alpha to non-blank
+// (ie., premultiplied), we need our output to be in linear light.
 bool PaddingEffect::needs_linear_light() const
 {
 	if ((border_color.r == 0.0 || border_color.r == 1.0) &&
 	    (border_color.g == 0.0 || border_color.g == 1.0) &&
-	    (border_color.b == 0.0 || border_color.b == 1.0)) {
+	    (border_color.b == 0.0 || border_color.b == 1.0) &&
+	    border_color.a == 1.0) {
 		return false;
 	}
 	return true;
