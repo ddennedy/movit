@@ -11,6 +11,7 @@
 #include "gtest/gtest.h"
 #include "input.h"
 #include "mirror_effect.h"
+#include "multiply_effect.h"
 #include "resize_effect.h"
 #include "test_util.h"
 #include "util.h"
@@ -638,18 +639,6 @@ TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 	expect_equal(expected_data, out_data, 4, 16);
 }
 
-// An effect that multiplies with a constant. Used below.
-class MultiplyEffect : public Effect {
-public:
-	MultiplyEffect() { register_float("factor", &factor); }
-	virtual std::string effect_type_id() const { return "MultiplyEffect"; }
-	std::string output_fragment_shader() { return read_file("multiply.frag"); }
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
-
-private:
-	float factor;
-};
-
 // An effect that adds its two inputs together. Used below.
 class AddEffect : public Effect {
 public:
@@ -680,11 +669,14 @@ TEST(EffectChainTest, DiamondGraph) {
 	};
 	float out_data[2 * 2];
 
+	const float half[] = { 0.5f, 0.5f, 0.5f, 0.5f };
+	const float two[] = { 2.0f, 2.0f, 2.0f, 0.5f };
+
 	MultiplyEffect *mul_half = new MultiplyEffect();
-	ASSERT_TRUE(mul_half->set_float("factor", 0.5f));
+	ASSERT_TRUE(mul_half->set_vec4("factor", half));
 	
 	MultiplyEffect *mul_two = new MultiplyEffect();
-	ASSERT_TRUE(mul_two->set_float("factor", 2.0f));
+	ASSERT_TRUE(mul_two->set_vec4("factor", two));
 
 	EffectChainTester tester(NULL, 2, 2);
 
@@ -726,11 +718,14 @@ TEST(EffectChainTest, DiamondGraphWithOneInputUsedInTwoPhases) {
 	};
 	float out_data[2 * 2];
 
+	const float half[] = { 0.5f, 0.5f, 0.5f, 0.5f };
+	const float two[] = { 2.0f, 2.0f, 2.0f, 0.5f };
+
 	MultiplyEffect *mul_half = new MultiplyEffect();
-	ASSERT_TRUE(mul_half->set_float("factor", 0.5f));
+	ASSERT_TRUE(mul_half->set_vec4("factor", half));
 	
 	MultiplyEffect *mul_two = new MultiplyEffect();
-	ASSERT_TRUE(mul_two->set_float("factor", 2.0f));
+	ASSERT_TRUE(mul_two->set_vec4("factor", two));
 	
 	BouncingIdentityEffect *bounce = new BouncingIdentityEffect();
 
