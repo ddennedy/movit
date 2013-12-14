@@ -54,6 +54,7 @@ UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
 UNTESTED_EFFECTS += resize_effect
 UNTESTED_EFFECTS += vignette_effect
+UNTESTED_EFFECTS += multiply_effect
 
 EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
 
