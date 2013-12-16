@@ -65,8 +65,8 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	//
 	// Some algebraic fiddling yields (unsurprisingly):
 	//
-	//   X_R = (x_R / y_R) Y_R
-	//   Z_R = (z_R / y_R) Y_R
+	//   X_R = (x_R / y_R) Y_R   (so define k1 = x_R / y_R)
+	//   Z_R = (z_R / y_R) Y_R   (so define k4 = z_R / y_R)
 	//
 	// We also know that since RGB=(1,1,1) should give us the
 	// D65 illuminant, we must have
@@ -75,8 +75,8 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	//   Y_R + Y_G + Y_B = D65_Y
 	//   Z_R + Z_G + Z_B = D65_Z
 	//
-	// But since we already know how to express Y and Z by
-	// some constant multiple of X, this reduces to
+	// But since we already know how to express X and Z by
+	// some constant multiple of Y, this reduces to
 	//
 	//   k1 Y_R + k2 Y_G + k3 Y_B = D65_X
 	//      Y_R +    Y_G +    Y_B = D65_Y
