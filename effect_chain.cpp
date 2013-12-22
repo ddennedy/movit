@@ -1559,6 +1559,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			// Last phase goes to the output the user specified.
 			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
 			check_error();
+			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+			assert(status == GL_FRAMEBUFFER_COMPLETE);
 			glViewport(x, y, width, height);
 			if (dither_effect != NULL) {
 				CHECK(dither_effect->set_int("output_width", width));
@@ -1573,6 +1575,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				output_node->output_texture,
 				0);
 			check_error();
+			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+			assert(status == GL_FRAMEBUFFER_COMPLETE);
 			glViewport(0, 0, phases[phase]->output_width, phases[phase]->output_height);
 		}
 
