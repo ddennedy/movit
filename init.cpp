@@ -48,9 +48,9 @@ void measure_texel_subpixel_precision()
 	// Now generate a simple texture that's just [0,1].
 	GLuint src_texnum;
 	float texdata[] = { 0, 1 };
-	glGenTextures(1, &dst_texnum);
+	glGenTextures(1, &src_texnum);
 	check_error();
-	glBindTexture(GL_TEXTURE_1D, dst_texnum);
+	glBindTexture(GL_TEXTURE_1D, src_texnum);
 	check_error();
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
