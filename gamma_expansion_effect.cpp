@@ -8,6 +8,7 @@ GammaExpansionEffect::GammaExpansionEffect()
 	: source_curve(GAMMA_LINEAR)
 {
 	register_int("source_curve", (int *)&source_curve);
+	memset(expansion_curve, 0, sizeof(expansion_curve));
 	register_1d_texture("expansion_curve_tex", expansion_curve, EXPANSION_CURVE_SIZE);
 }
 
