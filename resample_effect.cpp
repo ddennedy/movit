@@ -211,7 +211,7 @@ std::string SingleResamplePassEffect::output_fragment_shader()
 // so out[0] will read from parameters <x,y> = <0,0>, <1,0>, <2,0> and so on.
 //
 // For horizontal scaling, we fill in the exact same texture;
-// the shader just interprets is differently.
+// the shader just interprets it differently.
 void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
 	unsigned src_size, dst_size;
