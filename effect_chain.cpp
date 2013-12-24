@@ -55,6 +55,7 @@ EffectChain::~EffectChain()
 
 Input *EffectChain::add_input(Input *input)
 {
+	assert(!finalized);
 	inputs.push_back(input);
 	add_node(input);
 	return input;
@@ -62,6 +63,7 @@ Input *EffectChain::add_input(Input *input)
 
 void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)
 {
+	assert(!finalized);
 	output_format = format;
 	output_alpha_format = alpha_format;
 }
@@ -157,6 +159,7 @@ void EffectChain::find_all_nonlinear_inputs(Node *node, std::vector<Node *> *non
 
 Effect *EffectChain::add_effect(Effect *effect, const std::vector<Effect *> &inputs)
 {
+	assert(!finalized);
 	assert(inputs.size() == effect->num_inputs());
 	Node *node = add_node(effect);
 	for (unsigned i = 0; i < inputs.size(); ++i) {
