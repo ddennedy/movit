@@ -29,7 +29,6 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
 	  dither_effect(NULL),
-	  fbo(0),
 	  num_dither_bits(0),
 	  finalized(false) {}
 
@@ -47,9 +46,6 @@ EffectChain::~EffectChain()
 		glDeleteShader(phases[i]->vertex_shader);
 		glDeleteShader(phases[i]->fragment_shader);
 		delete phases[i];
-	}
-	if (fbo != 0) {
-		glDeleteFramebuffers(1, &fbo);
 	}
 }
 
@@ -1433,8 +1429,6 @@ void EffectChain::finalize()
 	// since otherwise this turns into an (albeit simple)
 	// register allocation problem.
 	if (phases.size() > 1) {
-		glGenFramebuffers(1, &fbo);
-
 		for (unsigned i = 0; i < phases.size() - 1; ++i) {
 			inform_input_sizes(phases[i]);
 			find_output_size(phases[i]);
@@ -1473,6 +1467,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 	// Save original viewport.
 	GLuint x = 0, y = 0;
+	GLuint fbo = 0;
 
 	if (width == 0 && height == 0) {
 		GLint viewport[4];
@@ -1499,6 +1494,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glLoadIdentity();
 
 	if (phases.size() > 1) {
+		glGenFramebuffers(1, &fbo);
+		check_error();
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		check_error();
 	}
@@ -1613,5 +1610,13 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			Node *node = phases[phase]->effects[i];
 			node->effect->clear_gl_state();
 		}
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
+
+	if (fbo != 0) {
+		glDeleteFramebuffers(1, &fbo);
+		check_error();
 	}
 }

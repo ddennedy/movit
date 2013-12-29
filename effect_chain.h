@@ -229,8 +229,6 @@ private:
 	Effect *dither_effect;
 
 	std::vector<Input *> inputs;  // Also contained in nodes.
-
-	GLuint fbo;
 	std::vector<Phase *> phases;
 
 	unsigned num_dither_bits;
