@@ -199,3 +199,35 @@ TEST(DeconvolutionSharpenEffectTest, NoiseAndCorrelationControlsReduceNoiseBoost
 	// Check that we didn't boost total energy (which in this case means the noise) more than 10%.
 	EXPECT_LT(sumsq_out, sumsq_in * 1.1f);
 }
+
+TEST(DeconvolutionSharpenEffectTest, CircularDeconvolutionKeepsAlpha) {
+	// Somewhat bigger, to make sure we are much bigger than the matrix size.
+	const int size = 32;
+
+	float data[size * size * 4];
+	float out_data[size * size];
+	float expected_alpha[size * size];
+
+	// Checkerbox pattern.
+	for (int y = 0; y < size; ++y) {
+		for (int x = 0; x < size; ++x) {
+			int c = (y ^ x) & 1;
+			data[(y * size + x) * 4 + 0] = c;
+			data[(y * size + x) * 4 + 1] = c;
+			data[(y * size + x) * 4 + 2] = c;
+			data[(y * size + x) * 4 + 3] = 1.0;
+			expected_alpha[y * size + x] = 1.0;
+		}
+	}
+
+	EffectChainTester tester(data, size, size, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *deconvolution_effect = tester.get_chain()->add_effect(new DeconvolutionSharpenEffect());
+	ASSERT_TRUE(deconvolution_effect->set_int("matrix_size", 5));
+	ASSERT_TRUE(deconvolution_effect->set_float("circle_radius", 2.0f));
+	ASSERT_TRUE(deconvolution_effect->set_float("gaussian_radius", 0.0f));
+	ASSERT_TRUE(deconvolution_effect->set_float("correlation", 0.0001f));
+	ASSERT_TRUE(deconvolution_effect->set_float("noise", 0.0f));
+	tester.run(out_data, GL_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_alpha, out_data, size, size);
+}

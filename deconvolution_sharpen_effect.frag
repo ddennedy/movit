@@ -36,7 +36,7 @@ vec4 FUNCNAME(vec2 tc) {
 	// Case D: All other samples have four-way symmetry.
 	// (Actually we have eight-way, but since we are using normalized
 	// coordinates, we can't just flip x and y.)
-	for (int y = 1; y < R; ++y) {
+	for (int y = 1; y <= R; ++y) {
 		for (int x = 1; x <= R; ++x) {
 			vec4 sample = PREFIX(samples)[y * (R + 1) + x];
 			vec2 mirror_sample = vec2(sample.x, -sample.y);
