@@ -22,7 +22,7 @@ Vector3d convert_color_temperature_to_xyz(float T)
 	assert(T <= 15000.0f);
 
 	if (T <= 4000.0f) {
-		x = ((-0.2661239e9 * invT - 0.2343580e6) * invT + 0.8776956e3) * invT + 0.179910;
+		x = ((-0.2661239e9 * invT - 0.2343589e6) * invT + 0.8776956e3) * invT + 0.179910;
 	} else {
 		x = ((-3.0258469e9 * invT + 2.1070379e6) * invT + 0.2226347e3) * invT + 0.240390;
 	}
