@@ -18,6 +18,10 @@ static const double rec601_525_y_R = 0.340, rec601_525_y_G = 0.595, rec601_525_y
 static const double rec601_625_x_R = 0.640, rec601_625_x_G = 0.290, rec601_625_x_B = 0.150;
 static const double rec601_625_y_R = 0.330, rec601_625_y_G = 0.600, rec601_625_y_B = 0.060;
 
+// Color coordinates from Rec. 2020.
+static const double rec2020_x_R = 0.708, rec2020_x_G = 0.170, rec2020_x_B = 0.131;
+static const double rec2020_y_R = 0.292, rec2020_y_G = 0.797, rec2020_y_B = 0.046;
+
 ColorspaceConversionEffect::ColorspaceConversionEffect()
 	: source_space(COLORSPACE_sRGB),
 	  destination_space(COLORSPACE_sRGB)
@@ -47,6 +51,10 @@ Matrix3d get_xyz_matrix(Colorspace space)
 	case COLORSPACE_REC_601_625:
 		x_R = rec601_625_x_R; x_G = rec601_625_x_G; x_B = rec601_625_x_B;
 		y_R = rec601_625_y_R; y_G = rec601_625_y_G; y_B = rec601_625_y_B;
+		break;
+	case COLORSPACE_REC_2020:
+		x_R = rec2020_x_R; x_G = rec2020_x_G; x_B = rec2020_x_B;
+		y_R = rec2020_y_R; y_G = rec2020_y_G; y_B = rec2020_y_B;
 		break;
 	default:
 		assert(false);

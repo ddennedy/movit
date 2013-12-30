@@ -29,13 +29,23 @@ std::string GammaExpansionEffect::output_fragment_shader()
 		invalidate_1d_texture("expansion_curve_tex");
 		return read_file("gamma_expansion_effect.frag");
 	}
-	if (source_curve == GAMMA_REC_709) {  // And Rec. 601.
+	if (source_curve == GAMMA_REC_709 ||  // Also includes Rec. 601, and 10-bit Rec. 2020.
+	    source_curve == GAMMA_REC_2020_12_BIT) {
+		// Rec. 2020, page 3.
+		float alpha, beta;
+		if (source_curve == GAMMA_REC_2020_12_BIT) {
+			alpha = 1.0993f;
+			beta = 0.0181f;
+		} else {
+			alpha = 1.099f;
+			beta = 0.018f;
+		}
 		for (unsigned i = 0; i < EXPANSION_CURVE_SIZE; ++i) {
 			float x = i / (float)(EXPANSION_CURVE_SIZE - 1);
-			if (x < 0.081f) {
+			if (x < beta * 4.5f) {
 				expansion_curve[i] = (1.0/4.5f) * x;
 			} else {
-				expansion_curve[i] = pow((x + 0.099) * (1.0/1.099f), 1.0f/0.45f);
+				expansion_curve[i] = pow((x + (alpha - 1.0f)) / alpha, 1.0f/0.45f);
 			}
 		}
 		invalidate_1d_texture("expansion_curve_tex");

@@ -187,6 +187,56 @@ TEST(ColorspaceConversionEffectTest, Rec601_625_Primaries) {
 	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
 }
 
+TEST(ColorspaceConversionEffectTest, Rec2020_Primaries) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	float out_data[4 * 5];
+
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_REC_2020, GAMMA_LINEAR);
+	tester.run(out_data, GL_RGBA, COLORSPACE_XYZ, GAMMA_LINEAR);
+
+	// Black should stay black.
+	EXPECT_FLOAT_EQ(0.0f, out_data[0 * 4 + 0]);
+	EXPECT_FLOAT_EQ(0.0f, out_data[0 * 4 + 1]);
+	EXPECT_FLOAT_EQ(0.0f, out_data[0 * 4 + 2]);
+	EXPECT_FLOAT_EQ(1.0f, out_data[0 * 4 + 3]);
+
+	// Convert the primaries from XYZ to xyz, and compare to the references
+	// given by Rec. 2020.
+	float white_xyz_sum = out_data[1 * 4 + 0] + out_data[1 * 4 + 1] + out_data[1 * 4 + 2];
+	float white_x = out_data[1 * 4 + 0] / white_xyz_sum;
+	float white_y = out_data[1 * 4 + 1] / white_xyz_sum;
+	EXPECT_NEAR(0.3127, white_x, 1e-3);
+	EXPECT_NEAR(0.3290, white_y, 1e-3);
+	EXPECT_FLOAT_EQ(1.0f, out_data[1 * 4 + 3]);
+
+	float red_xyz_sum = out_data[2 * 4 + 0] + out_data[2 * 4 + 1] + out_data[2 * 4 + 2];
+	float red_x = out_data[2 * 4 + 0] / red_xyz_sum;
+	float red_y = out_data[2 * 4 + 1] / red_xyz_sum;
+	EXPECT_NEAR(0.708, red_x, 1e-3);
+	EXPECT_NEAR(0.292, red_y, 1e-3);
+	EXPECT_FLOAT_EQ(1.0f, out_data[2 * 4 + 3]);
+
+	float green_xyz_sum = out_data[3 * 4 + 0] + out_data[3 * 4 + 1] + out_data[3 * 4 + 2];
+	float green_x = out_data[3 * 4 + 0] / green_xyz_sum;
+	float green_y = out_data[3 * 4 + 1] / green_xyz_sum;
+	EXPECT_NEAR(0.170, green_x, 1e-3);
+	EXPECT_NEAR(0.797, green_y, 1e-3);
+	EXPECT_FLOAT_EQ(1.0f, out_data[3 * 4 + 3]);
+
+	float blue_xyz_sum = out_data[4 * 4 + 0] + out_data[4 * 4 + 1] + out_data[4 * 4 + 2];
+	float blue_x = out_data[4 * 4 + 0] / blue_xyz_sum;
+	float blue_y = out_data[4 * 4 + 1] / blue_xyz_sum;
+	EXPECT_NEAR(0.131, blue_x, 1e-3);
+	EXPECT_NEAR(0.046, blue_y, 1e-3);
+	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
+}
+
 TEST(ColorspaceConversionEffectTest, sRGBToRec601_525) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,

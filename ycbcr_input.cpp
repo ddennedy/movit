@@ -202,6 +202,14 @@ std::string YCbCrInput::output_fragment_shader()
 		coeff[1] = 0.7152;
 		coeff[2] = 0.0722;
 		break;
+
+	case YCBCR_REC_2020:
+		// Rec. 2020, page 4.
+		coeff[0] = 0.2627;
+		coeff[1] = 0.6780;
+		coeff[2] = 0.0593;
+		break;
+
 	default:
 		assert(false);
 	}
@@ -215,7 +223,7 @@ std::string YCbCrInput::output_fragment_shader()
 		scale[1] = 1.0;
 		scale[2] = 1.0;
 	} else {
-		// Rec. 601, page 4; Rec. 709, page 19.
+		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 4.
 		offset[0] = 16.0 / 255.0;
 		offset[1] = 128.0 / 255.0;
 		offset[2] = 128.0 / 255.0;

@@ -95,3 +95,24 @@ TEST(GammaExpansionEffectTest, Rec709_AlphaIsUnchanged) {
 
 	expect_equal(data, out_data, 5, 1);
 }
+
+TEST(GammaExpansionEffectTest, Rec2020_12BitIsVeryCloseToRec709) {
+	float data[256];
+	for (unsigned i = 0; i < 256; ++i) {
+		data[i] = i / 255.0f;
+	}
+	float out_data_709[256];
+	float out_data_2020[256];
+
+	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_709);
+	tester.run(out_data_709, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester2(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_2020_12_BIT);
+	tester2.run(out_data_2020, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	double sqdiff = 0.0;
+	for (unsigned i = 0; i < 256; ++i) {
+		EXPECT_NEAR(out_data_709[i], out_data_2020[i], 1e-3);
+		sqdiff += (out_data_709[i] - out_data_2020[i]) * (out_data_709[i] - out_data_2020[i]);
+	}
+	EXPECT_GT(sqdiff, 1e-6);
+}

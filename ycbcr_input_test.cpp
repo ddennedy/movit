@@ -168,6 +168,61 @@ TEST(YCbCrInput, Rec709) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
+TEST(YCbCrInput, Rec2020) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 2020
+	// page 4, tables 4 and 5 (for conventional non-constant luminance).
+	// Note that we still use 8-bit inputs, even though Rec. 2020 is only
+	// defined for 10- and 12-bit.
+	unsigned char y[width * height] = {
+		16, 235, 74, 164, 29,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 97, 47, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 25, 119,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_2020;
+	ycbcr_format.full_range = false;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
 TEST(YCbCrInput, Subsampling420) {
 	const int width = 4;
 	const int height = 4;
