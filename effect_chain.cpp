@@ -66,6 +66,10 @@ void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_
 
 Node *EffectChain::add_node(Effect *effect)
 {
+	for (unsigned i = 0; i < nodes.size(); ++i) {
+		assert(nodes[i]->effect != effect);
+	}
+
 	char effect_id[256];
 	sprintf(effect_id, "eff%u", (unsigned)nodes.size());
 
