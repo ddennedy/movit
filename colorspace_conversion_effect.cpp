@@ -30,7 +30,7 @@ ColorspaceConversionEffect::ColorspaceConversionEffect()
 	register_int("destination_space", (int *)&destination_space);
 }
 
-Matrix3d get_xyz_matrix(Colorspace space)
+Matrix3d ColorspaceConversionEffect::get_xyz_matrix(Colorspace space)
 {
 	if (space == COLORSPACE_XYZ) {
 		return Matrix3d::Identity();

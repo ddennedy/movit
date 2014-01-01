@@ -9,6 +9,7 @@
 // will simply stay out-of-gamut, and probably clip in the output stage.
 
 #include <string>
+#include <Eigen/Core>
 
 #include "effect.h"
 #include "image_format.h"
@@ -25,6 +26,9 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+
+	// Get a conversion matrix from the given color space to XYZ.
+	static Eigen::Matrix3d get_xyz_matrix(Colorspace space);
 
 private:
 	Colorspace source_space, destination_space;

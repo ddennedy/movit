@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <assert.h>
 
+#include "colorspace_conversion_effect.h"
 #include "d65.h"
 #include "effect_util.h"
 #include "util.h"
@@ -37,13 +38,6 @@ Vector3d convert_color_temperature_to_xyz(float T)
 
 	return Vector3d(x, y, 1.0 - x - y);
 }
-
-// Assuming sRGB primaries, from Wikipedia.
-const double rgb_to_xyz_matrix[9] = {
-	0.4124, 0.2126, 0.0193, 
-	0.3576, 0.7152, 0.1192,
-	0.1805, 0.0722, 0.9505,
-};
 
 /*
  * There are several different perceptual color spaces with different intended
@@ -116,8 +110,9 @@ std::string WhiteBalanceEffect::output_fragment_shader()
 
 void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
 {
+	Matrix3d rgb_to_xyz_matrix = ColorspaceConversionEffect::get_xyz_matrix(COLORSPACE_sRGB);
 	Vector3d rgb(neutral_color.r, neutral_color.g, neutral_color.b);
-	Vector3d xyz = Map<const Matrix3d>(rgb_to_xyz_matrix) * rgb;
+	Vector3d xyz = rgb_to_xyz_matrix * rgb;
 	Vector3d lms_scale = compute_lms_scaling_factors(xyz);
 
 	/*
@@ -144,10 +139,10 @@ void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string
 	 * has to be the opposite of the execution order.
 	 */
 	Matrix3d corr_matrix =
-		Map<const Matrix3d>(rgb_to_xyz_matrix).inverse() *
+		rgb_to_xyz_matrix.inverse() *
 		Map<const Matrix3d>(xyz_to_lms_matrix).inverse() *
 		lms_scale.asDiagonal() *
 		Map<const Matrix3d>(xyz_to_lms_matrix) *
-		Map<const Matrix3d>(rgb_to_xyz_matrix);
+		rgb_to_xyz_matrix;
 	set_uniform_mat3(glsl_program_num, prefix, "correction_matrix", corr_matrix);
 }
