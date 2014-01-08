@@ -1,4 +1,4 @@
-// Expand sRGB gamma curve.
+// Expand gamma curve.
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = INPUT(tc);

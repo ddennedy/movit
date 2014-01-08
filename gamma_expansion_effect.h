@@ -5,7 +5,7 @@
 // typically inserted by the framework automatically at the beginning
 // of the processing chain.
 //
-// Currently supports sRGB and Rec. 601/709.
+// Currently supports sRGB, Rec. 601/709 and Rec. 2020 (10- and 12-bit).
 
 #include <string>
 
