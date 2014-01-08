@@ -303,6 +303,15 @@ int main(int argc, char **argv)
 		printf("%d frames in %.3f seconds = %.1f fps (%.1f ms/frame)\n",
 			frame, elapsed, frame / elapsed,
 			1e3 * elapsed / frame);
+
+		// Reset every 100 frames, so that local variations in frame times
+		// (especially for the first few frames, when the shaders are
+		// compiled etc.) don't make it hard to measure for the entire
+		// remaining duration of the program.
+		if (frame == 100) {
+			frame = 0;
+			start = now;
+		}
 #endif
 	}
 	return 0; 
