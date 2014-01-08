@@ -12,8 +12,6 @@
 #include "effect.h"
 #include "image_format.h"
 
-#define EXPANSION_CURVE_SIZE 256
-
 class GammaExpansionEffect : public Effect {
 private:
 	// Should not be instantiated by end users.
@@ -23,6 +21,7 @@ private:
 public:
 	virtual std::string effect_type_id() const { return "GammaExpansionEffect"; }
 	std::string output_fragment_shader();
+	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 	virtual bool needs_linear_light() const { return false; }
 	virtual bool needs_srgb_primaries() const { return false; }
@@ -33,7 +32,6 @@ public:
 
 private:
 	GammaCurve source_curve;
-	float expansion_curve[EXPANSION_CURVE_SIZE];
 };
 
 #endif // !defined(_MOVIT_GAMMA_EXPANSION_EFFECT_H)
