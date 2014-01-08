@@ -32,7 +32,7 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 	// very low values (up to some β) are linear. Above β, we have a power curve
 	// that looks like this:
 	//
-	//   y = ((x + ɑ - 1) / ɑ)^β
+	//   y = ((x + ɑ - 1) / ɑ)^ɣ
 	//
 	// However, pow() is relatively slow in GLSL, so we approximate this
 	// part by a minimax polynomial, whose coefficients are precalculated
