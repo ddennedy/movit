@@ -72,8 +72,8 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 		// From the Wikipedia article on sRGB; ɑ (called a+1 there) = 1.055,
 		// β = 0.04045, ɣ = 2.4.
 		// maxerror      = 0.000094
-		// error at beta = 0.000094
-		// error at 1.0  = 0.000094
+		// error at beta = 0.000012
+		// error at 1.0  = 0.000012
 		set_uniform_float(glsl_program_num, prefix, "linear_scale", 1.0 / 12.92);
 		set_uniform_float(glsl_program_num, prefix, "c0", 0.001324469581);
 		set_uniform_float(glsl_program_num, prefix, "c1", 0.02227416690);
