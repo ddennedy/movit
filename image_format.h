@@ -1,11 +1,15 @@
 #ifndef _MOVIT_IMAGE_FORMAT_H
 #define _MOVIT_IMAGE_FORMAT_H 1
 
-// Note: Input depths above 8 bits have not been tested, so Rec. 2020
-// support should be regarded as somewhat untested (it assumes 10-
-// or 12-bit input). We also only support “conventional non-constant
-// luminance” for Rec. 2020, where Y' is derived from R'G'B' instead of
-// RGB, since this is the same system as used in Rec. 601 and 709.
+// Note: Movit's internal processing formats do not have enough
+// accuracy to support 12-bit input, so if you want to use Rec. 2020,
+// you should probably stick to 10-bit, or accept somewhat reduced
+// accuracy for 12-bit. Input depths above 8 bits are also generally
+// less tested.
+//
+// We also only support “conventional non-constant luminance” for Rec. 2020,
+// where Y' is derived from R'G'B' instead of RGB, since this is the same
+// system as used in Rec. 601 and 709.
 
 enum MovitPixelFormat {
 	FORMAT_RGB,

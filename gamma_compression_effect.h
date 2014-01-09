@@ -5,7 +5,9 @@
 // typically inserted by the framework automatically at the end
 // of the processing chain.
 //
-// Currently supports sRGB and Rec. 601/709.
+// Currently supports sRGB, Rec. 601/709 and Rec. 2020 (10- and 12-bit).
+// Note that Movit's internal formats generally do not have enough accuracy
+// for 12-bit input or output.
 
 #include <string>
 

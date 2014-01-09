@@ -153,9 +153,10 @@ instead of on input? And I can promise you that once we move to more
 wide-gamut color spaces, like the one in Rec. 2020 (used for UHDTV), the
 difference will be anything but subtle. As of [why working in linear
 light matters](http://www.4p8.com/eric.brasseur/gamma.html),
-others have explained it better than I can; note also
-that this makes Movit future-proof when the world moves towards 10-
-and 12-bit color precision. The extra power from the GPU makes all of this
+others have explained it better than I can; note also that this makes Movit
+future-proof when the world moves towards 10- and 12-bit color precision
+(although the latter requires Movit to change from 16-bit to 32-bit floating
+point, it is a simple switch). The extra power from the GPU makes all of this
 simple, so do we not need to make too many concessions for the sake of speed.
 
 Movit does not currently do ICC profiles or advanced gamut mapping;
