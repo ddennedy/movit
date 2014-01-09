@@ -14,8 +14,6 @@
 #include "effect.h"
 #include "image_format.h"
 
-#define COMPRESSION_CURVE_SIZE 4096
-
 class GammaCompressionEffect : public Effect {
 private:
 	// Should not be instantiated by end users.
@@ -25,6 +23,7 @@ private:
 public:
 	virtual std::string effect_type_id() const { return "GammaCompressionEffect"; }
 	std::string output_fragment_shader();
+	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 	virtual bool needs_srgb_primaries() const { return false; }
 
@@ -34,7 +33,6 @@ public:
 
 private:
 	GammaCurve destination_curve;
-	float compression_curve[COMPRESSION_CURVE_SIZE];
 };
 
 #endif // !defined(_MOVIT_GAMMA_COMPRESSION_EFFECT_H)
