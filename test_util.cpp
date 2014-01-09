@@ -207,3 +207,26 @@ void expect_equal(const unsigned char *ref, const unsigned char *result, unsigne
 	delete[] ref_float;
 	delete[] result_float;
 }
+
+void test_accuracy(const float *expected, const float *result, unsigned num_values, double absolute_error_limit, double relative_error_limit, double local_relative_error_limit, double rms_limit)
+{
+	double squared_difference = 0.0;
+	for (unsigned i = 0; i < num_values; ++i) {
+		double absolute_error = fabs(expected[i] - result[i]);
+		squared_difference += absolute_error * absolute_error;
+		EXPECT_LT(absolute_error, absolute_error_limit);
+
+		if (expected[i] > 0.0) {
+			double relative_error = fabs(absolute_error / expected[i]);
+
+			EXPECT_LT(relative_error, relative_error_limit);
+		}
+		if (i < num_values - 1) {
+			double delta = expected[i + 1] - expected[i];
+			double local_relative_error = fabs(absolute_error / delta);
+			EXPECT_LT(local_relative_error, local_relative_error_limit);
+		}
+	}
+	double rms = sqrt(squared_difference) / num_values;
+	EXPECT_LT(rms, rms_limit);
+}

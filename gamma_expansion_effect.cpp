@@ -74,6 +74,9 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const std::stri
 		// maxerror      = 0.000094
 		// error at beta = 0.000012
 		// error at 1.0  = 0.000012
+		//
+		// Note that the worst _relative_ error by far is just at the beginning
+		// of the exponential curve, ie., just around β.
 		set_uniform_float(glsl_program_num, prefix, "linear_scale", 1.0 / 12.92);
 		set_uniform_float(glsl_program_num, prefix, "c0", 0.001324469581);
 		set_uniform_float(glsl_program_num, prefix, "c1", 0.02227416690);
