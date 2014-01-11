@@ -61,17 +61,25 @@ public:
 	// this data, you must either call set_pixel_data() again (using the same pointer
 	// is fine), or invalidate_pixel_data(). Otherwise, the texture won't be re-uploaded
 	// on subsequent frames.
-	void set_pixel_data(const unsigned char *pixel_data)
+	//
+	// The data can either be a regular pointer (if pbo==0), or a byte offset
+	// into a PBO. The latter will allow you to start uploading the texture data
+	// asynchronously to the GPU, if you have any CPU-intensive work between the
+	// call to set_pixel_data() and the actual rendering. In either case,
+	// the pointer (and PBO, if set) has to be valid at the time of the render call.
+	void set_pixel_data(const unsigned char *pixel_data, GLuint pbo = 0)
 	{
 		assert(this->type == GL_UNSIGNED_BYTE);
 		this->pixel_data = pixel_data;
+		this->pbo = pbo;
 		invalidate_pixel_data();
 	}
 
-	void set_pixel_data(const float *pixel_data)
+	void set_pixel_data(const float *pixel_data, GLuint pbo = 0)
 	{
 		assert(this->type == GL_FLOAT);
 		this->pixel_data = pixel_data;
+		this->pbo = pbo;
 		invalidate_pixel_data();
 	}
 
@@ -92,7 +100,7 @@ private:
 	GLuint pbo, texture_num;
 	bool needs_update, finalized;
 	int output_linear_gamma, needs_mipmaps;
-	unsigned width, height, pitch, bytes_per_pixel;
+	unsigned width, height, pitch;
 	const void *pixel_data;
 };
 

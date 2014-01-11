@@ -28,10 +28,6 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 
 FlatInput::~FlatInput()
 {
-	if (pbo != 0) {
-		glDeleteBuffers(1, &pbo);
-		check_error();
-	}
 	if (texture_num != 0) {
 		glDeleteTextures(1, &texture_num);
 		check_error();
@@ -53,47 +49,26 @@ void FlatInput::finalize()
 	}
 	if (pixel_format == FORMAT_RGB) {
 		format = GL_RGB;
-		bytes_per_pixel = 3;
 	} else if (pixel_format == FORMAT_RGBA_PREMULTIPLIED_ALPHA ||
 	           pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) {
 		format = GL_RGBA;
-		bytes_per_pixel = 4;
 	} else if (pixel_format == FORMAT_BGR) {
 		format = GL_BGR;
-		bytes_per_pixel = 3;
 	} else if (pixel_format == FORMAT_BGRA_PREMULTIPLIED_ALPHA ||
 	           pixel_format == FORMAT_BGRA_POSTMULTIPLIED_ALPHA) {
 		format = GL_BGRA;
-		bytes_per_pixel = 4;
 	} else if (pixel_format == FORMAT_GRAYSCALE) {
 		format = GL_LUMINANCE;
-		bytes_per_pixel = 1;
 	} else {
 		assert(false);
 	}
-	if (type == GL_FLOAT) {
-		bytes_per_pixel *= sizeof(float);
-	}
 
-	// Create PBO to hold the texture holding the input image, and then the texture itself.
-	glGenBuffers(1, &pbo);
-	check_error();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
-	check_error();
-	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, pitch * height * bytes_per_pixel, NULL, GL_STREAM_DRAW);
-	check_error();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-	check_error();
-	
+	// Create the texture itself.
 	glGenTextures(1, &texture_num);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texture_num);
 	check_error();
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-	check_error();
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 	check_error();
 	// Intel/Mesa seems to have a broken glGenerateMipmap() for non-FBO textures, so do it here
 	// instead of calling glGenerateMipmap().
@@ -102,6 +77,8 @@ void FlatInput::finalize()
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
 	check_error();
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
 
 	needs_update = true;
@@ -116,18 +93,14 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 	check_error();
 
 	if (needs_update) {
-		// Copy the pixel data into the PBO.
+		// Re-upload the texture.
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
 		check_error();
-		void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
-		memcpy(mapped_pbo, pixel_data, pitch * height * bytes_per_pixel);
-		glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		check_error();
-
-		// Re-upload the texture from the PBO.
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 		check_error();
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, BUFFER_OFFSET(0));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, pixel_data);
 		check_error();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();

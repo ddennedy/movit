@@ -1,11 +1,13 @@
 // Unit tests for FlatInput.
 
+#include <GL/glew.h>
 #include <stddef.h>
 
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
 #include "test_util.h"
+#include "util.h"
 
 TEST(FlatInput, SimpleGrayscale) {
 	const int size = 4;
@@ -225,4 +227,40 @@ TEST(FlatInput, UpdatedData) {
 
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 	expect_equal(data, out_data, width, height);
+}
+
+TEST(FlatInput, PBO) {
+	const int width = 3;
+	const int height = 2;
+
+	float data[width * height] = {
+		0.0, 1.0, 0.5,
+		0.5, 0.5, 0.2,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,  1.0, 1.0, 1.0, 1.0,  0.5, 0.5, 0.5, 1.0,
+		0.5, 0.5, 0.5, 1.0,  0.5, 0.5, 0.5, 1.0,  0.2, 0.2, 0.2, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	GLuint pbo;
+	glGenBuffers(1, &pbo);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * sizeof(float), data, GL_STREAM_DRAW);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
+	input->set_pixel_data((float *)BUFFER_OFFSET(0), pbo);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, 4 * width, height);
+
+	glDeleteBuffers(1, &pbo);
 }

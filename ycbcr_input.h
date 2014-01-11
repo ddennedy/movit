@@ -63,10 +63,17 @@ public:
 	// this data, you must either call set_pixel_data() again (using the same pointer
 	// is fine), or invalidate_pixel_data(). Otherwise, the texture won't be re-uploaded
 	// on subsequent frames.
-	void set_pixel_data(unsigned channel, const unsigned char *pixel_data)
+	//
+	// The data can either be a regular pointer (if pbo==0), or a byte offset
+	// into a PBO. The latter will allow you to start uploading the texture data
+	// asynchronously to the GPU, if you have any CPU-intensive work between the
+	// call to set_pixel_data() and the actual rendering. In either case,
+	// the pointer (and PBO, if set) has to be valid at the time of the render call.
+	void set_pixel_data(unsigned channel, const unsigned char *pixel_data, GLuint pbo = 0)
 	{
 		assert(channel >= 0 && channel < 3);
 		this->pixel_data[channel] = pixel_data;
+		this->pbos[channel] = pbo;
 		invalidate_pixel_data();
 	}
 
@@ -77,17 +84,14 @@ public:
 
 	void set_pitch(unsigned channel, unsigned pitch) {
 		assert(channel >= 0 && channel < 3);
-		if (this->pitch[channel] != pitch) {
-			this->pitch[channel] = pitch;
-			needs_pbo_recreate = true;
-		}
+		this->pitch[channel] = pitch;
 	}
 
 private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint pbos[3], texture_num[3];
-	bool needs_update, needs_pbo_recreate, finalized;
+	bool needs_update, finalized;
 
 	int needs_mipmaps;
 

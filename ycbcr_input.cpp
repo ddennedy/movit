@@ -62,7 +62,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
 	  needs_update(false),
-	  needs_pbo_recreate(false),
 	  finalized(false),
 	  needs_mipmaps(false),
 	  width(width),
@@ -88,10 +87,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 
 YCbCrInput::~YCbCrInput()
 {
-	if (pbos[0] != 0) {
-		glDeleteBuffers(3, pbos);
-		check_error();
-	}
 	if (texture_num[0] != 0) {
 		glDeleteTextures(3, texture_num);
 		check_error();
@@ -100,32 +95,16 @@ YCbCrInput::~YCbCrInput()
 
 void YCbCrInput::finalize()
 {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	check_error();
-
-	// Create PBOs to hold the textures holding the input image, and then the texture itself.
-	glGenBuffers(3, pbos);
-	check_error();
+	// Create the textures themselves.
 	glGenTextures(3, texture_num);
 	check_error();
 
 	for (unsigned channel = 0; channel < 3; ++channel) {
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbos[channel]);
-		check_error();
-		glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, pitch[channel] * heights[channel], NULL, GL_STREAM_DRAW);
-		check_error();
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-		check_error();
-		
 		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		check_error();
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch[channel]);
-		check_error();
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE8, widths[channel], heights[channel], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
-		check_error();
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();
 	}
 
@@ -141,27 +120,16 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 		check_error();
 
-		if (needs_update || needs_pbo_recreate) {
+		if (needs_update) {
+			// Re-upload the texture.
 			// Copy the pixel data into the PBO.
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbos[channel]);
 			check_error();
-
-			if (needs_pbo_recreate) {
-				// The pitch has changed; we need to reallocate this PBO.
-				glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, pitch[channel] * heights[channel], NULL, GL_STREAM_DRAW);
-				check_error();
-			}
-
-			void *mapped_pbo = glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY);
-			memcpy(mapped_pbo, pixel_data[channel], pitch[channel] * heights[channel]);
-
-			glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			check_error();
-
-			// Re-upload the texture from the PBO.
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch[channel]);
 			check_error();
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], GL_LUMINANCE, GL_UNSIGNED_BYTE, BUFFER_OFFSET(0));
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], GL_LUMINANCE, GL_UNSIGNED_BYTE, pixel_data[channel]);
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			check_error();
@@ -169,10 +137,11 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-			check_error();
 		}
 	}
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+	check_error();
 
 	// Bind samplers.
 	set_uniform_int(glsl_program_num, prefix, "tex_y", *sampler_num + 0);
@@ -181,7 +150,6 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 
 	*sampler_num += 3;
 	needs_update = false;
-	needs_pbo_recreate = false;
 }
 
 std::string YCbCrInput::output_fragment_shader()
