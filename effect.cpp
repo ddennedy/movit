@@ -83,34 +83,6 @@ void Effect::register_vec4(const std::string &key, float *values)
 	params_vec4[key] = values;
 }
 
-void Effect::register_1d_texture(const std::string &key, float *values, size_t size)
-{
-	assert(params_tex_1d.count(key) == 0);
-
-	Texture1D tex;
-	tex.values = values;
-	tex.size = size;
-	tex.needs_update = false;
-	glGenTextures(1, &tex.texture_num);
-
-	glBindTexture(GL_TEXTURE_1D, tex.texture_num);
-	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	check_error();
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, size, 0, GL_LUMINANCE, GL_FLOAT, values);
-	check_error();
-
-	params_tex_1d[key] = tex;
-}
-
-void Effect::invalidate_1d_texture(const std::string &key)
-{
-	assert(params_tex_1d.count(key) != 0);
-	params_tex_1d[key].needs_update = true;
-}
-
 // Output convenience uniforms for each parameter.
 // These will be filled in per-frame.
 std::string Effect::output_convenience_uniforms() const
@@ -144,13 +116,6 @@ std::string Effect::output_convenience_uniforms() const
 		sprintf(buf, "uniform vec4 PREFIX(%s);\n", it->first.c_str());
 		output.append(buf);
 	}
-	for (std::map<std::string, Texture1D>::const_iterator it = params_tex_1d.begin();
-	     it != params_tex_1d.end();
-	     ++it) {
-		char buf[256];
-		sprintf(buf, "uniform sampler1D PREFIX(%s);\n", it->first.c_str());
-		output.append(buf);
-	}
 	return output;
 }
 
@@ -175,24 +140,6 @@ void Effect::set_gl_state(GLuint glsl_program_num, const std::string& prefix, un
 	     it != params_vec4.end();
 	     ++it) {
 		set_uniform_vec4(glsl_program_num, prefix, it->first, it->second);
-	}
-
-	for (std::map<std::string, Texture1D>::iterator it = params_tex_1d.begin();
-	     it != params_tex_1d.end();
-	     ++it) {
-		glActiveTexture(GL_TEXTURE0 + *sampler_num);
-		check_error();
-		glBindTexture(GL_TEXTURE_1D, it->second.texture_num);
-		check_error();
-
-		if (it->second.needs_update) {
-			glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, it->second.size, 0, GL_LUMINANCE, GL_FLOAT, it->second.values);
-			check_error();
-			it->second.needs_update = false;
-		}
-
-		set_uniform_int(glsl_program_num, prefix, it->first, *sampler_num);
-		++*sampler_num;
 	}
 }
 

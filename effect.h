@@ -257,31 +257,12 @@ protected:
 	void register_vec3(const std::string &key, float *values);
 	void register_vec4(const std::string &key, float *values);
 
-	// This will register a 1D texture, which will be bound to a sampler
-	// when your GLSL code runs (so it corresponds 1:1 to a sampler2D uniform
-	// in GLSL).
-	//
-	// Note that if you change the contents of <values>, you will need to
-	// call invalidate_1d_texture() to have the picture re-uploaded on the
-	// next frame. This is in contrast to all the other parameters, which are
-	// set anew every frame.
-	void register_1d_texture(const std::string &key, float *values, size_t size);
-	void invalidate_1d_texture(const std::string &key);
-	
 private:
-	struct Texture1D {
-		float *values;
-		size_t size;
-		bool needs_update;
-		GLuint texture_num;
-	};
-
 	std::map<std::string, int *> params_int;
 	std::map<std::string, float *> params_float;
 	std::map<std::string, float *> params_vec2;
 	std::map<std::string, float *> params_vec3;
 	std::map<std::string, float *> params_vec4;
-	std::map<std::string, Texture1D> params_tex_1d;
 };
 
 #endif // !defined(_MOVIT_EFFECT_H)
