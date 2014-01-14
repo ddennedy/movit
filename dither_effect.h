@@ -75,7 +75,6 @@ private:
 	int texture_width, texture_height;
 
 	GLuint texnum;
-	bool need_texture_update;
 };
 
 #endif // !defined(_MOVIT_DITHER_EFFECT_H)
