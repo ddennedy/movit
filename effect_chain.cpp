@@ -23,14 +23,23 @@
 #include "gamma_expansion_effect.h"
 #include "init.h"
 #include "input.h"
+#include "resource_pool.h"
 #include "util.h"
 
-EffectChain::EffectChain(float aspect_nom, float aspect_denom)
+EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
 	  dither_effect(NULL),
 	  num_dither_bits(0),
-	  finalized(false) {}
+	  finalized(false),
+	  resource_pool(resource_pool) {
+	if (resource_pool == NULL) {
+		this->resource_pool = new ResourcePool();
+		owns_resource_pool = true;
+	} else {
+		owns_resource_pool = false;
+	}
+}
 
 EffectChain::~EffectChain()
 {
@@ -42,10 +51,11 @@ EffectChain::~EffectChain()
 		delete nodes[i];
 	}
 	for (unsigned i = 0; i < phases.size(); ++i) {
-		glDeleteProgram(phases[i]->glsl_program_num);
-		glDeleteShader(phases[i]->vertex_shader);
-		glDeleteShader(phases[i]->fragment_shader);
+		resource_pool->release_glsl_program(phases[i]->glsl_program_num);
 		delete phases[i];
+	}
+	if (owns_resource_pool) {
+		delete resource_pool;
 	}
 }
 
@@ -278,34 +288,8 @@ Phase *EffectChain::compile_glsl_program(
 	frag_shader += std::string("#define INPUT ") + sorted_effects.back()->effect_id + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
-	if (movit_debug_level == MOVIT_DEBUG_ON) {
-		// Output shader to a temporary file, for easier debugging.
-		static int compiled_shader_num = 0;
-		char filename[256];
-		sprintf(filename, "chain-%03d.frag", compiled_shader_num++);
-		FILE *fp = fopen(filename, "w");
-		if (fp == NULL) {
-			perror(filename);
-			exit(1);
-		}
-		fprintf(fp, "%s\n", frag_shader.c_str());
-		fclose(fp);
-	}
-	
-	GLuint glsl_program_num = glCreateProgram();
-	GLuint vs_obj = compile_shader(read_file("vs.vert"), GL_VERTEX_SHADER);
-	GLuint fs_obj = compile_shader(frag_shader, GL_FRAGMENT_SHADER);
-	glAttachShader(glsl_program_num, vs_obj);
-	check_error();
-	glAttachShader(glsl_program_num, fs_obj);
-	check_error();
-	glLinkProgram(glsl_program_num);
-	check_error();
-
 	Phase *phase = new Phase;
-	phase->glsl_program_num = glsl_program_num;
-	phase->vertex_shader = vs_obj;
-	phase->fragment_shader = fs_obj;
+	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
 	phase->input_needs_mipmaps = input_needs_mipmaps;
 	phase->inputs = true_inputs;
 	phase->effects = sorted_effects;

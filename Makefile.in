@@ -61,7 +61,7 @@ EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
 # Unit tests.
 TESTS=effect_chain_test $(TESTED_INPUTS:=_test) $(TESTED_EFFECTS:=_test)
 
-LIB_OBJS=effect_util.o util.o widgets.o effect.o effect_chain.o init.o $(INPUTS:=.o) $(EFFECTS:=.o)
+LIB_OBJS=effect_util.o util.o widgets.o effect.o effect_chain.o init.o resource_pool.o $(INPUTS:=.o) $(EFFECTS:=.o)
 
 # Default target:
 all: libmovit.a $(TESTS)
@@ -122,7 +122,7 @@ coverage: check
 	lcov --remove movit.info '*_test.cpp' '*/test_util.{cpp,h}' -o movit.info
 	genhtml -o coverage movit.info
 
-HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h
+HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h resource_pool.h
 HDRS += $(INPUTS:=.h)
 HDRS += $(EFFECTS:=.h)
 

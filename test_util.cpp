@@ -7,12 +7,23 @@
 #include "flat_input.h"
 #include "gtest/gtest.h"
 #include "init.h"
+#include "resource_pool.h"
 #include "test_util.h"
 #include "util.h"
 
 class Input;
 
 namespace {
+
+// Not thread-safe, but this isn't a big problem for testing.
+ResourcePool *get_static_pool()
+{
+	static ResourcePool *resource_pool = NULL;
+	if (!resource_pool) {
+		resource_pool = new ResourcePool();
+	}
+	return resource_pool;
+}
 
 // Flip upside-down to compensate for different origin.
 template<class T>
@@ -31,7 +42,7 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve,
                                      GLenum framebuffer_format)
-	: chain(width, height), width(width), height(height), finalized(false)
+	: chain(width, height, get_static_pool()), width(width), height(height), finalized(false)
 {
 	init_movit(".", MOVIT_DEBUG_ON);
 

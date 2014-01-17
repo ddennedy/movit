@@ -29,6 +29,7 @@
 class Effect;
 class Input;
 struct Phase;
+class ResourcePool;
 
 // For internal use within Node.
 enum AlphaType {
@@ -83,7 +84,7 @@ private:
 
 // A rendering phase; a single GLSL program rendering a single quad.
 struct Phase {
-	GLint glsl_program_num, vertex_shader, fragment_shader;
+	GLuint glsl_program_num;  // Owned by the resource_pool.
 	bool input_needs_mipmaps;
 
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
@@ -96,7 +97,13 @@ struct Phase {
 
 class EffectChain {
 public:
-	EffectChain(float aspect_nom, float aspect_denom);  // E.g., 16.0f, 9.0f for 16:9.
+	// Aspect: e.g. 16.0f, 9.0f for 16:9.
+	// resource_pool is a pointer to a ResourcePool with which to share shaders
+	// and other resources (see resource_pool.h). If NULL (the default),
+	// will create its own that is not shared with anything else. Does not take
+	// ownership of the passed-in ResourcePool, but will naturally take ownership
+	// of its own internal one if created.
+	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL);
 	~EffectChain();
 
 	// User API:
@@ -249,6 +256,9 @@ private:
 
 	unsigned num_dither_bits;
 	bool finalized;
+
+	ResourcePool *resource_pool;
+	bool owns_resource_pool;
 };
 
 #endif // !defined(_MOVIT_EFFECT_CHAIN_H)
