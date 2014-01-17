@@ -6,6 +6,16 @@
 // them. Generally you set up your effect chain once and then call its render
 // functions once per frame; setting one up can be relatively expensive,
 // but rendering is fast.
+//
+// Threading considerations: EffectChain is “thread-compatible”; you can use
+// different EffectChains in multiple threads at the same time (assuming the
+// threads do not use the same OpenGL context, but this is a good idea anyway),
+// but you may not use one EffectChain from multiple threads simultaneously.
+// You _are_ allowed to use one EffectChain from multiple threads as long as
+// you only use it from one at a time (possibly by doing your own locking),
+// but if so, the threads' contexts need to be set up to share resources, since
+// the EffectChain holds textures and other OpenGL objects that are tied to the
+// context.
 
 #include <GL/glew.h>
 #include <stdio.h>
