@@ -1,6 +1,12 @@
 #ifndef _MOVIT_EFFECT_CHAIN_H
 #define _MOVIT_EFFECT_CHAIN_H 1
 
+// An EffectChain is the largest basic entity in Movit; it contains everything
+// needed to connects a series of effects, from inputs to outputs, and render
+// them. Generally you set up your effect chain once and then call its render
+// functions once per frame; setting one up can be relatively expensive,
+// but rendering is fast.
+
 #include <GL/glew.h>
 #include <stdio.h>
 #include <map>
