@@ -57,9 +57,6 @@ public:
 	std::vector<Node *> incoming_links;
 
 private:
-	// Identifier used to create unique variables in GLSL.
-	std::string effect_id;
-
 	// Logical size of the output of this effect, ie. the resolution
 	// you would get if you sampled it as a texture. If it is undefined
 	// (since the inputs differ in resolution), it will be 0x0.
@@ -93,6 +90,10 @@ struct Phase {
 
 	std::vector<Node *> effects;  // In order.
 	unsigned output_width, output_height, virtual_output_width, virtual_output_height;
+
+	// Identifier used to create unique variables in GLSL.
+	// Unique per-phase to increase cacheability of compiled shaders.
+	std::map<Node *, std::string> effect_ids;
 };
 
 class EffectChain {

@@ -80,13 +80,9 @@ Node *EffectChain::add_node(Effect *effect)
 		assert(nodes[i]->effect != effect);
 	}
 
-	char effect_id[256];
-	sprintf(effect_id, "eff%u", (unsigned)nodes.size());
-
 	Node *node = new Node;
 	node->effect = effect;
 	node->disabled = false;
-	node->effect_id = effect_id;
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
 	node->output_alpha_type = ALPHA_INVALID;
@@ -224,6 +220,7 @@ Phase *EffectChain::compile_glsl_program(
 	const std::vector<Node *> &inputs,
 	const std::vector<Node *> &effects)
 {
+	Phase *phase = new Phase;
 	assert(!effects.empty());
 
 	// Deduplicate the inputs.
@@ -237,10 +234,13 @@ Phase *EffectChain::compile_glsl_program(
 	// Create functions for all the texture inputs that we need.
 	for (unsigned i = 0; i < true_inputs.size(); ++i) {
 		Node *input = true_inputs[i];
+		char effect_id[256];
+		sprintf(effect_id, "in%u", i);
+		phase->effect_ids.insert(std::make_pair(input, effect_id));
 	
-		frag_shader += std::string("uniform sampler2D tex_") + input->effect_id + ";\n";
-		frag_shader += std::string("vec4 ") + input->effect_id + "(vec2 tc) {\n";
-		frag_shader += "\treturn texture2D(tex_" + input->effect_id + ", tc);\n";
+		frag_shader += std::string("uniform sampler2D tex_") + effect_id + ";\n";
+		frag_shader += std::string("vec4 ") + effect_id + "(vec2 tc) {\n";
+		frag_shader += "\treturn texture2D(tex_" + std::string(effect_id) + ", tc);\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
 	}
@@ -249,21 +249,24 @@ Phase *EffectChain::compile_glsl_program(
 
 	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
 		Node *node = sorted_effects[i];
+		char effect_id[256];
+		sprintf(effect_id, "eff%u", i);
+		phase->effect_ids.insert(std::make_pair(node, effect_id));
 
 		if (node->incoming_links.size() == 1) {
-			frag_shader += std::string("#define INPUT ") + node->incoming_links[0]->effect_id + "\n";
+			frag_shader += std::string("#define INPUT ") + phase->effect_ids[node->incoming_links[0]] + "\n";
 		} else {
 			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
 				char buf[256];
-				sprintf(buf, "#define INPUT%d %s\n", j + 1, node->incoming_links[j]->effect_id.c_str());
+				sprintf(buf, "#define INPUT%d %s\n", j + 1, phase->effect_ids[node->incoming_links[j]].c_str());
 				frag_shader += buf;
 			}
 		}
 	
 		frag_shader += "\n";
-		frag_shader += std::string("#define FUNCNAME ") + node->effect_id + "\n";
-		frag_shader += replace_prefix(node->effect->output_convenience_uniforms(), node->effect_id);
-		frag_shader += replace_prefix(node->effect->output_fragment_shader(), node->effect_id);
+		frag_shader += std::string("#define FUNCNAME ") + effect_id + "\n";
+		frag_shader += replace_prefix(node->effect->output_convenience_uniforms(), effect_id);
+		frag_shader += replace_prefix(node->effect->output_fragment_shader(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
 		if (node->incoming_links.size() == 1) {
@@ -285,10 +288,9 @@ Phase *EffectChain::compile_glsl_program(
 			CHECK(node->effect->set_int("needs_mipmaps", input_needs_mipmaps));
 		}
 	}
-	frag_shader += std::string("#define INPUT ") + sorted_effects.back()->effect_id + "\n";
+	frag_shader += std::string("#define INPUT ") + phase->effect_ids[sorted_effects.back()] + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
-	Phase *phase = new Phase;
 	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
 	phase->input_needs_mipmaps = input_needs_mipmaps;
 	phase->inputs = true_inputs;
@@ -1537,7 +1539,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				check_error();
 			}
 
-			std::string texture_name = std::string("tex_") + input->effect_id;
+			std::string texture_name = std::string("tex_") + phases[phase]->effect_ids[input];
 			glUniform1i(glGetUniformLocation(phases[phase]->glsl_program_num, texture_name.c_str()), sampler);
 			check_error();
 		}
@@ -1572,7 +1574,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		unsigned sampler_num = phases[phase]->inputs.size();
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
-			node->effect->set_gl_state(phases[phase]->glsl_program_num, node->effect_id, &sampler_num);
+			node->effect->set_gl_state(phases[phase]->glsl_program_num, phases[phase]->effect_ids[node], &sampler_num);
 			check_error();
 		}
 
