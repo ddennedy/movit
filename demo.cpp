@@ -180,6 +180,8 @@ int main(int argc, char **argv)
 	init_movit(".", MOVIT_DEBUG_ON);
 	printf("GPU texture subpixel precision: about %.1f bits\n",
 		log2(1.0f / movit_texel_subpixel_precision));
+	printf("Wrongly rounded x+0.48 or x+0.52 values: %d/510\n",
+		movit_num_wrongly_rounded);
 	
 	unsigned img_w, img_h;
 	unsigned char *src_img = load_image(argc > 1 ? argv[1] : "blg_wheels_woman_1.jpg", &img_w, &img_h);

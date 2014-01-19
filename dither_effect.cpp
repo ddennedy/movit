@@ -4,6 +4,7 @@
 
 #include "dither_effect.h"
 #include "effect_util.h"
+#include "init.h"
 #include "util.h"
 
 namespace {
@@ -40,7 +41,9 @@ DitherEffect::~DitherEffect()
 
 std::string DitherEffect::output_fragment_shader()
 {
-	return read_file("dither_effect.frag");
+	char buf[256];
+	sprintf(buf, "#define NEED_EXPLICIT_ROUND %d\n", (movit_num_wrongly_rounded > 0));
+	return buf + read_file("dither_effect.frag");
 }
 
 void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
@@ -110,4 +113,9 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const std::string &pref
 	// we don't have to worry about it.	
 	float tc_scale[] = { float(width) / float(texture_width), float(height) / float(texture_height) };
 	set_uniform_vec2(glsl_program_num, prefix, "tc_scale", tc_scale);
+
+	// Used if the shader needs to do explicit rounding.
+	int round_fac = (1 << num_bits) - 1;
+	set_uniform_float(glsl_program_num, prefix, "round_fac", round_fac);
+	set_uniform_float(glsl_program_num, prefix, "inv_round_fac", 1.0f / round_fac);
 }

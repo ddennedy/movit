@@ -11,6 +11,7 @@ bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
+int movit_num_wrongly_rounded;
 
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
@@ -131,6 +132,122 @@ void measure_texel_subpixel_precision()
 	check_error();
 }
 
+void measure_roundoff_problems()
+{
+	// Generate a destination texture to render to, and an FBO.
+	GLuint dst_texnum, fbo;
+
+	glGenTextures(1, &dst_texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, dst_texnum);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	check_error();
+
+	glGenFramebuffers(1, &fbo);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	check_error();
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		dst_texnum,
+		0);
+	check_error();
+
+	// Now generate a texture where every value except the last should be
+	// rounded up to the next one. However, there are cards (in highly
+	// common use) that can't do this right, for unknown reasons.
+	GLuint src_texnum;
+	float texdata[512];
+	for (int i = 0; i < 256; ++i) {
+		texdata[i * 2 + 0] = (i + 0.48) / 255.0;
+		texdata[i * 2 + 1] = (i + 0.52) / 255.0;
+	}
+	glGenTextures(1, &src_texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_1D, src_texnum);
+	check_error();
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	check_error();
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE32F_ARB, 512, 0, GL_LUMINANCE, GL_FLOAT, texdata);
+	check_error();
+	glEnable(GL_TEXTURE_1D);
+	check_error();
+
+	// Basic state.
+	glDisable(GL_BLEND);
+	check_error();
+	glDisable(GL_DEPTH_TEST);
+	check_error();
+	glDepthMask(GL_FALSE);
+	check_error();
+
+	glViewport(0, 0, 512, 1);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	check_error();
+
+	// Draw the texture stretched over a long quad, interpolating it out.
+	glBegin(GL_QUADS);
+
+	glTexCoord1f(0.0f);
+	glVertex2f(0.0f, 0.0f);
+
+	glTexCoord1f(1.0f);
+	glVertex2f(1.0f, 0.0f);
+
+	glTexCoord1f(1.0f);
+	glVertex2f(1.0f, 1.0f);
+
+	glTexCoord1f(0.0f);
+	glVertex2f(0.0f, 1.0f);
+
+	glEnd();
+	check_error();
+
+	glDisable(GL_TEXTURE_1D);
+	check_error();
+
+	// Now read the data back and see what the card did. (Ignore the last value.)
+	// (We only look at the red channel; the others will surely be the same.)
+	unsigned char out_data[512];
+	glReadPixels(0, 0, 512, 1, GL_RED, GL_UNSIGNED_BYTE, out_data);
+	check_error();
+
+	int wrongly_rounded = 0;
+	for (unsigned i = 0; i < 255; ++i) {
+		if (out_data[i * 2 + 0] != i) {
+			++wrongly_rounded;
+		}
+		if (out_data[i * 2 + 1] != i + 1) {
+			++wrongly_rounded;
+		}
+	}
+
+	movit_num_wrongly_rounded = wrongly_rounded;
+
+	// Clean up.
+	glBindTexture(GL_TEXTURE_1D, 0);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
+	glDeleteFramebuffers(1, &fbo);
+	check_error();
+	glDeleteTextures(1, &dst_texnum);
+	check_error();
+	glDeleteTextures(1, &src_texnum);
+	check_error();
+}
+
 void check_extensions()
 {
 	// We fundamentally need FBOs and floating-point textures.
@@ -174,6 +291,7 @@ void init_movit(const std::string& data_directory, MovitDebugLevel debug_level)
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	measure_texel_subpixel_precision();
+	measure_roundoff_problems();
 	check_extensions();
 
 	movit_initialized = true;
