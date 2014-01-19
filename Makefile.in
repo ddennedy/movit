@@ -49,6 +49,7 @@ TESTED_EFFECTS += padding_effect
 TESTED_EFFECTS += resample_effect
 TESTED_EFFECTS += dither_effect
 TESTED_EFFECTS += deconvolution_sharpen_effect
+TESTED_EFFECTS += fft_pass_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
