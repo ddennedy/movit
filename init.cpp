@@ -289,6 +289,7 @@ void init_movit(const std::string& data_directory, MovitDebugLevel debug_level)
 	// geez	
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glDisable(GL_DITHER);
 
 	measure_texel_subpixel_precision();
 	measure_roundoff_problems();
