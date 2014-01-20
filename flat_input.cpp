@@ -70,10 +70,6 @@ void FlatInput::finalize()
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 	check_error();
-	// Intel/Mesa seems to have a broken glGenerateMipmap() for non-FBO textures, so do it here
-	// instead of calling glGenerateMipmap().
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, needs_mipmaps ? GL_TRUE : GL_FALSE);
-	check_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
 	check_error();
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -102,6 +98,10 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 		check_error();
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, pixel_data);
 		check_error();
+		if (needs_mipmaps) {
+			glGenerateMipmap(GL_TEXTURE_2D);
+			check_error();
+		}
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
