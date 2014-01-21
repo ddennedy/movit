@@ -87,24 +87,21 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 
 YCbCrInput::~YCbCrInput()
 {
-	if (texture_num[0] != 0) {
-		glDeleteTextures(3, texture_num);
-		check_error();
+	for (unsigned channel = 0; channel < 3; ++channel) {
+		if (texture_num[channel] != 0) {
+			resource_pool->release_2d_texture(texture_num[channel]);
+		}
 	}
 }
 
 void YCbCrInput::finalize()
 {
 	// Create the textures themselves.
-	glGenTextures(3, texture_num);
-	check_error();
-
 	for (unsigned channel = 0; channel < 3; ++channel) {
+		texture_num[channel] = resource_pool->create_2d_texture(GL_LUMINANCE8, widths[channel], heights[channel]);
 		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		check_error();
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE8, widths[channel], heights[channel], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 		check_error();
 	}
 

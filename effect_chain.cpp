@@ -90,6 +90,7 @@ Node *EffectChain::add_node(Effect *effect)
 
 	nodes.push_back(node);
 	node_map[effect] = node;
+	effect->inform_added(this);
 	return node;
 }
 
@@ -1424,15 +1425,13 @@ void EffectChain::finalize()
 			find_output_size(phases[i]);
 
 			Node *output_node = phases[i]->effects.back();
-			glGenTextures(1, &output_node->output_texture);
+			output_node->output_texture = resource_pool->create_2d_texture(GL_RGBA16F_ARB, phases[i]->output_width, phases[i]->output_height);
 			check_error();
 			glBindTexture(GL_TEXTURE_2D, output_node->output_texture);
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			check_error();
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, phases[i]->output_width, phases[i]->output_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 			check_error();
 
 			output_node->output_texture_width = phases[i]->output_width;

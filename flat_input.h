@@ -6,9 +6,12 @@
 #include <string>
 
 #include "effect.h"
+#include "effect_chain.h"
 #include "image_format.h"
 #include "init.h"
 #include "input.h"
+
+class ResourcePool;
 
 // A FlatInput is the normal, “classic” case of an input, where everything
 // comes from a single 2D array with chunky pixels.
@@ -93,6 +96,11 @@ public:
 		this->pitch = pitch;
 	}
 
+	virtual void inform_added(EffectChain *chain)
+	{
+		resource_pool = chain->get_resource_pool();
+	}
+
 private:
 	ImageFormat image_format;
 	MovitPixelFormat pixel_format;
@@ -102,6 +110,7 @@ private:
 	int output_linear_gamma, needs_mipmaps;
 	unsigned width, height, pitch;
 	const void *pixel_data;
+	ResourcePool *resource_pool;
 };
 
 #endif // !defined(_MOVIT_FLAT_INPUT_H)

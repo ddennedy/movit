@@ -4,6 +4,7 @@
 
 #include "effect_util.h"
 #include "flat_input.h"
+#include "resource_pool.h"
 #include "util.h"
 
 FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
@@ -29,8 +30,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 FlatInput::~FlatInput()
 {
 	if (texture_num != 0) {
-		glDeleteTextures(1, &texture_num);
-		check_error();
+		resource_pool->release_2d_texture(texture_num);
 	}
 }
 
@@ -64,15 +64,10 @@ void FlatInput::finalize()
 	}
 
 	// Create the texture itself.
-	glGenTextures(1, &texture_num);
-	check_error();
+	texture_num = resource_pool->create_2d_texture(internal_format, width, height);
 	glBindTexture(GL_TEXTURE_2D, texture_num);
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
-	check_error();
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
@@ -86,6 +81,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texture_num);
+	check_error();
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	check_error();
 
 	if (needs_update) {

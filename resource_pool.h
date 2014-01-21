@@ -41,6 +41,15 @@ public:
 	GLuint compile_glsl_program(const std::string& vertex_shader, const std::string& fragment_shader);
 	void release_glsl_program(GLuint glsl_program_num);
 
+	// Allocate a 2D texture of the given internal format and dimensions,
+	// or fetch a previous used if possible. Unbinds GL_TEXTURE_2D afterwards.
+	// Keeps ownership of the texture; you must call release_2d_texture() instead
+	// of deleting it when you no longer want it.
+	//
+	// Note: Currently we do not actually have a freelist, but this will change soon.
+	GLuint create_2d_texture(GLint internal_format, GLsizei width, GLsizei height);
+	void release_2d_texture(GLuint texture_num);
+
 private:
 	// Delete the given program and both its shaders.
 	void delete_program(GLuint program_num);

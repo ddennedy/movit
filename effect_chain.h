@@ -174,6 +174,12 @@ public:
 	void replace_sender(Node *new_sender, Node *receiver);
 	void insert_node_between(Node *sender, Node *middle, Node *receiver);
 
+	// Get the current resource pool assigned to this EffectChain.
+	// Primarily to let effects allocate textures as needed.
+	// Any resources you get from the pool must be returned to the pool
+	// no later than in the Effect's destructor.
+	ResourcePool *get_resource_pool() { return resource_pool; }
+
 private:
 	// Make sure the output rectangle is at least large enough to hold
 	// the given input rectangle in both dimensions, and is of the

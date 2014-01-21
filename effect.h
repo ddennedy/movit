@@ -196,6 +196,12 @@ public:
 	// if you have several, they will be INPUT1(), INPUT2(), and so on.
 	virtual unsigned num_inputs() const { return 1; }
 
+	// Inform the effect that it has been just added to the EffectChain.
+	// The primary use for this is to store the ResourcePool uesd by
+	// the chain; for modifications to it, rewrite_graph() below
+	// is probably a better fit.
+	virtual void inform_added(EffectChain *chain) {}
+
 	// Let the effect rewrite the effect chain as it sees fit.
 	// Most effects won't need to do this, but this is very useful
 	// if you have an effect that consists of multiple sub-effects

@@ -127,3 +127,43 @@ void ResourcePool::release_glsl_program(GLuint glsl_program_num)
 
 	pthread_mutex_unlock(&lock);
 }
+
+GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLsizei height)
+{
+	// Find any reasonable format given the internal format; OpenGL validates it
+	// even though we give NULL as pointer.
+	GLenum format;
+	switch (internal_format) {
+	case GL_RGBA32F_ARB:
+	case GL_RGBA16F_ARB:
+	case GL_RGBA8:
+	case GL_SRGB8_ALPHA8:
+		format = GL_RGBA;
+		break;
+	case GL_RG32F:
+	case GL_RG16F:
+		format = GL_RG;
+		break;
+	default:
+		// TODO: Add more here as needed.
+		assert(false);
+	}
+
+	GLuint texture_num;
+	glGenTextures(1, &texture_num);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texture_num);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	check_error();
+
+	return texture_num;
+}
+
+void ResourcePool::release_2d_texture(GLuint texture_num)
+{
+	glDeleteTextures(1, &texture_num);
+	check_error();
+}
