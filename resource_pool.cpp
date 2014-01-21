@@ -144,6 +144,9 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	case GL_RG16F:
 		format = GL_RG;
 		break;
+	case GL_LUMINANCE8:
+		format = GL_LUMINANCE;
+		break;
 	default:
 		// TODO: Add more here as needed.
 		assert(false);
