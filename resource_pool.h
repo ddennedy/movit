@@ -29,7 +29,15 @@ public:
 	// around after they are no longer in use (in case another EffectChain
 	// wants that exact program later). Shaders are expensive to compile and do not
 	// need a lot of resources to keep around, so this should be a reasonable number.
-	ResourcePool(size_t program_freelist_max_length = 100);
+	//
+	// texture_freelist_max_bytes is how many bytes of unused textures to keep around
+	// after they are no longer in use (in case a new texture of the same dimensions
+	// and format is needed). Note that the size estimate is very coarse; it does not
+	// take into account padding, metadata, and most importantly mipmapping.
+	// This means you should be prepared for actual memory usage of the freelist being
+	// twice this estimate or more.
+	ResourcePool(size_t program_freelist_max_length = 100,
+	             size_t texture_freelist_max_bytes = 100 << 20);  // 100 MB.
 	~ResourcePool();
 
 	// All remaining functions are intended for calls from EffectChain only.
@@ -57,7 +65,7 @@ private:
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
 
-	size_t program_freelist_max_length;
+	size_t program_freelist_max_length, texture_freelist_max_bytes;
 		
 	// A mapping from vertex/fragment shader source strings to compiled program number.
 	std::map<std::pair<std::string, std::string>, GLuint> programs;
@@ -74,6 +82,27 @@ private:
 	// Once this reaches <program_freelist_max_length>, the last element
 	// will be deleted.
 	std::list<GLuint> program_freelist;
+
+	struct Texture2D {
+		GLint internal_format;
+		GLsizei width, height;
+	};
+
+	// A mapping from texture number to format details. This is filled if the
+	// texture is given out to a client or on the freelist, but not if it is
+	// deleted from the freelist.
+	std::map<GLuint, Texture2D> texture_formats;
+
+	// A list of all textures that are release but not freed (most recently freed
+	// first), and an estimate of their current memory usage. Once
+	// <texture_freelist_bytes> goes above <texture_freelist_max_bytes>,
+	// elements are deleted off the end of the list until we are under the limit
+	// again.
+	std::list<GLuint> texture_freelist;
+	size_t texture_freelist_bytes;
+
+	// See the caveats at the constructor.
+	static size_t estimate_texture_size(const Texture2D &texture_format);
 };
 
 #endif  // !defined(_MOVIT_RESOURCE_POOL_H)

@@ -66,7 +66,8 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	  finalized(false),
 	  needs_mipmaps(false),
 	  width(width),
-	  height(height)
+	  height(height),
+	  resource_pool(NULL)
 {
 	pbos[0] = pbos[1] = pbos[2] = 0;
 	texture_num[0] = texture_num[1] = texture_num[2] = 0;

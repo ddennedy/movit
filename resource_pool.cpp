@@ -13,8 +13,11 @@
 
 using namespace std;
 
-ResourcePool::ResourcePool(size_t program_freelist_max_length)
-	: program_freelist_max_length(program_freelist_max_length) {
+ResourcePool::ResourcePool(size_t program_freelist_max_length,
+                           size_t texture_freelist_max_bytes)
+	: program_freelist_max_length(program_freelist_max_length),
+	  texture_freelist_max_bytes(texture_freelist_max_bytes),
+	  texture_freelist_bytes(0) {
 	pthread_mutex_init(&lock, NULL);
 }
 
@@ -29,6 +32,20 @@ ResourcePool::~ResourcePool()
 	}
 	assert(programs.empty());
 	assert(program_shaders.empty());
+
+	for (list<GLuint>::const_iterator freelist_it = texture_freelist.begin();
+	     freelist_it != texture_freelist.end();
+	     ++freelist_it) {
+		GLuint free_texture_num = program_freelist.front();
+		program_freelist.pop_front();
+		assert(texture_formats.count(free_texture_num) != 0);
+		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
+		texture_formats.erase(free_texture_num);
+		glDeleteTextures(1, &free_texture_num);
+		check_error();
+	}
+	assert(texture_formats.empty());
+	assert(texture_freelist_bytes == 0);
 }
 
 void ResourcePool::delete_program(GLuint glsl_program_num)
@@ -130,6 +147,24 @@ void ResourcePool::release_glsl_program(GLuint glsl_program_num)
 
 GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLsizei height)
 {
+	pthread_mutex_lock(&lock);
+	// See if there's a texture on the freelist we can use.
+	for (list<GLuint>::iterator freelist_it = texture_freelist.begin();
+	     freelist_it != texture_freelist.end();
+	     ++freelist_it) {
+		GLuint texture_num = *freelist_it;
+		map<GLuint, Texture2D>::const_iterator format_it = texture_formats.find(texture_num);
+		assert(format_it != texture_formats.end());
+		if (format_it->second.internal_format == internal_format &&
+		    format_it->second.width == width &&
+		    format_it->second.height == height) {
+			texture_freelist_bytes -= estimate_texture_size(format_it->second);
+			texture_freelist.erase(freelist_it);
+			pthread_mutex_unlock(&lock);
+			return texture_num;
+		}
+	}
+
 	// Find any reasonable format given the internal format; OpenGL validates it
 	// even though we give NULL as pointer.
 	GLenum format;
@@ -162,11 +197,64 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
 
+	Texture2D texture_format;
+	texture_format.internal_format = internal_format;
+	texture_format.width = width;
+	texture_format.height = height;
+	assert(texture_formats.count(texture_num) == 0);
+	texture_formats.insert(make_pair(texture_num, texture_format));
+
+	pthread_mutex_unlock(&lock);
 	return texture_num;
 }
 
 void ResourcePool::release_2d_texture(GLuint texture_num)
 {
-	glDeleteTextures(1, &texture_num);
-	check_error();
+	pthread_mutex_lock(&lock);
+	texture_freelist.push_front(texture_num);
+	assert(texture_formats.count(texture_num) != 0);
+	texture_freelist_bytes += estimate_texture_size(texture_formats[texture_num]);
+
+	while (texture_freelist_bytes > texture_freelist_max_bytes) {
+		GLuint free_texture_num = texture_freelist.front();
+		texture_freelist.pop_front();
+		assert(texture_formats.count(free_texture_num) != 0);
+		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
+		texture_formats.erase(free_texture_num);
+		glDeleteTextures(1, &free_texture_num);
+		check_error();
+	}
+	pthread_mutex_unlock(&lock);
+}
+
+size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
+{
+	size_t bytes_per_pixel;
+
+	switch (texture_format.internal_format) {
+	case GL_RGBA32F_ARB:
+		bytes_per_pixel = 16;
+		break;
+	case GL_RGBA16F_ARB:
+		bytes_per_pixel = 8;
+		break;
+	case GL_RGBA8:
+	case GL_SRGB8_ALPHA8:
+		bytes_per_pixel = 4;
+		break;
+	case GL_RG32F:
+		bytes_per_pixel = 8;
+		break;
+	case GL_RG16F:
+		bytes_per_pixel = 4;
+		break;
+	case GL_LUMINANCE8:
+		bytes_per_pixel = 1;
+		break;
+	default:
+		// TODO: Add more here as needed.
+		assert(false);
+	}
+
+	return texture_format.width * texture_format.height * bytes_per_pixel;
 }
