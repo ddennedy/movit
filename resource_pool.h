@@ -71,7 +71,8 @@ private:
 	std::map<GLuint, std::pair<GLuint, GLuint> > program_shaders;
 
 	// A list of programs that are no longer in use, most recently freed first.
-	// Once this reaches <program_freelist_max_length>, 
+	// Once this reaches <program_freelist_max_length>, the last element
+	// will be deleted.
 	std::list<GLuint> program_freelist;
 };
 
