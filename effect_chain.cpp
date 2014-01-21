@@ -44,9 +44,6 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 EffectChain::~EffectChain()
 {
 	for (unsigned i = 0; i < nodes.size(); ++i) {
-		if (nodes[i]->output_texture != 0) {
-			glDeleteTextures(1, &nodes[i]->output_texture);
-		}
 		delete nodes[i]->effect;
 		delete nodes[i];
 	}
@@ -86,7 +83,6 @@ Node *EffectChain::add_node(Effect *effect)
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
 	node->output_alpha_type = ALPHA_INVALID;
-	node->output_texture = 0;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
@@ -1414,32 +1410,6 @@ void EffectChain::finalize()
 
 	output_dot("step19-split-to-phases.dot");
 
-	// If we have more than one phase, we need intermediate render-to-texture.
-	// Construct an FBO, and then as many textures as we need.
-	// We choose the simplest option of having one texture per output,
-	// since otherwise this turns into an (albeit simple)
-	// register allocation problem.
-	if (phases.size() > 1) {
-		for (unsigned i = 0; i < phases.size() - 1; ++i) {
-			inform_input_sizes(phases[i]);
-			find_output_size(phases[i]);
-
-			Node *output_node = phases[i]->effects.back();
-			output_node->output_texture = resource_pool->create_2d_texture(GL_RGBA16F_ARB, phases[i]->output_width, phases[i]->output_height);
-			check_error();
-			glBindTexture(GL_TEXTURE_2D, output_node->output_texture);
-			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			check_error();
-
-			output_node->output_texture_width = phases[i]->output_width;
-			output_node->output_texture_height = phases[i]->output_height;
-		}
-		inform_input_sizes(phases.back());
-	}
-		
 	for (unsigned i = 0; i < inputs.size(); ++i) {
 		inputs[i]->finalize();
 	}
@@ -1491,29 +1461,18 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 	std::set<Node *> generated_mipmaps;
 
+	// We choose the simplest option of having one texture per output,
+	// since otherwise this turns into an (albeit simple) register allocation problem.
+	std::map<Phase *, GLuint> output_textures;
+
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
-		// See if the requested output size has changed. If so, we need to recreate
-		// the texture (and before we start setting up inputs).
+		// Find a texture for this phase.
 		inform_input_sizes(phases[phase]);
 		if (phase != phases.size() - 1) {
 			find_output_size(phases[phase]);
 
-			Node *output_node = phases[phase]->effects.back();
-
-			if (output_node->output_texture_width != phases[phase]->output_width ||
-			    output_node->output_texture_height != phases[phase]->output_height) {
-				glActiveTexture(GL_TEXTURE0);
-				check_error();
-				glBindTexture(GL_TEXTURE_2D, output_node->output_texture);
-				check_error();
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, phases[phase]->output_width, phases[phase]->output_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-				check_error();
-				glBindTexture(GL_TEXTURE_2D, 0);
-				check_error();
-
-				output_node->output_texture_width = phases[phase]->output_width;
-				output_node->output_texture_height = phases[phase]->output_height;
-			}
+			GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F_ARB, phases[phase]->output_width, phases[phase]->output_height);
+			output_textures.insert(std::make_pair(phases[phase], tex_num));
 		}
 
 		glUseProgram(phases[phase]->glsl_program_num);
@@ -1523,7 +1482,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		for (unsigned sampler = 0; sampler < phases[phase]->inputs.size(); ++sampler) {
 			glActiveTexture(GL_TEXTURE0 + sampler);
 			Node *input = phases[phase]->inputs[sampler];
-			glBindTexture(GL_TEXTURE_2D, input->output_texture);
+			glBindTexture(GL_TEXTURE_2D, output_textures[input->phase]);
 			check_error();
 			if (phases[phase]->input_needs_mipmaps) {
 				if (generated_mipmaps.count(input) == 0) {
@@ -1537,6 +1496,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				check_error();
 			}
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			check_error();
 
 			std::string texture_name = std::string("tex_") + phases[phase]->effect_ids[input];
 			glUniform1i(glGetUniformLocation(phases[phase]->glsl_program_num, texture_name.c_str()), sampler);
@@ -1556,12 +1519,11 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		} else {
-			Node *output_node = phases[phase]->effects.back();
 			glFramebufferTexture2D(
 				GL_FRAMEBUFFER,
 			        GL_COLOR_ATTACHMENT0,
 				GL_TEXTURE_2D,
-				output_node->output_texture,
+				output_textures[phases[phase]],
 				0);
 			check_error();
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
@@ -1599,6 +1561,12 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			Node *node = phases[phase]->effects[i];
 			node->effect->clear_gl_state();
 		}
+	}
+
+	for (std::map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
+	     texture_it != output_textures.end();
+	     ++texture_it) {
+		resource_pool->release_2d_texture(texture_it->second);
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

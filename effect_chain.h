@@ -64,11 +64,9 @@ private:
 	// they will be equal.
 	unsigned output_width, output_height;
 
-	// If output goes to RTT (otherwise, none of these are set).
-	// The Phase pointer is a but ugly; we should probably fix so
-	// that Phase takes other phases as inputs, instead of Node.
-	GLuint output_texture;
-	unsigned output_texture_width, output_texture_height;
+	// If output goes to RTT, which phase it is in (otherwise unset).
+	// This is a bit ugly; we should probably fix so that Phase takes other
+	// phases as inputs, instead of Node.
 	Phase *phase;
 
 	// Used during the building of the effect chain.
