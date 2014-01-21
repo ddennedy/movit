@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "effect_util.h"
+#include "resource_pool.h"
 #include "util.h"
 #include "ycbcr_input.h"
 

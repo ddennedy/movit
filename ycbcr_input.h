@@ -10,8 +10,11 @@
 #include <string>
 
 #include "effect.h"
+#include "effect_chain.h"
 #include "image_format.h"
 #include "input.h"
+
+class ResourcePool;
 
 struct YCbCrFormat {
 	// Which formula for Y' to use.
@@ -87,6 +90,11 @@ public:
 		this->pitch[channel] = pitch;
 	}
 
+	virtual void inform_added(EffectChain *chain)
+	{
+		resource_pool = chain->get_resource_pool();
+	}
+
 private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
@@ -98,6 +106,7 @@ private:
 	unsigned width, height, widths[3], heights[3];
 	const unsigned char *pixel_data[3];
 	unsigned pitch[3];
+	ResourcePool *resource_pool;
 };
 
 #endif // !defined(_MOVIT_YCBCR_INPUT_H)
