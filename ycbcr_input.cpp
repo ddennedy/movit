@@ -62,7 +62,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        unsigned width, unsigned height)
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
-	  needs_update(false),
 	  finalized(false),
 	  needs_mipmaps(false),
 	  width(width),
@@ -98,16 +97,6 @@ YCbCrInput::~YCbCrInput()
 
 void YCbCrInput::finalize()
 {
-	// Create the textures themselves.
-	for (unsigned channel = 0; channel < 3; ++channel) {
-		texture_num[channel] = resource_pool->create_2d_texture(GL_LUMINANCE8, widths[channel], heights[channel]);
-		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		check_error();
-	}
-
-	needs_update = true;
 	finalized = true;
 }
 	
@@ -116,12 +105,14 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 	for (unsigned channel = 0; channel < 3; ++channel) {
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
 		check_error();
-		glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
-		check_error();
 
-		if (needs_update) {
-			// Re-upload the texture.
-			// Copy the pixel data into the PBO.
+		if (texture_num[channel] == 0) {
+			// (Re-)upload the texture.
+			texture_num[channel] = resource_pool->create_2d_texture(GL_LUMINANCE8, widths[channel], heights[channel]);
+			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			check_error();
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbos[channel]);
 			check_error();
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -136,6 +127,9 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
+		} else {
+			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
+			check_error();
 		}
 	}
 
@@ -148,7 +142,6 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 	set_uniform_int(glsl_program_num, prefix, "tex_cr", *sampler_num + 2);
 
 	*sampler_num += 3;
-	needs_update = false;
 }
 
 std::string YCbCrInput::output_fragment_shader()
@@ -250,4 +243,14 @@ std::string YCbCrInput::output_fragment_shader()
 
 	frag_shader += read_file("ycbcr_input.frag");
 	return frag_shader;
+}
+
+void YCbCrInput::invalidate_pixel_data()
+{
+	for (unsigned channel = 0; channel < 3; ++channel) {
+		if (texture_num[channel] != 0) {
+			resource_pool->release_2d_texture(texture_num[channel]);
+			texture_num[channel] = 0;
+		}
+	}
 }

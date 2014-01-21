@@ -80,10 +80,7 @@ public:
 		invalidate_pixel_data();
 	}
 
-	void invalidate_pixel_data()
-	{
-		needs_update = true;
-	}
+	void invalidate_pixel_data();
 
 	void set_pitch(unsigned channel, unsigned pitch) {
 		assert(channel >= 0 && channel < 3);
@@ -99,7 +96,7 @@ private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint pbos[3], texture_num[3];
-	bool needs_update, finalized;
+	bool finalized;
 
 	int needs_mipmaps;
 

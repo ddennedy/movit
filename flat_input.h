@@ -86,10 +86,7 @@ public:
 		invalidate_pixel_data();
 	}
 
-	void invalidate_pixel_data()
-	{
-		needs_update = true;
-	}
+	void invalidate_pixel_data();
 
 	void set_pitch(unsigned pitch) {
 		assert(!finalized);
@@ -104,9 +101,9 @@ public:
 private:
 	ImageFormat image_format;
 	MovitPixelFormat pixel_format;
-	GLenum format, type;
+	GLenum internal_format, format, type;
 	GLuint pbo, texture_num;
-	bool needs_update, finalized;
+	bool finalized;
 	int output_linear_gamma, needs_mipmaps;
 	unsigned width, height, pitch;
 	const void *pixel_data;

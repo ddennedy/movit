@@ -13,7 +13,6 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  type(type),
 	  pbo(0),
 	  texture_num(0),
-	  needs_update(false),
 	  finalized(false),
 	  output_linear_gamma(false),
 	  needs_mipmaps(false),
@@ -37,7 +36,6 @@ FlatInput::~FlatInput()
 void FlatInput::finalize()
 {
 	// Translate the input format to OpenGL's enums.
-	GLenum internal_format;
 	if (type == GL_FLOAT) {
 		internal_format = GL_RGBA32F_ARB;
 	} else if (output_linear_gamma) {
@@ -63,16 +61,6 @@ void FlatInput::finalize()
 		assert(false);
 	}
 
-	// Create the texture itself.
-	texture_num = resource_pool->create_2d_texture(internal_format, width, height);
-	glBindTexture(GL_TEXTURE_2D, texture_num);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, 0);
-	check_error();
-
-	needs_update = true;
 	finalized = true;
 }
 	
@@ -80,20 +68,23 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 {
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, texture_num);
-	check_error();
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	check_error();
 
-	if (needs_update) {
-		// Re-upload the texture.
+	if (texture_num == 0) {
+		// (Re-)upload the texture.
+		texture_num = resource_pool->create_2d_texture(internal_format, width, height);
+		glBindTexture(GL_TEXTURE_2D, texture_num);
+		check_error();
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		check_error();
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		check_error();
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch);
 		check_error();
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, pixel_data);
+		check_error();
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		check_error();
 		if (needs_mipmaps) {
 			glGenerateMipmap(GL_TEXTURE_2D);
@@ -107,8 +98,9 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 		check_error();
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 		check_error();
-
-		needs_update = false;
+	} else {
+		glBindTexture(GL_TEXTURE_2D, texture_num);
+		check_error();
 	}
 
 	// Bind it to a sampler.
@@ -119,4 +111,12 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 std::string FlatInput::output_fragment_shader()
 {
 	return read_file("flat_input.frag");
+}
+
+void FlatInput::invalidate_pixel_data()
+{
+	if (texture_num != 0) {
+		resource_pool->release_2d_texture(texture_num);
+		texture_num = 0;
+	}
 }
