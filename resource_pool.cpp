@@ -36,8 +36,7 @@ ResourcePool::~ResourcePool()
 	for (list<GLuint>::const_iterator freelist_it = texture_freelist.begin();
 	     freelist_it != texture_freelist.end();
 	     ++freelist_it) {
-		GLuint free_texture_num = program_freelist.front();
-		program_freelist.pop_front();
+		GLuint free_texture_num = *freelist_it;
 		assert(texture_formats.count(free_texture_num) != 0);
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
 		texture_formats.erase(free_texture_num);
