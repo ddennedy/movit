@@ -954,3 +954,69 @@ TEST(EffectChainTest, VirtualSizeIsSentOnToInputs) {
 	// since bilinear scaling from 2x2 → 3x3 → 2x2 is not very exact.
 	expect_equal(data, out_data, size, size);
 }
+
+extern bool movit_initialized;
+
+// Does not use EffectChainTest, so that it can construct an EffectChain without
+// a shared ResourcePool (which is also properly destroyed afterwards).
+// Also turns on debugging to test that code path.
+TEST(EffectChainTest, IdentityWithOwnPool) {
+	const int width = 3, height = 2;
+	float data[] = {
+		0.0f, 0.25f, 0.3f,
+		0.75f, 1.0f, 1.0f,
+	};
+	const float expected_data[] = {
+		0.75f, 1.0f, 1.0f,
+		0.0f, 0.25f, 0.3f,
+	};
+	float out_data[6];
+
+	EffectChain chain(width, height);
+	movit_initialized = false;
+	init_movit(".", MOVIT_DEBUG_ON);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
+	input->set_pixel_data(data);
+	chain.add_input(input);
+	chain.add_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+
+	GLuint texnum, fbo;
+	glGenTextures(1, &texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	check_error();
+
+	glGenFramebuffers(1, &fbo);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	check_error();
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		texnum,
+		0);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
+
+	chain.finalize();
+
+	chain.render_to_fbo(fbo, width, height);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, out_data);
+
+	expect_equal(expected_data, out_data, width, height);
+
+	// Reset the debug status again.
+	movit_initialized = false;
+	init_movit(".", MOVIT_DEBUG_OFF);
+}
