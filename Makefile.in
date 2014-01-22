@@ -65,7 +65,7 @@ TESTS=effect_chain_test $(TESTED_INPUTS:=_test) $(TESTED_EFFECTS:=_test)
 LIB_OBJS=effect_util.o util.o widgets.o effect.o effect_chain.o init.o resource_pool.o $(INPUTS:=.o) $(EFFECTS:=.o)
 
 # Default target:
-all: libmovit.a $(TESTS)
+all: libmovit.la $(TESTS)
 
 ifeq ($(with_demo_app),yes)
 all: demo
@@ -80,29 +80,29 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
 
 # Unit tests.
-$(TESTS): %: %.o $(TEST_OBJS) libmovit.a
-	$(CXX) -o $@ $^ $(LDFLAGS)
+$(TESTS): %: %.o $(TEST_OBJS) libmovit.la
+	libtool --mode=link $(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
-demo: libmovit.a $(DEMO_OBJS)
-	$(CXX) -o demo $(DEMO_OBJS) libmovit.a $(LDFLAGS) $(DEMO_LDFLAGS)
+demo: libmovit.la $(DEMO_OBJS)
+	libtool --mode=link $(CXX) -o demo $(DEMO_OBJS) libmovit.la $(LDFLAGS) $(DEMO_LDFLAGS)
 
 # The library itself.
-libmovit.a: $(LIB_OBJS)
-	$(AR) rc $@ $(LIB_OBJS)
-	$(RANLIB) $@
+libmovit.la: $(LIB_OBJS)
+	libtool --mode=link $(CXX) -rpath $(libdir) -o $@ $(LIB_OBJS:.o=.lo)
 
 %.o: %.cpp
-	$(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	libtool --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
 
 clean:
-	$(RM) demo $(TESTS) libmovit.a $(OBJS) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step*.dot chain*.frag
-	$(RM) -r movit.info coverage/
+	libtool --mode=clean $(RM) demo $(TESTS) libmovit.la $(OBJS:.o=.lo)
+	$(RM) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step*.dot chain*.frag
+	$(RM) -r movit.info coverage/ .libs/
 
 distclean: clean
 	$(RM) Makefile movit.pc config.status config.log
@@ -137,8 +137,8 @@ SHADERS += overlay_matte_effect.frag
 MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.frag resize_effect.frag
 SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
 
-install: libmovit.a
-	$(INSTALL) -m 0644 libmovit.a $(libdir)/
+install: libmovit.la
+	libtool --mode=install $(INSTALL) -m 0644 libmovit.la $(libdir)/
 	$(MKDIR) -p $(includedir)/movit/
 	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
 	$(MKDIR) -p $(datadir)/movit/
