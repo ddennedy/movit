@@ -53,11 +53,11 @@ TESTED_EFFECTS += resample_effect
 TESTED_EFFECTS += dither_effect
 TESTED_EFFECTS += deconvolution_sharpen_effect
 TESTED_EFFECTS += fft_pass_effect
+TESTED_EFFECTS += vignette_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
 UNTESTED_EFFECTS += resize_effect
-UNTESTED_EFFECTS += vignette_effect
 UNTESTED_EFFECTS += multiply_effect
 
 EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
