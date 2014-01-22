@@ -20,8 +20,9 @@ INSTALL=install
 MKDIR=mkdir
 
 ifeq ($(COVERAGE),1)
-CXXFLAGS += -fprofile-arcs -ftest-coverage
+CXXFLAGS += -fprofile-arcs -ftest-coverage --coverage
 LDFLAGS += -fprofile-arcs -ftest-coverage
+LDLIBS += -lgcov
 endif
 
 DEMO_OBJS=demo.o
@@ -83,26 +84,28 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 
 # Unit tests.
 $(TESTS): %: %.o $(TEST_OBJS) libmovit.la
-	$(LIBTOOL) --mode=link $(CXX) -o $@ $^ $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
 demo: libmovit.la $(DEMO_OBJS)
-	$(LIBTOOL) --mode=link $(CXX) -o demo $(DEMO_OBJS) libmovit.la $(LDFLAGS) $(DEMO_LDFLAGS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o demo $(DEMO_OBJS) libmovit.la $(LDLIBS) $(DEMO_LDLIBS)
 
 # The library itself.
-libmovit.la: $(LIB_OBJS)
-	$(LIBTOOL) --mode=link $(CXX) -rpath $(libdir) -o $@ $(LIB_OBJS:.o=.lo)
+libmovit.la: $(LIB_OBJS:.o=.lo)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $(LDLIBS)
 
-%.o: %.cpp
+%.lo: %.cpp
 	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+%.o: %.cpp
+	$(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
 
 clean:
-	$(LIBTOOL) --mode=clean $(RM) demo $(TESTS) libmovit.la $(OBJS:.o=.lo)
+	$(LIBTOOL) --mode=clean $(RM) demo $(TESTS) libmovit.la $(OBJS) $(OBJS:.o=.lo)
 	$(RM) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step*.dot chain*.frag
 	$(RM) -r movit.info coverage/ .libs/
 
