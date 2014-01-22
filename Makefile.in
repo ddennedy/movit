@@ -6,6 +6,7 @@ includedir = @includedir@
 libdir = @libdir@
 datarootdir = @datarootdir@
 datadir = @datadir@
+top_builddir = @top_builddir@
 with_demo_app = @with_demo_app@
 
 CC=@CC@
@@ -13,6 +14,7 @@ CXX=@CXX@
 CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
 LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ -lpthread
 DEMO_LDFLAGS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
+LIBTOOL=@LIBTOOL@
 RANLIB=ranlib
 INSTALL=install
 MKDIR=mkdir
@@ -81,26 +83,26 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 
 # Unit tests.
 $(TESTS): %: %.o $(TEST_OBJS) libmovit.la
-	libtool --mode=link $(CXX) -o $@ $^ $(LDFLAGS)
+	$(LIBTOOL) --mode=link $(CXX) -o $@ $^ $(LDFLAGS)
 
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
 demo: libmovit.la $(DEMO_OBJS)
-	libtool --mode=link $(CXX) -o demo $(DEMO_OBJS) libmovit.la $(LDFLAGS) $(DEMO_LDFLAGS)
+	$(LIBTOOL) --mode=link $(CXX) -o demo $(DEMO_OBJS) libmovit.la $(LDFLAGS) $(DEMO_LDFLAGS)
 
 # The library itself.
 libmovit.la: $(LIB_OBJS)
-	libtool --mode=link $(CXX) -rpath $(libdir) -o $@ $(LIB_OBJS:.o=.lo)
+	$(LIBTOOL) --mode=link $(CXX) -rpath $(libdir) -o $@ $(LIB_OBJS:.o=.lo)
 
 %.o: %.cpp
-	libtool --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 DEPS=$(OBJS:.o=.d)
 -include $(DEPS)
 
 clean:
-	libtool --mode=clean $(RM) demo $(TESTS) libmovit.la $(OBJS:.o=.lo)
+	$(LIBTOOL) --mode=clean $(RM) demo $(TESTS) libmovit.la $(OBJS:.o=.lo)
 	$(RM) $(OBJS:.o=.gcno) $(OBJS:.o=.gcda) $(DEPS) step*.dot chain*.frag
 	$(RM) -r movit.info coverage/ .libs/
 
@@ -138,7 +140,7 @@ MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.fra
 SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
 
 install: libmovit.la
-	libtool --mode=install $(INSTALL) -m 0644 libmovit.la $(libdir)/
+	$(LIBTOOL) --mode=install $(INSTALL) -m 0644 libmovit.la $(libdir)/
 	$(MKDIR) -p $(includedir)/movit/
 	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
 	$(MKDIR) -p $(datadir)/movit/
