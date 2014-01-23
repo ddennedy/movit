@@ -11,6 +11,8 @@
 #include "test_util.h"
 #include "util.h"
 
+using namespace std;
+
 class Input;
 
 namespace {
@@ -32,7 +34,7 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 	for (unsigned y = 0; y < height / 2; ++y) {
 		unsigned flip_y = height - y - 1;
 		for (unsigned x = 0; x < width; ++x) {
-			std::swap(data[y * width + x], data[flip_y * width + x]);
+			swap(data[y * width + x], data[flip_y * width + x]);
 		}
 	}
 }

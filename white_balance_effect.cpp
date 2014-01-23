@@ -10,6 +10,7 @@
 #include "white_balance_effect.h"
 
 using namespace Eigen;
+using namespace std;
 
 namespace {
 
@@ -103,12 +104,12 @@ WhiteBalanceEffect::WhiteBalanceEffect()
 	register_float("output_color_temperature", &output_color_temperature);
 }
 
-std::string WhiteBalanceEffect::output_fragment_shader()
+string WhiteBalanceEffect::output_fragment_shader()
 {
 	return read_file("white_balance_effect.frag");
 }
 
-void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Matrix3d rgb_to_xyz_matrix = ColorspaceConversionEffect::get_xyz_matrix(COLORSPACE_sRGB);
 	Vector3d rgb(neutral_color.r, neutral_color.g, neutral_color.b);

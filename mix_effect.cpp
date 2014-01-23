@@ -1,6 +1,8 @@
 #include "mix_effect.h"
 #include "util.h"
 
+using namespace std;
+
 MixEffect::MixEffect()
 	: strength_first(0.5f), strength_second(0.5f)
 {
@@ -8,7 +10,7 @@ MixEffect::MixEffect()
 	register_float("strength_second", &strength_second);
 }
 
-std::string MixEffect::output_fragment_shader()
+string MixEffect::output_fragment_shader()
 {
 	return read_file("mix_effect.frag");
 }

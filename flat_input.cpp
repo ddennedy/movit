@@ -7,6 +7,8 @@
 #include "resource_pool.h"
 #include "util.h"
 
+using namespace std;
+
 FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
 	: image_format(image_format),
           pixel_format(pixel_format),
@@ -64,7 +66,7 @@ void FlatInput::finalize()
 	finalized = true;
 }
 	
-void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
@@ -108,7 +110,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix,
 	++*sampler_num;
 }
 
-std::string FlatInput::output_fragment_shader()
+string FlatInput::output_fragment_shader()
 {
 	return read_file("flat_input.frag");
 }

@@ -13,6 +13,8 @@
 #include "resample_effect.h"
 #include "util.h"
 
+using namespace std;
+
 namespace {
 
 float sinc(float x)
@@ -155,7 +157,7 @@ void ResampleEffect::update_size()
 	assert(ok);
 }
 
-bool ResampleEffect::set_float(const std::string &key, float value) {
+bool ResampleEffect::set_float(const string &key, float value) {
 	if (key == "width") {
 		output_width = value;
 		update_size();
@@ -193,7 +195,7 @@ SingleResamplePassEffect::~SingleResamplePassEffect()
 	glDeleteTextures(1, &texnum);
 }
 
-std::string SingleResamplePassEffect::output_fragment_shader()
+string SingleResamplePassEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define DIRECTION_VERTICAL %d\n", (direction == VERTICAL));
@@ -212,7 +214,7 @@ std::string SingleResamplePassEffect::output_fragment_shader()
 //
 // For horizontal scaling, we fill in the exact same texture;
 // the shader just interprets it differently.
-void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	unsigned src_size, dst_size;
 	if (direction == SingleResamplePassEffect::HORIZONTAL) {
@@ -286,7 +288,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	// Anyhow, in this case we clearly need to look at more source pixels
 	// to compute the destination pixel, and how many depend on the scaling factor.
 	// Thus, the kernel width will vary with how much we scale.
-	float radius_scaling_factor = std::min(float(dst_size) / float(src_size), 1.0f);
+	float radius_scaling_factor = min(float(dst_size) / float(src_size), 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
 	float *weights = new float[dst_samples * src_samples * 2];
@@ -316,7 +318,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	src_bilinear_samples = 0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		unsigned num_samples_saved = combine_samples(weights + (y * src_samples) * 2, NULL, src_samples, UINT_MAX);
-		src_bilinear_samples = std::max<int>(src_bilinear_samples, src_samples - num_samples_saved);
+		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
 	}
 
 	// Now that we know the right width, actually combine the samples.
@@ -348,7 +350,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const std
 	delete[] bilinear_weights;
 }
 
-void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

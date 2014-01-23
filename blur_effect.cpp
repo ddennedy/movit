@@ -10,6 +10,8 @@
 
 // Must match blur_effect.frag.
 #define NUM_TAPS 16
+
+using namespace std;
 	
 BlurEffect::BlurEffect()
 	: radius(3.0f),
@@ -56,8 +58,8 @@ void BlurEffect::update_radius()
 	float adjusted_radius = radius;
 	while ((mipmap_width > 1 || mipmap_height > 1) && adjusted_radius * 1.5f > NUM_TAPS / 2) {
 		// Find the next mipmap size (round down, minimum 1 pixel).
-		mipmap_width = std::max(mipmap_width / 2, 1u);
-		mipmap_height = std::max(mipmap_height / 2, 1u);
+		mipmap_width = max(mipmap_width / 2, 1u);
+		mipmap_height = max(mipmap_height / 2, 1u);
 
 		// Approximate when mipmap sizes are odd, but good enough.
 		adjusted_radius = radius * float(mipmap_width) / float(input_width);
@@ -78,7 +80,7 @@ void BlurEffect::update_radius()
 	assert(ok);
 }
 
-bool BlurEffect::set_float(const std::string &key, float value) {
+bool BlurEffect::set_float(const string &key, float value) {
 	if (key == "radius") {
 		radius = value;
 		update_radius();
@@ -102,12 +104,12 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	register_int("virtual_height", &virtual_height);
 }
 
-std::string SingleBlurPassEffect::output_fragment_shader()
+string SingleBlurPassEffect::output_fragment_shader()
 {
 	return read_file("blur_effect.frag");
 }
 
-void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

@@ -6,6 +6,8 @@
 #include "effect_chain.h"
 #include "util.h"
 
+using namespace std;
+
 DiffusionEffect::DiffusionEffect()
 	: blur(new BlurEffect),
 	  overlay_matte(new OverlayMatteEffect)
@@ -27,7 +29,7 @@ void DiffusionEffect::rewrite_graph(EffectChain *graph, Node *self)
 	self->disabled = true;
 }
 
-bool DiffusionEffect::set_float(const std::string &key, float value) {
+bool DiffusionEffect::set_float(const string &key, float value) {
 	if (key == "blurred_mix_amount") {
 		return overlay_matte->set_float(key, value);
 	}
@@ -40,7 +42,7 @@ OverlayMatteEffect::OverlayMatteEffect()
 	register_float("blurred_mix_amount", &blurred_mix_amount);
 }
 
-std::string OverlayMatteEffect::output_fragment_shader()
+string OverlayMatteEffect::output_fragment_shader()
 {
 	return read_file("overlay_matte_effect.frag");
 }

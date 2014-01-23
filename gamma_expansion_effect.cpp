@@ -5,13 +5,15 @@
 #include "gamma_expansion_effect.h"
 #include "util.h"
 
+using namespace std;
+
 GammaExpansionEffect::GammaExpansionEffect()
 	: source_curve(GAMMA_LINEAR)
 {
 	register_int("source_curve", (int *)&source_curve);
 }
 
-std::string GammaExpansionEffect::output_fragment_shader()
+string GammaExpansionEffect::output_fragment_shader()
 {
 	if (source_curve == GAMMA_LINEAR) {
 		return read_file("identity.frag");
@@ -24,7 +26,7 @@ std::string GammaExpansionEffect::output_fragment_shader()
 	assert(false);
 }
 
-void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

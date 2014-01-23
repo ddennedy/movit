@@ -5,6 +5,8 @@
 #include "vignette_effect.h"
 #include "util.h"
 
+using namespace std;
+
 VignetteEffect::VignetteEffect()
 	: center(0.5f, 0.5f),
 	  aspect_correction(1.0f, 1.0f),
@@ -16,7 +18,7 @@ VignetteEffect::VignetteEffect()
 	register_float("inner_radius", (float *)&inner_radius);
 }
 
-std::string VignetteEffect::output_fragment_shader()
+string VignetteEffect::output_fragment_shader()
 {
 	return read_file("vignette_effect.frag");
 }
@@ -30,7 +32,7 @@ void VignetteEffect::inform_input_size(unsigned input_num, unsigned width, unsig
 	}
 }
 
-void VignetteEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void VignetteEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

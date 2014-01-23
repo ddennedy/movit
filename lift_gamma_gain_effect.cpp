@@ -5,6 +5,8 @@
 #include "lift_gamma_gain_effect.h"
 #include "util.h"
 
+using namespace std;
+
 LiftGammaGainEffect::LiftGammaGainEffect()
 	: lift(0.0f, 0.0f, 0.0f),
 	  gamma(1.0f, 1.0f, 1.0f),
@@ -15,12 +17,12 @@ LiftGammaGainEffect::LiftGammaGainEffect()
 	register_vec3("gain", (float *)&gain);
 }
 
-std::string LiftGammaGainEffect::output_fragment_shader()
+string LiftGammaGainEffect::output_fragment_shader()
 {
 	return read_file("lift_gamma_gain_effect.frag");
 }
 
-void LiftGammaGainEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void LiftGammaGainEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

@@ -5,6 +5,8 @@
 #include "padding_effect.h"
 #include "util.h"
 
+using namespace std;
+
 PaddingEffect::PaddingEffect()
 	: border_color(0.0f, 0.0f, 0.0f, 0.0f),
 	  output_width(1280),
@@ -19,12 +21,12 @@ PaddingEffect::PaddingEffect()
 	register_float("left", &left);
 }
 
-std::string PaddingEffect::output_fragment_shader()
+string PaddingEffect::output_fragment_shader()
 {
 	return read_file("padding_effect.frag");
 }
 
-void PaddingEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void PaddingEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

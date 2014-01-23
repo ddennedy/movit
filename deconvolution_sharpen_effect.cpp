@@ -17,6 +17,7 @@
 #include "util.h"
 
 using namespace Eigen;
+using namespace std;
 
 DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	: R(5),
@@ -37,7 +38,7 @@ DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	register_float("noise", &noise);
 }
 
-std::string DeconvolutionSharpenEffect::output_fragment_shader()
+string DeconvolutionSharpenEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define R %u\n", R);
@@ -170,10 +171,10 @@ MatrixXf convolve(const MatrixXf &a, const MatrixXf &b)
 			int xa_max = xr;
 
 			// Now fit to the first demand.
-			ya_min = std::max<int>(ya_min, 0);
-			ya_max = std::min<int>(ya_max, a.rows() - 1);
-			xa_min = std::max<int>(xa_min, 0);
-			xa_max = std::min<int>(xa_max, a.cols() - 1);
+			ya_min = max<int>(ya_min, 0);
+			ya_max = min<int>(ya_max, a.rows() - 1);
+			xa_min = max<int>(xa_min, 0);
+			xa_max = min<int>(xa_max, a.cols() - 1);
 
 			assert(ya_max >= ya_min);
 			assert(xa_max >= xa_min);
@@ -220,10 +221,10 @@ MatrixXf central_convolve(const MatrixXf &a, const MatrixXf &b)
 			int xa_max = xr;
 
 			// Now fit to the first demand.
-			ya_min = std::max<int>(ya_min, 0);
-			ya_max = std::min<int>(ya_max, a.rows() - 1);
-			xa_min = std::max<int>(xa_min, 0);
-			xa_max = std::min<int>(xa_max, a.cols() - 1);
+			ya_min = max<int>(ya_min, 0);
+			ya_max = min<int>(ya_max, a.rows() - 1);
+			xa_min = max<int>(xa_min, 0);
+			xa_max = min<int>(xa_max, a.cols() - 1);
 
 			assert(ya_max >= ya_min);
 			assert(xa_max >= xa_min);
@@ -417,7 +418,7 @@ void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 	last_noise = noise;
 }
 
-void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

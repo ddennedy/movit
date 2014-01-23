@@ -7,6 +7,8 @@
 #include "init.h"
 #include "util.h"
 
+using namespace std;
+
 bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
@@ -16,7 +18,7 @@ int movit_num_wrongly_rounded;
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
 // pointer instead (and never care to clean it up).
-std::string *movit_data_directory = NULL;
+string *movit_data_directory = NULL;
 
 namespace {
 
@@ -114,7 +116,7 @@ void measure_texel_subpixel_precision()
 	float biggest_jump = 0.0f;
 	for (unsigned i = 1; i < width; ++i) {
 		assert(out_data[i] >= out_data[i - 1]);
-		biggest_jump = std::max(biggest_jump, out_data[i] - out_data[i - 1]);
+		biggest_jump = max(biggest_jump, out_data[i] - out_data[i - 1]);
 	}
 
 	movit_texel_subpixel_precision = biggest_jump;
@@ -275,13 +277,13 @@ void check_extensions()
 
 }  // namespace
 
-void init_movit(const std::string& data_directory, MovitDebugLevel debug_level)
+void init_movit(const string& data_directory, MovitDebugLevel debug_level)
 {
 	if (movit_initialized) {
 		return;
 	}
 
-	movit_data_directory = new std::string(data_directory);
+	movit_data_directory = new string(data_directory);
 	movit_debug_level = debug_level;
 
 	glewInit();

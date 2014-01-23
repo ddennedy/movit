@@ -11,6 +11,7 @@
 #include "ycbcr_input.h"
 
 using namespace Eigen;
+using namespace std;
 
 namespace {
 
@@ -100,7 +101,7 @@ void YCbCrInput::finalize()
 	finalized = true;
 }
 	
-void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
 	for (unsigned channel = 0; channel < 3; ++channel) {
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
@@ -144,7 +145,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const std::string& prefix
 	*sampler_num += 3;
 }
 
-std::string YCbCrInput::output_fragment_shader()
+string YCbCrInput::output_fragment_shader()
 {
 	float coeff[3], offset[3], scale[3];
 
@@ -212,7 +213,7 @@ std::string YCbCrInput::output_fragment_shader()
 	// Inverting the matrix gives us what we need to go from YCbCr back to RGB.
 	Matrix3d ycbcr_to_rgb = rgb_to_ycbcr.inverse();
 
-	std::string frag_shader;
+	string frag_shader;
 
 	frag_shader = output_glsl_mat3("PREFIX(inv_ycbcr_matrix)", ycbcr_to_rgb);
 

@@ -7,6 +7,8 @@
 #include "init.h"
 #include "util.h"
 
+using namespace std;
+
 namespace {
 
 // A simple LCG (linear congruental generator) random generator.
@@ -39,14 +41,14 @@ DitherEffect::~DitherEffect()
 	glDeleteTextures(1, &texnum);
 }
 
-std::string DitherEffect::output_fragment_shader()
+string DitherEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define NEED_EXPLICIT_ROUND %d\n", (movit_num_wrongly_rounded > 0));
 	return buf + read_file("dither_effect.frag");
 }
 
-void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void DitherEffect::update_texture(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	float *dither_noise = new float[width * height];
 	float dither_double_amplitude = 1.0f / (1 << num_bits);
@@ -54,8 +56,8 @@ void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &pr
 	// We don't need a strictly nonrepeating dither; reducing the resolution
 	// to max 128x128 saves a lot of texture bandwidth, without causing any
 	// noticeable harm to the dither's performance.
-	texture_width = std::min(width, 128);
-	texture_height = std::min(height, 128);
+	texture_width = min(width, 128);
+	texture_height = min(height, 128);
 
 	// Using the resolution as a seed gives us a consistent dither from frame to frame.
 	// It also gives a different dither for e.g. different aspect ratios, which _feels_
@@ -85,7 +87,7 @@ void DitherEffect::update_texture(GLuint glsl_program_num, const std::string &pr
 	delete[] dither_noise;
 }
 
-void DitherEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void DitherEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

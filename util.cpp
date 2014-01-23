@@ -8,7 +8,9 @@
 #include "init.h"
 #include "util.h"
 
-extern std::string *movit_data_directory;
+using namespace std;
+
+extern string *movit_data_directory;
 
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
 {
@@ -66,9 +68,9 @@ void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b)
 	}
 }
 
-std::string read_file(const std::string &filename)
+string read_file(const string &filename)
 {
-	const std::string full_pathname = *movit_data_directory + "/" + filename;
+	const string full_pathname = *movit_data_directory + "/" + filename;
 
 	static char buf[131072];
 	FILE *fp = fopen(full_pathname.c_str(), "r");
@@ -80,10 +82,10 @@ std::string read_file(const std::string &filename)
 	int len = fread(buf, 1, sizeof(buf), fp);
 	fclose(fp);
 
-	return std::string(buf, len);
+	return string(buf, len);
 }
 
-GLuint compile_shader(const std::string &shader_src, GLenum type)
+GLuint compile_shader(const string &shader_src, GLenum type)
 {
 	GLuint obj = glCreateShader(type);
 	const GLchar* source[] = { shader_src.data() };
@@ -116,7 +118,7 @@ void print_3x3_matrix(const Eigen::Matrix3d& m)
 	printf("\n");
 }
 
-std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m)
+string output_glsl_mat3(const string &name, const Eigen::Matrix3d &m)
 {
 	char buf[1024];
 	sprintf(buf,

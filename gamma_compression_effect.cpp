@@ -6,13 +6,15 @@
 #include "effect_util.h"
 #include "util.h"
 
+using namespace std;
+
 GammaCompressionEffect::GammaCompressionEffect()
 	: destination_curve(GAMMA_LINEAR)
 {
 	register_int("destination_curve", (int *)&destination_curve);
 }
 
-std::string GammaCompressionEffect::output_fragment_shader()
+string GammaCompressionEffect::output_fragment_shader()
 {
 	if (destination_curve == GAMMA_LINEAR) {
 		return read_file("identity.frag");
@@ -25,7 +27,7 @@ std::string GammaCompressionEffect::output_fragment_shader()
 	assert(false);
 }
 
-void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

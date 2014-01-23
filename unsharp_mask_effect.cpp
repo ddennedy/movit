@@ -7,6 +7,8 @@
 #include "unsharp_mask_effect.h"
 #include "util.h"
 
+using namespace std;
+
 UnsharpMaskEffect::UnsharpMaskEffect()
 	: blur(new BlurEffect),
 	  mix(new MixEffect)
@@ -30,7 +32,7 @@ void UnsharpMaskEffect::rewrite_graph(EffectChain *graph, Node *self)
 	self->disabled = true;
 }
 
-bool UnsharpMaskEffect::set_float(const std::string &key, float value) {
+bool UnsharpMaskEffect::set_float(const string &key, float value) {
 	if (key == "amount") {
 		bool ok = mix->set_float("strength_first", 1.0f + value);
 		return ok && mix->set_float("strength_second", -value);

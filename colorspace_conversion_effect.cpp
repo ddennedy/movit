@@ -7,6 +7,7 @@
 #include "util.h"
 
 using namespace Eigen;
+using namespace std;
 
 // Color coordinates from Rec. 709; sRGB uses the same primaries.
 static const double rec709_x_R = 0.640, rec709_x_G = 0.300, rec709_x_B = 0.150;
@@ -126,7 +127,7 @@ Matrix3d ColorspaceConversionEffect::get_xyz_matrix(Colorspace space)
 	return m;
 }
 
-std::string ColorspaceConversionEffect::output_fragment_shader()
+string ColorspaceConversionEffect::output_fragment_shader()
 {
 	// Create a matrix to convert from source space -> XYZ,
 	// another matrix to convert from XYZ -> destination space,

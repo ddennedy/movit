@@ -16,6 +16,8 @@
 #include "test_util.h"
 #include "util.h"
 
+using namespace std;
+
 TEST(EffectChainTest, EmptyChain) {
 	float data[] = {
 		0.0f, 0.25f, 0.3f,
@@ -32,8 +34,8 @@ TEST(EffectChainTest, EmptyChain) {
 class IdentityEffect : public Effect {
 public:
 	IdentityEffect() {}
-	virtual std::string effect_type_id() const { return "IdentityEffect"; }
-	std::string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "IdentityEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
 };
 
 TEST(EffectChainTest, Identity) {
@@ -53,8 +55,8 @@ TEST(EffectChainTest, Identity) {
 class BouncingIdentityEffect : public Effect {
 public:
 	BouncingIdentityEffect() {}
-	virtual std::string effect_type_id() const { return "IdentityEffect"; }
-	std::string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "IdentityEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
 	bool needs_texture_bounce() const { return true; }
 	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 };
@@ -93,8 +95,8 @@ TEST(MirrorTest, BasicTest) {
 class InvertEffect : public Effect {
 public:
 	InvertEffect() {}
-	virtual std::string effect_type_id() const { return "InvertEffect"; }
-	std::string output_fragment_shader() { return read_file("invert_effect.frag"); }
+	virtual string effect_type_id() const { return "InvertEffect"; }
+	string output_fragment_shader() { return read_file("invert_effect.frag"); }
 
 	// A real invert would actually care about its alpha,
 	// but in this unit test, it only complicates things.
@@ -108,8 +110,8 @@ template<class T>
 class RewritingEffect : public Effect {
 public:
 	RewritingEffect() : effect(new T()), replaced_node(NULL) {}
-	virtual std::string effect_type_id() const { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
-	std::string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
+	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
 		replaced_node = graph->add_node(effect);
 		graph->replace_receiver(self, replaced_node);
@@ -202,7 +204,7 @@ public:
 	    : FlatInput(format, pixel_format, type, width, height),
 	      overridden_color_space(format.color_space),
 	      overridden_gamma_curve(format.gamma_curve) {}
-	virtual std::string effect_type_id() const { return "UnknownColorspaceInput"; }
+	virtual string effect_type_id() const { return "UnknownColorspaceInput"; }
 
 	void set_color_space(Colorspace colorspace) {
 		overridden_color_space = colorspace;
@@ -387,8 +389,8 @@ TEST(EffectChainTest, NoAlphaConversionsWhenPremultipliedAlphaNotNeeded) {
 class BlueInput : public Input {
 public:
 	BlueInput() { register_int("needs_mipmaps", &needs_mipmaps); }
-	virtual std::string effect_type_id() const { return "IdentityEffect"; }
-	std::string output_fragment_shader() { return read_file("blue.frag"); }
+	virtual string effect_type_id() const { return "IdentityEffect"; }
+	string output_fragment_shader() { return read_file("blue.frag"); }
 	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
 	virtual void finalize() {}
 	virtual bool can_output_linear_gamma() const { return true; }
@@ -406,8 +408,8 @@ private:
 class RewritingToBlueInput : public Input {
 public:
 	RewritingToBlueInput() : blue_node(NULL) { register_int("needs_mipmaps", &needs_mipmaps); }
-	virtual std::string effect_type_id() const { return "RewritingToBlueInput"; }
-	std::string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "RewritingToBlueInput"; }
+	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
 		Node *blue_node = graph->add_node(new BlueInput());
 		graph->replace_receiver(self, blue_node);
@@ -457,8 +459,8 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 class BlankAlphaPreservingEffect : public Effect {
 public:
 	BlankAlphaPreservingEffect() {}
-	virtual std::string effect_type_id() const { return "BlankAlphaPreservingEffect"; }
-	std::string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "BlankAlphaPreservingEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 };
 
@@ -517,9 +519,9 @@ class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
 	virtual bool needs_mipmaps() const { return true; }
-	virtual std::string effect_type_id() const { return "MipmapNeedingEffect"; }
-	std::string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+	virtual string effect_type_id() const { return "MipmapNeedingEffect"; }
+	string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
+	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 	{
 		glActiveTexture(GL_TEXTURE0);
 		check_error();
@@ -643,8 +645,8 @@ TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 class AddEffect : public Effect {
 public:
 	AddEffect() {}
-	virtual std::string effect_type_id() const { return "AddEffect"; }
-	std::string output_fragment_shader() { return read_file("add.frag"); }
+	virtual string effect_type_id() const { return "AddEffect"; }
+	string output_fragment_shader() { return read_file("add.frag"); }
 	virtual unsigned num_inputs() const { return 2; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 };
@@ -824,7 +826,7 @@ public:
 		input_width = width;
 		input_height = height;
 	}
-	virtual std::string effect_type_id() const { return "SizeStoringEffect"; }
+	virtual string effect_type_id() const { return "SizeStoringEffect"; }
 
 	int input_width, input_height;
 };
@@ -913,8 +915,8 @@ public:
 		  height(height),
 		  virtual_width(virtual_width),
 		  virtual_height(virtual_height) {}
-	virtual std::string effect_type_id() const { return "VirtualResizeEffect"; }
-	std::string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual string effect_type_id() const { return "VirtualResizeEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
 
 	virtual bool changes_output_size() const { return true; }
 

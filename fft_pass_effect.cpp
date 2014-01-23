@@ -4,6 +4,8 @@
 #include "effect_util.h"
 #include "util.h"
 
+using namespace std;
+
 FFTPassEffect::FFTPassEffect()
 	: input_width(1280),
 	  input_height(720),
@@ -21,14 +23,14 @@ FFTPassEffect::~FFTPassEffect()
 	glDeleteTextures(1, &tex);
 }
 
-std::string FFTPassEffect::output_fragment_shader()
+string FFTPassEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define DIRECTION_VERTICAL %d\n", (direction == VERTICAL));
 	return buf + read_file("fft_pass_effect.frag");
 }
 
-void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num)
+void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 

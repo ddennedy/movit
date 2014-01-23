@@ -50,7 +50,7 @@ ResourcePool::~ResourcePool()
 void ResourcePool::delete_program(GLuint glsl_program_num)
 {
 	bool found_program = false;
-	for (std::map<std::pair<std::string, std::string>, GLuint>::iterator program_it = programs.begin();
+	for (map<pair<string, string>, GLuint>::iterator program_it = programs.begin();
 	     program_it != programs.end();
 	     ++program_it) {
 		if (program_it->second == glsl_program_num) {
@@ -62,7 +62,7 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 	assert(found_program);
 	glDeleteProgram(glsl_program_num);
 
-	std::map<GLuint, std::pair<GLuint, GLuint> >::iterator shader_it =
+	map<GLuint, pair<GLuint, GLuint> >::iterator shader_it =
 		program_shaders.find(glsl_program_num);
 	assert(shader_it != program_shaders.end());
 

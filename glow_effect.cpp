@@ -7,6 +7,8 @@
 #include "mix_effect.h"
 #include "util.h"
 
+using namespace std;
+
 GlowEffect::GlowEffect()
 	: blur(new BlurEffect),
 	  cutoff(new HighlightCutoffEffect),
@@ -35,7 +37,7 @@ void GlowEffect::rewrite_graph(EffectChain *graph, Node *self)
 	self->disabled = true;
 }
 
-bool GlowEffect::set_float(const std::string &key, float value) {
+bool GlowEffect::set_float(const string &key, float value) {
 	if (key == "blurred_mix_amount") {
 		return mix->set_float("strength_second", value);
 	}
@@ -51,7 +53,7 @@ HighlightCutoffEffect::HighlightCutoffEffect()
 	register_float("cutoff", &cutoff);
 }
 
-std::string HighlightCutoffEffect::output_fragment_shader()
+string HighlightCutoffEffect::output_fragment_shader()
 {
 	return read_file("highlight_cutoff_effect.frag");
 }

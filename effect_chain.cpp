@@ -26,6 +26,8 @@
 #include "resource_pool.h"
 #include "util.h"
 
+using namespace std;
+
 EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
@@ -144,7 +146,7 @@ void EffectChain::insert_node_between(Node *sender, Node *middle, Node *receiver
 	assert(middle->incoming_links.size() == middle->effect->num_inputs());
 }
 
-void EffectChain::find_all_nonlinear_inputs(Node *node, std::vector<Node *> *nonlinear_inputs)
+void EffectChain::find_all_nonlinear_inputs(Node *node, vector<Node *> *nonlinear_inputs)
 {
 	if (node->output_gamma_curve == GAMMA_LINEAR &&
 	    node->effect->effect_type_id() != "GammaCompressionEffect") {
@@ -160,7 +162,7 @@ void EffectChain::find_all_nonlinear_inputs(Node *node, std::vector<Node *> *non
 	}
 }
 
-Effect *EffectChain::add_effect(Effect *effect, const std::vector<Effect *> &inputs)
+Effect *EffectChain::add_effect(Effect *effect, const vector<Effect *> &inputs)
 {
 	assert(!finalized);
 	assert(inputs.size() == effect->num_inputs());
@@ -173,15 +175,15 @@ Effect *EffectChain::add_effect(Effect *effect, const std::vector<Effect *> &inp
 }
 
 // GLSL pre-1.30 doesn't support token pasting. Replace PREFIX(x) with <effect_id>_x.
-std::string replace_prefix(const std::string &text, const std::string &prefix)
+string replace_prefix(const string &text, const string &prefix)
 {
-	std::string output;
+	string output;
 	size_t start = 0;
 
 	while (start < text.size()) {
 		size_t pos = text.find("PREFIX(", start);
-		if (pos == std::string::npos) {
-			output.append(text.substr(start, std::string::npos));
+		if (pos == string::npos) {
+			output.append(text.substr(start, string::npos));
 			break;
 		}
 
@@ -214,44 +216,44 @@ std::string replace_prefix(const std::string &text, const std::string &prefix)
 }
 
 Phase *EffectChain::compile_glsl_program(
-	const std::vector<Node *> &inputs,
-	const std::vector<Node *> &effects)
+	const vector<Node *> &inputs,
+	const vector<Node *> &effects)
 {
 	Phase *phase = new Phase;
 	assert(!effects.empty());
 
 	// Deduplicate the inputs.
-	std::vector<Node *> true_inputs = inputs;
-	std::sort(true_inputs.begin(), true_inputs.end());
-	true_inputs.erase(std::unique(true_inputs.begin(), true_inputs.end()), true_inputs.end());
+	vector<Node *> true_inputs = inputs;
+	sort(true_inputs.begin(), true_inputs.end());
+	true_inputs.erase(unique(true_inputs.begin(), true_inputs.end()), true_inputs.end());
 
 	bool input_needs_mipmaps = false;
-	std::string frag_shader = read_file("header.frag");
+	string frag_shader = read_file("header.frag");
 
 	// Create functions for all the texture inputs that we need.
 	for (unsigned i = 0; i < true_inputs.size(); ++i) {
 		Node *input = true_inputs[i];
 		char effect_id[256];
 		sprintf(effect_id, "in%u", i);
-		phase->effect_ids.insert(std::make_pair(input, effect_id));
+		phase->effect_ids.insert(make_pair(input, effect_id));
 	
-		frag_shader += std::string("uniform sampler2D tex_") + effect_id + ";\n";
-		frag_shader += std::string("vec4 ") + effect_id + "(vec2 tc) {\n";
-		frag_shader += "\treturn texture2D(tex_" + std::string(effect_id) + ", tc);\n";
+		frag_shader += string("uniform sampler2D tex_") + effect_id + ";\n";
+		frag_shader += string("vec4 ") + effect_id + "(vec2 tc) {\n";
+		frag_shader += "\treturn texture2D(tex_" + string(effect_id) + ", tc);\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
 	}
 
-	std::vector<Node *> sorted_effects = topological_sort(effects);
+	vector<Node *> sorted_effects = topological_sort(effects);
 
 	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
 		Node *node = sorted_effects[i];
 		char effect_id[256];
 		sprintf(effect_id, "eff%u", i);
-		phase->effect_ids.insert(std::make_pair(node, effect_id));
+		phase->effect_ids.insert(make_pair(node, effect_id));
 
 		if (node->incoming_links.size() == 1) {
-			frag_shader += std::string("#define INPUT ") + phase->effect_ids[node->incoming_links[0]] + "\n";
+			frag_shader += string("#define INPUT ") + phase->effect_ids[node->incoming_links[0]] + "\n";
 		} else {
 			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
 				char buf[256];
@@ -261,7 +263,7 @@ Phase *EffectChain::compile_glsl_program(
 		}
 	
 		frag_shader += "\n";
-		frag_shader += std::string("#define FUNCNAME ") + effect_id + "\n";
+		frag_shader += string("#define FUNCNAME ") + effect_id + "\n";
 		frag_shader += replace_prefix(node->effect->output_convenience_uniforms(), effect_id);
 		frag_shader += replace_prefix(node->effect->output_fragment_shader(), effect_id);
 		frag_shader += "#undef PREFIX\n";
@@ -285,7 +287,7 @@ Phase *EffectChain::compile_glsl_program(
 			CHECK(node->effect->set_int("needs_mipmaps", input_needs_mipmaps));
 		}
 	}
-	frag_shader += std::string("#define INPUT ") + phase->effect_ids[sorted_effects.back()] + "\n";
+	frag_shader += string("#define INPUT ") + phase->effect_ids[sorted_effects.back()] + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
 	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
@@ -309,22 +311,22 @@ void EffectChain::construct_glsl_programs(Node *output)
 	// Which effects have already been completed?
 	// We need to keep track of it, as an effect with multiple outputs
 	// could otherwise be calculated multiple times.
-	std::set<Node *> completed_effects;
+	set<Node *> completed_effects;
 
 	// Effects in the current phase, as well as inputs (outputs from other phases
 	// that we depend on). Note that since we start iterating from the end,
 	// the effect list will be in the reverse order.
-	std::vector<Node *> this_phase_inputs;
-	std::vector<Node *> this_phase_effects;
+	vector<Node *> this_phase_inputs;
+	vector<Node *> this_phase_effects;
 
 	// Effects that we have yet to calculate, but that we know should
 	// be in the current phase.
-	std::stack<Node *> effects_todo_this_phase;
+	stack<Node *> effects_todo_this_phase;
 
 	// Effects that we have yet to calculate, but that come from other phases.
 	// We delay these until we have this phase done in its entirety,
 	// at which point we pick any of them and start a new phase from that.
-	std::stack<Node *> effects_todo_other_phases;
+	stack<Node *> effects_todo_other_phases;
 
 	effects_todo_this_phase.push(output);
 
@@ -349,7 +351,7 @@ void EffectChain::construct_glsl_programs(Node *output)
 			completed_effects.insert(node);
 
 			// Find all the dependencies of this effect, and add them to the stack.
-			std::vector<Node *> deps = node->incoming_links;
+			vector<Node *> deps = node->incoming_links;
 			assert(node->effect->num_inputs() == deps.size());
 			for (unsigned i = 0; i < deps.size(); ++i) {
 				bool start_new_phase = false;
@@ -424,7 +426,7 @@ void EffectChain::construct_glsl_programs(Node *output)
 
 	// Finally, since the phases are found from the output but must be executed
 	// from the input(s), reverse them, too.
-	std::reverse(phases.begin(), phases.end());
+	reverse(phases.begin(), phases.end());
 }
 
 void EffectChain::output_dot(const char *filename)
@@ -443,10 +445,10 @@ void EffectChain::output_dot(const char *filename)
 	fprintf(fp, "  output [shape=box label=\"(output)\"];\n");
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		// Find out which phase this event belongs to.
-		std::vector<int> in_phases;
+		vector<int> in_phases;
 		for (unsigned j = 0; j < phases.size(); ++j) {
 			const Phase* p = phases[j];
-			if (std::find(p->effects.begin(), p->effects.end(), nodes[i]) != p->effects.end()) {
+			if (find(p->effects.begin(), p->effects.end(), nodes[i]) != p->effects.end()) {
 				in_phases.push_back(j);
 			}
 		}
@@ -472,13 +474,13 @@ void EffectChain::output_dot(const char *filename)
 			char to_node_id[256];
 			snprintf(to_node_id, 256, "n%ld", (long)nodes[i]->outgoing_links[j]);
 
-			std::vector<std::string> labels = get_labels_for_edge(nodes[i], nodes[i]->outgoing_links[j]);
+			vector<string> labels = get_labels_for_edge(nodes[i], nodes[i]->outgoing_links[j]);
 			output_dot_edge(fp, from_node_id, to_node_id, labels);
 		}
 
 		if (nodes[i]->outgoing_links.empty() && !nodes[i]->disabled) {
 			// Output node.
-			std::vector<std::string> labels = get_labels_for_edge(nodes[i], NULL);
+			vector<string> labels = get_labels_for_edge(nodes[i], NULL);
 			output_dot_edge(fp, from_node_id, "output", labels);
 		}
 	}
@@ -487,9 +489,9 @@ void EffectChain::output_dot(const char *filename)
 	fclose(fp);
 }
 
-std::vector<std::string> EffectChain::get_labels_for_edge(const Node *from, const Node *to)
+vector<string> EffectChain::get_labels_for_edge(const Node *from, const Node *to)
 {
-	std::vector<std::string> labels;
+	vector<string> labels;
 
 	if (to != NULL && to->effect->needs_texture_bounce()) {
 		labels.push_back("needs_bounce");
@@ -544,14 +546,14 @@ std::vector<std::string> EffectChain::get_labels_for_edge(const Node *from, cons
 }
 
 void EffectChain::output_dot_edge(FILE *fp,
-                                  const std::string &from_node_id,
-                                  const std::string &to_node_id,
-                                  const std::vector<std::string> &labels)
+                                  const string &from_node_id,
+                                  const string &to_node_id,
+                                  const vector<string> &labels)
 {
 	if (labels.empty()) {
 		fprintf(fp, "  %s -> %s;\n", from_node_id.c_str(), to_node_id.c_str());
 	} else {
-		std::string label = labels[0];
+		string label = labels[0];
 		for (unsigned k = 1; k < labels.size(); ++k) {
 			label += ", " + labels[k];
 		}
@@ -724,10 +726,10 @@ void EffectChain::sort_all_nodes_topologically()
 	nodes = topological_sort(nodes);
 }
 
-std::vector<Node *> EffectChain::topological_sort(const std::vector<Node *> &nodes)
+vector<Node *> EffectChain::topological_sort(const vector<Node *> &nodes)
 {
-	std::set<Node *> nodes_left_to_visit(nodes.begin(), nodes.end());
-	std::vector<Node *> sorted_list;
+	set<Node *> nodes_left_to_visit(nodes.begin(), nodes.end());
+	vector<Node *> sorted_list;
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		topological_sort_visit_node(nodes[i], &nodes_left_to_visit, &sorted_list);
 	}
@@ -735,7 +737,7 @@ std::vector<Node *> EffectChain::topological_sort(const std::vector<Node *> &nod
 	return sorted_list;
 }
 
-void EffectChain::topological_sort_visit_node(Node *node, std::set<Node *> *nodes_left_to_visit, std::vector<Node *> *sorted_list)
+void EffectChain::topological_sort_visit_node(Node *node, set<Node *> *nodes_left_to_visit, vector<Node *> *sorted_list)
 {
 	if (nodes_left_to_visit->count(node) == 0) {
 		return;
@@ -1204,7 +1206,7 @@ void EffectChain::fix_internal_gamma_by_asking_inputs(unsigned step)
 			}
 
 			// See if all inputs can give us linear gamma. If not, leave it.
-			std::vector<Node *> nonlinear_inputs;
+			vector<Node *> nonlinear_inputs;
 			find_all_nonlinear_inputs(node, &nonlinear_inputs);
 			assert(!nonlinear_inputs.empty());
 
@@ -1335,7 +1337,7 @@ void EffectChain::add_dither_if_needed()
 // multiple outputs right now).
 Node *EffectChain::find_output_node()
 {
-	std::vector<Node *> output_nodes;
+	vector<Node *> output_nodes;
 	for (unsigned i = 0; i < nodes.size(); ++i) {
 		Node *node = nodes[i];
 		if (node->disabled) {
@@ -1459,11 +1461,11 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		check_error();
 	}
 
-	std::set<Node *> generated_mipmaps;
+	set<Node *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
 	// since otherwise this turns into an (albeit simple) register allocation problem.
-	std::map<Phase *, GLuint> output_textures;
+	map<Phase *, GLuint> output_textures;
 
 	for (unsigned phase = 0; phase < phases.size(); ++phase) {
 		// Find a texture for this phase.
@@ -1472,7 +1474,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			find_output_size(phases[phase]);
 
 			GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F_ARB, phases[phase]->output_width, phases[phase]->output_height);
-			output_textures.insert(std::make_pair(phases[phase], tex_num));
+			output_textures.insert(make_pair(phases[phase], tex_num));
 		}
 
 		glUseProgram(phases[phase]->glsl_program_num);
@@ -1501,7 +1503,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
 
-			std::string texture_name = std::string("tex_") + phases[phase]->effect_ids[input];
+			string texture_name = string("tex_") + phases[phase]->effect_ids[input];
 			glUniform1i(glGetUniformLocation(phases[phase]->glsl_program_num, texture_name.c_str()), sampler);
 			check_error();
 		}
@@ -1563,7 +1565,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		}
 	}
 
-	for (std::map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
+	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
 	     texture_it != output_textures.end();
 	     ++texture_it) {
 		resource_pool->release_2d_texture(texture_it->second);
