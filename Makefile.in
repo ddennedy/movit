@@ -14,6 +14,7 @@ CXX=@CXX@
 CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
 LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ -lpthread
 DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
+SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@
 RANLIB=ranlib
 INSTALL=install
