@@ -125,7 +125,7 @@ check: $(TESTS)
 # You need to build with COVERAGE=1 to use this target.
 coverage: check
 	lcov -d . -c -o movit.info
-	lcov --remove movit.info '*_test.cpp' '*/test_util.{cpp,h}' -o movit.info
+	lcov --remove movit.info '*_test.cpp' 'test_util.*' widgets.cpp -o movit.info
 	genhtml -o coverage movit.info
 
 HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h resource_pool.h
