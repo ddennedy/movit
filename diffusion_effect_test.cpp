@@ -1,5 +1,7 @@
 // Unit tests for DiffusionEffect.
 
+#include <GL/glew.h>
+
 #include "diffusion_effect.h"
 #include "effect_chain.h"
 #include "gtest/gtest.h"

@@ -1,5 +1,7 @@
 // Unit tests for LiftGammaGainEffect.
 
+#include <GL/glew.h>
+
 #include "effect_chain.h"
 #include "gtest/gtest.h"
 #include "image_format.h"

@@ -1,11 +1,14 @@
 // Unit tests for FFTPassEffect.
 
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "effect_chain.h"
+#include "fft_pass_effect.h"
+#include "glew.h"
 #include "gtest/gtest.h"
 #include "image_format.h"
-#include "fft_pass_effect.h"
 #include "multiply_effect.h"
 #include "test_util.h"
 

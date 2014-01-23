@@ -1,10 +1,11 @@
 // Unit tests for ResampleEffect.
 
+#include <GL/glew.h>
 #include <math.h>
-#include <iomanip>
 
 #include "effect_chain.h"
 #include "flat_input.h"
+#include "glew.h"
 #include "gtest/gtest.h"
 #include "image_format.h"
 #include "resample_effect.h"

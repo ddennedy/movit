@@ -1,9 +1,7 @@
-#include <math.h>
-#include <string.h>
 #include <assert.h>
 
-#include "gamma_compression_effect.h"
 #include "effect_util.h"
+#include "gamma_compression_effect.h"
 #include "util.h"
 
 using namespace std;

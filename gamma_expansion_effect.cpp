@@ -1,4 +1,3 @@
-#include <math.h>
 #include <assert.h>
 
 #include "effect_util.h"

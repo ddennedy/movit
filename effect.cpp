@@ -6,7 +6,6 @@
 
 #include "effect.h"
 #include "effect_util.h"
-#include "util.h"
 
 using namespace std;
 

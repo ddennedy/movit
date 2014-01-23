@@ -1,5 +1,3 @@
-#include <GL/glew.h>
-
 #include "multiply_effect.h"
 #include "util.h"
 

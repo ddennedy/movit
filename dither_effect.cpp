@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <assert.h>
+#include <stdio.h>
 #include <algorithm>
 
 #include "dither_effect.h"

@@ -1,5 +1,6 @@
 // Unit tests for DeconvolutionSharpenEffect.
 
+#include <GL/glew.h>
 #include <math.h>
 #include <stdlib.h>
 

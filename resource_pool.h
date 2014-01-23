@@ -16,12 +16,13 @@
 // safely called from multiple threads at the same time, provided they have
 // separate (but sharing) OpenGL contexts.
 
+#include <GL/glew.h>
+#include <pthread.h>
+#include <stddef.h>
 #include <list>
 #include <map>
 #include <string>
 #include <utility>
-#include <GL/glew.h>
-#include <pthread.h>
 
 class ResourcePool {
 public:

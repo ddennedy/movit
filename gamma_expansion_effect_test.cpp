@@ -1,10 +1,11 @@
 // Unit tests for GammaExpansionEffect.
 
-#include <math.h>
 #include <GL/glew.h>
+#include <math.h>
 
 #include "gamma_expansion_effect.h"
 #include "gtest/gtest.h"
+#include "gtest/gtest-message.h"
 #include "test_util.h"
 
 TEST(GammaExpansionEffectTest, sRGB_KeyValues) {

@@ -1,7 +1,8 @@
 #include <GL/glew.h>
+#include <math.h>
 
-#include "fft_pass_effect.h"
 #include "effect_util.h"
+#include "fft_pass_effect.h"
 #include "util.h"
 
 using namespace std;

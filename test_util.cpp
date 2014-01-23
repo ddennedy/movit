@@ -1,11 +1,12 @@
 #include <assert.h>
-#include <gtest/gtest-message.h>
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
 
 #include "flat_input.h"
+#include "glew.h"
 #include "gtest/gtest.h"
+#include "gtest/gtest-message.h"
 #include "init.h"
 #include "resource_pool.h"
 #include "test_util.h"

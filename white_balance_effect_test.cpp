@@ -1,6 +1,6 @@
 // Unit tests for WhiteBalanceEffect.
 
-#include <iomanip>
+#include <GL/glew.h>
 
 #include "effect_chain.h"
 #include "gtest/gtest.h"

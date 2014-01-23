@@ -9,6 +9,7 @@
 // Note that Movit's internal formats generally do not have enough accuracy
 // for 12-bit input or output.
 
+#include <GL/glew.h>
 #include <string>
 
 #include "effect.h"

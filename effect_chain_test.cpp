@@ -9,6 +9,7 @@
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
+#include "init.h"
 #include "input.h"
 #include "mirror_effect.h"
 #include "multiply_effect.h"

@@ -1,4 +1,5 @@
 // Unit tests for BlurEffect.
+#include <GL/glew.h>
 #include <math.h>
 #include <string.h>
 

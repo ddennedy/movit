@@ -1,9 +1,10 @@
 #include <GL/glew.h>
+#include <assert.h>
 #include <math.h>
 
 #include "effect_util.h"
-#include "vignette_effect.h"
 #include "util.h"
+#include "vignette_effect.h"
 
 using namespace std;
 

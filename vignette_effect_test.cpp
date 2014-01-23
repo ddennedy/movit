@@ -1,12 +1,13 @@
 // Unit tests for VignetteEffect.
 
+#include <GL/glew.h>
 #include <math.h>
 
 #include "effect_chain.h"
-#include "vignette_effect.h"
 #include "gtest/gtest.h"
 #include "image_format.h"
 #include "test_util.h"
+#include "vignette_effect.h"
 
 TEST(VignetteEffectTest, HugeInnerRadiusDoesNothing) {
 	const int size = 4;

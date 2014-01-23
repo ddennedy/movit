@@ -1,14 +1,15 @@
-#include "resource_pool.h"
-
-#include <stdio.h>
+#include <assert.h>
 #include <pthread.h>
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
 
+#include "glew.h"
 #include "init.h"
+#include "resource_pool.h"
 #include "util.h"
 
 using namespace std;

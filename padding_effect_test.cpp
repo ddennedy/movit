@@ -1,5 +1,6 @@
 // Unit tests for AlphaMultiplicationEffect.
 
+#include <GL/glew.h>
 #include <stddef.h>
 
 #include "effect_chain.h"

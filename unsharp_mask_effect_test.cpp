@@ -1,5 +1,6 @@
 // Unit tests for UnsharpMaskEffect.
 
+#include <GL/glew.h>
 #include <math.h>
 
 #include "effect_chain.h"

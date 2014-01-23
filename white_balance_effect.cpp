@@ -6,6 +6,7 @@
 #include "colorspace_conversion_effect.h"
 #include "d65.h"
 #include "effect_util.h"
+#include "image_format.h"
 #include "util.h"
 #include "white_balance_effect.h"
 

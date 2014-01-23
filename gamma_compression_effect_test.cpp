@@ -5,9 +5,11 @@
 // However, the accuracy tests are somewhat simpler, since we
 // only need to care about absolute errors and not relative.
 
-#include <math.h>
 #include <GL/glew.h>
+#include <math.h>
+
 #include "gtest/gtest.h"
+#include "gtest/gtest-message.h"
 #include "image_format.h"
 #include "test_util.h"
 
