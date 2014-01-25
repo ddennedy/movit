@@ -299,11 +299,18 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
+		double sum = 0.0;
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
 			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y), LANCZOS_RADIUS);
 			weights[(y * src_samples + i) * 2 + 0] = weight * radius_scaling_factor;
 			weights[(y * src_samples + i) * 2 + 1] = (src_y + 0.5) / float(src_size);
+			sum += weights[(y * src_samples + i) * 2 + 0];
+		}
+
+		// Normalize so that the sum becomes one.
+		for (int i = 0; i < src_samples; ++i) {
+			weights[(y * src_samples + i) * 2 + 0] /= sum;
 		}
 	}
 

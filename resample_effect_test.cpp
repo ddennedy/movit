@@ -166,3 +166,38 @@ TEST(ResampleEffectTest, UpscaleByThreeGetsCorrectPixelCenters) {
 		}
 	}
 }
+
+TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
+	const int swidth = 1280, sheight = 720;
+	const int dwidth = 36, dheight = 20;
+
+	float data[swidth * sheight], out_data[dwidth * dheight], expected_data[dwidth * dheight];
+	for (int y = 0; y < sheight; ++y) {
+		for (int x = 0; x < swidth; ++x) {
+			data[y * swidth + x] = 0.5f;
+		}
+	}
+	for (int y = 0; y < dheight; ++y) {
+		for (int x = 0; x < dwidth; ++x) {
+			expected_data[y * dwidth + x] = 0.5f;
+		}
+	}
+
+	EffectChainTester tester(NULL, dwidth, dheight, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, swidth, sheight);
+	input->set_pixel_data(data);
+
+	tester.get_chain()->add_input(input);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", dwidth));
+	ASSERT_TRUE(resample_effect->set_int("height", dheight));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, dwidth, dheight, 0.001);
+}
+
