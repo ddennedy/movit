@@ -229,7 +229,6 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		assert(false);
 	}
 
-
 	// For many resamplings (e.g. 640 -> 1280), we will end up with the same
 	// set of samples over and over again in a loop. Thus, we can compute only
 	// the first such loop, and then ask the card to repeat the texture for us.
@@ -299,19 +298,13 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
-		double sum = 0.0;
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
 			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y), LANCZOS_RADIUS);
 			weights[(y * src_samples + i) * 2 + 0] = weight * radius_scaling_factor;
 			weights[(y * src_samples + i) * 2 + 1] = (src_y + 0.5) / float(src_size);
-			sum += weights[(y * src_samples + i) * 2 + 0];
 		}
 
-		// Normalize so that the sum becomes one.
-		for (int i = 0; i < src_samples; ++i) {
-			weights[(y * src_samples + i) * 2 + 0] /= sum;
-		}
 	}
 
 	// Now make use of the bilinear filtering in the GPU to reduce the number of samples
@@ -337,6 +330,18 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 			src_samples,
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
+
+		// Normalize so that the sum becomes one. Note that we do it twice;
+		// this sometimes helps a tiny little bit when we have many samples.
+		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
+			float sum = 0.0;
+			for (int i = 0; i < src_bilinear_samples; ++i) {
+				sum += bilinear_weights[(y * src_bilinear_samples + i) * 2 + 0];
+			}
+			for (int i = 0; i < src_bilinear_samples; ++i) {
+				bilinear_weights[(y * src_bilinear_samples + i) * 2 + 0] /= sum;
+			}
+		}
 	}	
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
