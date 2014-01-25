@@ -168,22 +168,25 @@ TEST(ResampleEffectTest, UpscaleByThreeGetsCorrectPixelCenters) {
 }
 
 TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
-	const int swidth = 1280, sheight = 720;
-	const int dwidth = 36, dheight = 20;
+	// Do only one resample pass, more specifically the last one, which goes to
+	// our fp32 output. This allows us to analyze the precision without intermediate
+	// fp16 rounding.
+	const int swidth = 1, sheight = 1280;
+	const int dwidth = 1, dheight = 64;
 
 	float data[swidth * sheight], out_data[dwidth * dheight], expected_data[dwidth * dheight];
 	for (int y = 0; y < sheight; ++y) {
 		for (int x = 0; x < swidth; ++x) {
-			data[y * swidth + x] = 0.5f;
+			data[y * swidth + x] = 1.0f;
 		}
 	}
 	for (int y = 0; y < dheight; ++y) {
 		for (int x = 0; x < dwidth; ++x) {
-			expected_data[y * dwidth + x] = 0.5f;
+			expected_data[y * dwidth + x] = 1.0f;
 		}
 	}
 
-	EffectChainTester tester(NULL, dwidth, dheight, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(NULL, dwidth, dheight, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -198,6 +201,10 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 	ASSERT_TRUE(resample_effect->set_int("height", dheight));
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	expect_equal(expected_data, out_data, dwidth, dheight, 0.001);
+	// Require that we are within 10-bit accuracy. Note that this is for
+	// one pass only; some cards that don't have correct fp32 -> fp16
+	// rounding in the intermediate framebuffers will go outside this after
+	// a 2D resize. This limit is tight enough that it will be good enough
+	// for 8-bit accuracy, though.
+	expect_equal(expected_data, out_data, dwidth, dheight, 0.5 / 1023.0);
 }
-
