@@ -22,11 +22,6 @@ public:
 
 	virtual std::string effect_type_id() const { return "FlatInput"; }
 
-	// Create the texture itself. We cannot do this in the constructor,
-	// because we don't necessarily know all the settings (sRGB texture,
-	// mipmap generation) at that point.
-	void finalize();
-
 	virtual bool can_output_linear_gamma() const {
 		return (movit_srgb_textures_supported &&
 		        type == GL_UNSIGNED_BYTE &&
@@ -89,8 +84,8 @@ public:
 	void invalidate_pixel_data();
 
 	void set_pitch(unsigned pitch) {
-		assert(!finalized);
 		this->pitch = pitch;
+		invalidate_pixel_data();
 	}
 
 	virtual void inform_added(EffectChain *chain)
@@ -101,9 +96,8 @@ public:
 private:
 	ImageFormat image_format;
 	MovitPixelFormat pixel_format;
-	GLenum internal_format, format, type;
+	GLenum type;
 	GLuint pbo, texture_num;
-	bool finalized;
 	int output_linear_gamma, needs_mipmaps;
 	unsigned width, height, pitch;
 	const void *pixel_data;

@@ -1413,10 +1413,6 @@ void EffectChain::finalize()
 
 	output_dot("step19-split-to-phases.dot");
 
-	for (unsigned i = 0; i < inputs.size(); ++i) {
-		inputs[i]->finalize();
-	}
-
 	assert(phases[0]->inputs.empty());
 	
 	finalized = true;

@@ -15,7 +15,6 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  type(type),
 	  pbo(0),
 	  texture_num(0),
-	  finalized(false),
 	  output_linear_gamma(false),
 	  needs_mipmaps(false),
 	  width(width),
@@ -35,43 +34,40 @@ FlatInput::~FlatInput()
 	}
 }
 
-void FlatInput::finalize()
-{
-	// Translate the input format to OpenGL's enums.
-	if (type == GL_FLOAT) {
-		internal_format = GL_RGBA32F_ARB;
-	} else if (output_linear_gamma) {
-		assert(type == GL_UNSIGNED_BYTE);
-		internal_format = GL_SRGB8_ALPHA8;
-	} else {
-		assert(type == GL_UNSIGNED_BYTE);
-		internal_format = GL_RGBA8;
-	}
-	if (pixel_format == FORMAT_RGB) {
-		format = GL_RGB;
-	} else if (pixel_format == FORMAT_RGBA_PREMULTIPLIED_ALPHA ||
-	           pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) {
-		format = GL_RGBA;
-	} else if (pixel_format == FORMAT_BGR) {
-		format = GL_BGR;
-	} else if (pixel_format == FORMAT_BGRA_PREMULTIPLIED_ALPHA ||
-	           pixel_format == FORMAT_BGRA_POSTMULTIPLIED_ALPHA) {
-		format = GL_BGRA;
-	} else if (pixel_format == FORMAT_GRAYSCALE) {
-		format = GL_LUMINANCE;
-	} else {
-		assert(false);
-	}
-
-	finalized = true;
-}
-	
 void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
 
 	if (texture_num == 0) {
+		// Translate the input format to OpenGL's enums.
+		GLint internal_format;
+		GLenum format;
+		if (type == GL_FLOAT) {
+			internal_format = GL_RGBA32F_ARB;
+		} else if (output_linear_gamma) {
+			assert(type == GL_UNSIGNED_BYTE);
+			internal_format = GL_SRGB8_ALPHA8;
+		} else {
+			assert(type == GL_UNSIGNED_BYTE);
+			internal_format = GL_RGBA8;
+		}
+		if (pixel_format == FORMAT_RGB) {
+			format = GL_RGB;
+		} else if (pixel_format == FORMAT_RGBA_PREMULTIPLIED_ALPHA ||
+			   pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) {
+			format = GL_RGBA;
+		} else if (pixel_format == FORMAT_BGR) {
+			format = GL_BGR;
+		} else if (pixel_format == FORMAT_BGRA_PREMULTIPLIED_ALPHA ||
+			   pixel_format == FORMAT_BGRA_POSTMULTIPLIED_ALPHA) {
+			format = GL_BGRA;
+		} else if (pixel_format == FORMAT_GRAYSCALE) {
+			format = GL_LUMINANCE;
+		} else {
+			assert(false);
+		}
+
 		// (Re-)upload the texture.
 		texture_num = resource_pool->create_2d_texture(internal_format, width, height);
 		glBindTexture(GL_TEXTURE_2D, texture_num);

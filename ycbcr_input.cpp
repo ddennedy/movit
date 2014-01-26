@@ -63,7 +63,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        unsigned width, unsigned height)
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
-	  finalized(false),
 	  needs_mipmaps(false),
 	  width(width),
 	  height(height),
@@ -96,11 +95,6 @@ YCbCrInput::~YCbCrInput()
 	}
 }
 
-void YCbCrInput::finalize()
-{
-	finalized = true;
-}
-	
 void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
 	for (unsigned channel = 0; channel < 3; ++channel) {

@@ -44,11 +44,6 @@ public:
 
 	virtual std::string effect_type_id() const { return "YCbCrInput"; }
 
-	// Create the texture itself. We cannot do this in the constructor,
-	// because we don't necessarily know all the settings (sRGB texture,
-	// mipmap generation) at that point.
-	void finalize();
-
 	virtual bool can_output_linear_gamma() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
 
@@ -85,6 +80,7 @@ public:
 	void set_pitch(unsigned channel, unsigned pitch) {
 		assert(channel >= 0 && channel < 3);
 		this->pitch[channel] = pitch;
+		invalidate_pixel_data();
 	}
 
 	virtual void inform_added(EffectChain *chain)
@@ -96,7 +92,6 @@ private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint pbos[3], texture_num[3];
-	bool finalized;
 
 	int needs_mipmaps;
 
