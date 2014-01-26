@@ -99,7 +99,7 @@ GLuint compile_shader(const string &shader_src, GLenum type)
 	glGetShaderInfoLog(obj, log_length, &log_length, info_log);
 	info_log[log_length] = 0; 
 	if (strlen(info_log) > 0) {
-		printf("shader compile log: %s\n", info_log);
+		fprintf(stderr, "Shader compile log: %s\n", info_log);
 	}
 
 	GLint status;
