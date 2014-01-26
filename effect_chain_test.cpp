@@ -958,8 +958,6 @@ TEST(EffectChainTest, VirtualSizeIsSentOnToInputs) {
 	expect_equal(data, out_data, size, size);
 }
 
-extern bool movit_initialized;
-
 // Does not use EffectChainTest, so that it can construct an EffectChain without
 // a shared ResourcePool (which is also properly destroyed afterwards).
 // Also turns on debugging to test that code path.
@@ -976,8 +974,7 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	float out_data[6];
 
 	EffectChain chain(width, height);
-	movit_initialized = false;
-	init_movit(".", MOVIT_DEBUG_ON);
+	movit_debug_level = MOVIT_DEBUG_ON;
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -1020,6 +1017,5 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	expect_equal(expected_data, out_data, width, height);
 
 	// Reset the debug status again.
-	movit_initialized = false;
-	init_movit(".", MOVIT_DEBUG_OFF);
+	movit_debug_level = MOVIT_DEBUG_OFF;
 }
