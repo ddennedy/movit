@@ -14,6 +14,7 @@ MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
 int movit_num_wrongly_rounded;
+bool movit_shader_rounding_supported;
 
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
@@ -273,6 +274,12 @@ void check_extensions()
 	// sRGB texture decode would be nice, but are not mandatory
 	// (GammaExpansionEffect can do the same thing if needed).
 	movit_srgb_textures_supported = glewIsSupported("GL_EXT_texture_sRGB");
+
+	// We may want to use round() at the end of the final shader,
+	// if supported. We need either GLSL 1.30 or this extension to do that,
+	// and 1.30 brings with it other things that we don't want to demand
+	// for now.
+	movit_shader_rounding_supported = glewIsSupported("GL_EXT_gpu_shader4");
 }
 
 }  // namespace

@@ -45,7 +45,7 @@ DitherEffect::~DitherEffect()
 string DitherEffect::output_fragment_shader()
 {
 	char buf[256];
-	sprintf(buf, "#define NEED_EXPLICIT_ROUND %d\n", (movit_num_wrongly_rounded > 0));
+	sprintf(buf, "#define NEED_EXPLICIT_ROUND %d\n", (movit_num_wrongly_rounded > 0 && movit_shader_rounding_supported));
 	return buf + read_file("dither_effect.frag");
 }
 

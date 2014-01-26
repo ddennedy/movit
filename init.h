@@ -51,9 +51,14 @@ extern float movit_texel_subpixel_precision;
 // round the right way (giving some leeway, but not a lot); the number
 // of errors are stored here.
 //
-// If this value is above 0, and you have enabled dithering, we will
-// round off explicitly at the very end of the shader.
+// If this value is above 0, the extension GL_EXT_gpu_shader4 is available
+// (giving round()) and you have enabled dithering, we will round off
+// explicitly at the very end of the shader.
+//
+// Note: I don't know of any cards that round off wrong (well, outside
+// our tolerance) and do not have this extension.
 extern int movit_num_wrongly_rounded;
+extern bool movit_shader_rounding_supported;
 
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
