@@ -301,7 +301,7 @@ void DeconvolutionSharpenEffect::update_deconvolution_kernel()
 	MatrixXf r_uu(8 * R + 1, 8 * R + 1);
 	for (int y = -4 * R; y <= 4 * R; ++y) {	
 		for (int x = -4 * R; x <= 4 * R; ++x) {
-			r_uu(x + 4 * R, y + 4 * R) = pow(correlation, hypot(x, y));
+			r_uu(x + 4 * R, y + 4 * R) = pow(double(correlation), hypot(x, y));
 		}
 	}
 
