@@ -1,7 +1,7 @@
 #ifndef _MOVIT_DEFS_H
 #define _MOVIT_DEFS_H
 
-// Utility macros that are useful from other heder files.
+// Utility macros that are useful from other header files.
 
 #ifdef __GNUC__
 #define MUST_CHECK_RESULT __attribute__((warn_unused_result))
