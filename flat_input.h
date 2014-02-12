@@ -11,6 +11,8 @@
 #include "init.h"
 #include "input.h"
 
+namespace movit {
+
 class ResourcePool;
 
 // A FlatInput is the normal, “classic” case of an input, where everything
@@ -103,5 +105,7 @@ private:
 	const void *pixel_data;
 	ResourcePool *resource_pool;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_FLAT_INPUT_H)

@@ -29,6 +29,8 @@
 
 using namespace std;
 
+namespace movit {
+
 EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
@@ -1576,3 +1578,5 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		check_error();
 	}
 }
+
+}  // namespace movit

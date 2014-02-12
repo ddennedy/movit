@@ -6,6 +6,8 @@
 #include "gtest/gtest.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(ColorspaceConversionEffectTest, Reversible) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
@@ -278,3 +280,5 @@ TEST(ColorspaceConversionEffectTest, sRGBToRec601_525) {
 
 	expect_equal(expected_data, out_data, 4, 6);
 }
+
+}  // namespace movit

@@ -22,6 +22,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class EffectChain;
 class Node;
 class SingleResamplePassEffect;
@@ -98,5 +100,7 @@ private:
 	int src_bilinear_samples, num_loops;
 	float slice_height;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_RESAMPLE_EFFECT_H)

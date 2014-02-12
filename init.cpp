@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace movit {
+
 bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
@@ -314,3 +316,5 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	movit_initialized = true;
 	return true;
 }
+
+}  // namespace movit

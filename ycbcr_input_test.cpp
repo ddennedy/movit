@@ -10,6 +10,8 @@
 #include "util.h"
 #include "ycbcr_input.h"
 
+namespace movit {
+
 TEST(YCbCrInput, Simple444) {
 	const int width = 1;
 	const int height = 5;
@@ -474,3 +476,5 @@ TEST(YCbCrInput, PBO) {
 
 	glDeleteBuffers(1, &pbo);
 }
+
+}  // namespace movit

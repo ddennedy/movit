@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace movit {
+
 namespace {
 
 float sinc(float x)
@@ -404,3 +406,5 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
 }
+
+}  // namespace movit

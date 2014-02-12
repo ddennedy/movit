@@ -19,6 +19,8 @@
 
 using namespace std;
 
+namespace movit {
+
 TEST(EffectChainTest, EmptyChain) {
 	float data[] = {
 		0.0f, 0.25f, 0.3f,
@@ -1019,3 +1021,5 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	// Reset the debug status again.
 	movit_debug_level = MOVIT_DEBUG_OFF;
 }
+
+}  // namespace movit

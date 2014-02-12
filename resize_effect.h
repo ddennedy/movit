@@ -9,6 +9,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class ResizeEffect : public Effect {
 public:
 	ResizeEffect();
@@ -27,5 +29,7 @@ public:
 private:
 	int width, height;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_RESIZE_EFFECT_H)

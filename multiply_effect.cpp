@@ -3,6 +3,8 @@
 
 using namespace std;
 
+namespace movit {
+
 MultiplyEffect::MultiplyEffect()
 	: factor(1.0f, 1.0f, 1.0f, 1.0f)
 {
@@ -13,3 +15,5 @@ string MultiplyEffect::output_fragment_shader()
 {
 	return read_file("multiply_effect.frag");
 }
+
+}  // namespace movit

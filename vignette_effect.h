@@ -9,6 +9,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class VignetteEffect : public Effect {
 public:
 	VignetteEffect();
@@ -25,5 +27,7 @@ private:
 	Point2D center, aspect_correction;
 	float radius, inner_radius;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_VIGNETTE_EFFECT_H)

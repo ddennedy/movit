@@ -5,6 +5,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(AlphaDivisionEffectTest, SimpleTest) {
 	const int size = 2;
 	float data[4 * size] = {
@@ -35,3 +37,5 @@ TEST(AlphaDivisionEffectTest, ZeroAlphaIsPreserved) {
 	EXPECT_EQ(0.0f, out_data[3]);
 	EXPECT_EQ(0.0f, out_data[7]);
 }
+
+}  // namespace movit

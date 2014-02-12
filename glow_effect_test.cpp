@@ -9,6 +9,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(GlowEffectTest, NoAmountDoesNothing) {
 	const int size = 4;
 
@@ -108,3 +110,5 @@ TEST(GlowEffectTest, GlowsOntoZeroAlpha) {
 
 	expect_equal(expected_data, out_data, 4, size);
 }
+
+}  // namespace movit

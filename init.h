@@ -4,6 +4,8 @@
 #include "defs.h"
 #include <string>
 
+namespace movit {
+
 enum MovitDebugLevel {
 	MOVIT_DEBUG_OFF = 0,
 	MOVIT_DEBUG_ON = 1,
@@ -64,5 +66,7 @@ extern bool movit_shader_rounding_supported;
 
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
+
+}  // namespace movit
 
 #endif  // !defined(_MOVIT_INIT_H)

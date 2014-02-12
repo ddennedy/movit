@@ -11,6 +11,8 @@
 #include "test_util.h"
 #include "util.h"
 
+namespace movit {
+
 TEST(PaddingEffectTest, SimpleCenter) {
 	float data[2 * 2] = {
 		1.0f, 0.5f,
@@ -241,3 +243,5 @@ TEST(PaddingEffectTest, AlphaIsCorrectEvenWithNonLinearInputsAndOutputs) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_REC_601_625, GAMMA_REC_709, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 	expect_equal(expected_data, out_data, 4, 4);
 }
+
+}  // namespace movit

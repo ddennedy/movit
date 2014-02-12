@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace movit {
+
 LiftGammaGainEffect::LiftGammaGainEffect()
 	: lift(0.0f, 0.0f, 0.0f),
 	  gamma(1.0f, 1.0f, 1.0f),
@@ -38,3 +40,5 @@ void LiftGammaGainEffect::set_gl_state(GLuint glsl_program_num, const string &pr
 		2.2f / gamma.b);
 	set_uniform_vec3(glsl_program_num, prefix, "inv_gamma_22", (float *)&inv_gamma_22);
 }
+
+}  // namespace movit

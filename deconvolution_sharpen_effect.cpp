@@ -19,6 +19,8 @@
 using namespace Eigen;
 using namespace std;
 
+namespace movit {
+
 DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	: R(5),
 	  circle_radius(2.0f),
@@ -444,3 +446,5 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const str
 
 	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, (R + 1) * (R + 1));
 }
+
+}  // namespace movit

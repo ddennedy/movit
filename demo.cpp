@@ -35,6 +35,8 @@
 #include "util.h"
 #include "widgets.h"
 
+using namespace movit;
+
 unsigned char result[WIDTH * HEIGHT * 4];
 
 float lift_theta = 0.0f, lift_rad = 0.0f, lift_v = 0.0f;

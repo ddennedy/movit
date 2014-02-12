@@ -11,6 +11,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class MultiplyEffect : public Effect {
 public:
 	MultiplyEffect();
@@ -20,5 +22,7 @@ public:
 private:
 	RGBATuple factor;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_MULTIPLY_EFFECT_H)

@@ -16,6 +16,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class EffectChain;
 class Node;
 class SingleBlurPassEffect;
@@ -91,5 +93,7 @@ private:
 	Direction direction;
 	int width, height, virtual_width, virtual_height;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_BLUR_EFFECT_H)

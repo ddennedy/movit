@@ -14,6 +14,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class OverlayEffect : public Effect {
 public:
 	OverlayEffect();
@@ -30,5 +32,7 @@ public:
 	// to EffectChain, so postpone that optimization for later.
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_OVERLAY_EFFECT_H)

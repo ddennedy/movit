@@ -8,6 +8,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(DiffusionEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;
 
@@ -62,3 +64,5 @@ TEST(DiffusionEffectTest, FlattensOutWhitePyramid) {
 
 	expect_equal(expected_data, out_data, size, size, 0.05f, 0.002);
 }
+
+}  // namespace movit

@@ -14,6 +14,8 @@
 
 using namespace std;
 
+namespace movit {
+
 ResourcePool::ResourcePool(size_t program_freelist_max_length,
                            size_t texture_freelist_max_bytes)
 	: program_freelist_max_length(program_freelist_max_length),
@@ -258,3 +260,5 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 
 	return texture_format.width * texture_format.height * bytes_per_pixel;
 }
+
+}  // namespace movit

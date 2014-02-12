@@ -9,6 +9,8 @@
 #include "test_util.h"
 #include "unsharp_mask_effect.h"
 
+namespace movit {
+
 TEST(UnsharpMaskEffectTest, NoAmountDoesNothing) {
 	const int size = 4;
 
@@ -72,3 +74,5 @@ TEST(UnsharpMaskEffectTest, UnblursGaussianBlur) {
 	// Add some leeway for the rest; unsharp masking is not expected to be extremely good.
 	expect_equal(expected_data, out_data, size, size, 0.1, 0.001);
 }
+
+}  // namespace movit

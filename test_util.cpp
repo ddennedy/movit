@@ -14,6 +14,8 @@
 
 using namespace std;
 
+namespace movit {
+
 class Input;
 
 namespace {
@@ -244,3 +246,5 @@ void test_accuracy(const float *expected, const float *result, unsigned num_valu
 	double rms = sqrt(squared_difference) / num_values;
 	EXPECT_LT(rms, rms_limit);
 }
+
+}  // namespace movit

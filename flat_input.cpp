@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace movit {
+
 FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
 	: image_format(image_format),
           pixel_format(pixel_format),
@@ -118,3 +120,5 @@ void FlatInput::invalidate_pixel_data()
 		texture_num = 0;
 	}
 }
+
+}  // namespace movit

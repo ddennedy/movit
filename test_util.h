@@ -5,6 +5,8 @@
 #include "effect_chain.h"
 #include "image_format.h"
 
+namespace movit {
+
 class Input;
 
 class EffectChainTester {
@@ -34,5 +36,7 @@ private:
 void expect_equal(const float *ref, const float *result, unsigned width, unsigned height, float largest_difference_limit = 1.5 / 255.0, float rms_limit = 0.2 / 255.0);
 void expect_equal(const unsigned char *ref, const unsigned char *result, unsigned width, unsigned height, unsigned largest_difference_limit = 1, float rms_limit = 0.2);
 void test_accuracy(const float *expected, const float *result, unsigned num_values, double absolute_error_limit, double relative_error_limit, double local_relative_error_limit, double rms_limit);
+
+}  // namespace movit
 
 #endif  // !defined(_MOVIT_TEST_UTIL_H)

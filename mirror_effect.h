@@ -7,6 +7,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class MirrorEffect : public Effect {
 public:
 	MirrorEffect();
@@ -17,5 +19,7 @@ public:
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_MIRROR_EFFECT_H)

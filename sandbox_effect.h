@@ -13,6 +13,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class SandboxEffect : public Effect {
 public:
 	SandboxEffect();
@@ -24,5 +26,7 @@ public:
 private:
 	float parm;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_SANDBOX_EFFECT_H)

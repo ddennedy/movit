@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace movit {
+
 UnsharpMaskEffect::UnsharpMaskEffect()
 	: blur(new BlurEffect),
 	  mix(new MixEffect)
@@ -39,3 +41,5 @@ bool UnsharpMaskEffect::set_float(const string &key, float value) {
 	}
 	return blur->set_float(key, value);
 }
+
+}  // namespace movit

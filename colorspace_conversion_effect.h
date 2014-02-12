@@ -14,6 +14,8 @@
 #include "effect.h"
 #include "image_format.h"
 
+namespace movit {
+
 class ColorspaceConversionEffect : public Effect {
 private:
 	// Should not be instantiated by end users.
@@ -33,5 +35,7 @@ public:
 private:
 	Colorspace source_space, destination_space;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_COLORSPACE_CONVERSION_EFFECT_H)

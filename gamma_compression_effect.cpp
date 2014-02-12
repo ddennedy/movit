@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace movit {
+
 GammaCompressionEffect::GammaCompressionEffect()
 	: destination_curve(GAMMA_LINEAR)
 {
@@ -110,3 +112,5 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		set_uniform_float(glsl_program_num, prefix, "beta", 0.0181);
 	}
 }
+
+}  // namespace movit

@@ -9,6 +9,8 @@
 #include "mix_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(MixEffectTest, FiftyFiftyMix) {
 	float data_a[] = {
 		0.0f, 0.25f,
@@ -138,3 +140,5 @@ TEST(MixEffectTest, MixesLinearlyDespitesRGBInputsAndOutputs) {
 
 	expect_equal(expected_data, out_data, 2, 2);
 }
+
+}  // namespace movit

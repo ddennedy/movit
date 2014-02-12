@@ -3,6 +3,8 @@
 
 using namespace std;
 
+namespace movit {
+
 ResizeEffect::ResizeEffect()
 	: width(1280), height(720)
 {
@@ -20,3 +22,5 @@ void ResizeEffect::get_output_size(unsigned *width, unsigned *height, unsigned *
 	*virtual_width = *width = this->width;
 	*virtual_height = *height = this->height;
 }
+
+}  // namespace movit

@@ -57,6 +57,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class FFTPassEffect : public Effect {
 public:
 	FFTPassEffect();
@@ -107,5 +109,7 @@ private:
 	int pass_number;  // From 1..n.
 	int inverse;  // 0 = forward (FFT), 1 = reverse (IFFT).
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_FFT_PASS_EFFECT_H)

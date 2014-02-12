@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace movit {
+
 DiffusionEffect::DiffusionEffect()
 	: blur(new BlurEffect),
 	  overlay_matte(new OverlayMatteEffect)
@@ -46,3 +48,5 @@ string OverlayMatteEffect::output_fragment_shader()
 {
 	return read_file("overlay_matte_effect.frag");
 }
+
+}  // namespace movit

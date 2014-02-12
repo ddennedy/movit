@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace movit {
+
 extern string *movit_data_directory;
 
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b)
@@ -175,3 +177,5 @@ void combine_two_samples(float w1, float w2, float *offset, float *total_weight,
 	assert(*offset >= 0.0f);
 	assert(*offset <= 1.0f);
 }
+
+}  // namespace movit

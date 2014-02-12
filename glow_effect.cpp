@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace movit {
+
 GlowEffect::GlowEffect()
 	: blur(new BlurEffect),
 	  cutoff(new HighlightCutoffEffect),
@@ -57,3 +59,5 @@ string HighlightCutoffEffect::output_fragment_shader()
 {
 	return read_file("highlight_cutoff_effect.frag");
 }
+
+}  // namespace movit

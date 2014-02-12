@@ -17,6 +17,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class PaddingEffect : public Effect {
 public:
 	PaddingEffect();
@@ -38,5 +40,7 @@ private:
 	int output_width, output_height;
 	float top, left;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_PADDING_EFFECT_H)

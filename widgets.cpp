@@ -6,6 +6,8 @@
 
 #define HSV_WHEEL_SIZE 128
 
+namespace movit {
+
 GLuint hsv_wheel_num;
 
 void draw_hsv_wheel(float y, float rad, float theta, float value)
@@ -155,3 +157,5 @@ void read_colorwheel(float xf, float yf, float *rad, float *theta, float *value)
 	}
 }
 
+
+}  // namespace movit

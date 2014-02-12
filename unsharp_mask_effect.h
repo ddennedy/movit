@@ -16,6 +16,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class BlurEffect;
 class EffectChain;
 class MixEffect;
@@ -42,5 +44,7 @@ private:
 	BlurEffect *blur;
 	MixEffect *mix;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_UNSHARP_MASK_EFFECT_H)

@@ -9,6 +9,8 @@
 #include "overlay_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(OverlayEffectTest, TopDominatesBottomWhenNoAlpha) {
 	float data_a[] = {
 		0.0f, 0.25f,
@@ -91,3 +93,5 @@ TEST(OverlayEffectTest, PhotoshopReferenceTest) {
 
 	expect_equal(expected_data, out_data, 4, 1);
 }
+
+}  // namespace movit

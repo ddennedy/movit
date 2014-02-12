@@ -11,6 +11,8 @@
 #include "resample_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 namespace {
 
 float sinc(float x)
@@ -208,3 +210,5 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 	// for 8-bit accuracy, though.
 	expect_equal(expected_data, out_data, dwidth, dheight, 0.5 / 1023.0);
 }
+
+}  // namespace movit

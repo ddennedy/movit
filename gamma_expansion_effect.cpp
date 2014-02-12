@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace movit {
+
 GammaExpansionEffect::GammaExpansionEffect()
 	: source_curve(GAMMA_LINEAR)
 {
@@ -121,3 +123,5 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		set_uniform_float(glsl_program_num, prefix, "beta", 0.0181 * 4.5);
 	}
 }
+
+}  // namespace movit

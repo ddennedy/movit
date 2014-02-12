@@ -13,6 +13,8 @@
 using namespace Eigen;
 using namespace std;
 
+namespace movit {
+
 namespace {
 
 // Temperature is in Kelvin. Formula from http://en.wikipedia.org/wiki/Planckian_locus#Approximation .
@@ -148,3 +150,5 @@ void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const string &pre
 		rgb_to_xyz_matrix;
 	set_uniform_mat3(glsl_program_num, prefix, "correction_matrix", corr_matrix);
 }
+
+}  // namespace movit

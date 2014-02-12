@@ -12,6 +12,8 @@
 #include "multiply_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 namespace {
 
 // Generate a random number uniformly distributed between [-1.0, 1.0].
@@ -333,3 +335,5 @@ TEST(FFTPassEffectTest, BigFFTAccuracy) {
 		expect_equal(in, out2, 4, fft_size, max_error, rms_limit);
 	}
 }
+
+}  // namespace movit

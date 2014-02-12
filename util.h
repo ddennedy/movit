@@ -11,6 +11,8 @@
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
+namespace movit {
+
 // Converts a HSV color to RGB. Assumes h in [0, 2pi> or [-pi, pi>
 void hsv2rgb(float h, float s, float v, float *r, float *g, float *b);
 
@@ -40,6 +42,8 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 // asked for. sum_sq_error, if not NULL, will contain the sum of the
 // (estimated) squared errors of the two weights.
 void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error);
+
+}  // namespace movit
 
 #ifdef NDEBUG
 #define check_error()

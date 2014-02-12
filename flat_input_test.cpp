@@ -9,6 +9,8 @@
 #include "test_util.h"
 #include "util.h"
 
+namespace movit {
+
 TEST(FlatInput, SimpleGrayscale) {
 	const int size = 4;
 
@@ -264,3 +266,5 @@ TEST(FlatInput, PBO) {
 
 	glDeleteBuffers(1, &pbo);
 }
+
+}  // namespace movit

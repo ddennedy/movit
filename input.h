@@ -6,6 +6,8 @@
 #include "effect.h"
 #include "image_format.h"
 
+namespace movit {
+
 // An input is a degenerate case of an effect; it represents the picture data
 // that comes from the user. As such, it has zero “inputs” itself.
 //
@@ -27,5 +29,7 @@ public:
 	virtual Colorspace get_color_space() const = 0;
 	virtual GammaCurve get_gamma_curve() const = 0;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_INPUT_H)

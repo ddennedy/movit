@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace movit {
+
 GLint get_uniform_location(GLuint glsl_program_num, const string &prefix, const string &key)
 {
 	string name = prefix + "_" + key;
@@ -97,3 +99,5 @@ void set_uniform_mat3(GLuint glsl_program_num, const string &prefix, const strin
 	glUniformMatrix3fv(location, 1, GL_FALSE, matrixf);
 	check_error();
 }
+
+}  // namespace movit

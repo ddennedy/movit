@@ -7,6 +7,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(AlphaMultiplicationEffectTest, SimpleTest) {
 	const int size = 3;
 	float data[4 * size] = {
@@ -25,3 +27,5 @@ TEST(AlphaMultiplicationEffectTest, SimpleTest) {
 
 	expect_equal(expected_data, out_data, 4, size);
 }
+
+}  // namespace movit

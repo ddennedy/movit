@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace movit {
+
 SandboxEffect::SandboxEffect()
 	: parm(0.0f)
 {
@@ -22,3 +24,5 @@ void SandboxEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	// Any OpenGL state you might want to set, goes here.
 }
+
+}  // namespace movit

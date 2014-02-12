@@ -8,6 +8,8 @@
 #include "test_util.h"
 #include "white_balance_effect.h"
 
+namespace movit {
+
 TEST(WhiteBalanceEffectTest, GrayNeutralDoesNothing) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
@@ -102,3 +104,5 @@ TEST(WhiteBalanceEffectTest, HigherColorTemperatureIncreasesBlue) {
 	EXPECT_GT(out_data[4 * 1 + 2] - out_data[4 * 1 + 1], 0.05);
 	EXPECT_GT(out_data[4 * 1 + 1] - out_data[4 * 1 + 0], 0.05);
 }
+
+}  // namespace movit

@@ -56,6 +56,7 @@ TL;DR, but I am interested in a programming example instead
 Assuming you have an OpenGL context already set up:
 
 <code>
+  using namespace movit;
   EffectChain chain(1280, 720);
 
   ImageFormat inout_format;

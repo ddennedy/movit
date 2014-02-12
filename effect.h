@@ -18,6 +18,8 @@
 
 #include "defs.h"
 
+namespace movit {
+
 class EffectChain;
 class Node;
 
@@ -270,5 +272,7 @@ private:
 	std::map<std::string, float *> params_vec3;
 	std::map<std::string, float *> params_vec4;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_EFFECT_H)

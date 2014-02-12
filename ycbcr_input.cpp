@@ -13,6 +13,8 @@
 using namespace Eigen;
 using namespace std;
 
+namespace movit {
+
 namespace {
 
 // OpenGL has texel center in (0.5, 0.5), but different formats have
@@ -249,3 +251,5 @@ void YCbCrInput::invalidate_pixel_data()
 		}
 	}
 }
+
+}  // namespace movit

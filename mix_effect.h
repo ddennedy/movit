@@ -8,6 +8,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class MixEffect : public Effect {
 public:
 	MixEffect();
@@ -24,5 +26,7 @@ public:
 private:
 	float strength_first, strength_second;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_MIX_EFFECT_H)

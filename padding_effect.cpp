@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace movit {
+
 PaddingEffect::PaddingEffect()
 	: border_color(0.0f, 0.0f, 0.0f, 0.0f),
 	  output_width(1280),
@@ -130,3 +132,5 @@ void PaddingEffect::inform_input_size(unsigned input_num, unsigned width, unsign
 	input_width = width;
 	input_height = height;
 }
+
+}  // namespace movit

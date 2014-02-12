@@ -8,6 +8,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(DitherEffectTest, NoDitherOnExactValues) {
 	const int size = 4;
 
@@ -55,3 +57,5 @@ TEST(DitherEffectTest, SinusoidBelowOneLevelComesThrough) {
 
 	EXPECT_NEAR(amplitude, sum / (size * 255.0f), 1.1e-5);
 }
+
+}  // namespace movit

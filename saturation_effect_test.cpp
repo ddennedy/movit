@@ -8,6 +8,8 @@
 #include "saturation_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(SaturationEffectTest, SaturationOneIsPassThrough) {
 	float data[] = {
 		1.0f, 0.5f, 0.75f, 0.6f,
@@ -66,3 +68,5 @@ TEST(SaturationEffectTest, DoubleSaturation) {
 
 	expect_equal(expected_data, out_data, 4, 3);
 }
+
+}  // namespace movit

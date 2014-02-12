@@ -5,6 +5,8 @@
 
 using namespace std;
 
+namespace movit {
+
 SaturationEffect::SaturationEffect()
 	: saturation(1.0f)
 {
@@ -15,3 +17,5 @@ string SaturationEffect::output_fragment_shader()
 {
 	return read_file("saturation_effect.frag");
 }
+
+}  // namespace movit

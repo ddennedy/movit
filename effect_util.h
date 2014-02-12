@@ -14,6 +14,8 @@
 
 #include "util.h"
 
+namespace movit {
+
 class EffectChain;
 class Node;
 
@@ -26,5 +28,7 @@ void set_uniform_vec3(GLuint glsl_program_num, const std::string &prefix, const 
 void set_uniform_vec4(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values);
 void set_uniform_vec4_array(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const float *values, size_t num_values);
 void set_uniform_mat3(GLuint glsl_program_num, const std::string &prefix, const std::string &key, const Eigen::Matrix3d &matrix);
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_EFFECT_UTIL_H)

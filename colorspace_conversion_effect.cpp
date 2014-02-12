@@ -9,6 +9,8 @@
 using namespace Eigen;
 using namespace std;
 
+namespace movit {
+
 // Color coordinates from Rec. 709; sRGB uses the same primaries.
 static const double rec709_x_R = 0.640, rec709_x_G = 0.300, rec709_x_B = 0.150;
 static const double rec709_y_R = 0.330, rec709_y_G = 0.600, rec709_y_B = 0.060;
@@ -142,3 +144,5 @@ string ColorspaceConversionEffect::output_fragment_shader()
 	return output_glsl_mat3("PREFIX(conversion_matrix)", m) +
 		read_file("colorspace_conversion_effect.frag");
 }
+
+}  // namespace movit

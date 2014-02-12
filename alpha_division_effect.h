@@ -7,11 +7,15 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class AlphaDivisionEffect : public Effect {
 public:
 	AlphaDivisionEffect() {}
 	virtual std::string effect_type_id() const { return "AlphaDivisionEffect"; }
 	std::string output_fragment_shader();
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_ALPHA_DIVISION_EFFECT_H)

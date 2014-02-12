@@ -24,6 +24,8 @@
 #include <string>
 #include <utility>
 
+namespace movit {
+
 class ResourcePool {
 public:
 	// program_freelist_max_length is how many compiled programs that are unused to keep
@@ -105,5 +107,7 @@ private:
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);
 };
+
+}  // namespace movit
 
 #endif  // !defined(_MOVIT_RESOURCE_POOL_H)

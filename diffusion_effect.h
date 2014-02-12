@@ -18,6 +18,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class BlurEffect;
 class EffectChain;
 class Node;
@@ -58,5 +60,6 @@ private:
 	float blurred_mix_amount;
 };
 
+}  // namespace movit
 
 #endif // !defined(_MOVIT_DIFFUSION_EFFECT_H)

@@ -48,6 +48,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class DitherEffect : public Effect {
 private:
 	// Should not be instantiated by end users;
@@ -76,5 +78,7 @@ private:
 
 	GLuint texnum;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_DITHER_EFFECT_H)

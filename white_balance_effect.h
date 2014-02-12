@@ -8,6 +8,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class WhiteBalanceEffect : public Effect {
 public:
 	WhiteBalanceEffect();
@@ -25,5 +27,7 @@ private:
 	// Choosing 6500 will lead to no color cast (ie., the neutral color becomes perfectly gray).
 	float output_color_temperature;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_WHITE_BALANCE_EFFECT_H)

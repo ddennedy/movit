@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace movit {
+
 VignetteEffect::VignetteEffect()
 	: center(0.5f, 0.5f),
 	  aspect_correction(1.0f, 1.0f),
@@ -43,3 +45,5 @@ void VignetteEffect::set_gl_state(GLuint glsl_program_num, const string &prefix,
 	Point2D flipped_center(center.x, 1.0f - center.y);
 	set_uniform_vec2(glsl_program_num, prefix, "flipped_center", (float *)&flipped_center);
 }
+
+}  // namespace movit

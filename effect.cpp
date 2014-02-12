@@ -9,6 +9,8 @@
 
 using namespace std;
 
+namespace movit {
+
 bool Effect::set_int(const string &key, int value)
 {
 	if (params_int.count(key) == 0) {
@@ -145,3 +147,5 @@ void Effect::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigne
 }
 
 void Effect::clear_gl_state() {}
+
+}  // namespace movit

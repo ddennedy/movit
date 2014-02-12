@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace movit {
+
 FFTPassEffect::FFTPassEffect()
 	: input_width(1280),
 	  input_height(720),
@@ -156,3 +158,5 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	assert(input_size % fft_size == 0);
 	set_uniform_float(glsl_program_num, prefix, "num_repeats", input_size / fft_size);
 }
+
+}  // namespace movit

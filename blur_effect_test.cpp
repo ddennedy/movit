@@ -9,6 +9,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(BlurEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;
 
@@ -99,3 +101,5 @@ TEST(BlurEffectTest, BlurTwoDotsLargeRadius) {
 
 	expect_equal(expected_data, out_data, size, size, 0.1f, 1e-3);
 }
+
+}  // namespace movit

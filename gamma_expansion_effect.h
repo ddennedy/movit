@@ -15,6 +15,8 @@
 #include "effect.h"
 #include "image_format.h"
 
+namespace movit {
+
 class GammaExpansionEffect : public Effect {
 private:
 	// Should not be instantiated by end users.
@@ -36,5 +38,7 @@ public:
 private:
 	GammaCurve source_curve;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_GAMMA_EXPANSION_EFFECT_H)

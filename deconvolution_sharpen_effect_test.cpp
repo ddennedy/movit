@@ -10,6 +10,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(DeconvolutionSharpenEffectTest, IdentityTransformDoesNothing) {
 	const int size = 4;
 
@@ -232,3 +234,5 @@ TEST(DeconvolutionSharpenEffectTest, CircularDeconvolutionKeepsAlpha) {
 
 	expect_equal(expected_alpha, out_data, size, size);
 }
+
+}  // namespace movit

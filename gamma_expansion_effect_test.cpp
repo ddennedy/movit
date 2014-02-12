@@ -8,6 +8,8 @@
 #include "gtest/gtest-message.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(GammaExpansionEffectTest, sRGB_KeyValues) {
 	float data[] = {
 		0.0f, 1.0f,
@@ -250,3 +252,5 @@ TEST(GammaExpansionEffectTest, Rec2020_12Bit_Inaccuracy) {
 	//
 	test_accuracy(expected_data, out_data, 4096, 1e-3, 0.01, 2.50, 1e-4);
 }
+
+}  // namespace movit

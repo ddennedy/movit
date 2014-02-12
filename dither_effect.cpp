@@ -10,6 +10,8 @@
 
 using namespace std;
 
+namespace movit {
+
 namespace {
 
 // A simple LCG (linear congruental generator) random generator.
@@ -122,3 +124,5 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, u
 	set_uniform_float(glsl_program_num, prefix, "round_fac", round_fac);
 	set_uniform_float(glsl_program_num, prefix, "inv_round_fac", 1.0f / round_fac);
 }
+
+}  // namespace movit

@@ -13,6 +13,8 @@
 #include "image_format.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(GammaCompressionEffectTest, sRGB_KeyValues) {
 	float data[] = {
 		0.0f, 1.0f,
@@ -212,3 +214,5 @@ TEST(GammaCompressionEffectTest, Rec2020_12Bit_Inaccuracy) {
 	// precision and inaccuracies in the polynomial approximation.
 	expect_equal(expected_data, out_data, 4096, 1, 1.2 / 4095.0, 1e-5);
 }
+
+}  // namespace movit

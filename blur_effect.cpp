@@ -12,6 +12,8 @@
 #define NUM_TAPS 16
 
 using namespace std;
+
+namespace movit {
 	
 BlurEffect::BlurEffect()
 	: radius(3.0f),
@@ -196,3 +198,5 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 void SingleBlurPassEffect::clear_gl_state()
 {
 }
+
+}  // namespace movit

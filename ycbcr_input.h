@@ -14,6 +14,8 @@
 #include "image_format.h"
 #include "input.h"
 
+namespace movit {
+
 class ResourcePool;
 
 struct YCbCrFormat {
@@ -100,5 +102,7 @@ private:
 	unsigned pitch[3];
 	ResourcePool *resource_pool;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_YCBCR_INPUT_H)

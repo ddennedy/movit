@@ -8,6 +8,8 @@
 #include "lift_gamma_gain_effect.h"
 #include "test_util.h"
 
+namespace movit {
+
 TEST(LiftGammaGainEffectTest, DefaultIsNoop) {
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 1.0f,
@@ -116,3 +118,5 @@ TEST(LiftGammaGainEffectTest, OutOfGamutColorsAreClipped) {
 
 	expect_equal(expected_data, out_data, 4, 3);
 }
+
+}  // namespace movit

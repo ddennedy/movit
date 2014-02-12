@@ -11,6 +11,8 @@
 // where Y' is derived from R'G'B' instead of RGB, since this is the same
 // system as used in Rec. 601 and 709.
 
+namespace movit {
+
 enum MovitPixelFormat {
 	FORMAT_RGB,
 	FORMAT_RGBA_PREMULTIPLIED_ALPHA,
@@ -51,5 +53,7 @@ struct ImageFormat {
 	Colorspace color_space;
 	GammaCurve gamma_curve;
 };
+
+}  // namespace movit
 
 #endif  // !defined(_MOVIT_IMAGE_FORMAT_H)

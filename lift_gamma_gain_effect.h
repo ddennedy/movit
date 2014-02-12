@@ -25,6 +25,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class LiftGammaGainEffect : public Effect {
 public:
 	LiftGammaGainEffect();
@@ -37,5 +39,7 @@ public:
 private:
 	RGBTriplet lift, gamma, gain;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_LIFT_GAMMA_GAIN_EFFECT_H)

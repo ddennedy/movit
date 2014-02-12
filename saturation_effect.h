@@ -11,6 +11,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class SaturationEffect : public Effect {
 public:
 	SaturationEffect();
@@ -21,5 +23,7 @@ public:
 private:
 	float saturation;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_SATURATION_EFFECT_H)

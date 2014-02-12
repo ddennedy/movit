@@ -25,6 +25,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class DeconvolutionSharpenEffect : public Effect {
 public:
 	DeconvolutionSharpenEffect();
@@ -67,5 +69,7 @@ private:
 	
 	void update_deconvolution_kernel();
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_DECONVOLUTION_SHARPEN_EFFECT_H)

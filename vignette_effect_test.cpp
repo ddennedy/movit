@@ -9,6 +9,8 @@
 #include "test_util.h"
 #include "vignette_effect.h"
 
+namespace movit {
+
 TEST(VignetteEffectTest, HugeInnerRadiusDoesNothing) {
 	const int size = 4;
 
@@ -91,3 +93,5 @@ TEST(VignetteEffectTest, BurstFromUpperLeftCorner) {
 
 	expect_equal(expected_data, out_data, width, height);
 }
+
+}  // namespace movit

@@ -26,6 +26,8 @@
 
 #include "image_format.h"
 
+namespace movit {
+
 class Effect;
 class Input;
 struct Phase;
@@ -265,5 +267,7 @@ private:
 	ResourcePool *resource_pool;
 	bool owns_resource_pool;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_EFFECT_CHAIN_H)

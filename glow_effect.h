@@ -10,6 +10,8 @@
 
 #include "effect.h"
 
+namespace movit {
+
 class BlurEffect;
 class EffectChain;
 class HighlightCutoffEffect;
@@ -54,5 +56,7 @@ public:
 private:
 	float cutoff;
 };
+
+}  // namespace movit
 
 #endif // !defined(_MOVIT_GLOW_EFFECT_H)
