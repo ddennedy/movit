@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	SDL_SetVideoMode(WIDTH, HEIGHT, 0, SDL_OPENGL);
 	SDL_WM_SetCaption("OpenGL window", NULL);
 
-	init_movit(".", MOVIT_DEBUG_ON);
+	CHECK(init_movit(".", MOVIT_DEBUG_ON));
 	printf("GPU texture subpixel precision: about %.1f bits\n",
 		log2(1.0f / movit_texel_subpixel_precision));
 	printf("Wrongly rounded x+0.48 or x+0.52 values: %d/510\n",

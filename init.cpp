@@ -251,25 +251,25 @@ void measure_roundoff_problems()
 	check_error();
 }
 
-void check_extensions()
+bool check_extensions()
 {
 	// We fundamentally need FBOs and floating-point textures.
-	assert(glewIsSupported("GL_ARB_framebuffer_object") != 0);
-	assert(glewIsSupported("GL_ARB_texture_float") != 0);
+	if (!glewIsSupported("GL_ARB_framebuffer_object")) return false;
+	if (!glewIsSupported("GL_ARB_texture_float")) return false;
 
 	// We assume that we can use non-power-of-two textures without restrictions.
-	assert(glewIsSupported("GL_ARB_texture_non_power_of_two") != 0);
+	if (!glewIsSupported("GL_ARB_texture_non_power_of_two")) return false;
 
 	// We also need GLSL fragment shaders.
-	assert(glewIsSupported("GL_ARB_fragment_shader") != 0);
-	assert(glewIsSupported("GL_ARB_shading_language_100") != 0);
+	if (!glewIsSupported("GL_ARB_fragment_shader")) return false;
+	if (!glewIsSupported("GL_ARB_shading_language_100")) return false;
 
 	// FlatInput and YCbCrInput uses PBOs. (They could in theory do without,
 	// but no modern card would really not provide it.)
-	assert(glewIsSupported("GL_ARB_pixel_buffer_object") != 0);
+	if (!glewIsSupported("GL_ARB_pixel_buffer_object")) return false;
 
 	// ResampleEffect uses RG textures to encode a two-component LUT.
-	assert(glewIsSupported("GL_ARB_texture_rg") != 0);
+	if (!glewIsSupported("GL_ARB_texture_rg")) return false;
 
 	// sRGB texture decode would be nice, but are not mandatory
 	// (GammaExpansionEffect can do the same thing if needed).
@@ -280,29 +280,37 @@ void check_extensions()
 	// and 1.30 brings with it other things that we don't want to demand
 	// for now.
 	movit_shader_rounding_supported = glewIsSupported("GL_EXT_gpu_shader4");
+
+	return true;
 }
 
 }  // namespace
 
-void init_movit(const string& data_directory, MovitDebugLevel debug_level)
+bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 {
 	if (movit_initialized) {
-		return;
+		return true;
 	}
 
 	movit_data_directory = new string(data_directory);
 	movit_debug_level = debug_level;
 
-	glewInit();
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		return false;
+	}
 
 	// geez	
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glDisable(GL_DITHER);
 
+	if (!check_extensions()) {
+		return false;
+	}
 	measure_texel_subpixel_precision();
 	measure_roundoff_problems();
-	check_extensions();
 
 	movit_initialized = true;
+	return true;
 }

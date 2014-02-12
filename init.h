@@ -1,6 +1,7 @@
 #ifndef _MOVIT_INIT_H
 #define _MOVIT_INIT_H
 
+#include "defs.h"
 #include <string>
 
 enum MovitDebugLevel {
@@ -10,7 +11,8 @@ enum MovitDebugLevel {
 
 // Initialize the library; in particular, will query the GPU for information
 // that is needed by various components. For instance, it verifies that
-// we have all the OpenGL extensions we need.
+// we have all the OpenGL extensions we need. Returns true if initialization
+// succeeded.
 //
 // The first parameter gives which directory to read .frag files from.
 // This is a temporary hack until we add something more solid.
@@ -20,8 +22,8 @@ enum MovitDebugLevel {
 // generated shaders to the current directory.
 //
 // If you call init_movit() twice with different parameters,
-// only the first will count.
-void init_movit(const std::string& data_directory, MovitDebugLevel debug_level);
+// only the first will count, and the second will always return true.
+bool init_movit(const std::string& data_directory, MovitDebugLevel debug_level) MUST_CHECK_RESULT;
 
 // GPU features. These are not intended for end-user use.
 
