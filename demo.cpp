@@ -4,7 +4,7 @@
 #define WIDTH 1280
 #define HEIGHT 720
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_error.h>
 #include <SDL/SDL_events.h>

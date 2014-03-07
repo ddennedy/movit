@@ -10,7 +10,7 @@
 // See DeconvolutionSharpenEffect for a different, possibly better
 // sharpening algorithm.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 

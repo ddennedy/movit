@@ -5,7 +5,7 @@
 // However, the accuracy tests are somewhat simpler, since we
 // only need to care about absolute errors and not relative.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <math.h>
 
 #include "gtest/gtest.h"

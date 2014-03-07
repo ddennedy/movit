@@ -6,8 +6,8 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <epoxy/gl.h>
 
-#include "glew.h"
 #include "init.h"
 #include "resource_pool.h"
 #include "util.h"

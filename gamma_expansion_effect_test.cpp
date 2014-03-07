@@ -1,6 +1,6 @@
 // Unit tests for GammaExpansionEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <math.h>
 
 #include "gamma_expansion_effect.h"

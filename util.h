@@ -3,7 +3,7 @@
 
 // Various utilities.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <Eigen/Core>

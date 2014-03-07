@@ -1,6 +1,6 @@
 #include <string.h>
 #include <assert.h>
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "effect_util.h"
 #include "flat_input.h"

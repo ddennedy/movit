@@ -1,7 +1,7 @@
 // Unit tests for YCbCrInput.
 // FIXME: This class really ought to support mipmaps.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stddef.h>
 
 #include "effect_chain.h"

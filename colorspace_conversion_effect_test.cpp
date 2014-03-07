@@ -1,6 +1,6 @@
 // Unit tests for ColorspaceConversionEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "colorspace_conversion_effect.h"
 #include "gtest/gtest.h"

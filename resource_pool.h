@@ -16,7 +16,7 @@
 // safely called from multiple threads at the same time, provided they have
 // separate (but sharing) OpenGL contexts.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <list>

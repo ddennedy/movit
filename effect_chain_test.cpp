@@ -2,7 +2,7 @@
 //
 // Note that this also contains the tests for some of the simpler effects.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 
 #include "effect.h"

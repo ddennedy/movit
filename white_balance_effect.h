@@ -3,7 +3,7 @@
 
 // Color correction in LMS color space.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

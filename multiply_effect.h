@@ -6,7 +6,7 @@
 // sending it through OverlayEffect, e.g. with R=G=B=A=0.3 to get 30% alpha
 // (remember, alpha is premultiplied).
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

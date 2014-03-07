@@ -1,7 +1,7 @@
 #ifndef _MOVIT_FLAT_INPUT_H
 #define _MOVIT_FLAT_INPUT_H 1
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 

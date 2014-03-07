@@ -10,7 +10,7 @@
 // effect instance; use the macro PREFIX() around your identifiers to
 // automatically prepend that prefix.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
 #include <map>

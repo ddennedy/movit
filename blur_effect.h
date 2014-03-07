@@ -9,7 +9,7 @@
 // which is what the user is intended to use, instantiates two copies of
 // SingleBlurPassEffect behind the scenes).
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string>

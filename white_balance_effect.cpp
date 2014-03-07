@@ -1,6 +1,6 @@
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 
 #include "colorspace_conversion_effect.h"

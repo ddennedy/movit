@@ -17,7 +17,7 @@
 // the EffectChain holds textures and other OpenGL objects that are tied to the
 // context.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stdio.h>
 #include <map>
 #include <set>

@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <Eigen/Core>
 #include <stddef.h>
 #include <string>

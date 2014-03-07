@@ -1,6 +1,6 @@
 // Unit tests for MixEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "effect_chain.h"
 #include "gtest/gtest.h"

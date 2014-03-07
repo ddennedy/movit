@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
 #include <algorithm>
@@ -284,32 +284,32 @@ void measure_roundoff_problems()
 bool check_extensions()
 {
 	// We fundamentally need FBOs and floating-point textures.
-	if (!glewIsSupported("GL_ARB_framebuffer_object")) return false;
-	if (!glewIsSupported("GL_ARB_texture_float")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_framebuffer_object")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_texture_float")) return false;
 
 	// We assume that we can use non-power-of-two textures without restrictions.
-	if (!glewIsSupported("GL_ARB_texture_non_power_of_two")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_texture_non_power_of_two")) return false;
 
 	// We also need GLSL fragment shaders.
-	if (!glewIsSupported("GL_ARB_fragment_shader")) return false;
-	if (!glewIsSupported("GL_ARB_shading_language_100")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_fragment_shader")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_shading_language_100")) return false;
 
 	// FlatInput and YCbCrInput uses PBOs. (They could in theory do without,
 	// but no modern card would really not provide it.)
-	if (!glewIsSupported("GL_ARB_pixel_buffer_object")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_pixel_buffer_object")) return false;
 
 	// ResampleEffect uses RG textures to encode a two-component LUT.
-	if (!glewIsSupported("GL_ARB_texture_rg")) return false;
+	if (!epoxy_has_gl_extension("GL_ARB_texture_rg")) return false;
 
 	// sRGB texture decode would be nice, but are not mandatory
 	// (GammaExpansionEffect can do the same thing if needed).
-	movit_srgb_textures_supported = glewIsSupported("GL_EXT_texture_sRGB");
+	movit_srgb_textures_supported = epoxy_has_gl_extension("GL_EXT_texture_sRGB");
 
 	// We may want to use round() at the end of the final shader,
 	// if supported. We need either GLSL 1.30 or this extension to do that,
 	// and 1.30 brings with it other things that we don't want to demand
 	// for now.
-	movit_shader_rounding_supported = glewIsSupported("GL_EXT_gpu_shader4");
+	movit_shader_rounding_supported = epoxy_has_gl_extension("GL_EXT_gpu_shader4");
 
 	return true;
 }
@@ -324,11 +324,6 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 
 	movit_data_directory = new string(data_directory);
 	movit_debug_level = debug_level;
-
-	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		return false;
-	}
 
 	// geez	
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);

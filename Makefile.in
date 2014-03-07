@@ -11,8 +11,8 @@ with_demo_app = @with_demo_app@
 
 CC=@CC@
 CXX=@CXX@
-CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
-LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ -lpthread
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @epoxy_CFLAGS@
+LDFLAGS=@epoxy_LIBS@ @SDL_LIBS@ -lpthread
 DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
 SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@ --tag=CXX

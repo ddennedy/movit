@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "sandbox_effect.h"
 #include "util.h"

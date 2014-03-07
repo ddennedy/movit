@@ -3,11 +3,11 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <epoxy/gl.h>
+#include <gtest/gtest.h>
 
 #include "effect_chain.h"
 #include "fft_pass_effect.h"
-#include "glew.h"
-#include "gtest/gtest.h"
 #include "image_format.h"
 #include "multiply_effect.h"
 #include "test_util.h"
