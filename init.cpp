@@ -101,27 +101,22 @@ void measure_texel_subpixel_precision()
 		0.25f, 0.0f
 	};
 
-	int position_attrib = glGetAttribLocation(glsl_program_num, "position");
-	assert(position_attrib != -1);
-	int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
-	assert(texcoord_attrib != -1);
-	glEnableVertexAttribArray(position_attrib);
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
 	check_error();
-	glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glBindVertexArray(vao);
 	check_error();
-	glEnableVertexAttribArray(texcoord_attrib);
-	check_error();
-	glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
-	check_error();
+
+	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(texcoords), texcoords);
 
 	glDrawArrays(GL_QUADS, 0, 4);
 	check_error();
 
+	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
+
 	glUseProgram(0);
-	check_error();
-	glDisableVertexAttribArray(position_attrib);
-	check_error();
-	glDisableVertexAttribArray(texcoord_attrib);
 	check_error();
 
 	// Now read the data back and see what the card did.
@@ -153,6 +148,8 @@ void measure_texel_subpixel_precision()
 	check_error();
 
 	resource_pool.release_glsl_program(glsl_program_num);
+	glDeleteVertexArrays(1, &vao);
+	check_error();
 }
 
 void measure_roundoff_problems()
@@ -230,25 +227,24 @@ void measure_roundoff_problems()
 		0.75f, 0.0f,
 		0.25f, 0.0f
 	};
-	int position_attrib = glGetAttribLocation(glsl_program_num, "position");
-	assert(position_attrib != -1);
-	int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
-	assert(texcoord_attrib != -1);
-	glEnableVertexAttribArray(position_attrib);
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
 	check_error();
-	glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	glBindVertexArray(vao);
 	check_error();
-	glEnableVertexAttribArray(texcoord_attrib);
-	check_error();
-	glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
-	check_error();
+
+	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(texcoords), texcoords);
+
 	glDrawArrays(GL_QUADS, 0, 4);
+	check_error();
+
+	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
 
 	glUseProgram(0);
 	check_error();
-	glDisableVertexAttribArray(position_attrib);
-	check_error();
-	glDisableVertexAttribArray(texcoord_attrib);
 
 	// Now read the data back and see what the card did. (Ignore the last value.)
 	// (We only look at the red channel; the others will surely be the same.)
@@ -281,6 +277,8 @@ void measure_roundoff_problems()
 	check_error();
 
 	resource_pool.release_glsl_program(glsl_program_num);
+	glDeleteVertexArrays(1, &vao);
+	check_error();
 }
 
 bool check_extensions()

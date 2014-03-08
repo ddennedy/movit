@@ -178,4 +178,41 @@ void combine_two_samples(float w1, float w2, float *offset, float *total_weight,
 	assert(*offset <= 1.0f);
 }
 
+GLuint fill_vertex_attribute(GLuint glsl_program_num, const string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
+{
+	int attrib = glGetAttribLocation(glsl_program_num, attribute_name.c_str());
+	if (attrib == -1) {
+		return -1;
+	}
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	check_error();
+	glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
+	check_error();
+	glEnableVertexAttribArray(attrib);
+	check_error();
+	glVertexAttribPointer(attrib, size, type, GL_FALSE, 0, BUFFER_OFFSET(0));
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	check_error();
+
+	return vbo;
+}
+
+void cleanup_vertex_attribute(GLuint glsl_program_num, const string &attribute_name, GLuint vbo)
+{
+	int attrib = glGetAttribLocation(glsl_program_num, attribute_name.c_str());
+	if (attrib == -1) {
+		return;
+	}
+
+	glDisableVertexAttribArray(attrib);
+	check_error();
+	glDeleteBuffers(1, &vbo);
+	check_error();
+}
+
 }  // namespace movit

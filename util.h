@@ -43,6 +43,13 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 // (estimated) squared errors of the two weights.
 void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error);
 
+// Create a VBO with the given data, and bind it to the vertex attribute
+// with name <attribute_name>. Returns the VBO number.
+GLuint fill_vertex_attribute(GLuint glsl_program_num, const std::string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data);
+
+// Clean up after fill_vertex_attribute().
+void cleanup_vertex_attribute(GLuint glsl_program_num, const std::string &attribute_name, GLuint vbo);
+
 }  // namespace movit
 
 #ifdef NDEBUG

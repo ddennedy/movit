@@ -1470,6 +1470,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		}
 
 		const GLuint glsl_program_num = phases[phase]->glsl_program_num;
+		check_error();
 		glUseProgram(glsl_program_num);
 		check_error();
 
@@ -1542,37 +1543,31 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			0.0f, 1.0f
 		};
 
-		int position_attrib = glGetAttribLocation(glsl_program_num, "position");
-		assert(position_attrib != -1);
-		glEnableVertexAttribArray(position_attrib);
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
 		check_error();
-		glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+		glBindVertexArray(vao);
 		check_error();
 
-		int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
-		if (texcoord_attrib != -1) {
-			glEnableVertexAttribArray(texcoord_attrib);
-			check_error();
-			glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);  // Same as texcoords.
-			check_error();
-		}
+		GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+		GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
 
 		glDrawArrays(GL_QUADS, 0, 4);
 		check_error();
 
+		cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
+		cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
+
 		glUseProgram(0);
 		check_error();
-		glDisableVertexAttribArray(position_attrib);
-		check_error();
-		if (texcoord_attrib != -1) {
-			glDisableVertexAttribArray(texcoord_attrib);
-			check_error();
-		}
 
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
 			node->effect->clear_gl_state();
 		}
+
+		glDeleteVertexArrays(1, &vao);
+		check_error();
 	}
 
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
