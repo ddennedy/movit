@@ -1446,13 +1446,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glDepthMask(GL_FALSE);
 	check_error();
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	if (phases.size() > 1) {
 		glGenFramebuffers(1, &fbo);
 		check_error();
@@ -1476,7 +1469,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			output_textures.insert(make_pair(phases[phase], tex_num));
 		}
 
-		glUseProgram(phases[phase]->glsl_program_num);
+		const GLuint glsl_program_num = phases[phase]->glsl_program_num;
+		glUseProgram(glsl_program_num);
 		check_error();
 
 		// Set up RTT inputs for this phase.
@@ -1503,7 +1497,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			check_error();
 
 			string texture_name = string("tex_") + phases[phase]->effect_ids[input];
-			glUniform1i(glGetUniformLocation(phases[phase]->glsl_program_num, texture_name.c_str()), sampler);
+			glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler);
 			check_error();
 		}
 
@@ -1536,27 +1530,44 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		unsigned sampler_num = phases[phase]->inputs.size();
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
-			node->effect->set_gl_state(phases[phase]->glsl_program_num, phases[phase]->effect_ids[node], &sampler_num);
+			node->effect->set_gl_state(glsl_program_num, phases[phase]->effect_ids[node], &sampler_num);
 			check_error();
 		}
 
 		// Now draw!
-		glBegin(GL_QUADS);
+		float vertices[] = {
+			0.0f, 0.0f,
+			1.0f, 0.0f,
+			1.0f, 1.0f,
+			0.0f, 1.0f
+		};
 
-		glTexCoord2f(0.0f, 0.0f);
-		glVertex2f(0.0f, 0.0f);
-
-		glTexCoord2f(1.0f, 0.0f);
-		glVertex2f(1.0f, 0.0f);
-
-		glTexCoord2f(1.0f, 1.0f);
-		glVertex2f(1.0f, 1.0f);
-
-		glTexCoord2f(0.0f, 1.0f);
-		glVertex2f(0.0f, 1.0f);
-
-		glEnd();
+		int position_attrib = glGetAttribLocation(glsl_program_num, "position");
+		assert(position_attrib != -1);
+		glEnableVertexAttribArray(position_attrib);
 		check_error();
+		glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+		check_error();
+
+		int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
+		if (texcoord_attrib != -1) {
+			glEnableVertexAttribArray(texcoord_attrib);
+			check_error();
+			glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);  // Same as texcoords.
+			check_error();
+		}
+
+		glDrawArrays(GL_QUADS, 0, 4);
+		check_error();
+
+		glUseProgram(0);
+		check_error();
+		glDisableVertexAttribArray(position_attrib);
+		check_error();
+		if (texcoord_attrib != -1) {
+			glDisableVertexAttribArray(texcoord_attrib);
+			check_error();
+		}
 
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
