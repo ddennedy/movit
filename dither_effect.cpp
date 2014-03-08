@@ -84,7 +84,7 @@ void DitherEffect::update_texture(GLuint glsl_program_num, const string &prefix,
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16F_ARB, texture_width, texture_height, 0, GL_LUMINANCE, GL_FLOAT, dither_noise);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, texture_width, texture_height, 0, GL_RED, GL_FLOAT, dither_noise);
 	check_error();
 
 	delete[] dither_noise;

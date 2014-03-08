@@ -64,7 +64,7 @@ void measure_texel_subpixel_precision()
 	check_error();
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	check_error();
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, 2, 0, GL_LUMINANCE, GL_FLOAT, texdata);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, 2, 0, GL_RED, GL_FLOAT, texdata);
 	check_error();
 
 	// Basic state.
@@ -195,7 +195,7 @@ void measure_roundoff_problems()
 	check_error();
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	check_error();
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE32F_ARB, 512, 0, GL_LUMINANCE, GL_FLOAT, texdata);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, texdata);
 	check_error();
 
 	// Basic state.
