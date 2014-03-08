@@ -5,6 +5,7 @@
 #include <string>
 
 #include "init.h"
+#include "resource_pool.h"
 #include "util.h"
 
 using namespace std;
@@ -27,6 +28,7 @@ namespace {
 
 void measure_texel_subpixel_precision()
 {
+	ResourcePool resource_pool;
 	static const unsigned width = 4096;
 
 	// Generate a destination texture to render to, and an FBO.
@@ -64,8 +66,6 @@ void measure_texel_subpixel_precision()
 	check_error();
 	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE16F_ARB, 2, 0, GL_LUMINANCE, GL_FLOAT, texdata);
 	check_error();
-	glEnable(GL_TEXTURE_1D);
-	check_error();
 
 	// Basic state.
 	glDisable(GL_BLEND);
@@ -77,36 +77,51 @@ void measure_texel_subpixel_precision()
 
 	glViewport(0, 0, width, 1);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	GLuint glsl_program_num = resource_pool.compile_glsl_program(
+		read_file("vs.vert"), read_file("texture1d.frag"));
+	glUseProgram(glsl_program_num);
+	check_error();
+	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 1D sampler.
 	check_error();
 
 	// Draw the texture stretched over a long quad, interpolating it out.
 	// Note that since the texel center is in (0.5), we need to adjust the
 	// texture coordinates in order not to get long stretches of (1,1,1,...)
 	// at the start and (...,0,0,0) at the end.
-	glBegin(GL_QUADS);
+	float vertices[] = {
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f
+	};
+	float texcoords[] = {
+		0.25f, 0.0f,
+		0.75f, 0.0f,
+		0.75f, 0.0f,
+		0.25f, 0.0f
+	};
 
-	glTexCoord1f(0.25f);
-	glVertex2f(0.0f, 0.0f);
-
-	glTexCoord1f(0.75f);
-	glVertex2f(1.0f, 0.0f);
-
-	glTexCoord1f(0.75f);
-	glVertex2f(1.0f, 1.0f);
-
-	glTexCoord1f(0.25f);
-	glVertex2f(0.0f, 1.0f);
-
-	glEnd();
+	int position_attrib = glGetAttribLocation(glsl_program_num, "position");
+	assert(position_attrib != -1);
+	int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
+	assert(texcoord_attrib != -1);
+	glEnableVertexAttribArray(position_attrib);
+	check_error();
+	glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+	check_error();
+	glEnableVertexAttribArray(texcoord_attrib);
+	check_error();
+	glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
 	check_error();
 
-	glDisable(GL_TEXTURE_1D);
+	glDrawArrays(GL_QUADS, 0, 4);
+	check_error();
+
+	glUseProgram(0);
+	check_error();
+	glDisableVertexAttribArray(position_attrib);
+	check_error();
+	glDisableVertexAttribArray(texcoord_attrib);
 	check_error();
 
 	// Now read the data back and see what the card did.
@@ -122,6 +137,7 @@ void measure_texel_subpixel_precision()
 		biggest_jump = max(biggest_jump, out_data[i] - out_data[i - 1]);
 	}
 
+	assert(biggest_jump > 0.0);
 	movit_texel_subpixel_precision = biggest_jump;
 
 	// Clean up.
@@ -135,10 +151,14 @@ void measure_texel_subpixel_precision()
 	check_error();
 	glDeleteTextures(1, &src_texnum);
 	check_error();
+
+	resource_pool.release_glsl_program(glsl_program_num);
 }
 
 void measure_roundoff_problems()
 {
+	ResourcePool resource_pool;
+
 	// Generate a destination texture to render to, and an FBO.
 	GLuint dst_texnum, fbo;
 
@@ -180,8 +200,6 @@ void measure_roundoff_problems()
 	check_error();
 	glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE32F_ARB, 512, 0, GL_LUMINANCE, GL_FLOAT, texdata);
 	check_error();
-	glEnable(GL_TEXTURE_1D);
-	check_error();
 
 	// Basic state.
 	glDisable(GL_BLEND);
@@ -193,34 +211,44 @@ void measure_roundoff_problems()
 
 	glViewport(0, 0, 512, 1);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	GLuint glsl_program_num = resource_pool.compile_glsl_program(
+		read_file("vs.vert"), read_file("texture1d.frag"));
+	glUseProgram(glsl_program_num);
 	check_error();
+	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 1D sampler.
 
 	// Draw the texture stretched over a long quad, interpolating it out.
-	glBegin(GL_QUADS);
-
-	glTexCoord1f(0.0f);
-	glVertex2f(0.0f, 0.0f);
-
-	glTexCoord1f(1.0f);
-	glVertex2f(1.0f, 0.0f);
-
-	glTexCoord1f(1.0f);
-	glVertex2f(1.0f, 1.0f);
-
-	glTexCoord1f(0.0f);
-	glVertex2f(0.0f, 1.0f);
-
-	glEnd();
+	float vertices[] = {
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f
+	};
+	float texcoords[] = {
+		0.25f, 0.0f,
+		0.75f, 0.0f,
+		0.75f, 0.0f,
+		0.25f, 0.0f
+	};
+	int position_attrib = glGetAttribLocation(glsl_program_num, "position");
+	assert(position_attrib != -1);
+	int texcoord_attrib = glGetAttribLocation(glsl_program_num, "texcoord");
+	assert(texcoord_attrib != -1);
+	glEnableVertexAttribArray(position_attrib);
 	check_error();
-
-	glDisable(GL_TEXTURE_1D);
+	glVertexAttribPointer(position_attrib, 2, GL_FLOAT, GL_FALSE, 0, vertices);
 	check_error();
+	glEnableVertexAttribArray(texcoord_attrib);
+	check_error();
+	glVertexAttribPointer(texcoord_attrib, 2, GL_FLOAT, GL_FALSE, 0, texcoords);
+	check_error();
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glUseProgram(0);
+	check_error();
+	glDisableVertexAttribArray(position_attrib);
+	check_error();
+	glDisableVertexAttribArray(texcoord_attrib);
 
 	// Now read the data back and see what the card did. (Ignore the last value.)
 	// (We only look at the red channel; the others will surely be the same.)
@@ -251,6 +279,8 @@ void measure_roundoff_problems()
 	check_error();
 	glDeleteTextures(1, &src_texnum);
 	check_error();
+
+	resource_pool.release_glsl_program(glsl_program_num);
 }
 
 bool check_extensions()
