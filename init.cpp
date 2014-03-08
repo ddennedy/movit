@@ -89,16 +89,16 @@ void measure_texel_subpixel_precision()
 	// texture coordinates in order not to get long stretches of (1,1,1,...)
 	// at the start and (...,0,0,0) at the end.
 	float vertices[] = {
+		0.0f, 1.0f,
 		0.0f, 0.0f,
-		1.0f, 0.0f,
 		1.0f, 1.0f,
-		0.0f, 1.0f
+		1.0f, 0.0f
 	};
 	float texcoords[] = {
 		0.25f, 0.0f,
+		0.25f, 0.0f,
 		0.75f, 0.0f,
-		0.75f, 0.0f,
-		0.25f, 0.0f
+		0.75f, 0.0f
 	};
 
 	GLuint vao;
@@ -110,7 +110,7 @@ void measure_texel_subpixel_precision()
 	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
 	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(texcoords), texcoords);
 
-	glDrawArrays(GL_QUADS, 0, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	check_error();
 
 	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
@@ -216,16 +216,16 @@ void measure_roundoff_problems()
 
 	// Draw the texture stretched over a long quad, interpolating it out.
 	float vertices[] = {
+		0.0f, 1.0f,
 		0.0f, 0.0f,
-		1.0f, 0.0f,
 		1.0f, 1.0f,
-		0.0f, 1.0f
+		1.0f, 0.0f
 	};
 	float texcoords[] = {
 		0.25f, 0.0f,
+		0.25f, 0.0f,
 		0.75f, 0.0f,
-		0.75f, 0.0f,
-		0.25f, 0.0f
+		0.75f, 0.0f
 	};
 
 	GLuint vao;
@@ -237,7 +237,7 @@ void measure_roundoff_problems()
 	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
 	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(texcoords), texcoords);
 
-	glDrawArrays(GL_QUADS, 0, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	check_error();
 
 	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);

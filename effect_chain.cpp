@@ -1537,10 +1537,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 		// Now draw!
 		float vertices[] = {
+			0.0f, 1.0f,
 			0.0f, 0.0f,
-			1.0f, 0.0f,
 			1.0f, 1.0f,
-			0.0f, 1.0f
+			1.0f, 0.0f
 		};
 
 		GLuint vao;
@@ -1552,7 +1552,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
 		GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
 
-		glDrawArrays(GL_QUADS, 0, 4);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		check_error();
 
 		cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
