@@ -105,6 +105,15 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader, const str
 		glLinkProgram(glsl_program_num);
 		check_error();
 
+		GLint success;
+		glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
+		if (success == GL_FALSE) {
+			GLchar error_log[1024] = {0};
+			glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
+			fprintf(stderr, "Error linking program: %s\n", error_log);
+			exit(1);
+		}
+
 		if (movit_debug_level == MOVIT_DEBUG_ON) {
 			// Output shader to a temporary file, for easier debugging.
 			static int compiled_shader_num = 0;
