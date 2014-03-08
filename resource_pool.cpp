@@ -190,8 +190,8 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	case GL_RG16F:
 		format = GL_RG;
 		break;
-	case GL_LUMINANCE8:
-		format = GL_LUMINANCE;
+	case GL_R8:
+		format = GL_RED;
 		break;
 	default:
 		// TODO: Add more here as needed.
@@ -259,7 +259,7 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 	case GL_RG16F:
 		bytes_per_pixel = 4;
 		break;
-	case GL_LUMINANCE8:
+	case GL_R8:
 		bytes_per_pixel = 1;
 		break;
 	default:

@@ -105,7 +105,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 		if (texture_num[channel] == 0) {
 			// (Re-)upload the texture.
-			texture_num[channel] = resource_pool->create_2d_texture(GL_LUMINANCE8, widths[channel], heights[channel]);
+			texture_num[channel] = resource_pool->create_2d_texture(GL_R8, widths[channel], heights[channel]);
 			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -116,7 +116,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch[channel]);
 			check_error();
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], GL_LUMINANCE, GL_UNSIGNED_BYTE, pixel_data[channel]);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], GL_RED, GL_UNSIGNED_BYTE, pixel_data[channel]);
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			check_error();
