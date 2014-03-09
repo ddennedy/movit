@@ -221,12 +221,6 @@ void measure_roundoff_problems()
 		1.0f, 1.0f,
 		1.0f, 0.0f
 	};
-	float texcoords[] = {
-		0.25f, 0.0f,
-		0.25f, 0.0f,
-		0.75f, 0.0f,
-		0.75f, 0.0f
-	};
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -235,7 +229,7 @@ void measure_roundoff_problems()
 	check_error();
 
 	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
-	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(texcoords), texcoords);
+	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same data.
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	check_error();
