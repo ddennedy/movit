@@ -197,6 +197,13 @@ int main(int argc, char **argv)
 	EffectChain chain(WIDTH, HEIGHT);
 	glViewport(0, 0, WIDTH, HEIGHT);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
 	ImageFormat inout_format;
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
