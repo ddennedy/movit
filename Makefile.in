@@ -8,12 +8,16 @@ datarootdir = @datarootdir@
 datadir = @datadir@
 top_builddir = @top_builddir@
 with_demo_app = @with_demo_app@
+with_SDL2 = @with_SDL2@
 
 CC=@CC@
 CXX=@CXX@
-CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @epoxy_CFLAGS@
-LDFLAGS=@epoxy_LIBS@ @SDL_LIBS@ -lpthread
-DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @SDL2_CFLAGS@ @SDL_CFLAGS@ @Eigen3_CFLAGS@ @epoxy_CFLAGS@
+ifeq ($(with_SDL2),yes)
+CXXFLAGS += -DHAVE_SDL2
+endif
+LDFLAGS=@epoxy_LIBS@ @SDL2_LIBS@ @SDL_LIBS@ -lpthread
+DEMO_LDLIBS=@SDL2_image_LIBS@ @SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
 SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@ --tag=CXX
 RANLIB=ranlib

@@ -5,6 +5,16 @@
 #define HEIGHT 720
 
 #include <epoxy/gl.h>
+
+#ifdef HAVE_SDL2
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_error.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_mouse.h>
+#include <SDL2/SDL_video.h>
+#else
 #include <SDL/SDL.h>
 #include <SDL/SDL_error.h>
 #include <SDL/SDL_events.h>
@@ -13,6 +23,8 @@
 #include <SDL/SDL_keysym.h>
 #include <SDL/SDL_mouse.h>
 #include <SDL/SDL_video.h>
+#endif
+
 #include <assert.h>
 #include <features.h>
 #include <math.h>
@@ -121,9 +133,11 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 	rgba_fmt.Gshift = 8;
 	rgba_fmt.Bshift = 0;
 	rgba_fmt.Ashift = 24;
-	
+
+#ifndef HAVE_SDL2
 	rgba_fmt.colorkey = 0;
 	rgba_fmt.alpha = 255;
+#endif
 
 	SDL_Surface *converted = SDL_ConvertSurface(img, &rgba_fmt, SDL_SWSURFACE);
 
@@ -175,8 +189,19 @@ int main(int argc, char **argv)
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+#ifdef HAVE_SDL2
+	SDL_Window *window = SDL_CreateWindow("OpenGL window",
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		WIDTH, HEIGHT,
+		SDL_WINDOW_OPENGL);
+	SDL_GLContext context = SDL_GL_CreateContext(window);
+	assert(context != NULL);
+#else
 	SDL_SetVideoMode(WIDTH, HEIGHT, 0, SDL_OPENGL);
 	SDL_WM_SetCaption("OpenGL window", NULL);
+#endif
 
 	CHECK(init_movit(".", MOVIT_DEBUG_ON));
 	printf("GPU texture subpixel precision: about %.1f bits\n",
@@ -288,7 +313,11 @@ int main(int argc, char **argv)
 		draw_saturation_bar(0.75f, blur_radius / 100.0f);
 		draw_saturation_bar(0.80f, blurred_mix_amount);
 
+#ifdef HAVE_SDL2
+		SDL_GL_SwapWindow(window);
+#else
 		SDL_GL_SwapBuffers();
+#endif
 		check_error();
 
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
