@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "effect_util.h"
+#include "fp16.h"
 #include "fft_pass_effect.h"
 #include "util.h"
 
@@ -79,7 +80,7 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	// bit, so the stride is 8, and so on.
 
 	assert((fft_size & (fft_size - 1)) == 0);  // Must be power of two.
-	float *tmp = new float[fft_size * 4];
+	fp16_int_t *tmp = new fp16_int_t[fft_size * 4];
 	int subfft_size = 1 << pass_number;
 	double mulfac;
 	if (inverse) {
@@ -124,10 +125,10 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 		} else {
 			support_texture_index = i;
 		}
-		tmp[support_texture_index * 4 + 0] = (base - support_texture_index) / double(input_size);
-		tmp[support_texture_index * 4 + 1] = (base + stride - support_texture_index) / double(input_size);
-		tmp[support_texture_index * 4 + 2] = twiddle_real;
-		tmp[support_texture_index * 4 + 3] = twiddle_imag;
+		tmp[support_texture_index * 4 + 0] = fp64_to_fp16((base - support_texture_index) / double(input_size));
+		tmp[support_texture_index * 4 + 1] = fp64_to_fp16((base + stride - support_texture_index) / double(input_size));
+		tmp[support_texture_index * 4 + 2] = fp64_to_fp16(twiddle_real);
+		tmp[support_texture_index * 4 + 3] = fp64_to_fp16(twiddle_imag);
 	}
 
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
@@ -143,11 +144,14 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	// Supposedly FFTs are very sensitive to inaccuracies in the twiddle factors,
 	// at least according to a paper by Schatzman (see gpuwave.pdf reference [30]
-	// for the full reference), so we keep them at 32-bit. However, for
-	// small sizes, all components are exact anyway, so we can cheat there
-	// (although noting that the source coordinates become somewhat less
-	// accurate then, too).
-	glTexImage2D(GL_TEXTURE_2D, 0, (subfft_size <= 4) ? GL_RGBA16F : GL_RGBA32F, fft_size, 1, 0, GL_RGBA, GL_FLOAT, tmp);
+	// for the full reference); however, practical testing indicates that it's
+	// not a problem to keep the twiddle factors at 16-bit, at least as long as
+	// we round them properly--it would seem that Schatzman were mainly talking
+	// about poor sin()/cos() approximations. Thus, we store them in 16-bit,
+	// which gives a nice speed boost.
+	//
+	// Note that the source coordinates become somewhat less accurate too, though.
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, fft_size, 1, 0, GL_RGBA, GL_HALF_FLOAT, tmp);
 	check_error();
 
 	delete[] tmp;
