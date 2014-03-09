@@ -132,13 +132,13 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
-	glBindTexture(GL_TEXTURE_1D, tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	check_error();
 
 	// Supposedly FFTs are very sensitive to inaccuracies in the twiddle factors,
@@ -147,7 +147,7 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	// small sizes, all components are exact anyway, so we can cheat there
 	// (although noting that the source coordinates become somewhat less
 	// accurate then, too).
-	glTexImage1D(GL_TEXTURE_1D, 0, (subfft_size <= 4) ? GL_RGBA16F : GL_RGBA32F, fft_size, 0, GL_RGBA, GL_FLOAT, tmp);
+	glTexImage2D(GL_TEXTURE_2D, 0, (subfft_size <= 4) ? GL_RGBA16F : GL_RGBA32F, fft_size, 1, 0, GL_RGBA, GL_FLOAT, tmp);
 	check_error();
 
 	delete[] tmp;

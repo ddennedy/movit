@@ -58,13 +58,13 @@ void measure_texel_subpixel_precision()
 	float texdata[] = { 0, 1 };
 	glGenTextures(1, &src_texnum);
 	check_error();
-	glBindTexture(GL_TEXTURE_1D, src_texnum);
+	glBindTexture(GL_TEXTURE_2D, src_texnum);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	check_error();
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_R16F, 2, 0, GL_RED, GL_FLOAT, texdata);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 2, 1, 0, GL_RED, GL_FLOAT, texdata);
 	check_error();
 
 	// Basic state.
@@ -81,7 +81,7 @@ void measure_texel_subpixel_precision()
 		read_file("vs.vert"), read_file("texture1d.frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
-	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 1D sampler.
+	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
 	check_error();
 
 	// Draw the texture stretched over a long quad, interpolating it out.
@@ -136,7 +136,7 @@ void measure_texel_subpixel_precision()
 	movit_texel_subpixel_precision = biggest_jump;
 
 	// Clean up.
-	glBindTexture(GL_TEXTURE_1D, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
@@ -189,13 +189,13 @@ void measure_roundoff_problems()
 	}
 	glGenTextures(1, &src_texnum);
 	check_error();
-	glBindTexture(GL_TEXTURE_1D, src_texnum);
+	glBindTexture(GL_TEXTURE_2D, src_texnum);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	check_error();
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, 512, 0, GL_RED, GL_FLOAT, texdata);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 512, 1, 0, GL_RED, GL_FLOAT, texdata);
 	check_error();
 
 	// Basic state.
@@ -212,7 +212,7 @@ void measure_roundoff_problems()
 		read_file("vs.vert"), read_file("texture1d.frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
-	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 1D sampler.
+	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
 
 	// Draw the texture stretched over a long quad, interpolating it out.
 	float vertices[] = {
@@ -265,7 +265,7 @@ void measure_roundoff_problems()
 	movit_num_wrongly_rounded = wrongly_rounded;
 
 	// Clean up.
-	glBindTexture(GL_TEXTURE_1D, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
