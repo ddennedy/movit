@@ -203,12 +203,10 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 	ASSERT_TRUE(resample_effect->set_int("height", dheight));
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	// Require that we are within 10-bit accuracy. Note that this is for
-	// one pass only; some cards that don't have correct fp32 -> fp16
-	// rounding in the intermediate framebuffers will go outside this after
-	// a 2D resize. This limit is tight enough that it will be good enough
-	// for 8-bit accuracy, though.
-	expect_equal(expected_data, out_data, dwidth, dheight, 0.5 / 1023.0);
+	// Require that we are within 10-bit accuracy. Note that this limit is for
+	// one pass only, but the limit is tight enough that it should be good enough
+	// for 10-bit accuracy even after two passes.
+	expect_equal(expected_data, out_data, dwidth, dheight, 0.1 / 1023.0);
 }
 
 }  // namespace movit

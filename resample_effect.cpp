@@ -10,6 +10,7 @@
 
 #include "effect_chain.h"
 #include "effect_util.h"
+#include "fp16.h"
 #include "resample_effect.h"
 #include "util.h"
 
@@ -142,7 +143,7 @@ void ResampleEffect::inform_input_size(unsigned input_num, unsigned width, unsig
 	input_height = height;
 	update_size();
 }
-		
+
 void ResampleEffect::update_size()
 {
 	bool ok = true;
@@ -325,26 +326,36 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 	// Now that we know the right width, actually combine the samples.
 	float *bilinear_weights = new float[dst_samples * src_bilinear_samples * 2];
+	fp16_int_t *bilinear_weights_fp16 = new fp16_int_t[dst_samples * src_bilinear_samples * 2];
 	for (unsigned y = 0; y < dst_samples; ++y) {
+		float *bilinear_weights_ptr = bilinear_weights + (y * src_bilinear_samples) * 2;
+		fp16_int_t *bilinear_weights_fp16_ptr = bilinear_weights_fp16 + (y * src_bilinear_samples) * 2;
 		unsigned num_samples_saved = combine_samples(
 			weights + (y * src_samples) * 2,
-			bilinear_weights + (y * src_bilinear_samples) * 2,
+			bilinear_weights_ptr,
 			src_samples,
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
 
+		// Convert to fp16.
+		for (int i = 0; i < src_bilinear_samples; ++i) {
+			bilinear_weights_fp16_ptr[i * 2 + 0] = fp64_to_fp16(bilinear_weights_ptr[i * 2 + 0]);
+			bilinear_weights_fp16_ptr[i * 2 + 1] = fp64_to_fp16(bilinear_weights_ptr[i * 2 + 1]);
+		}
+
 		// Normalize so that the sum becomes one. Note that we do it twice;
 		// this sometimes helps a tiny little bit when we have many samples.
 		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
-			float sum = 0.0;
+			double sum = 0.0;
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				sum += bilinear_weights[(y * src_bilinear_samples + i) * 2 + 0];
+				sum += fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]);
 			}
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				bilinear_weights[(y * src_bilinear_samples + i) * 2 + 0] /= sum;
+				bilinear_weights_fp16_ptr[i * 2 + 0] = fp64_to_fp16(
+					fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]) / sum);
 			}
 		}
-	}	
+	}
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
@@ -357,11 +368,12 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_FLOAT, bilinear_weights);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights_fp16);
 	check_error();
 
 	delete[] weights;
 	delete[] bilinear_weights;
+	delete[] bilinear_weights_fp16;
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
