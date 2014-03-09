@@ -34,6 +34,9 @@ void print_3x3_matrix(const Eigen::Matrix3d &m);
 // Output a GLSL 3x3 matrix declaration.
 std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 
+// Calculate a / b, rounding up. Does not handle overflow correctly.
+unsigned div_round_up(unsigned a, unsigned b);
+
 // Calculate where to sample, and with what weight, if one wants to use
 // the GPU's bilinear hardware to sample w1 * x[0] + w2 * x[1].
 //
