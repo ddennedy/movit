@@ -7,6 +7,7 @@
 
 #include "effect.h"
 #include "effect_chain.h"
+#include "fp16.h"
 #include "image_format.h"
 #include "init.h"
 #include "input.h"
@@ -38,6 +39,7 @@ public:
 		case FORMAT_RGBA_POSTMULTIPLIED_ALPHA:
 		case FORMAT_BGRA_POSTMULTIPLIED_ALPHA:
 			return OUTPUT_POSTMULTIPLIED_ALPHA;
+		case FORMAT_RG:
 		case FORMAT_RGB:
 		case FORMAT_BGR:
 		case FORMAT_GRAYSCALE:
@@ -70,6 +72,14 @@ public:
 	void set_pixel_data(const unsigned char *pixel_data, GLuint pbo = 0)
 	{
 		assert(this->type == GL_UNSIGNED_BYTE);
+		this->pixel_data = pixel_data;
+		this->pbo = pbo;
+		invalidate_pixel_data();
+	}
+
+	void set_pixel_data(const fp16_int_t *pixel_data, GLuint pbo = 0)
+	{
+		assert(this->type == GL_HALF_FLOAT);
 		this->pixel_data = pixel_data;
 		this->pbo = pbo;
 		invalidate_pixel_data();

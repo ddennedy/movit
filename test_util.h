@@ -19,8 +19,8 @@ public:
 	~EffectChainTester();
 	
 	EffectChain *get_chain() { return &chain; }
-	Input *add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
-	Input *add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve);
+	Input *add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width = -1, int input_height = -1);
+	Input *add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width = -1, int input_height = -1);
 	void run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 	void run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 

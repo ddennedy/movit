@@ -85,25 +85,39 @@ EffectChainTester::~EffectChainTester()
 	check_error();
 }
 
-Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
+Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width, int input_height)
 {
 	ImageFormat format;
 	format.color_space = color_space;
 	format.gamma_curve = gamma_curve;
 
-	FlatInput *input = new FlatInput(format, pixel_format, GL_FLOAT, width, height);
+	if (input_width == -1) {
+		input_width = width;
+	}
+	if (input_height == -1) {
+		input_height = height;
+	}
+
+	FlatInput *input = new FlatInput(format, pixel_format, GL_FLOAT, input_width, input_height);
 	input->set_pixel_data(data);
 	chain.add_input(input);
 	return input;
 }
 
-Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve)
+Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width, int input_height)
 {
 	ImageFormat format;
 	format.color_space = color_space;
 	format.gamma_curve = gamma_curve;
 
-	FlatInput *input = new FlatInput(format, pixel_format, GL_UNSIGNED_BYTE, width, height);
+	if (input_width == -1) {
+		input_width = width;
+	}
+	if (input_height == -1) {
+		input_height = height;
+	}
+
+	FlatInput *input = new FlatInput(format, pixel_format, GL_UNSIGNED_BYTE, input_width, input_height);
 	input->set_pixel_data(data);
 	chain.add_input(input);
 	return input;

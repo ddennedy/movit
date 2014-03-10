@@ -59,6 +59,7 @@ TESTED_EFFECTS += dither_effect
 TESTED_EFFECTS += deconvolution_sharpen_effect
 TESTED_EFFECTS += fft_pass_effect
 TESTED_EFFECTS += vignette_effect
+TESTED_EFFECTS += slice_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect

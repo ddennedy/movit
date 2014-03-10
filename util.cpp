@@ -215,4 +215,9 @@ void cleanup_vertex_attribute(GLuint glsl_program_num, const string &attribute_n
 	check_error();
 }
 
+unsigned div_round_up(unsigned a, unsigned b)
+{
+	return (a + b - 1) / b;
+}
+
 }  // namespace movit

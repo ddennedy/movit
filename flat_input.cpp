@@ -24,7 +24,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  pitch(width),
 	  pixel_data(NULL)
 {
-	assert(type == GL_FLOAT || type == GL_UNSIGNED_BYTE);
+	assert(type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
 }
@@ -46,7 +46,17 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 		GLint internal_format;
 		GLenum format;
 		if (type == GL_FLOAT) {
-			internal_format = GL_RGBA32F_ARB;
+			if (pixel_format == FORMAT_RG) {
+				internal_format = GL_RG32F;
+			} else {
+				internal_format = GL_RGBA32F;
+			}
+		} else if (type == GL_HALF_FLOAT) {
+			if (pixel_format == FORMAT_RG) {
+				internal_format = GL_RG16F;
+			} else {
+				internal_format = GL_RGBA16F;
+			}
 		} else if (output_linear_gamma) {
 			assert(type == GL_UNSIGNED_BYTE);
 			internal_format = GL_SRGB8_ALPHA8;
@@ -66,6 +76,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 			format = GL_BGRA;
 		} else if (pixel_format == FORMAT_GRAYSCALE) {
 			format = GL_LUMINANCE;
+		} else if (pixel_format == FORMAT_RG) {
+			format = GL_RG;
 		} else {
 			assert(false);
 		}
