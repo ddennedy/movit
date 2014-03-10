@@ -29,10 +29,12 @@ public:
 	                             unsigned *virtual_width, unsigned *virtual_height) const;
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
 	
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 
 private:
+	EffectChain *chain;
 	int input_width, input_height;
 	int input_slice_size, output_slice_size;
 	Direction direction;

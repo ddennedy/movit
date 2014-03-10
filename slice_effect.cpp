@@ -1,5 +1,6 @@
 #include <epoxy/gl.h>
 
+#include "effect_chain.h"
 #include "slice_effect.h"
 #include "effect_util.h"
 #include "util.h"
@@ -60,12 +61,10 @@ void SliceEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, un
 		set_uniform_float(glsl_program_num, prefix, "slice_offset_to_input_coord", float(output_slice_size) / float(input_height));
 	}
 
-	// Normalized coordinates could potentially cause blurring of the
-	// image; it's not critical, but we have set changes_output_size()
-	// and needs_texture_bounce(), so simply turning off the interpolation
-	// is allowed.
-	assert(*sampler_num == 1);
-	glActiveTexture(GL_TEXTURE0);
+	// Normalized coordinates could potentially cause blurring of the image.
+	// It isn't critical, but still good practice.
+	Node *self = chain->find_node_for_effect(this);
+	glActiveTexture(chain->get_input_sampler(self, 0));
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	check_error();

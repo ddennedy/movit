@@ -73,6 +73,7 @@ public:
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
+	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
 		if (parent != NULL) {
 			parent->inform_input_size(input_num, width, height);
@@ -93,6 +94,7 @@ private:
 	void update_texture(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 	ResampleEffect *parent;
+	EffectChain *chain;
 	Direction direction;
 	GLuint texnum;
 	int input_width, input_height, output_width, output_height;
