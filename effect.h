@@ -167,6 +167,15 @@ public:
 	// next effect set needs_texture_bounce()).
 	virtual bool changes_output_size() const { return false; }
 
+	// Whether this effect is effectively sampling from a a single texture.
+	// If so, it will override needs_texture_bounce(); however, there are also
+	// two demands it needs to fulfill:
+	//
+	//  1. It needs to be an Input, ie. num_inputs() == 0.
+	//  2. It needs to allocate exactly one sampler in set_gl_state(),
+	//     and allow dependent effects to change that sampler state.
+	virtual bool is_single_texture() const { return false; }
+
 	// If changes_output_size() is true, you must implement this to tell
 	// the framework what output size you want. Also, you can set a
 	// virtual width/height, which is the size the next effect (if any)

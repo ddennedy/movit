@@ -359,13 +359,13 @@ void EffectChain::construct_glsl_programs(Node *output)
 			for (unsigned i = 0; i < deps.size(); ++i) {
 				bool start_new_phase = false;
 
-				// FIXME: If we sample directly from a texture, we won't need this.
-				if (node->effect->needs_texture_bounce()) {
+				if (node->effect->needs_texture_bounce() &&
+				    !deps[i]->effect->is_single_texture()) {
 					start_new_phase = true;
 				}
 
 				if (deps[i]->outgoing_links.size() > 1) {
-					if (deps[i]->effect->num_inputs() > 0) {
+					if (!deps[i]->effect->is_single_texture()) {
 						// More than one effect uses this as the input,
 						// and it is not a texture itself.
 						// The easiest thing to do (and probably also the safest
@@ -373,6 +373,8 @@ void EffectChain::construct_glsl_programs(Node *output)
 						// and then let the next passes read from that.
 						start_new_phase = true;
 					} else {
+						assert(deps[i]->effect->num_inputs() == 0);
+
 						// For textures, we try to be slightly more clever;
 						// if none of our outputs need a bounce, we don't bounce
 						// but instead simply use the effect many times.
