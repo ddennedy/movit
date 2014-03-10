@@ -58,6 +58,7 @@ public:
 	unsigned get_height() const { return height; }
 	Colorspace get_color_space() const { return image_format.color_space; }
 	GammaCurve get_gamma_curve() const { return image_format.gamma_curve; }
+	virtual bool is_single_texture() const { return true; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer
