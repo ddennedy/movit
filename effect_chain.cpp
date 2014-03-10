@@ -149,6 +149,15 @@ void EffectChain::insert_node_between(Node *sender, Node *middle, Node *receiver
 	assert(middle->incoming_links.size() == middle->effect->num_inputs());
 }
 
+GLenum EffectChain::get_input_sampler(Node *node, unsigned input_num) const
+{
+	assert(node->effect->needs_texture_bounce());
+	assert(input_num < node->incoming_links.size());
+	assert(node->incoming_links[input_num]->bound_sampler_num >= 0);
+	assert(node->incoming_links[input_num]->bound_sampler_num < 8);
+	return GL_TEXTURE0 + node->incoming_links[input_num]->bound_sampler_num;
+}
+
 void EffectChain::find_all_nonlinear_inputs(Node *node, vector<Node *> *nonlinear_inputs)
 {
 	if (node->output_gamma_curve == GAMMA_LINEAR &&
@@ -1480,6 +1489,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		for (unsigned sampler = 0; sampler < phases[phase]->inputs.size(); ++sampler) {
 			glActiveTexture(GL_TEXTURE0 + sampler);
 			Node *input = phases[phase]->inputs[sampler];
+			input->bound_sampler_num = sampler;
 			glBindTexture(GL_TEXTURE_2D, output_textures[input->phase]);
 			check_error();
 			if (phases[phase]->input_needs_mipmaps) {
@@ -1533,8 +1543,16 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		unsigned sampler_num = phases[phase]->inputs.size();
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
+			unsigned old_sampler_num = sampler_num;
 			node->effect->set_gl_state(glsl_program_num, phases[phase]->effect_ids[node], &sampler_num);
 			check_error();
+
+			if (node->effect->is_single_texture()) {
+				assert(sampler_num - old_sampler_num == 1);
+				node->bound_sampler_num = old_sampler_num;
+			} else {
+				node->bound_sampler_num = -1;
+			}
 		}
 
 		// Now draw!

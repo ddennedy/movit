@@ -522,17 +522,27 @@ class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
 	virtual bool needs_mipmaps() const { return true; }
+
+	// To be allowed to mess with the sampler state.
+	virtual bool needs_texture_bounce() const { return true; }
+
 	virtual string effect_type_id() const { return "MipmapNeedingEffect"; }
 	string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
+	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+
 	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 	{
-		glActiveTexture(GL_TEXTURE0);
+		Node *self = chain->find_node_for_effect(this);
+		glActiveTexture(chain->get_input_sampler(self, 0));
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		check_error();
 	}
+
+private:
+	EffectChain *chain;
 };
 
 TEST(EffectChainTest, MipmapGenerationWorks) {

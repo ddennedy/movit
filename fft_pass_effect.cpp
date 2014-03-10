@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <math.h>
 
+#include "effect_chain.h"
 #include "effect_util.h"
 #include "fp16.h"
 #include "fft_pass_effect.h"
@@ -40,15 +41,13 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	int input_size = (direction == VERTICAL) ? input_height : input_width;
 
-	// See the comments on changes_output_size() in the .h file to see
-	// why this is legal. It is _needed_ because it counteracts the
-	// precision issues we get because we sample the input texture with
-	// normalized coordinates (especially when the repeat count along
-	// the axis is not a power of two); we very rapidly end up in narrowly
-	// missing a texel center, which causes precision loss to propagate
-	// throughout the FFT.
-	assert(*sampler_num == 1);
-	glActiveTexture(GL_TEXTURE0);
+	// This is needed because it counteracts the precision issues we get
+	// because we sample the input texture with normalized coordinates
+	// (especially when the repeat count along the axis is not a power of
+	// two); we very rapidly end up in narrowly missing a texel center,
+	// which causes precision loss to propagate throughout the FFT.
+	Node *self = chain->find_node_for_effect(this);
+	glActiveTexture(chain->get_input_sampler(self, 0));
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	check_error();

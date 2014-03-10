@@ -71,6 +71,15 @@ private:
 	// phases as inputs, instead of Node.
 	Phase *phase;
 
+	// If the effect has is_single_texture(), or if the output went to RTT
+	// and that texture has been bound to a sampler, the sampler number
+	// will be stored here.
+	//
+	// TODO: Can an RTT texture be used as inputs to multiple effects
+	// within the same phase? If so, we have a problem with modifying
+	// sampler state here.
+	int bound_sampler_num;
+
 	// Used during the building of the effect chain.
 	Colorspace output_color_space;
 	GammaCurve output_gamma_curve;
@@ -173,6 +182,16 @@ public:
 	void replace_receiver(Node *old_receiver, Node *new_receiver);
 	void replace_sender(Node *new_sender, Node *receiver);
 	void insert_node_between(Node *sender, Node *middle, Node *receiver);
+	Node *find_node_for_effect(Effect *effect) { return node_map[effect]; }
+
+	// Get the OpenGL sampler (GL_TEXTURE0, GL_TEXTURE1, etc.) for the
+	// input of the given node, so that one can modify the sampler state
+	// directly. Only valid to call during set_gl_state().
+	//
+	// Also, for this to be allowed, <node>'s effect must have
+	// needs_texture_bounce() set, so that it samples directly from a
+	// single-sampler input, or from an RTT texture.
+	GLenum get_input_sampler(Node *node, unsigned input_num) const;
 
 	// Get the current resource pool assigned to this EffectChain.
 	// Primarily to let effects allocate textures as needed.

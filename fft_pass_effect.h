@@ -98,10 +98,13 @@ public:
 		*width = *virtual_width = input_width;
 		*height = *virtual_height = input_height;
 	}
+
+	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
 	
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 
 private:
+	EffectChain *chain;
 	int input_width, input_height;
 	GLuint tex;
 	int fft_size;
