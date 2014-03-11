@@ -14,24 +14,24 @@ vec4 FUNCNAME(vec2 tc) {
 	//
 	//         0                     w
 	//   luma: |---------------------|
-        //   mix:                        |----|
-        //                               0    1
+	//   mix:                        |----|
+	//                               0    1
 	//
 	// Then as we progress, eventually the luma range should move to the right
 	// so that more pixels start moving towards higher mix value:
 	//
 	//           0                     w
 	//   luma:   |---------------------|
-        //   mix:                        |----|
-        //                               0    1
+	//   mix:                        |----|
+	//                               0    1
 	//
 	// and at the very end, all pixels should be in the state 1.0 (0% first image,
 	// 100% second image):
 	//
 	//                                    0                     w
 	//   luma:                            |---------------------|
-        //   mix:                        |----|
-        //                               0    1
+	//   mix:                        |----|
+	//                               0    1
 	//
 	// So clearly, it should move (w+1) units to the right, and apart from that
 	// just stay a simple mapping.
@@ -40,5 +40,4 @@ vec4 FUNCNAME(vec2 tc) {
 	float m = clamp((luma - w) + PREFIX(progress_mul_w_plus_one), 0.0, 1.0);
 
 	return mix(first, second, m);
-//	return vec4(luma, luma, luma, 1.0);
 }
