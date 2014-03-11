@@ -139,6 +139,13 @@ public:
 		inputs.push_back(input2);
 		return add_effect(effect, inputs);
 	}
+	Effect *add_effect(Effect *effect, Effect *input1, Effect *input2, Effect *input3) {
+		std::vector<Effect *> inputs;
+		inputs.push_back(input1);
+		inputs.push_back(input2);
+		inputs.push_back(input3);
+		return add_effect(effect, inputs);
+	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
