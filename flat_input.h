@@ -78,7 +78,15 @@ public:
 		invalidate_pixel_data();
 	}
 
-	void set_pixel_data(const fp16_int_t *pixel_data, GLuint pbo = 0)
+	void set_pixel_data(const unsigned short *pixel_data, GLuint pbo = 0)
+	{
+		assert(this->type == GL_UNSIGNED_SHORT);
+		this->pixel_data = pixel_data;
+		this->pbo = pbo;
+		invalidate_pixel_data();
+	}
+
+	void set_pixel_data_fp16(const fp16_int_t *pixel_data, GLuint pbo = 0)
 	{
 		assert(this->type == GL_HALF_FLOAT);
 		this->pixel_data = pixel_data;

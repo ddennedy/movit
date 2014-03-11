@@ -24,7 +24,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  pitch(width),
 	  pixel_data(NULL)
 {
-	assert(type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_BYTE);
+	assert(type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_SHORT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
 }
@@ -46,16 +46,28 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 		GLint internal_format;
 		GLenum format;
 		if (type == GL_FLOAT) {
-			if (pixel_format == FORMAT_RG) {
+			if (pixel_format == FORMAT_R) {
+				internal_format = GL_R32F;
+			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG32F;
 			} else {
 				internal_format = GL_RGBA32F;
 			}
 		} else if (type == GL_HALF_FLOAT) {
-			if (pixel_format == FORMAT_RG) {
+			if (pixel_format == FORMAT_R) {
+				internal_format = GL_R16F;
+			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG16F;
 			} else {
 				internal_format = GL_RGBA16F;
+			}
+		} else if (type == GL_UNSIGNED_SHORT) {
+			if (pixel_format == FORMAT_R) {
+				internal_format = GL_R16;
+			} else if (pixel_format == FORMAT_RG) {
+				internal_format = GL_RG16;
+			} else {
+				internal_format = GL_RGBA16;
 			}
 		} else if (output_linear_gamma) {
 			assert(type == GL_UNSIGNED_BYTE);
