@@ -61,6 +61,7 @@ TESTED_EFFECTS += fft_pass_effect
 TESTED_EFFECTS += vignette_effect
 TESTED_EFFECTS += slice_effect
 TESTED_EFFECTS += complex_modulate_effect
+TESTED_EFFECTS += luma_mix_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
