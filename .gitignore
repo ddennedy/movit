@@ -47,6 +47,13 @@ autom4te.cache/
 config.h.in
 config.log
 config.status
+.libs
+config.guess
+config.sub
+install-sh
+libtool
+ltmain.sh
+m4
 configure
 Makefile
 movit.pc
