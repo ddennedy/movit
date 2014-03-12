@@ -103,7 +103,8 @@ libmovit.la: $(LIB_OBJS:.o=.lo)
 
 %.lo: %.cpp
 	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
-	sed 's/\.o:/\.lo:/' < $(@:.lo=.d) > $(@:.lo=.ld)
+	[ ! -r $(@:.lo=.d) ] || sed 's/\.o:/\.lo:/' < $(@:.lo=.d) > $(@:.lo=.ld)
+	[ ! -r .libs/$(@:.lo=.d) ] || sed 's/\.o:/\.lo:/' < .libs/$(@:.lo=.d) > .libs/$(@:.lo=.ld)
 %.o: %.cpp
 	$(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
