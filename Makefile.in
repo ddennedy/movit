@@ -9,6 +9,7 @@ datadir = @datadir@
 top_builddir = @top_builddir@
 with_demo_app = @with_demo_app@
 with_SDL2 = @with_SDL2@
+with_coverage = @with_coverage@
 
 CC=@CC@
 CXX=@CXX@
@@ -24,7 +25,7 @@ RANLIB=ranlib
 INSTALL=install
 MKDIR=mkdir
 
-ifeq ($(COVERAGE),1)
+ifeq ($(with_coverage),yes)
 CXXFLAGS += -fprofile-arcs -ftest-coverage --coverage
 LDFLAGS += -fprofile-arcs -ftest-coverage
 LDLIBS += -lgcov
@@ -131,11 +132,16 @@ check: $(TESTS)
 		exit 1; \
 	fi
 
-# You need to build with COVERAGE=1 to use this target.
+ifeq ($(with_coverage),yes)
 coverage: check
 	lcov -d . -c -o movit.info
 	lcov --remove movit.info '*_test.cpp' 'test_util.*' 'sandbox_effect.*' widgets.cpp -o movit.info
 	genhtml -o coverage movit.info
+else
+coverage:
+	@echo You need to compile with --enable-coverage to use this target.
+	@exit 1
+endif
 
 HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h resource_pool.h
 HDRS += $(INPUTS:=.h)

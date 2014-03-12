@@ -28,5 +28,9 @@ PKG_CHECK_MODULES([libpng], [libpng12], [], [with_demo_app=no; AC_MSG_WARN([libp
 AC_SUBST([with_demo_app])
 AC_SUBST([with_SDL2])
 
+with_coverage=no
+AC_ARG_ENABLE([coverage], [  --enable-coverage       build with information needed to compute test coverage], [with_coverage=yes])
+AC_SUBST([with_coverage])
+
 AC_CONFIG_FILES([Makefile movit.pc])
 AC_OUTPUT
