@@ -140,7 +140,7 @@ coverage:
 	@exit 1
 endif
 
-HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h resource_pool.h
+HDRS = effect_chain.h effect_util.h effect.h input.h image_format.h init.h util.h defs.h resource_pool.h fp16.h
 HDRS += $(INPUTS:=.h)
 HDRS += $(EFFECTS:=.h)
 
