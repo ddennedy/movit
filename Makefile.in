@@ -149,6 +149,7 @@ SHADERS += $(INPUTS:=.frag)
 SHADERS += $(EFFECTS:=.frag)
 SHADERS += highlight_cutoff_effect.frag
 SHADERS += overlay_matte_effect.frag
+SHADERS += texture1d.frag
 
 # These purposefully do not exist.
 MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.frag resize_effect.frag
