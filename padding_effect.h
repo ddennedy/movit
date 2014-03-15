@@ -11,10 +11,6 @@
 // The border color is taken to be in linear gamma, sRGB, with premultiplied alpha.
 // You may not change it after calling finalize(), since that could change the
 // graph (need_linear_light() etc. depend on the border color you choose).
-//
-// As a convenience, if the flag “pad_from_bottom” is nonzero, the “top” parameter
-// will mean pixels from the bottom (matching OpenGL's usual bottom-left convention),
-// instead of from the top as usual.
 
 #include <GL/glew.h>
 #include <string>
@@ -43,7 +39,6 @@ private:
 	int input_width, input_height;
 	int output_width, output_height;
 	float top, left;
-	int pad_from_bottom;
 };
 
 }  // namespace movit
