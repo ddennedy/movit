@@ -125,35 +125,36 @@ TEST(FFTPassEffectTest, SingleFrequency) {
 }
 
 TEST(FFTPassEffectTest, Repeat) {
-	const int fft_size = 64;
-	const int num_repeats = 31;  // Prime, to make things more challenging.
-	float data[num_repeats * fft_size * 4] = { 0 };
-	float expected_data[num_repeats * fft_size * 4], out_data[num_repeats * fft_size * 4];
-
 	srand(12345);
-	for (int i = 0; i < num_repeats * fft_size * 4; ++i) {
-		data[i] = uniform_random();
-	}
+	for (int fft_size = 2; fft_size < 512; fft_size *= 2) {
+		const int num_repeats = 31;  // Prime, to make things more challenging.
+		float data[num_repeats * fft_size * 4];
+		float expected_data[num_repeats * fft_size * 4], out_data[num_repeats * fft_size * 4];
 
-	for (int i = 0; i < num_repeats; ++i) {
-		run_fft(data + i * fft_size * 4, expected_data + i * fft_size * 4, fft_size, false);
-	}
+		for (int i = 0; i < num_repeats * fft_size * 4; ++i) {
+			data[i] = uniform_random();
+		}
 
-	{
-		// Horizontal.
-		EffectChainTester tester(data, num_repeats * fft_size, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
-		setup_fft(tester.get_chain(), fft_size, false);
-		tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+		for (int i = 0; i < num_repeats; ++i) {
+			run_fft(data + i * fft_size * 4, expected_data + i * fft_size * 4, fft_size, false);
+		}
 
-		expect_equal(expected_data, out_data, 4, num_repeats * fft_size);
-	}
-	{
-		// Vertical.
-		EffectChainTester tester(data, 1, num_repeats * fft_size, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
-		setup_fft(tester.get_chain(), fft_size, false, false, FFTPassEffect::VERTICAL);
-		tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+		{
+			// Horizontal.
+			EffectChainTester tester(data, num_repeats * fft_size, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+			setup_fft(tester.get_chain(), fft_size, false);
+			tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 
-		expect_equal(expected_data, out_data, 4, num_repeats * fft_size);
+			expect_equal(expected_data, out_data, 4, num_repeats * fft_size);
+		}
+		{
+			// Vertical.
+			EffectChainTester tester(data, 1, num_repeats * fft_size, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+			setup_fft(tester.get_chain(), fft_size, false, false, FFTPassEffect::VERTICAL);
+			tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+
+			expect_equal(expected_data, out_data, 4, num_repeats * fft_size);
+		}
 	}
 }
 
