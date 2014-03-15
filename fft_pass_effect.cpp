@@ -117,15 +117,17 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 		// is that we can have multiple FFTs along the same line,
 		// and want to reuse the support texture by repeating it.
 		int base = k * stride * 2 + offset;
-		int support_texture_index;
+		int support_texture_index = i;
+		int src1 = base;
+		int src2 = base + stride;
 		if (direction == FFTPassEffect::VERTICAL) {
 			// Compensate for OpenGL's bottom-left convention.
-			support_texture_index = fft_size - i - 1;
-		} else {
-			support_texture_index = i;
+			support_texture_index = fft_size - support_texture_index - 1;
+			src1 = fft_size - src1 - 1;
+			src2 = fft_size - src2 - 1;
 		}
-		tmp[support_texture_index * 4 + 0] = fp64_to_fp16((base - support_texture_index) / double(input_size));
-		tmp[support_texture_index * 4 + 1] = fp64_to_fp16((base + stride - support_texture_index) / double(input_size));
+		tmp[support_texture_index * 4 + 0] = fp64_to_fp16((src1 - support_texture_index) / double(input_size));
+		tmp[support_texture_index * 4 + 1] = fp64_to_fp16((src2 - support_texture_index) / double(input_size));
 		tmp[support_texture_index * 4 + 2] = fp64_to_fp16(twiddle_real);
 		tmp[support_texture_index * 4 + 3] = fp64_to_fp16(twiddle_imag);
 	}
