@@ -84,20 +84,20 @@ TEST(SliceEffectTest, HorizontalDiscard) {
 	expect_equal(expected_data, out_data, 4, 2);
 }
 
-TEST(SliceEffectTest, VerticalOverlapSlicesFromBottom) {
+TEST(SliceEffectTest, VerticalOverlapSlicesFromTop) {
 	float data[2 * 3] = {
 		0.0f, 0.1f,
-
 		0.4f, 0.3f,
+
 		0.6f, 0.2f,
 	};
 	float expected_data[2 * 6] = {
 		0.0f, 0.1f,
-		0.0f, 0.1f,
-		0.0f, 0.1f,
-
-		0.0f, 0.1f,
 		0.4f, 0.3f,
+		0.6f, 0.2f,
+
+		0.6f, 0.2f,
+		0.6f, 0.2f,
 		0.6f, 0.2f,
 	};
 	float out_data[2 * 6];

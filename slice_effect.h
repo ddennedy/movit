@@ -7,8 +7,8 @@
 // discard roles, where one does convolutions by means of many small FFTs, but
 // could also work as a (relatively boring) video effect on its own.
 //
-// Note that vertical slices happen from the bottom, not the top, due to the
-// OpenGL coordinate system.
+// Note that vertical slices happen from the top, consistent with the rest of
+// Movit.
 
 #include <GL/glew.h>
 #include <string>

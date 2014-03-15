@@ -6,7 +6,7 @@ vec4 FUNCNAME(vec2 tc) {
 	// DIRECTION_VERTICAL will be #defined to 1 if we are expanding vertically,
 	// and 0 otherwise.
 #if DIRECTION_VERTICAL
-	float sliced_coord = tc.y;
+	float sliced_coord = 1.0 - tc.y;
 #else
 	float sliced_coord = tc.x;
 #endif
@@ -19,7 +19,7 @@ vec4 FUNCNAME(vec2 tc) {
 	float input_coord = slice_num * PREFIX(slice_num_to_input_coord) + slice_offset * PREFIX(slice_offset_to_input_coord);
 
 #if DIRECTION_VERTICAL
-	return INPUT(vec2(tc.x, input_coord));
+	return INPUT(vec2(tc.x, 1.0 - input_coord));
 #else
 	return INPUT(vec2(input_coord, tc.y));
 #endif
