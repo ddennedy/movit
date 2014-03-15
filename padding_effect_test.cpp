@@ -208,6 +208,37 @@ TEST(PaddingEffectTest, Crop) {
 	expect_equal(expected_data, out_data, 1, 1);
 }
 
+TEST(PaddingEffectTest, CropFromBottom) {
+	float data[2 * 2] = {
+		1.0f, 0.5f,
+		0.8f, 0.3f,
+	};
+	float expected_data[1 * 1] = {
+		0.5f,
+	};
+	float out_data[1 * 1];
+
+	EffectChainTester tester(NULL, 1, 1);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input->set_pixel_data(data);
+	tester.get_chain()->add_input(input);
+
+	Effect *effect = tester.get_chain()->add_effect(new PaddingEffect());
+	CHECK(effect->set_int("width", 1));
+	CHECK(effect->set_int("height", 1));
+	CHECK(effect->set_float("left", -1.0f));
+	CHECK(effect->set_float("top", -1.0f));
+	CHECK(effect->set_int("pad_from_bottom", 1));
+
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+	expect_equal(expected_data, out_data, 1, 1);
+}
+
 TEST(PaddingEffectTest, AlphaIsCorrectEvenWithNonLinearInputsAndOutputs) {
 	float data[2 * 1] = {
 		1.0f,

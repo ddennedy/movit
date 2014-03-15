@@ -14,13 +14,15 @@ PaddingEffect::PaddingEffect()
 	  output_width(1280),
 	  output_height(720),
 	  top(0),
-	  left(0)
+	  left(0),
+	  pad_from_bottom(0)
 {
 	register_vec4("border_color", (float *)&border_color);
 	register_int("width", &output_width);
 	register_int("height", &output_height);
 	register_float("top", &top);
 	register_float("left", &left);
+	register_int("pad_from_bottom", &pad_from_bottom);
 }
 
 string PaddingEffect::output_fragment_shader()
@@ -32,10 +34,13 @@ void PaddingEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	float offset[2] = {
-		left / output_width,
-		(output_height - input_height - top) / output_height
-	};
+	float offset[2];
+	offset[0] = left / output_width;
+	if (pad_from_bottom) {
+		offset[1] = top / output_height;
+	} else {
+		offset[1] = (output_height - input_height - top) / output_height;
+	}
 	set_uniform_vec2(glsl_program_num, prefix, "offset", offset);
 
 	float scale[2] = {
