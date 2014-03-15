@@ -40,9 +40,10 @@ Still TL;DR, please give me the list of filters
 ===============================================
 
 Blur, diffusion, glow, lift/gamma/gain (color correction), mirror,
-mix (add two inputs), overlay (the Porter-Duff “over” operation),
-scale (bilinear and Lanczos), sharpen (both by unsharp mask and by
-Wiener filters), saturation (or desaturation), vignette, and white balance.
+mix (add two inputs), luma mix (use a map to wipe between two inputs),
+overlay (the Porter-Duff “over” operation), scale (bilinear and Lanczos),
+sharpen (both by unsharp mask and by Wiener filters), saturation
+(or desaturation), vignette, and white balance.
 
 Yes, that's a short list. But they all look great, are fast and don't give
 you any nasty surprises. (I'd love to include denoise, deinterlace and
