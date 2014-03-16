@@ -1,5 +1,13 @@
 GTEST_DIR ?= /usr/src/gtest
 
+# This will be upgraded for each release, although not necessarily for every git commit.
+# See http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+# for the rules as of how this is changed. This does not really mean that Movit will
+# strive towards having a rock-stable ABI, but at least the soversion will increase
+# whenever it breaks, so that you will not have silent failures, and distribution package
+# management can run its course.
+movit_ltversion = 1:0:0
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 includedir = @includedir@
@@ -101,7 +109,7 @@ demo: libmovit.la $(DEMO_OBJS)
 
 # The library itself.
 libmovit.la: $(LIB_OBJS:.o=.lo)
-	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $(LDLIBS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -version-info $(movit_ltversion) -o $@ $^ $(LDLIBS)
 
 %.lo: %.cpp
 	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
