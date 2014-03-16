@@ -13,5 +13,6 @@ Description: Movit is a library for high-quality, high-performance video filters
 Version: git
 Requires:
 Conflicts:
-Libs: -lmovit @GLEW_LIBS@ @FFTW3_LIBS@
+Libs: -lmovit
+Libs.private: @GLEW_LIBS@ @FFTW3_LIBS@
 Cflags: -I${includedir}/movit @Eigen3_CFLAGS@ @GLEW_CFLAGS@ @FFTW3_CFLAGS@
