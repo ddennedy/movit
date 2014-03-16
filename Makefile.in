@@ -163,6 +163,7 @@ SHADERS += texture1d.frag
 
 # These purposefully do not exist.
 MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.frag resize_effect.frag
+MISSING_SHADERS += fft_convolution_effect.frag fft_input.frag
 SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
 
 install: libmovit.la
