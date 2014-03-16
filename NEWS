@@ -1,3 +1,8 @@
+Movit 1.0.2, March 16th, 2014
+
+ - Make a few tweaks to “make install”, to make distributions' lives easier.
+
+
 Movit 1.0.1, March 16th, 2014
 
  - Fix so that shared libraries are built.
