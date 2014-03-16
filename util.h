@@ -53,6 +53,9 @@ GLuint fill_vertex_attribute(GLuint glsl_program_num, const std::string &attribu
 // Clean up after fill_vertex_attribute().
 void cleanup_vertex_attribute(GLuint glsl_program_num, const std::string &attribute_name, GLuint vbo);
 
+// If v is not already a power of two, return the first higher power of two.
+unsigned next_power_of_two(unsigned v);
+
 }  // namespace movit
 
 #ifdef NDEBUG

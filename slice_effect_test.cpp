@@ -84,6 +84,30 @@ TEST(SliceEffectTest, HorizontalDiscard) {
 	expect_equal(expected_data, out_data, 4, 2);
 }
 
+TEST(SliceEffectTest, HorizontalOverlapWithOffset) {
+	float data[5 * 2] = {
+		/* 0.0f, */ 0.0f,  0.1f, 0.2f,  0.3f, 0.4f,
+		/* 0.4f, */ 0.4f,  0.3f, 0.2f,  0.1f, 0.0f,
+	};
+	float expected_data[9 * 2] = {
+		0.0f, 0.0f, 0.1f,  0.1f, 0.2f, 0.3f,  0.3f, 0.4f, 0.4f,
+		0.4f, 0.4f, 0.3f,  0.3f, 0.2f, 0.1f,  0.1f, 0.0f, 0.0f,
+	};
+	float out_data[9 * 2];
+
+	EffectChainTester tester(NULL, 9, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 5, 2);
+
+	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
+	ASSERT_TRUE(slice_effect->set_int("input_slice_size", 2));
+	ASSERT_TRUE(slice_effect->set_int("output_slice_size", 3));
+	ASSERT_TRUE(slice_effect->set_int("offset", -1));
+	ASSERT_TRUE(slice_effect->set_int("direction", SliceEffect::HORIZONTAL));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 9, 2);
+}
+
 TEST(SliceEffectTest, VerticalOverlapSlicesFromTop) {
 	float data[2 * 3] = {
 		0.0f, 0.1f,
@@ -108,6 +132,37 @@ TEST(SliceEffectTest, VerticalOverlapSlicesFromTop) {
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
 	ASSERT_TRUE(slice_effect->set_int("input_slice_size", 2));
 	ASSERT_TRUE(slice_effect->set_int("output_slice_size", 3));
+	ASSERT_TRUE(slice_effect->set_int("direction", SliceEffect::VERTICAL));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 2, 6);
+}
+
+TEST(SliceEffectTest, VerticalOverlapOffsetsFromTop) {
+	float data[2 * 3] = {
+		0.0f, 0.1f,
+		0.4f, 0.3f,
+
+		0.6f, 0.2f,
+	};
+	float expected_data[2 * 6] = {
+		0.4f, 0.3f,
+		0.6f, 0.2f,
+		0.6f, 0.2f,
+
+		0.6f, 0.2f,
+		0.6f, 0.2f,
+		0.6f, 0.2f,
+	};
+	float out_data[2 * 6];
+
+	EffectChainTester tester(NULL, 2, 6, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
+
+	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
+	ASSERT_TRUE(slice_effect->set_int("input_slice_size", 2));
+	ASSERT_TRUE(slice_effect->set_int("output_slice_size", 3));
+	ASSERT_TRUE(slice_effect->set_int("offset", 1));
 	ASSERT_TRUE(slice_effect->set_int("direction", SliceEffect::VERTICAL));
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 

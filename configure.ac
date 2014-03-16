@@ -8,6 +8,7 @@ AC_PROG_CC
 AC_PROG_CXX
 PKG_CHECK_MODULES([Eigen3], [eigen3])
 PKG_CHECK_MODULES([GLEW], [glew])
+PKG_CHECK_MODULES([FFTW3], [fftw3])
 
 # Needed for unit tests and the demo app.
 PKG_CHECK_MODULES([SDL], [sdl])

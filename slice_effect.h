@@ -37,6 +37,7 @@ private:
 	EffectChain *chain;
 	int input_width, input_height;
 	int input_slice_size, output_slice_size;
+	int offset;
 	Direction direction;
 };
 

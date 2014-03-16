@@ -12,9 +12,9 @@ with_coverage = @with_coverage@
 
 CC=@CC@
 CXX=@CXX@
-CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@
-LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ -lpthread
-DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@ @FFTW3_CFLAGS@
+LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ @FFTW3_LIBS@ -lpthread
+DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@ @FFTW3_LIBS@
 SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@ --tag=CXX
 RANLIB=ranlib
@@ -59,11 +59,13 @@ TESTED_EFFECTS += vignette_effect
 TESTED_EFFECTS += slice_effect
 TESTED_EFFECTS += complex_modulate_effect
 TESTED_EFFECTS += luma_mix_effect
+TESTED_EFFECTS += fft_convolution_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
 UNTESTED_EFFECTS += resize_effect
 UNTESTED_EFFECTS += multiply_effect
+UNTESTED_EFFECTS += fft_input
 
 EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
 

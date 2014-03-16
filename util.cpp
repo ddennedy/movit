@@ -220,4 +220,17 @@ unsigned div_round_up(unsigned a, unsigned b)
 	return (a + b - 1) / b;
 }
 
+// Algorithm from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2.
+unsigned next_power_of_two(unsigned v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+	return v;
+}
+
 }  // namespace movit
