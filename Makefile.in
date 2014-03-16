@@ -179,7 +179,7 @@ install: libmovit.la
 	$(INSTALL) -m 644 movit.pc $(libdir)/pkgconfig/
 
 DISTDIR=movit-$(movit_version)
-OTHER_DIST_FILES=add.frag autogen.sh blue.frag configure.ac d65.h effectlist.txt identity.frag invert_effect.frag Makefile.in mipmap_needing_effect.frag movit.pc.in README test_util.h widgets.h
+OTHER_DIST_FILES=add.frag autogen.sh blue.frag configure.ac d65.h effectlist.txt identity.frag invert_effect.frag Makefile.in mipmap_needing_effect.frag movit.pc.in README NEWS test_util.h widgets.h
 
 dist:
 	$(MKDIR) $(DISTDIR)
