@@ -22,7 +22,8 @@ with_coverage = @with_coverage@
 CC=@CC@
 CXX=@CXX@
 CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @GLEW_CFLAGS@ @FFTW3_CFLAGS@
-LDFLAGS=@GLEW_LIBS@ @SDL_LIBS@ @FFTW3_LIBS@ -lpthread
+LDFLAGS=@GLEW_LIBS@ @FFTW3_LIBS@ -lpthread
+TEST_LDLIBS=@SDL_LIBS@
 DEMO_LDLIBS=@SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@ @FFTW3_LIBS@
 SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@ --tag=CXX
@@ -101,7 +102,7 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 
 # Unit tests.
 $(TESTS): %: %.o $(TEST_OBJS) libmovit.la
-	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(TEST_LDLIBS)
 
 OWN_OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(OWN_TEST_OBJS) $(TESTS:=.o)
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
