@@ -170,13 +170,13 @@ MISSING_SHADERS += fft_convolution_effect.frag fft_input.frag
 SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
 
 install: libmovit.la
-	$(LIBTOOL) --mode=install $(INSTALL) -m 0644 libmovit.la $(libdir)/
-	$(MKDIR) -p $(includedir)/movit/
-	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
-	$(MKDIR) -p $(datadir)/movit/
-	$(INSTALL) -m 0644 $(SHADERS) $(datadir)/movit/
-	$(MKDIR) -p $(libdir)/pkgconfig/
-	$(INSTALL) -m 644 movit.pc $(libdir)/pkgconfig/
+	$(LIBTOOL) --mode=install $(INSTALL) -m 0644 libmovit.la $(DESTDIR)$(libdir)/
+	$(MKDIR) -p $(DESTDIR)$(includedir)/movit/
+	$(INSTALL) -m 0644 $(HDRS) $(DESTDIR)$(includedir)/movit/
+	$(MKDIR) -p $(DESTDIR)$(datadir)/movit/
+	$(INSTALL) -m 0644 $(SHADERS) $(DESTDIR)$(datadir)/movit/
+	$(MKDIR) -p $(DESTDIR)$(libdir)/pkgconfig/
+	$(INSTALL) -m 644 movit.pc $(DESTDIR)$(libdir)/pkgconfig/
 
 DISTDIR=movit-$(movit_version)
 OTHER_DIST_FILES=add.frag autogen.sh blue.frag configure.ac d65.h effectlist.txt identity.frag invert_effect.frag Makefile.in mipmap_needing_effect.frag movit.pc.in README NEWS test_util.h widgets.h
