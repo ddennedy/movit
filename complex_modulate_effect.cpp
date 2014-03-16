@@ -25,7 +25,7 @@ void ComplexModulateEffect::set_gl_state(GLuint glsl_program_num, const string &
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	float num_repeats[] = { num_repeats_x, num_repeats_y };
+	float num_repeats[] = { float(num_repeats_x), float(num_repeats_y) };
 	set_uniform_vec2(glsl_program_num, prefix, "num_repeats", num_repeats);
 
 	// Set the secondary input to repeat (and nearest while we're at it).
