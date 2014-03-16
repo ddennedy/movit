@@ -112,7 +112,7 @@ demo: libmovit.la $(DEMO_OBJS)
 
 # The library itself.
 libmovit.la: $(LIB_OBJS:.o=.lo)
-	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -version-info $(movit_ltversion) -o $@ $^ $(LDLIBS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -version-info $(movit_ltversion) -o $@ $^ $(LDLIBS)
 
 %.lo: %.cpp
 	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
