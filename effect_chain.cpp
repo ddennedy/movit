@@ -227,24 +227,13 @@ string replace_prefix(const string &text, const string &prefix)
 	return output;
 }
 
-Phase *EffectChain::compile_glsl_program(
-	const vector<Node *> &inputs,
-	const vector<Node *> &effects)
+void EffectChain::compile_glsl_program(Phase *phase)
 {
-	Phase *phase = new Phase;
-	assert(!effects.empty());
-
-	// Deduplicate the inputs.
-	vector<Node *> true_inputs = inputs;
-	sort(true_inputs.begin(), true_inputs.end());
-	true_inputs.erase(unique(true_inputs.begin(), true_inputs.end()), true_inputs.end());
-
-	bool input_needs_mipmaps = false;
 	string frag_shader = read_file("header.frag");
 
 	// Create functions for all the texture inputs that we need.
-	for (unsigned i = 0; i < true_inputs.size(); ++i) {
-		Node *input = true_inputs[i];
+	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
+		Node *input = phase->inputs[i]->output_node;
 		char effect_id[256];
 		sprintf(effect_id, "in%u", i);
 		phase->effect_ids.insert(make_pair(input, effect_id));
@@ -256,10 +245,8 @@ Phase *EffectChain::compile_glsl_program(
 		frag_shader += "\n";
 	}
 
-	vector<Node *> sorted_effects = topological_sort(effects);
-
-	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
-		Node *node = sorted_effects[i];
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
 		char effect_id[256];
 		sprintf(effect_id, "eff%u", i);
 		phase->effect_ids.insert(make_pair(node, effect_id));
@@ -290,24 +277,11 @@ Phase *EffectChain::compile_glsl_program(
 			}
 		}
 		frag_shader += "\n";
-
-		input_needs_mipmaps |= node->effect->needs_mipmaps();
 	}
-	for (unsigned i = 0; i < sorted_effects.size(); ++i) {
-		Node *node = sorted_effects[i];
-		if (node->effect->num_inputs() == 0) {
-			CHECK(node->effect->set_int("needs_mipmaps", input_needs_mipmaps));
-		}
-	}
-	frag_shader += string("#define INPUT ") + phase->effect_ids[sorted_effects.back()] + "\n";
+	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
 	frag_shader.append(read_file("footer.frag"));
 
 	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
-	phase->input_needs_mipmaps = input_needs_mipmaps;
-	phase->inputs = true_inputs;
-	phase->effects = sorted_effects;
-
-	return phase;
 }
 
 // Construct GLSL programs, starting at the given effect and following
@@ -317,130 +291,118 @@ Phase *EffectChain::compile_glsl_program(
 // and of course at the end.
 //
 // We follow a quite simple depth-first search from the output, although
-// without any explicit recursion.
-void EffectChain::construct_glsl_programs(Node *output)
+// without recursing explicitly within each phase.
+Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *completed_effects)
 {
-	// Which effects have already been completed?
-	// We need to keep track of it, as an effect with multiple outputs
-	// could otherwise be calculated multiple times.
-	set<Node *> completed_effects;
+	if (completed_effects->count(output)) {
+		return (*completed_effects)[output];
+	}
 
-	// Effects in the current phase, as well as inputs (outputs from other phases
-	// that we depend on). Note that since we start iterating from the end,
-	// the effect list will be in the reverse order.
-	vector<Node *> this_phase_inputs;
-	vector<Node *> this_phase_effects;
+	Phase *phase = new Phase;
+	phase->output_node = output;
 
 	// Effects that we have yet to calculate, but that we know should
 	// be in the current phase.
 	stack<Node *> effects_todo_this_phase;
-
-	// Effects that we have yet to calculate, but that come from other phases.
-	// We delay these until we have this phase done in its entirety,
-	// at which point we pick any of them and start a new phase from that.
-	stack<Node *> effects_todo_other_phases;
-
 	effects_todo_this_phase.push(output);
 
-	for ( ;; ) {  // Termination condition within loop.
-		if (!effects_todo_this_phase.empty()) {
-			// OK, we have more to do this phase.
-			Node *node = effects_todo_this_phase.top();
-			effects_todo_this_phase.pop();
+	while (!effects_todo_this_phase.empty()) {
+		Node *node = effects_todo_this_phase.top();
+		effects_todo_this_phase.pop();
 
-			// This should currently only happen for effects that are inputs
-			// (either true inputs or phase outputs). We special-case inputs,
-			// and then deduplicate phase outputs in compile_glsl_program().
-			if (node->effect->num_inputs() == 0) {
-				if (find(this_phase_effects.begin(), this_phase_effects.end(), node) != this_phase_effects.end()) {
-					continue;
-				}
-			} else {
-				assert(completed_effects.count(node) == 0);
+		// This should currently only happen for effects that are inputs
+		// (either true inputs or phase outputs). We special-case inputs,
+		// and then deduplicate phase outputs below.
+		if (node->effect->num_inputs() == 0) {
+			if (find(phase->effects.begin(), phase->effects.end(), node) != phase->effects.end()) {
+				continue;
+			}
+		} else {
+			assert(completed_effects->count(node) == 0);
+		}
+
+		phase->effects.push_back(node);
+
+		// Find all the dependencies of this effect, and add them to the stack.
+		vector<Node *> deps = node->incoming_links;
+		assert(node->effect->num_inputs() == deps.size());
+		for (unsigned i = 0; i < deps.size(); ++i) {
+			bool start_new_phase = false;
+
+			if (node->effect->needs_texture_bounce() &&
+			    !deps[i]->effect->is_single_texture()) {
+				start_new_phase = true;
 			}
 
-			this_phase_effects.push_back(node);
-			completed_effects.insert(node);
-
-			// Find all the dependencies of this effect, and add them to the stack.
-			vector<Node *> deps = node->incoming_links;
-			assert(node->effect->num_inputs() == deps.size());
-			for (unsigned i = 0; i < deps.size(); ++i) {
-				bool start_new_phase = false;
-
-				if (node->effect->needs_texture_bounce() &&
-				    !deps[i]->effect->is_single_texture()) {
+			if (deps[i]->outgoing_links.size() > 1) {
+				if (!deps[i]->effect->is_single_texture()) {
+					// More than one effect uses this as the input,
+					// and it is not a texture itself.
+					// The easiest thing to do (and probably also the safest
+					// performance-wise in most cases) is to bounce it to a texture
+					// and then let the next passes read from that.
 					start_new_phase = true;
-				}
+				} else {
+					assert(deps[i]->effect->num_inputs() == 0);
 
-				if (deps[i]->outgoing_links.size() > 1) {
-					if (!deps[i]->effect->is_single_texture()) {
-						// More than one effect uses this as the input,
-						// and it is not a texture itself.
-						// The easiest thing to do (and probably also the safest
-						// performance-wise in most cases) is to bounce it to a texture
-						// and then let the next passes read from that.
-						start_new_phase = true;
-					} else {
-						assert(deps[i]->effect->num_inputs() == 0);
-
-						// For textures, we try to be slightly more clever;
-						// if none of our outputs need a bounce, we don't bounce
-						// but instead simply use the effect many times.
-						//
-						// Strictly speaking, we could bounce it for some outputs
-						// and use it directly for others, but the processing becomes
-						// somewhat simpler if the effect is only used in one such way.
-						for (unsigned j = 0; j < deps[i]->outgoing_links.size(); ++j) {
-							Node *rdep = deps[i]->outgoing_links[j];
-							start_new_phase |= rdep->effect->needs_texture_bounce();
-						}
+					// For textures, we try to be slightly more clever;
+					// if none of our outputs need a bounce, we don't bounce
+					// but instead simply use the effect many times.
+					//
+					// Strictly speaking, we could bounce it for some outputs
+					// and use it directly for others, but the processing becomes
+					// somewhat simpler if the effect is only used in one such way.
+					for (unsigned j = 0; j < deps[i]->outgoing_links.size(); ++j) {
+						Node *rdep = deps[i]->outgoing_links[j];
+						start_new_phase |= rdep->effect->needs_texture_bounce();
 					}
 				}
-
-				if (deps[i]->effect->changes_output_size()) {
-					start_new_phase = true;
-				}
-
-				if (start_new_phase) {
-					effects_todo_other_phases.push(deps[i]);
-					this_phase_inputs.push_back(deps[i]);
-				} else {
-					effects_todo_this_phase.push(deps[i]);
-				}
 			}
-			continue;
-		}
 
-		// No more effects to do this phase. Take all the ones we have,
-		// and create a GLSL program for it.
-		if (!this_phase_effects.empty()) {
-			reverse(this_phase_effects.begin(), this_phase_effects.end());
-			phases.push_back(compile_glsl_program(this_phase_inputs, this_phase_effects));
-			this_phase_effects.back()->phase = phases.back();
-			this_phase_inputs.clear();
-			this_phase_effects.clear();
-		}
-		assert(this_phase_inputs.empty());
-		assert(this_phase_effects.empty());
+			if (deps[i]->effect->changes_output_size()) {
+				start_new_phase = true;
+			}
 
-		// If we have no effects left, exit.
-		if (effects_todo_other_phases.empty()) {
-			break;
-		}
-
-		Node *node = effects_todo_other_phases.top();
-		effects_todo_other_phases.pop();
-
-		if (completed_effects.count(node) == 0) {
-			// Start a new phase, calculating from this effect.
-			effects_todo_this_phase.push(node);
+			if (start_new_phase) {
+				phase->inputs.push_back(construct_phase(deps[i], completed_effects));
+			} else {
+				effects_todo_this_phase.push(deps[i]);
+			}
 		}
 	}
 
-	// Finally, since the phases are found from the output but must be executed
-	// from the input(s), reverse them, too.
-	reverse(phases.begin(), phases.end());
+	// No more effects to do this phase. Take all the ones we have,
+	// and create a GLSL program for it.
+	assert(!phase->effects.empty());
+
+	// Deduplicate the inputs.
+	sort(phase->inputs.begin(), phase->inputs.end());
+	phase->inputs.erase(unique(phase->inputs.begin(), phase->inputs.end()), phase->inputs.end());
+
+	// We added the effects from the output and back, but we need to output
+	// them in topological sort order in the shader.
+	phase->effects = topological_sort(phase->effects);
+
+	// Figure out if we need mipmaps or not, and if so, tell the inputs that.
+	phase->input_needs_mipmaps = false;
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		phase->input_needs_mipmaps |= node->effect->needs_mipmaps();
+	}
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		if (node->effect->num_inputs() == 0) {
+			CHECK(node->effect->set_int("needs_mipmaps", phase->input_needs_mipmaps));
+		}
+	}
+
+	// Actually make the shader for this phase.
+	compile_glsl_program(phase);
+
+	assert(completed_effects->count(output) == 0);
+	completed_effects->insert(make_pair(output, phase));
+	phases.push_back(phase);
+	return phase;
 }
 
 void EffectChain::output_dot(const char *filename)
@@ -621,11 +583,11 @@ void EffectChain::inform_input_sizes(Phase *phase)
 		}
 	}
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
-		Node *input = phase->inputs[i];
-		input->output_width = input->phase->virtual_output_width;
-		input->output_height = input->phase->virtual_output_height;
-		assert(input->output_width != 0);
-		assert(input->output_height != 0);
+		Phase *input = phase->inputs[i];
+		input->output_node->output_width = input->virtual_output_width;
+		input->output_node->output_height = input->virtual_output_height;
+		assert(input->output_node->output_width != 0);
+		assert(input->output_node->output_height != 0);
 	}
 
 	// Now propagate from the inputs towards the end, and inform as we go.
@@ -676,14 +638,14 @@ void EffectChain::find_output_size(Phase *phase)
 	bool all_inputs_same_size = true;
 
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
-		Node *input = phase->inputs[i];
-		assert(input->phase->output_width != 0);
-		assert(input->phase->output_height != 0);
+		Phase *input = phase->inputs[i];
+		assert(input->output_width != 0);
+		assert(input->output_height != 0);
 		if (output_width == 0 && output_height == 0) {
-			output_width = input->phase->virtual_output_width;
-			output_height = input->phase->virtual_output_height;
-		} else if (output_width != input->phase->virtual_output_width ||
-		           output_height != input->phase->virtual_output_height) {
+			output_width = input->virtual_output_width;
+			output_height = input->virtual_output_height;
+		} else if (output_width != input->virtual_output_width ||
+		           output_height != input->virtual_output_height) {
 			all_inputs_same_size = false;
 		}
 	}
@@ -715,10 +677,10 @@ void EffectChain::find_output_size(Phase *phase)
 	output_width = 0;
 	output_height = 0;
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
-		Node *input = phase->inputs[i];
-		assert(input->phase->output_width != 0);
-		assert(input->phase->output_height != 0);
-		size_rectangle_to_fit(input->phase->output_width, input->phase->output_height, &output_width, &output_height);
+		Phase *input = phase->inputs[i];
+		assert(input->output_width != 0);
+		assert(input->output_height != 0);
+		size_rectangle_to_fit(input->output_width, input->output_height, &output_width, &output_height);
 	}
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Effect *effect = phase->effects[i]->effect;
@@ -1422,7 +1384,11 @@ void EffectChain::finalize()
 	output_dot("step18-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
-	construct_glsl_programs(find_output_node());
+	// We need to keep track of which effects have already been computed,
+	// as an effect with multiple users could otherwise be calculated
+	// multiple times.
+	map<Node *, Phase *> completed_effects;
+	construct_phase(find_output_node(), &completed_effects);
 
 	output_dot("step19-split-to-phases.dot");
 
@@ -1464,7 +1430,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		check_error();
 	}
 
-	set<Node *> generated_mipmaps;
+	set<Phase *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
 	// since otherwise this turns into an (albeit simple) register allocation problem.
@@ -1488,9 +1454,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		// Set up RTT inputs for this phase.
 		for (unsigned sampler = 0; sampler < phases[phase]->inputs.size(); ++sampler) {
 			glActiveTexture(GL_TEXTURE0 + sampler);
-			Node *input = phases[phase]->inputs[sampler];
-			input->bound_sampler_num = sampler;
-			glBindTexture(GL_TEXTURE_2D, output_textures[input->phase]);
+			Phase *input = phases[phase]->inputs[sampler];
+			input->output_node->bound_sampler_num = sampler;
+			glBindTexture(GL_TEXTURE_2D, output_textures[input]);
 			check_error();
 			if (phases[phase]->input_needs_mipmaps) {
 				if (generated_mipmaps.count(input) == 0) {
@@ -1509,7 +1475,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
 
-			string texture_name = string("tex_") + phases[phase]->effect_ids[input];
+			string texture_name = string("tex_") + phases[phase]->effect_ids[input->output_node];
 			glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler);
 			check_error();
 		}

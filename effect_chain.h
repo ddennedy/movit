@@ -66,11 +66,6 @@ private:
 	// they will be equal.
 	unsigned output_width, output_height;
 
-	// If output goes to RTT, which phase it is in (otherwise unset).
-	// This is a bit ugly; we should probably fix so that Phase takes other
-	// phases as inputs, instead of Node.
-	Phase *phase;
-
 	// If the effect has is_single_texture(), or if the output went to RTT
 	// and that texture has been bound to a sampler, the sampler number
 	// will be stored here.
@@ -90,13 +85,14 @@ private:
 
 // A rendering phase; a single GLSL program rendering a single quad.
 struct Phase {
+	Node *output_node;
+
 	GLuint glsl_program_num;  // Owned by the resource_pool.
 	bool input_needs_mipmaps;
 
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
-	// input textures are not counted here.
-	std::vector<Node *> inputs;
-
+	// input textures are counted as part of <effects>.
+	std::vector<Phase *> inputs;
 	std::vector<Node *> effects;  // In order.
 	unsigned output_width, output_height, virtual_output_width, virtual_output_height;
 
@@ -224,13 +220,13 @@ private:
 	// output gamma different from GAMMA_LINEAR.
 	void find_all_nonlinear_inputs(Node *effect, std::vector<Node *> *nonlinear_inputs);
 
-	// Create a GLSL program computing the given effects in order.
-	Phase *compile_glsl_program(const std::vector<Node *> &inputs,
-	                            const std::vector<Node *> &effects);
+	// Create a GLSL program computing the effects for this phase in order.
+	void compile_glsl_program(Phase *phase);
 
 	// Create all GLSL programs needed to compute the given effect, and all outputs
-	// that depends on it (whenever possible).
-	void construct_glsl_programs(Node *output);
+	// that depend on it (whenever possible). Returns the phase that has <output>
+	// as the last effect. Also pushes all phases in order onto <phases>.
+	Phase *construct_phase(Node *output, std::map<Node *, Phase *> *completed_effects);
 
 	// Output the current graph to the given file in a Graphviz-compatible format;
 	// only useful for debugging.
