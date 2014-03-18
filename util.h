@@ -56,6 +56,12 @@ void cleanup_vertex_attribute(GLuint glsl_program_num, const std::string &attrib
 // If v is not already a power of two, return the first higher power of two.
 unsigned next_power_of_two(unsigned v);
 
+// Get a pointer that represents the current OpenGL context, in a cross-platform way.
+// This is not intended for anything but identification (ie., so you can associate
+// different FBOs with different contexts); you should probably not try to cast it
+// back into anything you intend to pass into OpenGL.
+void *get_gl_context_identifier();
+
 }  // namespace movit
 
 #ifdef NDEBUG

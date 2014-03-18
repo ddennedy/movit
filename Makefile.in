@@ -1,5 +1,14 @@
 GTEST_DIR ?= /usr/src/gtest
 
+# This will be upgraded for each release, although not necessarily for every git commit.
+# See http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+# for the rules as of how this is changed. This does not really mean that Movit will
+# strive towards having a rock-stable ABI, but at least the soversion will increase
+# whenever it breaks, so that you will not have silent failures, and distribution package
+# management can run its course.
+movit_ltversion = 1:3:0
+movit_version = 1.0.3
+
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 includedir = @includedir@
@@ -13,11 +22,13 @@ with_coverage = @with_coverage@
 
 CC=@CC@
 CXX=@CXX@
-CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @SDL2_CFLAGS@ @SDL_CFLAGS@ @Eigen3_CFLAGS@ @epoxy_CFLAGS@ @FFTW3_CFLAGS@
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @epoxy_CFLAGS@ @FFTW3_CFLAGS@
 ifeq ($(with_SDL2),yes)
 CXXFLAGS += -DHAVE_SDL2
 endif
-LDFLAGS=@epoxy_LIBS@ @SDL2_LIBS@ @SDL_LIBS@ @FFTW3_LIBS@ -lpthread
+LDFLAGS=@LDFLAGS@
+LDLIBS=@epoxy_LIBS@ @FFTW3_LIBS@ -lpthread
+TEST_LDLIBS=@epoxy_LIBS@ @SDL2_LIBS@ @SDL_LIBS@ -lpthread
 DEMO_LDLIBS=@SDL2_image_LIBS@ @SDL_image_LIBS@ -lrt -lpthread @libpng_LIBS@ @FFTW3_LIBS@
 SHELL=@SHELL@
 LIBTOOL=@LIBTOOL@ --tag=CXX
@@ -86,7 +97,8 @@ all: demo
 endif
 
 # Google Test and other test library functions.
-TEST_OBJS = gtest-all.o gtest_sdl_main.o test_util.o
+OWN_TEST_OBJS = gtest_sdl_main.o test_util.o
+TEST_OBJS = gtest-all.o $(OWN_TEST_OBJS)
 
 gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	$(CXX) -MMD $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
@@ -95,8 +107,9 @@ gtest_sdl_main.o: gtest_sdl_main.cpp
 
 # Unit tests.
 $(TESTS): %: %.o $(TEST_OBJS) libmovit.la
-	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -o $@ $^ $(TEST_LDLIBS)
 
+OWN_OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(OWN_TEST_OBJS) $(TESTS:=.o)
 OBJS=$(DEMO_OBJS) $(LIB_OBJS) $(TEST_OBJS) $(TESTS:=.o)
 
 # A small demo program.
@@ -105,7 +118,7 @@ demo: libmovit.la $(DEMO_OBJS)
 
 # The library itself.
 libmovit.la: $(LIB_OBJS:.o=.lo)
-	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -o $@ $^ $(LDLIBS)
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -version-info $(movit_ltversion) -o $@ $^ $(LDLIBS)
 
 %.lo: %.cpp
 	$(LIBTOOL) --mode=compile $(CXX) -MMD -MP $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
@@ -159,15 +172,30 @@ SHADERS += texture1d.frag
 
 # These purposefully do not exist.
 MISSING_SHADERS = diffusion_effect.frag glow_effect.frag unsharp_mask_effect.frag resize_effect.frag
+MISSING_SHADERS += fft_convolution_effect.frag fft_input.frag
 SHADERS := $(filter-out $(MISSING_SHADERS),$(SHADERS))
 
 install: libmovit.la
-	$(LIBTOOL) --mode=install $(INSTALL) -m 0644 libmovit.la $(libdir)/
-	$(MKDIR) -p $(includedir)/movit/
-	$(INSTALL) -m 0644 $(HDRS) $(includedir)/movit/
-	$(MKDIR) -p $(datadir)/movit/
-	$(INSTALL) -m 0644 $(SHADERS) $(datadir)/movit/
-	$(MKDIR) -p $(libdir)/pkgconfig/
-	$(INSTALL) -m 644 movit.pc $(libdir)/pkgconfig/
+	$(MKDIR) -p $(DESTDIR)$(libdir)/
+	$(LIBTOOL) --mode=install $(INSTALL) -m 0644 libmovit.la $(DESTDIR)$(libdir)/
+	$(MKDIR) -p $(DESTDIR)$(includedir)/movit/
+	$(INSTALL) -m 0644 $(HDRS) $(DESTDIR)$(includedir)/movit/
+	$(MKDIR) -p $(DESTDIR)$(datadir)/movit/
+	$(INSTALL) -m 0644 $(SHADERS) $(DESTDIR)$(datadir)/movit/
+	$(MKDIR) -p $(DESTDIR)$(libdir)/pkgconfig/
+	$(INSTALL) -m 644 movit.pc $(DESTDIR)$(libdir)/pkgconfig/
 
-.PHONY: coverage clean distclean check all install
+DISTDIR=movit-$(movit_version)
+OTHER_DIST_FILES=add.frag autogen.sh blue.frag configure.ac d65.h identity.frag invert_effect.frag Makefile.in mipmap_needing_effect.frag movit.pc.in README NEWS test_util.h widgets.h
+
+dist:
+	$(MKDIR) $(DISTDIR)
+	cp $(OWN_OBJS:.o=.cpp) $(DISTDIR)/
+	cp $(HDRS) $(DISTDIR)/
+	cp $(SHADERS) $(DISTDIR)/
+	cp $(OTHER_DIST_FILES) $(DISTDIR)/
+	( cd $(DISTDIR) && aclocal && libtoolize --install --copy && autoconf && $(RM) -r autom4te.cache/ )
+	tar zcvvf ../$(DISTDIR).tar.gz $(DISTDIR)
+	$(RM) -r $(DISTDIR)
+
+.PHONY: coverage clean distclean check all install dist

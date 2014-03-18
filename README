@@ -9,7 +9,7 @@ Movit is the Modern Video Toolkit, notwithstanding that anything that's
 called “modern” usually isn't, and it's really not a toolkit.
 
 Movit aims to be a _high-quality_, _high-performance_, _open-source_
-library for video filters. It is currently in alpha stage.
+library for video filters.
 
 
 TL;DR, please give me download link and system demands
@@ -25,8 +25,8 @@ OK, you need
   part of OpenGL 3.0 or newer, although most OpenGL 2.0 cards also
   have what's needed through extensions). If your machine is less than five
   years old _and you have the appropriate drivers_, you're home free.
-* The [Eigen 3] and [Google Test] libraries. (The library itself
-  depends only on the former, but you probably want to run the unit tests.)
+* The [Eigen 3], [FFTW3] and [Google Test] libraries. (The library itself
+  does not depend on the latter, but you probably want to run the unit tests.)
 * The [epoxy] library, for dealing with OpenGL extensions on various
   platforms.
 
