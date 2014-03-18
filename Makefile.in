@@ -22,7 +22,7 @@ with_coverage = @with_coverage@
 
 CC=@CC@
 CXX=@CXX@
-CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @Eigen3_CFLAGS@ @epoxy_CFLAGS@ @FFTW3_CFLAGS@
+CXXFLAGS=-Wall @CXXFLAGS@ -I$(GTEST_DIR)/include @SDL2_CFLAGS@ @SDL_CFLAGS@ @Eigen3_CFLAGS@ @epoxy_CFLAGS@ @FFTW3_CFLAGS@
 ifeq ($(with_SDL2),yes)
 CXXFLAGS += -DHAVE_SDL2
 endif
