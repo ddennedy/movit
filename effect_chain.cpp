@@ -53,6 +53,15 @@ EffectChain::~EffectChain()
 		delete nodes[i];
 	}
 	for (unsigned i = 0; i < phases.size(); ++i) {
+		glBindVertexArray(phases[i]->vao);
+		check_error();
+
+		cleanup_vertex_attribute(phases[i]->glsl_program_num, "position", phases[i]->position_vbo);
+		cleanup_vertex_attribute(phases[i]->glsl_program_num, "texcoord", phases[i]->texcoord_vbo);
+
+		glBindVertexArray(0);
+		check_error();
+
 		resource_pool->release_glsl_program(phases[i]->glsl_program_num);
 		delete phases[i];
 	}
@@ -287,6 +296,27 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	frag_shader.append(read_file("footer.frag"));
 
 	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
+
+	// Prepare the geometry for the fullscreen quad used in this phase.
+	// (We have separate VAOs per shader, since the bindings can in theory
+	// be different.)
+	float vertices[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f
+	};
+
+	glGenVertexArrays(1, &phase->vao);
+	check_error();
+	glBindVertexArray(phase->vao);
+	check_error();
+
+	phase->position_vbo = fill_vertex_attribute(phase->glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+	phase->texcoord_vbo = fill_vertex_attribute(phase->glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
+
+	glBindVertexArray(0);
+	check_error();
 }
 
 // Construct GLSL programs, starting at the given effect and following
@@ -1532,39 +1562,15 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			}
 		}
 
-		// Now draw!
-		float vertices[] = {
-			0.0f, 1.0f,
-			0.0f, 0.0f,
-			1.0f, 1.0f,
-			1.0f, 0.0f
-		};
-
-		GLuint vao;
-		glGenVertexArrays(1, &vao);
+		glBindVertexArray(phases[phase]->vao);
 		check_error();
-		glBindVertexArray(vao);
-		check_error();
-
-		GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
-		GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
-
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		check_error();
-
-		cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
-		cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
-
-		glUseProgram(0);
 		check_error();
 
 		for (unsigned i = 0; i < phases[phase]->effects.size(); ++i) {
 			Node *node = phases[phase]->effects[i];
 			node->effect->clear_gl_state();
 		}
-
-		glDeleteVertexArrays(1, &vao);
-		check_error();
 	}
 
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
@@ -1574,6 +1580,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
+	glBindVertexArray(0);
+	check_error();
+	glUseProgram(0);
 	check_error();
 }
 

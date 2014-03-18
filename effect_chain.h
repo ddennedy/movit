@@ -99,6 +99,13 @@ struct Phase {
 	// Identifier used to create unique variables in GLSL.
 	// Unique per-phase to increase cacheability of compiled shaders.
 	std::map<Node *, std::string> effect_ids;
+
+	// The geometry needed to draw this quad, bound to the vertex array
+	// object. (Seemingly it's actually a win not to upload geometry every
+	// frame, even for something as small as a quad, due to fewer state
+	// changes.)
+	GLuint vao;
+	GLuint position_vbo, texcoord_vbo;
 };
 
 class EffectChain {
