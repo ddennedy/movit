@@ -9,6 +9,14 @@
 #include "init.h"
 #include "util.h"
 
+#if defined(__DARWIN__)
+#include <OpenGL/OpenGL.h>
+#elif defined(WIN32)
+#include <GL/wglew.h>
+#else
+#include <GL/glxew.h>
+#endif
+
 using namespace std;
 
 namespace movit {
@@ -231,6 +239,17 @@ unsigned next_power_of_two(unsigned v)
 	v |= v >> 16;
 	v++;
 	return v;
+}
+
+void *get_gl_context_identifier()
+{
+#if defined(__DARWIN__)
+	return (void *)CGLGetCurrentContext();
+#elif defined(WIN32)
+	return (void *)wglGetCurrentContext();
+#else
+	return (void *)glXGetCurrentContext();
+#endif
 }
 
 }  // namespace movit

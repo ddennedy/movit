@@ -59,6 +59,11 @@ EffectChain::~EffectChain()
 	if (owns_resource_pool) {
 		delete resource_pool;
 	}
+	for (map<void *, GLuint>::const_iterator fbo_it = fbos.begin();
+	     fbo_it != fbos.end(); ++fbo_it) {
+		glDeleteFramebuffers(1, &fbo_it->second);
+		check_error();
+	}
 }
 
 Input *EffectChain::add_input(Input *input)
@@ -1405,6 +1410,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	// Save original viewport.
 	GLuint x = 0, y = 0;
 	GLuint fbo = 0;
+	void *context = get_gl_context_identifier();
 
 	if (width == 0 && height == 0) {
 		GLint viewport[4];
@@ -1424,8 +1430,13 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	check_error();
 
 	if (phases.size() > 1) {
-		glGenFramebuffers(1, &fbo);
-		check_error();
+		if (fbos.count(context) == 0) {
+			glGenFramebuffers(1, &fbo);
+			check_error();
+			fbos.insert(make_pair(context, fbo));
+		} else {
+			fbo = fbos[context];
+		}
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		check_error();
 	}
@@ -1564,11 +1575,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
-
-	if (fbo != 0) {
-		glDeleteFramebuffers(1, &fbo);
-		check_error();
-	}
 }
 
 }  // namespace movit
