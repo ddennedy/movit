@@ -108,7 +108,9 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 
 string SingleBlurPassEffect::output_fragment_shader()
 {
-	return read_file("blur_effect.frag");
+	char buf[256];
+	sprintf(buf, "#define DIRECTION_VERTICAL %d\n", (direction == VERTICAL));
+	return buf + read_file("blur_effect.frag");
 }
 
 void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
@@ -159,13 +161,11 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 	//
 	// We pack the parameters into a float4: The relative sample coordinates
 	// in (x,y), and the weight in z. w is unused.
-	float samples[4 * (NUM_TAPS / 2 + 1)];
+	float samples[2 * (NUM_TAPS / 2 + 1)];
 
 	// Center sample.
-	samples[4 * 0 + 0] = 0.0f;
-	samples[4 * 0 + 1] = 0.0f;
-	samples[4 * 0 + 2] = weight[0];
-	samples[4 * 0 + 3] = 0.0f;
+	samples[2 * 0 + 0] = 0.0f;
+	samples[2 * 0 + 1] = weight[0];
 
 	// All other samples.
 	for (unsigned i = 1; i < NUM_TAPS / 2 + 1; ++i) {
@@ -176,23 +176,18 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		float offset, total_weight;
 		combine_two_samples(w1, w2, &offset, &total_weight, NULL);
 
-		float x = 0.0f, y = 0.0f;
-
 		if (direction == HORIZONTAL) {
-			x = (base_pos + offset) / (float)width;
+			samples[2 * i + 0] = (base_pos + offset) / (float)width;
 		} else if (direction == VERTICAL) {
-			y = (base_pos + offset) / (float)height;
+			samples[2 * i + 0] = (base_pos + offset) / (float)height;
 		} else {
 			assert(false);
 		}
 
-		samples[4 * i + 0] = x;
-		samples[4 * i + 1] = y;
-		samples[4 * i + 2] = total_weight;
-		samples[4 * i + 3] = 0.0f;
+		samples[2 * i + 1] = total_weight;
 	}
 
-	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS / 2 + 1);
+	set_uniform_vec2_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS / 2 + 1);
 }
 
 void SingleBlurPassEffect::clear_gl_state()

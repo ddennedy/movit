@@ -69,6 +69,17 @@ void set_uniform_vec4(GLuint glsl_program_num, const string &prefix, const strin
 	check_error();
 }
 
+void set_uniform_vec2_array(GLuint glsl_program_num, const string &prefix, const string &key, const float *values, size_t num_values)
+{
+	GLint location = get_uniform_location(glsl_program_num, prefix, key);
+	if (location == -1) {
+		return;
+	}
+	check_error();
+	glUniform2fv(location, num_values, values);
+	check_error();
+}
+
 void set_uniform_vec4_array(GLuint glsl_program_num, const string &prefix, const string &key, const float *values, size_t num_values)
 {
 	GLint location = get_uniform_location(glsl_program_num, prefix, key);
