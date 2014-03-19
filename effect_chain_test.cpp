@@ -223,7 +223,7 @@ private:
 	GammaCurve overridden_gamma_curve;
 };
 
-TEST(EffectChainTester, HandlesInputChangingColorspace) {
+TEST(EffectChainTest, HandlesInputChangingColorspace) {
 	const int size = 4;
 
 	float data[size] = {
