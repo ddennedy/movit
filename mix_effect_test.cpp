@@ -102,7 +102,7 @@ TEST(MixEffectTest, AdditiveBlendingWorksForBothTotallyOpaqueAndPartiallyTranslu
 		1.0f, 1.0f, 1.0f, 0.7f,
 	};
 
-	float out_data[4];
+	float out_data[8];
 	EffectChainTester tester(data_a, 1, 2, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
 	Effect *input2 = tester.add_input(data_b, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
