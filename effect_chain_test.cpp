@@ -983,7 +983,7 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 		0.75f, 1.0f, 1.0f,
 		0.0f, 0.25f, 0.3f,
 	};
-	float out_data[6];
+	float out_data[6], temp[6 * 4];
 
 	EffectChain chain(width, height);
 	movit_debug_level = MOVIT_DEBUG_ON;
@@ -1025,8 +1025,11 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	check_error();
-	glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, out_data);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, temp);
 	check_error();
+	for (unsigned i = 0; i < 6; ++i) {
+		out_data[i] = temp[i * 4];
+	}
 
 	expect_equal(expected_data, out_data, width, height);
 
