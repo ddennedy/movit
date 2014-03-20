@@ -152,19 +152,23 @@ TEST(EffectChainTest, RewritingWorksAndGammaConversionsAreInserted) {
 
 TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 	unsigned char data[] = {
-		0, 64,
-		128, 255,
+		  0,   0,   0, 255,
+		 64,  64,  64, 255,
+		128, 128, 128, 255,
+		255, 255, 255, 255,
 	};
-	float expected_data[4] = {
-		1.0f, 0.9771f,
-		0.8983f, 0.0f,
+	float expected_data[] = {
+		1.0000f, 1.0000f, 1.0000f, 1.0000f,
+		0.9771f, 0.9771f, 0.9771f, 1.0000f,
+		0.8983f, 0.8983f, 0.8983f, 1.0000f,
+		0.0000f, 0.0000f, 0.0000f, 1.0000f
 	};
-	float out_data[4];
-	EffectChainTester tester(NULL, 2, 2);
-	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
+	float out_data[4 * 4];
+	EffectChainTester tester(NULL, 1, 4);
+	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	RewritingEffect<InvertEffect> *effect = new RewritingEffect<InvertEffect>();
 	tester.get_chain()->add_effect(effect);
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	Node *node = effect->replaced_node;
 	ASSERT_EQ(1, node->incoming_links.size());
@@ -172,7 +176,7 @@ TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("GammaCompressionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
-	expect_equal(expected_data, out_data, 2, 2);
+	expect_equal(expected_data, out_data, 4, 4);
 }
 
 TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {

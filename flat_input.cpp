@@ -102,7 +102,13 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 			}
 		} else if (output_linear_gamma) {
 			assert(type == GL_UNSIGNED_BYTE);
-			internal_format = GL_SRGB8_ALPHA8;
+			if (pixel_format == FORMAT_RGB) {
+				internal_format = GL_SRGB8;
+			} else if (pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) {
+				internal_format = GL_SRGB8_ALPHA8;
+			} else {
+				assert(false);
+			}
 		} else {
 			assert(type == GL_UNSIGNED_BYTE);
 			if (pixel_format == FORMAT_R) {
