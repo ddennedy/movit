@@ -1024,7 +1024,9 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	chain.render_to_fbo(fbo, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	check_error();
 	glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, out_data);
+	check_error();
 
 	expect_equal(expected_data, out_data, width, height);
 
