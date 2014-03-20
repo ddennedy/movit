@@ -101,9 +101,6 @@ private:
 	int input_width, input_height;
 	int convolve_width, convolve_height;
 
-	// Chosen by algorithm.
-	int fft_width, fft_height;
-
 	// Both of these are owned by us if owns_effects is true (before finalize()),
 	// and otherwise owned by the EffectChain.
 	FFTInput *fft_input;
