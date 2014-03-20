@@ -38,7 +38,7 @@ void measure_texel_subpixel_precision()
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, dst_texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, width, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, 1, 0, GL_RGBA, GL_FLOAT, NULL);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);

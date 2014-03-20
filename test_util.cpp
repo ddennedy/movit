@@ -59,7 +59,7 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);
