@@ -7,6 +7,7 @@
 #include "gtest/gtest.h"
 #include "image_format.h"
 #include "test_util.h"
+#include "util.h"
 
 namespace movit {
 
@@ -28,8 +29,11 @@ TEST(DitherEffectTest, NoDitherOnExactValues) {
 	unsigned char out_data[size * size];
 
 	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	check_error();
 	tester.get_chain()->set_dither_bits(8);
+	check_error();
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	check_error();
 
 	expect_equal(expected_data, out_data, size, size);
 }
