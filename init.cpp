@@ -277,6 +277,21 @@ void measure_roundoff_problems()
 
 bool check_extensions()
 {
+	// GLES generally doesn't use extensions as actively as desktop OpenGL.
+	// For now, we say that for GLES, we require GLES 3, which has everything
+	// we need.
+	//
+	// Since we use implicit #version 100, we don't have round(). We will
+	// fix this at some later stage.
+	if (!epoxy_is_desktop_gl()) {
+		if (epoxy_gl_version() >= 30) {
+			movit_srgb_textures_supported = true;
+			movit_shader_rounding_supported = false;
+		} else {
+			return false;
+		}
+	}
+
 	// We fundamentally need FBOs and floating-point textures.
 	// FBOs are covered by OpenGL 1.5, and are not an extension there.
 	// Floating-point textures are part of OpenGL 3.0 and newer.
