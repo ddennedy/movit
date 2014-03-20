@@ -50,6 +50,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 				internal_format = GL_R32F;
 			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG32F;
+			} else if (pixel_format == FORMAT_RGB) {
+				internal_format = GL_RGB32F;
 			} else {
 				internal_format = GL_RGBA32F;
 			}
@@ -58,6 +60,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 				internal_format = GL_R16F;
 			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG16F;
+			} else if (pixel_format == FORMAT_RGB) {
+				internal_format = GL_RGB16F;
 			} else {
 				internal_format = GL_RGBA16F;
 			}
@@ -66,6 +70,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 				internal_format = GL_R16;
 			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG16;
+			} else if (pixel_format == FORMAT_RGB) {
+				internal_format = GL_RGB16;
 			} else {
 				internal_format = GL_RGBA16;
 			}
@@ -78,6 +84,8 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 				internal_format = GL_R8;
 			} else if (pixel_format == FORMAT_RG) {
 				internal_format = GL_RG8;
+			} else if (pixel_format == FORMAT_RGB) {
+				internal_format = GL_RGB8;
 			} else {
 				internal_format = GL_RGBA8;
 			}
