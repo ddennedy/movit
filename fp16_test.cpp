@@ -41,7 +41,8 @@ union fp32 {
 };
 
 TEST(FP16Test, NaN) {
-	EXPECT_EQ(0xfe00, fp64_to_fp16(0.0 / 0.0));
+	// Ignore the sign bit.
+	EXPECT_EQ(0x7e00, fp64_to_fp16(0.0 / 0.0) & 0x7fff);
 	EXPECT_TRUE(isnan(fp16_to_fp64(0xfe00)));
 
 	fp64 borderline_inf;
