@@ -34,15 +34,12 @@ public:
 	virtual AlphaHandling alpha_handling() const {
 		switch (pixel_format) {
 		case FORMAT_RGBA_PREMULTIPLIED_ALPHA:
-		case FORMAT_BGRA_PREMULTIPLIED_ALPHA:
 			return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA;
 		case FORMAT_RGBA_POSTMULTIPLIED_ALPHA:
-		case FORMAT_BGRA_POSTMULTIPLIED_ALPHA:
 			return OUTPUT_POSTMULTIPLIED_ALPHA;
+		case FORMAT_R:
 		case FORMAT_RG:
 		case FORMAT_RGB:
-		case FORMAT_BGR:
-		case FORMAT_GRAYSCALE:
 			return OUTPUT_BLANK_ALPHA;
 		default:
 			assert(false);
@@ -123,6 +120,7 @@ private:
 	unsigned width, height, pitch;
 	const void *pixel_data;
 	ResourcePool *resource_pool;
+	bool fixup_swap_rb, fixup_red_to_grayscale;
 };
 
 }  // namespace movit

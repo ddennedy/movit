@@ -11,9 +11,8 @@ using namespace std;
 
 namespace movit {
 
-FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
+FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format_in, GLenum type, unsigned width, unsigned height)
 	: image_format(image_format),
-          pixel_format(pixel_format),
 	  type(type),
 	  pbo(0),
 	  texture_num(0),
@@ -22,11 +21,37 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format, GL
 	  width(width),
 	  height(height),
 	  pitch(width),
-	  pixel_data(NULL)
+	  pixel_data(NULL),
+	  fixup_swap_rb(false),
+	  fixup_red_to_grayscale(false)
 {
 	assert(type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_SHORT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
+
+	// Some types are not supported in all GL versions (e.g. GLES),
+	// and will corrected into the right format in the shader.
+	switch (pixel_format_in) {
+	case FORMAT_BGRA_PREMULTIPLIED_ALPHA:
+		pixel_format = FORMAT_RGBA_PREMULTIPLIED_ALPHA;
+		fixup_swap_rb = true;
+		break;
+	case FORMAT_BGRA_POSTMULTIPLIED_ALPHA:
+		pixel_format = FORMAT_RGBA_POSTMULTIPLIED_ALPHA;
+		fixup_swap_rb = true;
+		break;
+	case FORMAT_BGR:
+		pixel_format = FORMAT_RGB;
+		fixup_swap_rb = true;
+		break;
+	case FORMAT_GRAYSCALE:
+		pixel_format = FORMAT_R;
+		fixup_red_to_grayscale = true;
+		break;
+	default:
+		pixel_format = pixel_format_in;
+		break;
+	}
 }
 
 FlatInput::~FlatInput()
@@ -95,15 +120,10 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 		} else if (pixel_format == FORMAT_RGBA_PREMULTIPLIED_ALPHA ||
 			   pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) {
 			format = GL_RGBA;
-		} else if (pixel_format == FORMAT_BGR) {
-			format = GL_BGR;
-		} else if (pixel_format == FORMAT_BGRA_PREMULTIPLIED_ALPHA ||
-			   pixel_format == FORMAT_BGRA_POSTMULTIPLIED_ALPHA) {
-			format = GL_BGRA;
-		} else if (pixel_format == FORMAT_GRAYSCALE) {
-			format = GL_LUMINANCE;
 		} else if (pixel_format == FORMAT_RG) {
 			format = GL_RG;
+		} else if (pixel_format == FORMAT_R) {
+			format = GL_RED;
 		} else {
 			assert(false);
 		}
@@ -148,7 +168,10 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 
 string FlatInput::output_fragment_shader()
 {
-	return read_file("flat_input.frag");
+	char buf[256];
+	sprintf(buf, "#define FIXUP_SWAP_RB %d\n#define FIXUP_RED_TO_GRAYSCALE %d\n",
+		fixup_swap_rb, fixup_red_to_grayscale);
+	return buf + read_file("flat_input.frag");
 }
 
 void FlatInput::invalidate_pixel_data()
