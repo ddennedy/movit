@@ -122,14 +122,14 @@ void measure_texel_subpixel_precision()
 	// Now read the data back and see what the card did.
 	// (We only look at the red channel; the others will surely be the same.)
 	// We assume a linear ramp; anything else will give sort of odd results here.
-	float out_data[width];
-	glReadPixels(0, 0, width, 1, GL_RED, GL_FLOAT, out_data);
+	float out_data[width * 4];
+	glReadPixels(0, 0, width, 1, GL_RGBA, GL_FLOAT, out_data);
 	check_error();
 
 	float biggest_jump = 0.0f;
 	for (unsigned i = 1; i < width; ++i) {
-		assert(out_data[i] >= out_data[i - 1]);
-		biggest_jump = max(biggest_jump, out_data[i] - out_data[i - 1]);
+		assert(out_data[i * 4] >= out_data[(i - 1) * 4]);
+		biggest_jump = max(biggest_jump, out_data[i * 4] - out_data[(i - 1) * 4]);
 	}
 
 	assert(biggest_jump > 0.0);
@@ -242,16 +242,16 @@ void measure_roundoff_problems()
 
 	// Now read the data back and see what the card did. (Ignore the last value.)
 	// (We only look at the red channel; the others will surely be the same.)
-	unsigned char out_data[512];
-	glReadPixels(0, 0, 512, 1, GL_RED, GL_UNSIGNED_BYTE, out_data);
+	unsigned char out_data[512 * 4];
+	glReadPixels(0, 0, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, out_data);
 	check_error();
 
 	int wrongly_rounded = 0;
 	for (unsigned i = 0; i < 255; ++i) {
-		if (out_data[i * 2 + 0] != i) {
+		if (out_data[(i * 2 + 0) * 4] != i) {
 			++wrongly_rounded;
 		}
-		if (out_data[i * 2 + 1] != i + 1) {
+		if (out_data[(i * 2 + 1) * 4] != i + 1) {
 			++wrongly_rounded;
 		}
 	}

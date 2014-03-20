@@ -132,7 +132,20 @@ void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_spa
 	chain.render_to_fbo(fbo, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, format, GL_FLOAT, out_data);
+	check_error();
+	if (!epoxy_is_desktop_gl() && format == GL_RED) {
+		// GLES will only read GL_RGBA.
+		float *temp = new float[width * height * 4];
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, temp);
+		check_error();
+		for (int i = 0; i < width * height; ++i) {
+			out_data[i] = temp[i * 4];
+		}
+		delete[] temp;
+	} else {
+		glReadPixels(0, 0, width, height, format, GL_FLOAT, out_data);
+		check_error();
+	}
 
 	if (format == GL_RGBA) {
 		width *= 4;
@@ -150,7 +163,20 @@ void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace c
 	chain.render_to_fbo(fbo, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_data);
+	check_error();
+	if (!epoxy_is_desktop_gl() && format == GL_RED) {
+		// GLES will only read GL_RGBA.
+		unsigned char *temp = new unsigned char[width * height * 4];
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+		check_error();
+		for (int i = 0; i < width * height; ++i) {
+			out_data[i] = temp[i * 4];
+		}
+		delete[] temp;
+	} else {
+		glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_data);
+		check_error();
+	}
 
 	if (format == GL_RGBA) {
 		width *= 4;
