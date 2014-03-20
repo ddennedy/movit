@@ -149,15 +149,15 @@ void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_spa
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, temp);
 		check_error();
 		if (format == GL_ALPHA) {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4 + 3];
 			}
 		} else if (format == GL_BLUE) {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4 + 2];
 			}
 		} else {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4];
 			}
 		}
@@ -190,15 +190,15 @@ void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace c
 		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, temp);
 		check_error();
 		if (format == GL_ALPHA) {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4 + 3];
 			}
 		} else if (format == GL_BLUE) {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4 + 2];
 			}
 		} else {
-			for (int i = 0; i < width * height; ++i) {
+			for (unsigned i = 0; i < width * height; ++i) {
 				out_data[i] = temp[i * 4];
 			}
 		}
