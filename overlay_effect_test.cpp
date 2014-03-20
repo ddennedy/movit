@@ -39,12 +39,12 @@ TEST(OverlayEffectTest, BottomDominatesTopWhenTopIsTransparent) {
 		0.5f, 0.5f, 0.5f, 0.0f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 1, 1, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 1, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	tester.get_chain()->add_effect(new OverlayEffect(), input1, input2);
-	tester.run(out_data, GL_BGRA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(data_a, out_data, 4, 1);
 }
@@ -60,12 +60,12 @@ TEST(OverlayEffectTest, ZeroAlphaRemainsZeroAlpha) {
 		0.0f, 0.0f, 0.0f, 0.0f
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 1, 1, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 1, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	tester.get_chain()->add_effect(new OverlayEffect(), input1, input2);
-	tester.run(out_data, GL_BGRA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	EXPECT_FLOAT_EQ(0.0f, expected_data[3]);
 }
@@ -84,12 +84,12 @@ TEST(OverlayEffectTest, PhotoshopReferenceTest) {
 		179.0f/255.0f, 153.0f/255.0f, 51.0f/255.0f, 0.625f
 	};
 	float out_data[4];
-	EffectChainTester tester(data_a, 1, 1, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data_a, 1, 1, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input2 = tester.add_input(data_b, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	tester.get_chain()->add_effect(new OverlayEffect(), input1, input2);
-	tester.run(out_data, GL_BGRA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, 1);
 }
