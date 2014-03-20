@@ -55,11 +55,21 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 		add_input(data, pixel_format, color_space, gamma_curve);
 	}
 
+	GLuint type;
+	if (framebuffer_format == GL_RGBA8) {
+		type = GL_UNSIGNED_BYTE;
+	} else if (framebuffer_format == GL_RGBA16F || framebuffer_format == GL_RGBA32F) {
+		type = GL_FLOAT;
+	} else {
+		// Add more here as needed.
+		assert(false);
+	}
+
 	glGenTextures(1, &texnum);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, NULL);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);
