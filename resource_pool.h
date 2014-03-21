@@ -56,8 +56,6 @@ public:
 	// or fetch a previous used if possible. Unbinds GL_TEXTURE_2D afterwards.
 	// Keeps ownership of the texture; you must call release_2d_texture() instead
 	// of deleting it when you no longer want it.
-	//
-	// Note: Currently we do not actually have a freelist, but this will change soon.
 	GLuint create_2d_texture(GLint internal_format, GLsizei width, GLsizei height);
 	void release_2d_texture(GLuint texture_num);
 
