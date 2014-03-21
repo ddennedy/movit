@@ -287,7 +287,6 @@ private:
 	std::map<Effect *, Node *> node_map;
 	Effect *dither_effect;
 
-	std::map<void *, GLuint> fbos;  // One for each OpenGL context.
 	std::vector<Input *> inputs;  // Also contained in nodes.
 	std::vector<Phase *> phases;
 

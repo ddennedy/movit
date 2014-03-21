@@ -17,10 +17,13 @@ using namespace std;
 namespace movit {
 
 ResourcePool::ResourcePool(size_t program_freelist_max_length,
-                           size_t texture_freelist_max_bytes)
+                           size_t texture_freelist_max_bytes,
+                           size_t fbo_freelist_max_length)
 	: program_freelist_max_length(program_freelist_max_length),
 	  texture_freelist_max_bytes(texture_freelist_max_bytes),
-	  texture_freelist_bytes(0) {
+	  fbo_freelist_max_length(fbo_freelist_max_length),
+	  texture_freelist_bytes(0)
+{
 	pthread_mutex_init(&lock, NULL);
 }
 
@@ -48,6 +51,17 @@ ResourcePool::~ResourcePool()
 	}
 	assert(texture_formats.empty());
 	assert(texture_freelist_bytes == 0);
+
+	for (list<GLuint>::const_iterator freelist_it = fbo_freelist.begin();
+	     freelist_it != fbo_freelist.end();
+	     ++freelist_it) {
+		GLuint free_fbo_num = *freelist_it;
+		assert(fbo_formats.count(free_fbo_num) != 0);
+		fbo_formats.erase(free_fbo_num);
+		glDeleteFramebuffers(1, &free_fbo_num);
+		check_error();
+	}
+	assert(fbo_formats.empty());
 }
 
 void ResourcePool::delete_program(GLuint glsl_program_num)
@@ -233,6 +247,60 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
 		texture_formats.erase(free_texture_num);
 		glDeleteTextures(1, &free_texture_num);
+		check_error();
+	}
+	pthread_mutex_unlock(&lock);
+}
+
+GLuint ResourcePool::create_fbo(void *context, GLint internal_format, GLsizei width, GLsizei height)
+{
+	pthread_mutex_lock(&lock);
+	// See if there's an FBO on the freelist we can use.
+	for (list<GLuint>::iterator freelist_it = fbo_freelist.begin();
+	     freelist_it != fbo_freelist.end();
+	     ++freelist_it) {
+		GLuint fbo_num = *freelist_it;
+		map<GLuint, FBO>::const_iterator format_it = fbo_formats.find(fbo_num);
+		assert(format_it != fbo_formats.end());
+		if (format_it->second.context == context &&
+		    format_it->second.internal_format == internal_format &&
+		    format_it->second.width == width &&
+		    format_it->second.height == height) {
+			fbo_freelist.erase(freelist_it);
+			pthread_mutex_unlock(&lock);
+			return fbo_num;
+		}
+	}
+
+	// Create a new one.
+	GLuint fbo_num;
+	glGenFramebuffers(1, &fbo_num);
+	check_error();
+
+	FBO fbo_format;
+	fbo_format.context = context;
+	fbo_format.internal_format = internal_format;
+	fbo_format.width = width;
+	fbo_format.height = height;
+	assert(fbo_formats.count(fbo_num) == 0);
+	fbo_formats.insert(make_pair(fbo_num, fbo_format));
+
+	pthread_mutex_unlock(&lock);
+	return fbo_num;
+}
+
+void ResourcePool::release_fbo(GLuint fbo_num)
+{
+	pthread_mutex_lock(&lock);
+	fbo_freelist.push_front(fbo_num);
+	assert(fbo_formats.count(fbo_num) != 0);
+
+	while (fbo_freelist.size() > fbo_freelist_max_length) {
+		GLuint free_fbo_num = fbo_freelist.front();
+		fbo_freelist.pop_front();
+		assert(fbo_formats.count(free_fbo_num) != 0);
+		fbo_formats.erase(free_fbo_num);
+		glDeleteFramebuffers(1, &free_fbo_num);
 		check_error();
 	}
 	pthread_mutex_unlock(&lock);

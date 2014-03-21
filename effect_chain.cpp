@@ -68,11 +68,6 @@ EffectChain::~EffectChain()
 	if (owns_resource_pool) {
 		delete resource_pool;
 	}
-	for (map<void *, GLuint>::const_iterator fbo_it = fbos.begin();
-	     fbo_it != fbos.end(); ++fbo_it) {
-		glDeleteFramebuffers(1, &fbo_it->second);
-		check_error();
-	}
 }
 
 Input *EffectChain::add_input(Input *input)
@@ -1459,18 +1454,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glDepthMask(GL_FALSE);
 	check_error();
 
-	if (phases.size() > 1) {
-		if (fbos.count(context) == 0) {
-			glGenFramebuffers(1, &fbo);
-			check_error();
-			fbos.insert(make_pair(context, fbo));
-		} else {
-			fbo = fbos[context];
-		}
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		check_error();
-	}
-
 	set<Phase *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
@@ -1485,7 +1468,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		if (phase_num != phases.size() - 1) {
 			find_output_size(phase);
 
-			GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F_ARB, phase->output_width, phase->output_height);
+			GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F, phase->output_width, phase->output_height);
 			output_textures.insert(make_pair(phase, tex_num));
 		}
 
@@ -1536,6 +1519,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		} else {
+			fbo = resource_pool->create_fbo(context, GL_RGBA16F, phase->output_width, phase->output_height);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			check_error();
 			glFramebufferTexture2D(
 				GL_FRAMEBUFFER,
 			        GL_COLOR_ATTACHMENT0,
@@ -1572,6 +1558,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		for (unsigned i = 0; i < phase->effects.size(); ++i) {
 			Node *node = phase->effects[i];
 			node->effect->clear_gl_state();
+		}
+		if (phase_num != phases.size() - 1) {
+			resource_pool->release_fbo(fbo);
 		}
 	}
 

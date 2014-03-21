@@ -40,7 +40,8 @@ public:
 	// This means you should be prepared for actual memory usage of the freelist being
 	// twice this estimate or more.
 	ResourcePool(size_t program_freelist_max_length = 100,
-	             size_t texture_freelist_max_bytes = 100 << 20);  // 100 MB.
+	             size_t texture_freelist_max_bytes = 100 << 20,  // 100 MB.
+	             size_t fbo_freelist_max_length = 100);
 	~ResourcePool();
 
 	// All remaining functions are intended for calls from EffectChain only.
@@ -59,6 +60,19 @@ public:
 	GLuint create_2d_texture(GLint internal_format, GLsizei width, GLsizei height);
 	void release_2d_texture(GLuint texture_num);
 
+	// Allocate an FBO used for the given internal format and dimensions,
+	// or fetch a previous used if possible. Keeps ownership of the FBO;
+	// you must call release_fbo() of deleting it when you no longer want it.
+	// You can get an appropriate context pointer from get_gl_context_identifier().
+	//
+	// NOTE: In principle, the FBO doesn't have a resolution or pixel format;
+	// you can bind almost whatever texture you want to it. However, changing
+	// resolution or pixel formats can have an adverse effect on performance,
+	// in particular on NVidia cards. Also, keep in mind that FBOs are not
+	// shareable across contexts.
+	GLuint create_fbo(void *context, GLint internal_format, GLsizei width, GLsizei height);
+	void release_fbo(GLuint fbo_num);
+
 private:
 	// Delete the given program and both its shaders.
 	void delete_program(GLuint program_num);
@@ -66,7 +80,7 @@ private:
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
 
-	size_t program_freelist_max_length, texture_freelist_max_bytes;
+	size_t program_freelist_max_length, texture_freelist_max_bytes, fbo_freelist_max_length;
 		
 	// A mapping from vertex/fragment shader source strings to compiled program number.
 	std::map<std::pair<std::string, std::string>, GLuint> programs;
@@ -101,6 +115,22 @@ private:
 	// again.
 	std::list<GLuint> texture_freelist;
 	size_t texture_freelist_bytes;
+
+	struct FBO {
+		void *context;
+		GLint internal_format;
+		GLsizei width, height;
+	};
+
+	// A mapping from FBO number to format details. This is filled if the
+	// FBO is given out to a client or on the freelist, but not if it is
+	// deleted from the freelist.
+	std::map<GLuint, FBO> fbo_formats;
+
+	// A list of all FBOs that are release but not freed (most recently freed
+	// first). Once this reaches <fbo_freelist_max_length>, the last element
+	// will be deleted.
+	std::list<GLuint> fbo_freelist;
 
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);
