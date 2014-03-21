@@ -18,6 +18,7 @@ float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
 int movit_num_wrongly_rounded;
 bool movit_shader_rounding_supported;
+MovitShaderModel movit_shader_model;
 
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
@@ -78,7 +79,8 @@ void measure_texel_subpixel_precision()
 	glViewport(0, 0, width, 1);
 
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
-		read_file("vs.vert"), read_file("texture1d.frag"));
+		read_version_dependent_file("vs", "vert"),
+		read_version_dependent_file("texture1d", "frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
@@ -209,7 +211,8 @@ void measure_roundoff_problems()
 	glViewport(0, 0, 512, 1);
 
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
-		read_file("vs.vert"), read_file("texture1d.frag"));
+		read_version_dependent_file("vs", "vert"),
+		read_version_dependent_file("texture1d", "frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
@@ -334,6 +337,31 @@ bool check_extensions()
 	return true;
 }
 
+double get_glsl_version()
+{
+	char *glsl_version_str = strdup((const char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+	// Skip past the first period.
+	char *ptr = strchr(glsl_version_str, '.');
+	assert(ptr != NULL);
+	++ptr;
+
+	// Now cut the string off at the next period or space, whatever comes first
+	// (unless the string ends first).
+	while (*ptr && *ptr != '.' && *ptr != ' ') {
+		++ptr;
+	}
+	*ptr = '\0';
+
+	// Now we have something on the form X.YY. We convert it to a float, and hope
+	// that if it's inexact (e.g. 1.30), atof() will round the same way the
+	// compiler will.
+	float glsl_version = atof(glsl_version_str);
+	free(glsl_version_str);
+
+	return glsl_version;
+}
+
 }  // namespace
 
 bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
@@ -353,6 +381,18 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	if (!check_extensions()) {
 		return false;
 	}
+
+	// Find out what shader model we should compile for.
+	if (epoxy_is_desktop_gl()) {
+		if (get_glsl_version() >= 1.30) {
+			movit_shader_model = MOVIT_GLSL_130;
+		} else {
+			movit_shader_model = MOVIT_GLSL_110;
+		}
+	} else {
+		movit_shader_model = MOVIT_ESSL_300;
+	}
+
 	measure_texel_subpixel_precision();
 	measure_roundoff_problems();
 

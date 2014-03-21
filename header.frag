@@ -8,3 +8,8 @@ precision highp float;
 #endif
 
 varying vec2 tc;
+
+vec4 tex2D(sampler2D s, vec2 coord)
+{
+	return texture2D(s, coord);
+}

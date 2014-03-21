@@ -6,7 +6,7 @@ vec4 FUNCNAME(vec2 tc) {
 	// we flip the y coordinate.
 	tc.y = 1.0 - tc.y;
 
-	vec4 pixel = texture2D(PREFIX(tex), tc);
+	vec4 pixel = tex2D(PREFIX(tex), tc);
 
 	// These two are #defined to 0 or 1 in flat_input.cpp.
 #if FIXUP_SWAP_RB
