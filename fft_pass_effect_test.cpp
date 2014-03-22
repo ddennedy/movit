@@ -126,7 +126,7 @@ TEST(FFTPassEffectTest, SingleFrequency) {
 
 TEST(FFTPassEffectTest, Repeat) {
 	srand(12345);
-	for (int fft_size = 2; fft_size < 512; fft_size *= 2) {
+	for (int fft_size = 2; fft_size <= 128; fft_size *= 2) {
 		const int num_repeats = 31;  // Prime, to make things more challenging.
 		float data[num_repeats * fft_size * 4];
 		float expected_data[num_repeats * fft_size * 4], out_data[num_repeats * fft_size * 4];
