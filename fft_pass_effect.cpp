@@ -41,11 +41,12 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	int input_size = (direction == VERTICAL) ? input_height : input_width;
 
-	// This is needed because it counteracts the precision issues we get
-	// because we sample the input texture with normalized coordinates
-	// (especially when the repeat count along the axis is not a power of
-	// two); we very rapidly end up in narrowly missing a texel center,
-	// which causes precision loss to propagate throughout the FFT.
+	// Because of the memory layout (see below) and because we use offsets,
+	// the support texture values for many consecutive values will be
+	// the same. Thus, we can store a smaller texture (giving a small
+	// performance boost) and just sample it with NEAREST. Also, this
+	// counteracts any precision issues we might get from linear
+	// interpolation.
 	Node *self = chain->find_node_for_effect(this);
 	glActiveTexture(chain->get_input_sampler(self, 0));
 	check_error();
@@ -91,9 +92,8 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	assert((fft_size & (fft_size - 1)) == 0);  // Must be power of two.
 	assert(fft_size % subfft_size == 0);
 	int stride = fft_size / subfft_size;
-	for (int i = 0; i < fft_size; ++i) {
-		int k = i / stride;         // Element number within this sub-FFT.
-		int offset = i % stride;    // Sub-FFT number.
+	for (int i = 0; i < subfft_size; i++) {
+		int k = i;
 		double twiddle_real, twiddle_imag;
 
 		if (k < subfft_size / 2) {
@@ -116,18 +116,18 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 		// for using offsets and not direct coordinates as in GPUwave
 		// is that we can have multiple FFTs along the same line,
 		// and want to reuse the support texture by repeating it.
-		int base = k * stride * 2 + offset;
+		int base = k * stride * 2;
 		int support_texture_index = i;
 		int src1 = base;
 		int src2 = base + stride;
+		double sign = 1.0;
 		if (direction == FFTPassEffect::VERTICAL) {
 			// Compensate for OpenGL's bottom-left convention.
-			support_texture_index = fft_size - support_texture_index - 1;
-			src1 = fft_size - src1 - 1;
-			src2 = fft_size - src2 - 1;
+			support_texture_index = subfft_size - support_texture_index - 1;
+			sign = -1.0;
 		}
-		tmp[support_texture_index * 4 + 0] = fp64_to_fp16((src1 - support_texture_index) / double(input_size));
-		tmp[support_texture_index * 4 + 1] = fp64_to_fp16((src2 - support_texture_index) / double(input_size));
+		tmp[support_texture_index * 4 + 0] = fp64_to_fp16(sign * (src1 - i * stride) / double(input_size));
+		tmp[support_texture_index * 4 + 1] = fp64_to_fp16(sign * (src2 - i * stride) / double(input_size));
 		tmp[support_texture_index * 4 + 2] = fp64_to_fp16(twiddle_real);
 		tmp[support_texture_index * 4 + 3] = fp64_to_fp16(twiddle_imag);
 	}
@@ -152,7 +152,7 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	// which gives a nice speed boost.
 	//
 	// Note that the source coordinates become somewhat less accurate too, though.
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, fft_size, 1, 0, GL_RGBA, GL_HALF_FLOAT, tmp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, subfft_size, 1, 0, GL_RGBA, GL_HALF_FLOAT, tmp);
 	check_error();
 
 	delete[] tmp;
