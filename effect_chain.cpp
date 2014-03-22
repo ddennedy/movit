@@ -1484,22 +1484,12 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			input->output_node->bound_sampler_num = sampler;
 			glBindTexture(GL_TEXTURE_2D, output_textures[input]);
 			check_error();
-			if (phase->input_needs_mipmaps) {
-				if (generated_mipmaps.count(input) == 0) {
-					glGenerateMipmap(GL_TEXTURE_2D);
-					check_error();
-					generated_mipmaps.insert(input);
-				}
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+			if (phase->input_needs_mipmaps && generated_mipmaps->count(input) == 0) {
+				glGenerateMipmap(GL_TEXTURE_2D);
 				check_error();
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				check_error();
+				generated_mipmaps->insert(input);
 			}
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			check_error();
+			setup_rtt_sampler(glsl_program_num, sampler, phase->effect_ids[input->output_node], phase->input_needs_mipmaps);
 
 			string texture_name = string("tex_") + phase->effect_ids[input->output_node];
 			glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler);
@@ -1565,6 +1555,27 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glBindVertexArray(0);
 	check_error();
 	glUseProgram(0);
+	check_error();
+}
+
+void EffectChain::setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const string &effect_id, bool use_mipmaps)
+{
+	glActiveTexture(GL_TEXTURE0 + sampler_num);
+	check_error();
+	if (use_mipmaps) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		check_error();
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		check_error();
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
+
+	string texture_name = string("tex_") + effect_id;
+	glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler_num);
 	check_error();
 }
 
