@@ -101,16 +101,25 @@ public:
 
 	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
 	
-	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
+	enum Direction { INVALID = -1, HORIZONTAL = 0, VERTICAL = 1 };
 
 private:
+	void generate_support_texture();
+
 	EffectChain *chain;
 	int input_width, input_height;
 	GLuint tex;
+
 	int fft_size;
 	Direction direction;
 	int pass_number;  // From 1..n.
 	int inverse;  // 0 = forward (FFT), 1 = reverse (IFFT).
+
+	int last_fft_size;
+	Direction last_direction;
+	int last_pass_number;
+	int last_inverse;
+	int last_input_size;
 };
 
 }  // namespace movit

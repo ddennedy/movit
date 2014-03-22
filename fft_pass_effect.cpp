@@ -14,7 +14,12 @@ namespace movit {
 FFTPassEffect::FFTPassEffect()
 	: input_width(1280),
 	  input_height(720),
-	  direction(HORIZONTAL)
+	  direction(HORIZONTAL),
+	  last_fft_size(-1),
+	  last_direction(INVALID),
+	  last_pass_number(-1),
+	  last_inverse(-1),
+	  last_input_size(-1)
 {
 	register_int("fft_size", &fft_size);
 	register_int("direction", (int *)&direction);
@@ -39,14 +44,11 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	int input_size = (direction == VERTICAL) ? input_height : input_width;
-
-	// Because of the memory layout (see below) and because we use offsets,
-	// the support texture values for many consecutive values will be
-	// the same. Thus, we can store a smaller texture (giving a small
-	// performance boost) and just sample it with NEAREST. Also, this
-	// counteracts any precision issues we might get from linear
-	// interpolation.
+	// This is needed because it counteracts the precision issues we get
+	// because we sample the input texture with normalized coordinates
+	// (especially when the repeat count along the axis is not a power of
+	// two); we very rapidly end up in narrowly missing a texel center,
+	// which causes precision loss to propagate throughout the FFT.
 	Node *self = chain->find_node_for_effect(this);
 	glActiveTexture(chain->get_input_sampler(self, 0));
 	check_error();
@@ -54,6 +56,43 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	check_error();
+
+	// Because of the memory layout (see below) and because we use offsets,
+	// the support texture values for many consecutive values will be
+	// the same. Thus, we can store a smaller texture (giving a small
+	// performance boost) and just sample it with NEAREST. Also, this
+	// counteracts any precision issues we might get from linear
+	// interpolation.
+	glActiveTexture(GL_TEXTURE0 + *sampler_num);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, tex);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	check_error();
+
+	int input_size = (direction == VERTICAL) ? input_height : input_width;
+	if (last_fft_size != fft_size ||
+	    last_direction != direction ||
+	    last_pass_number != pass_number ||
+	    last_inverse != inverse ||
+	    last_input_size != input_size) {
+		generate_support_texture();
+	}
+
+	set_uniform_int(glsl_program_num, prefix, "support_tex", *sampler_num);
+	++*sampler_num;
+
+	assert(input_size % fft_size == 0);
+	set_uniform_float(glsl_program_num, prefix, "num_repeats", input_size / fft_size);
+}
+
+void FFTPassEffect::generate_support_texture()
+{
+	int input_size = (direction == VERTICAL) ? input_height : input_width;
 
 	// The memory layout follows figure 5.2 on page 25 of
 	// http://gpuwave.sesse.net/gpuwave.pdf -- it can be a bit confusing
@@ -132,17 +171,6 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 		tmp[support_texture_index * 4 + 3] = fp64_to_fp16(twiddle_imag);
 	}
 
-	glActiveTexture(GL_TEXTURE0 + *sampler_num);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, tex);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	check_error();
-
 	// Supposedly FFTs are very sensitive to inaccuracies in the twiddle factors,
 	// at least according to a paper by Schatzman (see gpuwave.pdf reference [30]
 	// for the full reference); however, practical testing indicates that it's
@@ -157,11 +185,11 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 
 	delete[] tmp;
 
-	set_uniform_int(glsl_program_num, prefix, "support_tex", *sampler_num);
-	++*sampler_num;
-
-	assert(input_size % fft_size == 0);
-	set_uniform_float(glsl_program_num, prefix, "num_repeats", input_size / fft_size);
+	last_fft_size = fft_size;
+	last_direction = direction;
+	last_pass_number = pass_number;
+	last_inverse = inverse;
+	last_input_size = input_size;
 }
 
 }  // namespace movit
