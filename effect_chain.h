@@ -235,6 +235,13 @@ private:
 	// as the last effect. Also pushes all phases in order onto <phases>.
 	Phase *construct_phase(Node *output, std::map<Node *, Phase *> *completed_effects);
 
+	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
+	void execute_phase(Phase *phase, bool last_phase, std::map<Phase *, GLuint> *output_textures, std::set<Phase *> *generated_mipmaps);
+
+	// Set up the given sampler number for sampling from an RTT texture,
+	// and bind it to "tex_" plus the given GLSL variable.
+	void setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const std::string &effect_id, bool use_mipmaps);
+
 	// Output the current graph to the given file in a Graphviz-compatible format;
 	// only useful for debugging.
 	void output_dot(const char *filename);

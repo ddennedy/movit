@@ -1435,8 +1435,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 	// Save original viewport.
 	GLuint x = 0, y = 0;
-	GLuint fbo = 0;
-	void *context = get_gl_context_identifier();
 
 	if (width == 0 && height == 0) {
 		GLint viewport[4];
@@ -1464,50 +1462,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
 		Phase *phase = phases[phase_num];
 
-		// Find a texture for this phase.
-		inform_input_sizes(phase);
-		if (phase_num != phases.size() - 1) {
-			find_output_size(phase);
-
-			GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F, phase->output_width, phase->output_height);
-			output_textures.insert(make_pair(phase, tex_num));
-		}
-
-		const GLuint glsl_program_num = phase->glsl_program_num;
-		check_error();
-		glUseProgram(glsl_program_num);
-		check_error();
-
-		// Set up RTT inputs for this phase.
-		for (unsigned sampler = 0; sampler < phase->inputs.size(); ++sampler) {
-			glActiveTexture(GL_TEXTURE0 + sampler);
-			Phase *input = phase->inputs[sampler];
-			input->output_node->bound_sampler_num = sampler;
-			glBindTexture(GL_TEXTURE_2D, output_textures[input]);
-			check_error();
-			if (phase->input_needs_mipmaps) {
-				if (generated_mipmaps.count(input) == 0) {
-					glGenerateMipmap(GL_TEXTURE_2D);
-					check_error();
-					generated_mipmaps.insert(input);
-				}
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-				check_error();
-			} else {
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				check_error();
-			}
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			check_error();
-
-			string texture_name = string("tex_") + phase->effect_ids[input->output_node];
-			glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler);
-			check_error();
-		}
-
-		// And now the output.
 		if (phase_num == phases.size() - 1) {
 			// Last phase goes to the output the user specified.
 			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
@@ -1519,40 +1473,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_width", width));
 				CHECK(dither_effect->set_int("output_height", height));
 			}
-		} else {
-			fbo = resource_pool->create_fbo(context, output_textures[phase]);
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			glViewport(0, 0, phase->output_width, phase->output_height);
 		}
-
-		// Give the required parameters to all the effects.
-		unsigned sampler_num = phase->inputs.size();
-		for (unsigned i = 0; i < phase->effects.size(); ++i) {
-			Node *node = phase->effects[i];
-			unsigned old_sampler_num = sampler_num;
-			node->effect->set_gl_state(glsl_program_num, phase->effect_ids[node], &sampler_num);
-			check_error();
-
-			if (node->effect->is_single_texture()) {
-				assert(sampler_num - old_sampler_num == 1);
-				node->bound_sampler_num = old_sampler_num;
-			} else {
-				node->bound_sampler_num = -1;
-			}
-		}
-
-		glBindVertexArray(phase->vao);
-		check_error();
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		check_error();
-
-		for (unsigned i = 0; i < phase->effects.size(); ++i) {
-			Node *node = phase->effects[i];
-			node->effect->clear_gl_state();
-		}
-		if (phase_num != phases.size() - 1) {
-			resource_pool->release_fbo(fbo);
-		}
+		execute_phase(phase, phase_num == phases.size() - 1, &output_textures, &generated_mipmaps);
 	}
 
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
@@ -1566,6 +1488,99 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glBindVertexArray(0);
 	check_error();
 	glUseProgram(0);
+	check_error();
+}
+
+void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLuint> *output_textures, set<Phase *> *generated_mipmaps)
+{
+	GLuint fbo = 0;
+
+	// Find a texture for this phase.
+	inform_input_sizes(phase);
+	if (!last_phase) {
+		find_output_size(phase);
+
+		GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F, phase->output_width, phase->output_height);
+		output_textures->insert(make_pair(phase, tex_num));
+	}
+
+	const GLuint glsl_program_num = phase->glsl_program_num;
+	check_error();
+	glUseProgram(glsl_program_num);
+	check_error();
+
+	// Set up RTT inputs for this phase.
+	for (unsigned sampler = 0; sampler < phase->inputs.size(); ++sampler) {
+		glActiveTexture(GL_TEXTURE0 + sampler);
+		Phase *input = phase->inputs[sampler];
+		input->output_node->bound_sampler_num = sampler;
+		glBindTexture(GL_TEXTURE_2D, (*output_textures)[input]);
+		check_error();
+		if (phase->input_needs_mipmaps && generated_mipmaps->count(input) == 0) {
+			glGenerateMipmap(GL_TEXTURE_2D);
+			check_error();
+			generated_mipmaps->insert(input);
+		}
+		setup_rtt_sampler(glsl_program_num, sampler, phase->effect_ids[input->output_node], phase->input_needs_mipmaps);
+	}
+
+	// And now the output. (Already set up for us if it is the last phase.)
+	if (!last_phase) {
+		void *context = get_gl_context_identifier();
+		fbo = resource_pool->create_fbo(context, (*output_textures)[phase]);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glViewport(0, 0, phase->output_width, phase->output_height);
+	}
+
+	// Give the required parameters to all the effects.
+	unsigned sampler_num = phase->inputs.size();
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		unsigned old_sampler_num = sampler_num;
+		node->effect->set_gl_state(glsl_program_num, phase->effect_ids[node], &sampler_num);
+		check_error();
+
+		if (node->effect->is_single_texture()) {
+			assert(sampler_num - old_sampler_num == 1);
+			node->bound_sampler_num = old_sampler_num;
+		} else {
+			node->bound_sampler_num = -1;
+		}
+	}
+
+	glBindVertexArray(phase->vao);
+	check_error();
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	check_error();
+
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		node->effect->clear_gl_state();
+	}
+
+	if (!last_phase) {
+		resource_pool->release_fbo(fbo);
+	}
+}
+
+void EffectChain::setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const string &effect_id, bool use_mipmaps)
+{
+	glActiveTexture(GL_TEXTURE0 + sampler_num);
+	check_error();
+	if (use_mipmaps) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		check_error();
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		check_error();
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
+
+	string texture_name = string("tex_") + effect_id;
+	glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler_num);
 	check_error();
 }
 
