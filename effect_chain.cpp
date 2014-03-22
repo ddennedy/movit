@@ -1519,18 +1519,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		} else {
-			fbo = resource_pool->create_fbo(context, GL_RGBA16F, phase->output_width, phase->output_height);
+			fbo = resource_pool->create_fbo(context, output_textures[phase]);
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			check_error();
-			glFramebufferTexture2D(
-				GL_FRAMEBUFFER,
-			        GL_COLOR_ATTACHMENT0,
-				GL_TEXTURE_2D,
-				output_textures[phase],
-				0);
-			check_error();
-			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-			assert(status == GL_FRAMEBUFFER_COMPLETE);
 			glViewport(0, 0, phase->output_width, phase->output_height);
 		}
 

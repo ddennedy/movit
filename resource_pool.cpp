@@ -248,11 +248,25 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 		texture_formats.erase(free_texture_num);
 		glDeleteTextures(1, &free_texture_num);
 		check_error();
+
+		// Delete any FBO related to this texture.
+		for (list<GLuint>::iterator fbo_freelist_it = fbo_freelist.begin();
+		     fbo_freelist_it != fbo_freelist.end(); ) {
+			GLuint fbo_num = *fbo_freelist_it;
+			map<GLuint, FBO>::const_iterator format_it = fbo_formats.find(fbo_num);
+			assert(format_it != fbo_formats.end());
+			if (format_it->second.texture_num == free_texture_num) {
+				glDeleteFramebuffers(1, &fbo_num);
+				fbo_freelist.erase(fbo_freelist_it++);
+			} else {
+				++fbo_freelist_it;
+			}
+		}
 	}
 	pthread_mutex_unlock(&lock);
 }
 
-GLuint ResourcePool::create_fbo(void *context, GLint internal_format, GLsizei width, GLsizei height)
+GLuint ResourcePool::create_fbo(void *context, GLuint texture_num)
 {
 	pthread_mutex_lock(&lock);
 	// See if there's an FBO on the freelist we can use.
@@ -263,9 +277,7 @@ GLuint ResourcePool::create_fbo(void *context, GLint internal_format, GLsizei wi
 		map<GLuint, FBO>::const_iterator format_it = fbo_formats.find(fbo_num);
 		assert(format_it != fbo_formats.end());
 		if (format_it->second.context == context &&
-		    format_it->second.internal_format == internal_format &&
-		    format_it->second.width == width &&
-		    format_it->second.height == height) {
+		    format_it->second.texture_num == texture_num) {
 			fbo_freelist.erase(freelist_it);
 			pthread_mutex_unlock(&lock);
 			return fbo_num;
@@ -276,12 +288,23 @@ GLuint ResourcePool::create_fbo(void *context, GLint internal_format, GLsizei wi
 	GLuint fbo_num;
 	glGenFramebuffers(1, &fbo_num);
 	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_num);
+	check_error();
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		texture_num,
+		0);
+	check_error();
+	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	assert(status == GL_FRAMEBUFFER_COMPLETE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
 
 	FBO fbo_format;
 	fbo_format.context = context;
-	fbo_format.internal_format = internal_format;
-	fbo_format.width = width;
-	fbo_format.height = height;
+	fbo_format.texture_num = texture_num;
 	assert(fbo_formats.count(fbo_num) == 0);
 	fbo_formats.insert(make_pair(fbo_num, fbo_format));
 

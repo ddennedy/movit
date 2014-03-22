@@ -60,17 +60,18 @@ public:
 	GLuint create_2d_texture(GLint internal_format, GLsizei width, GLsizei height);
 	void release_2d_texture(GLuint texture_num);
 
-	// Allocate an FBO used for the given internal format and dimensions,
-	// or fetch a previous used if possible. Keeps ownership of the FBO;
-	// you must call release_fbo() of deleting it when you no longer want it.
-	// You can get an appropriate context pointer from get_gl_context_identifier().
+	// Allocate an FBO with the the given texture bound as a framebuffer attachment,
+	// or fetch a previous used if possible. Unbinds GL_FRAMEBUFFER afterwards.
+	// Keeps ownership of the FBO; you must call release_fbo() of deleting
+	// it when you no longer want it. You can get an appropriate context
+	// pointer from get_gl_context_identifier().
 	//
 	// NOTE: In principle, the FBO doesn't have a resolution or pixel format;
 	// you can bind almost whatever texture you want to it. However, changing
-	// resolution or pixel formats can have an adverse effect on performance,
+	// textures can have an adverse effect on performance due to validation,
 	// in particular on NVidia cards. Also, keep in mind that FBOs are not
 	// shareable across contexts.
-	GLuint create_fbo(void *context, GLint internal_format, GLsizei width, GLsizei height);
+	GLuint create_fbo(void *context, GLuint texture_num);
 	void release_fbo(GLuint fbo_num);
 
 private:
@@ -118,8 +119,7 @@ private:
 
 	struct FBO {
 		void *context;
-		GLint internal_format;
-		GLsizei width, height;
+		GLuint texture_num;
 	};
 
 	// A mapping from FBO number to format details. This is filled if the
