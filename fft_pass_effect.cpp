@@ -119,8 +119,8 @@ void FFTPassEffect::generate_support_texture()
 	// bit, so the stride is 8, and so on.
 
 	assert((fft_size & (fft_size - 1)) == 0);  // Must be power of two.
-	fp16_int_t *tmp = new fp16_int_t[fft_size * 4];
 	int subfft_size = 1 << pass_number;
+	fp16_int_t *tmp = new fp16_int_t[subfft_size * 4];
 	double mulfac;
 	if (inverse) {
 		mulfac = 2.0 * M_PI;
