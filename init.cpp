@@ -362,6 +362,17 @@ double get_glsl_version()
 	return glsl_version;
 }
 
+void APIENTRY debug_callback(GLenum source,
+                             GLenum type,
+                             GLuint id,
+                             GLenum severity,
+                             GLsizei length,
+                             const char *message,
+                             const void *userParam)
+{
+	printf("Debug: %s\n", message);
+}
+
 }  // namespace
 
 bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
@@ -377,6 +388,12 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glDisable(GL_DITHER);
+
+	// You can turn this on if you want detailed debug messages from the driver.
+	// You should probably also ask for a debug context (see gtest_sdl_main.cpp),
+	// or you might not get much data back.
+	// glDebugMessageCallbackARB(callback, NULL);
+	// glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0, GL_TRUE);
 
 	if (!check_extensions()) {
 		return false;
