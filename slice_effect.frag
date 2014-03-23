@@ -25,3 +25,5 @@ vec4 FUNCNAME(vec2 tc) {
 	return INPUT(vec2(input_coord, tc.y));
 #endif
 }
+
+#undef DIRECTION_VERTICAL

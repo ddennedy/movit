@@ -22,3 +22,5 @@ vec4 FUNCNAME(vec2 tc) {
 	// where * is complex multiplication.
 	return c1 + support.z * c2 + support.w * vec4(-c2.y, c2.x, -c2.w, c2.z);
 }
+
+#undef DIRECTION_VERTICAL

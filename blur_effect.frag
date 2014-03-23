@@ -22,3 +22,5 @@ vec4 FUNCNAME(vec2 tc) {
 	}
 	return sum;
 }
+
+#undef DIRECTION_VERTICAL
