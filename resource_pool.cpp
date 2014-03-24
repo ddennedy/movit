@@ -203,6 +203,7 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	case GL_RGB32F:
 	case GL_RGB16F:
 	case GL_RGB8:
+	case GL_SRGB8:
 		format = GL_RGB;
 		break;
 	case GL_RG32F:
@@ -234,6 +235,7 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 		type = GL_FLOAT;
 		break;
 	case GL_SRGB8_ALPHA8:
+	case GL_SRGB8:
 	case GL_RGBA8:
 	case GL_RGB8:
 	case GL_RG8:
