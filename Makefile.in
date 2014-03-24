@@ -166,7 +166,7 @@ HDRS += $(EFFECTS:=.h)
 SHADERS = vs.vert vs.130.vert vs.300es.vert
 SHADERS += header.frag header.130.frag header.300es.frag
 SHADERS += footer.frag footer.130.frag footer.300es.frag
-SHADERS += texture1d.frag texture1d.130.frag footer.300es.frag
+SHADERS += texture1d.frag texture1d.130.frag texture1d.300es.frag
 SHADERS += $(INPUTS:=.frag)
 SHADERS += $(EFFECTS:=.frag)
 SHADERS += highlight_cutoff_effect.frag
