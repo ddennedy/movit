@@ -58,8 +58,9 @@ ResourcePool::~ResourcePool()
 		GLuint free_fbo_num = *freelist_it;
 		assert(fbo_formats.count(free_fbo_num) != 0);
 		fbo_formats.erase(free_fbo_num);
-		glDeleteFramebuffers(1, &free_fbo_num);
-		check_error();
+		// TODO: We currently leak due to FBO sharability issues.
+		// glDeleteFramebuffers(1, &free_fbo_num);
+		// check_error();
 	}
 	assert(fbo_formats.empty());
 }
@@ -263,7 +264,8 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 			assert(format_it != fbo_formats.end());
 			if (format_it->second.texture_num == free_texture_num) {
 				fbo_formats.erase(fbo_num);
-				glDeleteFramebuffers(1, &fbo_num);
+				// TODO: We currently leak due to FBO sharability issues.
+				// glDeleteFramebuffers(1, &fbo_num);
 				fbo_freelist.erase(fbo_freelist_it++);
 			} else {
 				++fbo_freelist_it;
@@ -330,8 +332,9 @@ void ResourcePool::release_fbo(GLuint fbo_num)
 		fbo_freelist.pop_front();
 		assert(fbo_formats.count(free_fbo_num) != 0);
 		fbo_formats.erase(free_fbo_num);
-		glDeleteFramebuffers(1, &free_fbo_num);
-		check_error();
+		// TODO: We currently leak due to FBO sharability issues.
+		// glDeleteFramebuffers(1, &free_fbo_num);
+		// check_error();
 	}
 	pthread_mutex_unlock(&lock);
 }
