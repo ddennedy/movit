@@ -1493,8 +1493,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 
 	// And now the output. (Already set up for us if it is the last phase.)
 	if (!last_phase) {
-		void *context = get_gl_context_identifier();
-		fbo = resource_pool->create_fbo(context, (*output_textures)[phase]);
+		fbo = resource_pool->create_fbo((*output_textures)[phase]);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, phase->output_width, phase->output_height);
 	}

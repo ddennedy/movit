@@ -15,6 +15,12 @@
 // Thread-safety: All functions except the constructor and destructor can be
 // safely called from multiple threads at the same time, provided they have
 // separate (but sharing) OpenGL contexts.
+//
+// Memory management (only relevant if you use multiple contexts): Some objects,
+// like FBOs, are not shareable across contexts, and can only be deleted from
+// the context they were created in. Thus, you will need to tell the
+// ResourcePool explicitly if you delete a context, or they will leak (and the
+// ResourcePool destructor will assert-fail). See clean_context().
 
 #include <GL/glew.h>
 #include <pthread.h>
@@ -41,7 +47,7 @@ public:
 	// twice this estimate or more.
 	ResourcePool(size_t program_freelist_max_length = 100,
 	             size_t texture_freelist_max_bytes = 100 << 20,  // 100 MB.
-	             size_t fbo_freelist_max_length = 100);
+	             size_t fbo_freelist_max_length = 100);  // Per context.
 	~ResourcePool();
 
 	// All remaining functions are intended for calls from EffectChain only.
@@ -63,20 +69,35 @@ public:
 	// Allocate an FBO with the the given texture bound as a framebuffer attachment,
 	// or fetch a previous used if possible. Unbinds GL_FRAMEBUFFER afterwards.
 	// Keeps ownership of the FBO; you must call release_fbo() of deleting
-	// it when you no longer want it. You can get an appropriate context
-	// pointer from get_gl_context_identifier().
+	// it when you no longer want it.
 	//
 	// NOTE: In principle, the FBO doesn't have a resolution or pixel format;
 	// you can bind almost whatever texture you want to it. However, changing
 	// textures can have an adverse effect on performance due to validation,
 	// in particular on NVidia cards. Also, keep in mind that FBOs are not
-	// shareable across contexts.
-	GLuint create_fbo(void *context, GLuint texture_num);
+	// shareable across contexts, so you must have the context that's supposed
+	// to own the FBO current when you create or release it.
+	GLuint create_fbo(GLuint texture_num);
 	void release_fbo(GLuint fbo_num);
+
+	// Informs the ResourcePool that the current context is going away soon,
+	// and that any resources held for it in the freelist should be deleted.
+	//
+	// You do not need to do this for the last context; the regular destructor
+	// will take care of that. This means that if you only ever use one
+	// thread/context, you never need to call this function.
+	void clean_context();
 
 private:
 	// Delete the given program and both its shaders.
 	void delete_program(GLuint program_num);
+
+	// Deletes all FBOs for the given context that belong to deleted textures.
+	void cleanup_unlinked_fbos(void *context);
+
+	// Remove FBOs off the end of the freelist for <context>, until it
+	// is no more than <max_length> elements long.
+	void shrink_fbo_freelist(void *context, size_t max_length);
 
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
@@ -118,19 +139,18 @@ private:
 	size_t texture_freelist_bytes;
 
 	struct FBO {
-		void *context;
-		GLuint texture_num;
+		GLuint texture_num;  // 0 means associated to a texture that has since been deleted.
 	};
 
-	// A mapping from FBO number to format details. This is filled if the
-	// FBO is given out to a client or on the freelist, but not if it is
-	// deleted from the freelist.
-	std::map<GLuint, FBO> fbo_formats;
+	// For each context, a mapping from FBO number to format details. This is
+	// filled if the FBO is given out to a client or on the freelist, but
+	// not if it is deleted from the freelist.
+	std::map<std::pair<void *, GLuint>, FBO> fbo_formats;
 
-	// A list of all FBOs that are release but not freed (most recently freed
-	// first). Once this reaches <fbo_freelist_max_length>, the last element
-	// will be deleted.
-	std::list<GLuint> fbo_freelist;
+	// For each context, a list of all FBOs that are released but not freed
+	// (most recently freed first). Once this reaches <fbo_freelist_max_length>,
+	// the last element will be deleted.
+	std::map<void *, std::list<GLuint> > fbo_freelist;
 
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);

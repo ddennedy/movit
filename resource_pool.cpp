@@ -52,16 +52,29 @@ ResourcePool::~ResourcePool()
 	assert(texture_formats.empty());
 	assert(texture_freelist_bytes == 0);
 
-	for (list<GLuint>::const_iterator freelist_it = fbo_freelist.begin();
-	     freelist_it != fbo_freelist.end();
-	     ++freelist_it) {
-		GLuint free_fbo_num = *freelist_it;
-		assert(fbo_formats.count(free_fbo_num) != 0);
-		fbo_formats.erase(free_fbo_num);
-		// TODO: We currently leak due to FBO sharability issues.
-		// glDeleteFramebuffers(1, &free_fbo_num);
-		// check_error();
+	void *context = get_gl_context_identifier();
+	cleanup_unlinked_fbos(context);
+
+	for (map<void *, std::list<GLuint> >::iterator context_it = fbo_freelist.begin();
+	     context_it != fbo_freelist.end();
+	     ++context_it) {
+		if (context_it->first != context) {
+			// If this does not hold, the client should have called clean_context() earlier.
+			assert(context_it->second.empty());
+			continue;
+		}
+		for (list<GLuint>::const_iterator freelist_it = context_it->second.begin();
+		     freelist_it != context_it->second.end();
+		     ++freelist_it) {
+			pair<void *, GLuint> key(context, *freelist_it);
+			GLuint free_fbo_num = *freelist_it;
+			assert(fbo_formats.count(key) != 0);
+			fbo_formats.erase(key);
+			glDeleteFramebuffers(1, &free_fbo_num);
+			check_error();
+		}
 	}
+
 	assert(fbo_formats.empty());
 }
 
@@ -256,40 +269,40 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 		glDeleteTextures(1, &free_texture_num);
 		check_error();
 
-		// Delete any FBO related to this texture.
-		for (list<GLuint>::iterator fbo_freelist_it = fbo_freelist.begin();
-		     fbo_freelist_it != fbo_freelist.end(); ) {
-			GLuint fbo_num = *fbo_freelist_it;
-			map<GLuint, FBO>::const_iterator format_it = fbo_formats.find(fbo_num);
-			assert(format_it != fbo_formats.end());
+		// Unlink any lingering FBO related to this texture. We might
+		// not be in the right context, so don't delete it right away;
+		// the cleanup in release_fbo() (which calls cleanup_unlinked_fbos())
+		// will take care of actually doing that later.
+		for (map<pair<void *, GLuint>, FBO>::iterator format_it = fbo_formats.begin();
+		     format_it != fbo_formats.end();
+		     ++format_it) {
 			if (format_it->second.texture_num == free_texture_num) {
-				fbo_formats.erase(fbo_num);
-				// TODO: We currently leak due to FBO sharability issues.
-				// glDeleteFramebuffers(1, &fbo_num);
-				fbo_freelist.erase(fbo_freelist_it++);
-			} else {
-				++fbo_freelist_it;
+				format_it->second.texture_num = 0;
 			}
 		}
 	}
 	pthread_mutex_unlock(&lock);
 }
 
-GLuint ResourcePool::create_fbo(void *context, GLuint texture_num)
+GLuint ResourcePool::create_fbo(GLuint texture_num)
 {
+	void *context = get_gl_context_identifier();
+
 	pthread_mutex_lock(&lock);
-	// See if there's an FBO on the freelist we can use.
-	for (list<GLuint>::iterator freelist_it = fbo_freelist.begin();
-	     freelist_it != fbo_freelist.end();
-	     ++freelist_it) {
-		GLuint fbo_num = *freelist_it;
-		map<GLuint, FBO>::const_iterator format_it = fbo_formats.find(fbo_num);
-		assert(format_it != fbo_formats.end());
-		if (format_it->second.context == context &&
-		    format_it->second.texture_num == texture_num) {
-			fbo_freelist.erase(freelist_it);
-			pthread_mutex_unlock(&lock);
-			return fbo_num;
+	if (fbo_freelist.count(context) != 0) {
+		// See if there's an FBO on the freelist we can use.
+		for (list<GLuint>::iterator freelist_it = fbo_freelist[context].begin();
+		     freelist_it != fbo_freelist[context].end();
+		     ++freelist_it) {
+			GLuint fbo_num = *freelist_it;
+			map<pair<void *, GLuint>, FBO>::const_iterator format_it =
+				fbo_formats.find(make_pair(context, fbo_num));
+			assert(format_it != fbo_formats.end());
+			if (format_it->second.texture_num == texture_num) {
+				fbo_freelist[context].erase(freelist_it);
+				pthread_mutex_unlock(&lock);
+				return fbo_num;
+			}
 		}
 	}
 
@@ -312,10 +325,10 @@ GLuint ResourcePool::create_fbo(void *context, GLuint texture_num)
 	check_error();
 
 	FBO fbo_format;
-	fbo_format.context = context;
 	fbo_format.texture_num = texture_num;
-	assert(fbo_formats.count(fbo_num) == 0);
-	fbo_formats.insert(make_pair(fbo_num, fbo_format));
+	pair<void *, GLuint> key(context, fbo_num);
+	assert(fbo_formats.count(key) == 0);
+	fbo_formats.insert(make_pair(key, fbo_format));
 
 	pthread_mutex_unlock(&lock);
 	return fbo_num;
@@ -323,20 +336,58 @@ GLuint ResourcePool::create_fbo(void *context, GLuint texture_num)
 
 void ResourcePool::release_fbo(GLuint fbo_num)
 {
-	pthread_mutex_lock(&lock);
-	fbo_freelist.push_front(fbo_num);
-	assert(fbo_formats.count(fbo_num) != 0);
+	void *context = get_gl_context_identifier();
 
-	while (fbo_freelist.size() > fbo_freelist_max_length) {
-		GLuint free_fbo_num = fbo_freelist.front();
-		fbo_freelist.pop_front();
-		assert(fbo_formats.count(free_fbo_num) != 0);
-		fbo_formats.erase(free_fbo_num);
-		// TODO: We currently leak due to FBO sharability issues.
-		// glDeleteFramebuffers(1, &free_fbo_num);
-		// check_error();
-	}
+	pthread_mutex_lock(&lock);
+	fbo_freelist[context].push_front(fbo_num);
+	assert(fbo_formats.count(make_pair(context, fbo_num)) != 0);
+
+	// Now that we're in this context, free up any FBOs that are connected
+	// to deleted textures (in release_2d_texture).
+	cleanup_unlinked_fbos(context);
+
+	shrink_fbo_freelist(context, fbo_freelist_max_length);
 	pthread_mutex_unlock(&lock);
+}
+
+void ResourcePool::clean_context()
+{
+	void *context = get_gl_context_identifier();
+
+	// Currently, we only need to worry about FBOs, as they are the only
+	// non-shareable resource we hold.
+	shrink_fbo_freelist(context, 0);
+	fbo_freelist.erase(context);
+}
+
+void ResourcePool::cleanup_unlinked_fbos(void *context)
+{
+	for (list<GLuint>::iterator freelist_it = fbo_freelist[context].begin();
+	     freelist_it != fbo_freelist[context].end(); ) {
+		GLuint fbo_num = *freelist_it;
+		pair<void *, GLuint> key(context, fbo_num);
+		assert(fbo_formats.count(key) != 0);
+		if (fbo_formats[key].texture_num == 0) {
+			glDeleteFramebuffers(1, &fbo_num);
+			check_error();
+			fbo_freelist[context].erase(freelist_it++);
+		} else {
+			freelist_it++;
+		}
+	}
+}
+
+void ResourcePool::shrink_fbo_freelist(void *context, size_t max_length)
+{
+	while (fbo_freelist[context].size() > max_length) {
+		GLuint free_fbo_num = fbo_freelist[context].back();
+		pair<void *, GLuint> key(context, free_fbo_num);
+		fbo_freelist[context].pop_back();
+		assert(fbo_formats.count(key) != 0);
+		fbo_formats.erase(key);
+		glDeleteFramebuffers(1, &free_fbo_num);
+		check_error();
+	}
 }
 
 size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)

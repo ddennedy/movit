@@ -16,6 +16,10 @@
 // but if so, the threads' contexts need to be set up to share resources, since
 // the EffectChain holds textures and other OpenGL objects that are tied to the
 // context.
+//
+// Memory management (only relevant if you use multiple contexts):
+// See corresponding comment in resource_pool.h. This holds even if you don't
+// allocate your own ResourcePool, but let EffectChain hold its own.
 
 #include <GL/glew.h>
 #include <stdio.h>
