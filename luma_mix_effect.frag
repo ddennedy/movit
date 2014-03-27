@@ -39,7 +39,7 @@ vec4 FUNCNAME(vec2 tc) {
 	float w = PREFIX(transition_width);
 	float luma = INPUT3(tc).x;
 	if (PREFIX(inverse)) {
-		luma = 1.0f - luma;
+		luma = 1.0 - luma;
 	}
 	float m = clamp((luma * w - w) + PREFIX(progress_mul_w_plus_one), 0.0, 1.0);
 
