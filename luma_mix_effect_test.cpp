@@ -96,4 +96,44 @@ TEST(LumaMixEffectTest, SoftWipeHalfWayThrough) {
 	expect_equal(expected_data, out_data, 2, 2);
 }
 
+TEST(LumaMixEffectTest, Inverse) {
+	float data_a[] = {
+		0.0f, 0.25f,
+		0.75f, 1.0f,
+	};
+	float data_b[] = {
+		1.0f, 0.5f,
+		0.65f, 0.6f,
+	};
+	float data_luma[] = {
+		0.0f, 0.25f,
+		0.5f, 0.75f,
+	};
+
+	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input1 = tester.get_chain()->last_added_effect();
+	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *input3 = tester.add_input(data_luma, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	Effect *luma_mix_effect = tester.get_chain()->add_effect(new LumaMixEffect(), input1, input2, input3);
+	ASSERT_TRUE(luma_mix_effect->set_float("transition_width", 100000.0f));
+	ASSERT_TRUE(luma_mix_effect->set_int("inverse", 1));
+
+	// Inverse is not the same as reverse, so progress=0 should behave identically
+	// as HardWipe, ie. everything should be from A.
+	float out_data[4];
+	ASSERT_TRUE(luma_mix_effect->set_float("progress", 0.0f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(data_a, out_data, 2, 2);
+
+	// Lower two from A, the rest from B.
+	float expected_data_049[] = {
+		1.0f, 0.5f,
+		0.75f, 1.0f,
+	};
+	ASSERT_TRUE(luma_mix_effect->set_float("progress", 0.49f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data_049, out_data, 2, 2);
+}
+
 }  // namespace movit

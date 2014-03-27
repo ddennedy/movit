@@ -1,4 +1,5 @@
 uniform float PREFIX(progress_mul_w_plus_one);
+uniform bool PREFIX(inverse);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 first = INPUT1(tc);
@@ -36,8 +37,11 @@ vec4 FUNCNAME(vec2 tc) {
 	// So clearly, it should move (w+1) units to the right, and apart from that
 	// just stay a simple mapping.
 	float w = PREFIX(transition_width);
-	float luma = INPUT3(tc).x * w;
-	float m = clamp((luma - w) + PREFIX(progress_mul_w_plus_one), 0.0, 1.0);
+	float luma = INPUT3(tc).x;
+	if (PREFIX(inverse)) {
+		luma = 1.0f - luma;
+	}
+	float m = clamp((luma * w - w) + PREFIX(progress_mul_w_plus_one), 0.0, 1.0);
 
 	return mix(first, second, m);
 }
