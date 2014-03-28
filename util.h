@@ -3,7 +3,7 @@
 
 // Various utilities.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <Eigen/Core>
@@ -23,6 +23,10 @@ void hsv2rgb_normalized(float h, float s, float v, float *r, float *g, float *b)
 // Read a file from disk and return its contents.
 // Dies if the file does not exist.
 std::string read_file(const std::string &filename);
+
+// Reads <base>.<extension>, <base>.130.<extension> or <base>.300es.<extension> and
+// returns its contents, depending on <movit_shader_level>.
+std::string read_version_dependent_file(const std::string &base, const std::string &extension);
 
 // Compile the given GLSL shader (typically a vertex or fragment shader)
 // and return the object number.

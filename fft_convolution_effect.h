@@ -72,7 +72,7 @@
 // time, which in turn means you cannot change image or kernel size on the fly.
 
 #include <assert.h>
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

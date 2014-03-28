@@ -6,8 +6,8 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <epoxy/gl.h>
 
-#include "glew.h"
 #include "init.h"
 #include "resource_pool.h"
 #include "util.h"
@@ -214,16 +214,19 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	case GL_SRGB8_ALPHA8:
 		format = GL_RGBA;
 		break;
-	case GL_RGB32F_ARB:
-	case GL_RGB16F_ARB:
+	case GL_RGB32F:
+	case GL_RGB16F:
 	case GL_RGB8:
 	case GL_SRGB8:
 		format = GL_RGB;
 		break;
 	case GL_RG32F:
 	case GL_RG16F:
+	case GL_RG8:
 		format = GL_RG;
 		break;
+	case GL_R32F:
+	case GL_R16F:
 	case GL_R8:
 		format = GL_RED;
 		break;
@@ -232,12 +235,39 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 		assert(false);
 	}
 
+	// Same with type; GLES is stricter than desktop OpenGL here.
+	GLenum type;
+	switch (internal_format) {
+	case GL_RGBA32F_ARB:
+	case GL_RGBA16F_ARB:
+	case GL_RGB32F:
+	case GL_RGB16F:
+	case GL_RG32F:
+	case GL_RG16F:
+	case GL_R32F:
+	case GL_R16F:
+		type = GL_FLOAT;
+		break;
+	case GL_SRGB8_ALPHA8:
+	case GL_SRGB8:
+	case GL_RGBA8:
+	case GL_RGB8:
+	case GL_RG8:
+	case GL_R8:
+		type = GL_UNSIGNED_BYTE;
+		break;
+	default:
+		// TODO: Add more here as needed.
+		assert(false);
+	}
+
+
 	GLuint texture_num;
 	glGenTextures(1, &texture_num);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texture_num);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
@@ -401,15 +431,15 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 	case GL_RGBA16F_ARB:
 		bytes_per_pixel = 8;
 		break;
-	case GL_RGBA8:
-	case GL_SRGB8_ALPHA8:
-		bytes_per_pixel = 4;
-		break;
 	case GL_RGB32F_ARB:
 		bytes_per_pixel = 12;
 		break;
 	case GL_RGB16F_ARB:
 		bytes_per_pixel = 6;
+		break;
+	case GL_RGBA8:
+	case GL_SRGB8_ALPHA8:
+		bytes_per_pixel = 4;
 		break;
 	case GL_RGB8:
 	case GL_SRGB8:
@@ -420,6 +450,12 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 		break;
 	case GL_RG16F:
 		bytes_per_pixel = 4;
+		break;
+	case GL_R32F:
+		bytes_per_pixel = 4;
+		break;
+	case GL_R16F:
+		bytes_per_pixel = 2;
 		break;
 	case GL_R8:
 		bytes_per_pixel = 1;

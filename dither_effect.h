@@ -43,7 +43,7 @@
 // like many LCD monitors do, but it starts to get very hairy, again, for limited gains.)
 // The dither is also deterministic across runs.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

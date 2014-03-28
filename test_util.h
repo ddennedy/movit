@@ -1,7 +1,7 @@
 #ifndef _MOVIT_TEST_UTIL_H
 #define _MOVIT_TEST_UTIL_H 1
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include "effect_chain.h"
 #include "image_format.h"
 

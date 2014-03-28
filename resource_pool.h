@@ -22,7 +22,7 @@
 // ResourcePool explicitly if you delete a context, or they will leak (and the
 // ResourcePool destructor will assert-fail). See clean_context().
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <list>

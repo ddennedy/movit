@@ -14,7 +14,7 @@
 //
 // This class is tested as part of by FFTConvolutionEffectTest.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 

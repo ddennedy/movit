@@ -1,7 +1,7 @@
 #ifndef _MOVIT_FLAT_INPUT_H
 #define _MOVIT_FLAT_INPUT_H 1
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 
@@ -26,23 +26,26 @@ public:
 	virtual std::string effect_type_id() const { return "FlatInput"; }
 
 	virtual bool can_output_linear_gamma() const {
+		// On desktop OpenGL, there's also GL_SLUMINANCE8 which could give us
+		// support for single-channel sRGB decoding, but it's not supported
+		// on GLES, and we're already actively rewriting single-channel inputs
+		// to GL_RED (even on desktop), so we stick to 3- and 4-channel inputs.
 		return (movit_srgb_textures_supported &&
 		        type == GL_UNSIGNED_BYTE &&
+			(pixel_format == FORMAT_RGB ||
+			 pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) &&
 		        (image_format.gamma_curve == GAMMA_LINEAR ||
 		         image_format.gamma_curve == GAMMA_sRGB));
 	}
 	virtual AlphaHandling alpha_handling() const {
 		switch (pixel_format) {
 		case FORMAT_RGBA_PREMULTIPLIED_ALPHA:
-		case FORMAT_BGRA_PREMULTIPLIED_ALPHA:
 			return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA;
 		case FORMAT_RGBA_POSTMULTIPLIED_ALPHA:
-		case FORMAT_BGRA_POSTMULTIPLIED_ALPHA:
 			return OUTPUT_POSTMULTIPLIED_ALPHA;
+		case FORMAT_R:
 		case FORMAT_RG:
 		case FORMAT_RGB:
-		case FORMAT_BGR:
-		case FORMAT_GRAYSCALE:
 			return OUTPUT_BLANK_ALPHA;
 		default:
 			assert(false);
@@ -123,6 +126,7 @@ private:
 	unsigned width, height, pitch;
 	const void *pixel_data;
 	ResourcePool *resource_pool;
+	bool fixup_swap_rb, fixup_red_to_grayscale;
 };
 
 }  // namespace movit

@@ -14,5 +14,5 @@ Version: git
 Requires:
 Conflicts:
 Libs: -lmovit
-Libs.private: @GLEW_LIBS@ @FFTW3_LIBS@
-Cflags: -I${includedir}/movit @Eigen3_CFLAGS@ @GLEW_CFLAGS@ @FFTW3_CFLAGS@
+Libs.private: @epoxy_LIBS@ @FFTW3_LIBS@
+Cflags: -I${includedir}/movit @Eigen3_CFLAGS@ @epoxy_CFLAGS@ @FFTW3_CFLAGS@

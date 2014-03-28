@@ -1,6 +1,6 @@
 #define GL_GLEXT_PROTOTYPES 1
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <locale.h>
 #include <math.h>
@@ -229,7 +229,7 @@ string replace_prefix(const string &text, const string &prefix)
 
 void EffectChain::compile_glsl_program(Phase *phase)
 {
-	string frag_shader = read_file("header.frag");
+	string frag_shader = read_version_dependent_file("header", "frag");
 
 	// Create functions for all the texture inputs that we need.
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
@@ -240,7 +240,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	
 		frag_shader += string("uniform sampler2D tex_") + effect_id + ";\n";
 		frag_shader += string("vec4 ") + effect_id + "(vec2 tc) {\n";
-		frag_shader += "\treturn texture2D(tex_" + string(effect_id) + ", tc);\n";
+		frag_shader += "\treturn tex2D(tex_" + string(effect_id) + ", tc);\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
 	}
@@ -279,9 +279,10 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 	}
 	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
-	frag_shader.append(read_file("footer.frag"));
+	frag_shader.append(read_version_dependent_file("footer", "frag"));
 
-	phase->glsl_program_num = resource_pool->compile_glsl_program(read_file("vs.vert"), frag_shader);
+	string vert_shader = read_version_dependent_file("vs", "vert");
+	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
 }
 
 // Construct GLSL programs, starting at the given effect and following

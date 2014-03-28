@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
 #include <algorithm>
@@ -18,6 +18,7 @@ float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
 int movit_num_wrongly_rounded;
 bool movit_shader_rounding_supported;
+MovitShaderModel movit_shader_model;
 
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
@@ -78,7 +79,8 @@ void measure_texel_subpixel_precision()
 	glViewport(0, 0, width, 1);
 
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
-		read_file("vs.vert"), read_file("texture1d.frag"));
+		read_version_dependent_file("vs", "vert"),
+		read_version_dependent_file("texture1d", "frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
@@ -122,14 +124,14 @@ void measure_texel_subpixel_precision()
 	// Now read the data back and see what the card did.
 	// (We only look at the red channel; the others will surely be the same.)
 	// We assume a linear ramp; anything else will give sort of odd results here.
-	float out_data[width];
-	glReadPixels(0, 0, width, 1, GL_RED, GL_FLOAT, out_data);
+	float out_data[width * 4];
+	glReadPixels(0, 0, width, 1, GL_RGBA, GL_FLOAT, out_data);
 	check_error();
 
 	float biggest_jump = 0.0f;
 	for (unsigned i = 1; i < width; ++i) {
-		assert(out_data[i] >= out_data[i - 1]);
-		biggest_jump = max(biggest_jump, out_data[i] - out_data[i - 1]);
+		assert(out_data[i * 4] >= out_data[(i - 1) * 4]);
+		biggest_jump = max(biggest_jump, out_data[i * 4] - out_data[(i - 1) * 4]);
 	}
 
 	assert(biggest_jump > 0.0);
@@ -209,7 +211,8 @@ void measure_roundoff_problems()
 	glViewport(0, 0, 512, 1);
 
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
-		read_file("vs.vert"), read_file("texture1d.frag"));
+		read_version_dependent_file("vs", "vert"),
+		read_version_dependent_file("texture1d", "frag"));
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
@@ -242,16 +245,16 @@ void measure_roundoff_problems()
 
 	// Now read the data back and see what the card did. (Ignore the last value.)
 	// (We only look at the red channel; the others will surely be the same.)
-	unsigned char out_data[512];
-	glReadPixels(0, 0, 512, 1, GL_RED, GL_UNSIGNED_BYTE, out_data);
+	unsigned char out_data[512 * 4];
+	glReadPixels(0, 0, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, out_data);
 	check_error();
 
 	int wrongly_rounded = 0;
 	for (unsigned i = 0; i < 255; ++i) {
-		if (out_data[i * 2 + 0] != i) {
+		if (out_data[(i * 2 + 0) * 4] != i) {
 			++wrongly_rounded;
 		}
-		if (out_data[i * 2 + 1] != i + 1) {
+		if (out_data[(i * 2 + 1) * 4] != i + 1) {
 			++wrongly_rounded;
 		}
 	}
@@ -277,35 +280,94 @@ void measure_roundoff_problems()
 
 bool check_extensions()
 {
+	// GLES generally doesn't use extensions as actively as desktop OpenGL.
+	// For now, we say that for GLES, we require GLES 3, which has everything
+	// we need.
+	if (!epoxy_is_desktop_gl()) {
+		if (epoxy_gl_version() >= 30) {
+			movit_srgb_textures_supported = true;
+			movit_shader_rounding_supported = true;
+		} else {
+			return false;
+		}
+	}
+
 	// We fundamentally need FBOs and floating-point textures.
-	if (!glewIsSupported("GL_ARB_framebuffer_object")) return false;
-	if (!glewIsSupported("GL_ARB_texture_float")) return false;
+	// FBOs are covered by OpenGL 1.5, and are not an extension there.
+	// Floating-point textures are part of OpenGL 3.0 and newer.
+	if (epoxy_gl_version() < 15 &&
+	    !epoxy_has_gl_extension("GL_ARB_framebuffer_object")) return false;
+	if (epoxy_gl_version() < 30 &&
+	    !epoxy_has_gl_extension("GL_ARB_texture_float")) return false;
 
 	// We assume that we can use non-power-of-two textures without restrictions.
-	if (!glewIsSupported("GL_ARB_texture_non_power_of_two")) return false;
+	if (epoxy_gl_version() < 20 &&
+	    !epoxy_has_gl_extension("GL_ARB_texture_non_power_of_two")) return false;
 
 	// We also need GLSL fragment shaders.
-	if (!glewIsSupported("GL_ARB_fragment_shader")) return false;
-	if (!glewIsSupported("GL_ARB_shading_language_100")) return false;
+	if (epoxy_gl_version() < 20) {
+		if (!epoxy_has_gl_extension("GL_ARB_fragment_shader")) return false;
+		if (!epoxy_has_gl_extension("GL_ARB_shading_language_100")) return false;
+	}
 
 	// FlatInput and YCbCrInput uses PBOs. (They could in theory do without,
 	// but no modern card would really not provide it.)
-	if (!glewIsSupported("GL_ARB_pixel_buffer_object")) return false;
+	if (epoxy_gl_version() < 21 &&
+	    !epoxy_has_gl_extension("GL_ARB_pixel_buffer_object")) return false;
 
 	// ResampleEffect uses RG textures to encode a two-component LUT.
-	if (!glewIsSupported("GL_ARB_texture_rg")) return false;
+	if (epoxy_gl_version() < 30 &&
+	    !epoxy_has_gl_extension("GL_ARB_texture_rg")) return false;
 
 	// sRGB texture decode would be nice, but are not mandatory
 	// (GammaExpansionEffect can do the same thing if needed).
-	movit_srgb_textures_supported = glewIsSupported("GL_EXT_texture_sRGB");
+	movit_srgb_textures_supported =
+		(epoxy_gl_version() >= 21 || epoxy_has_gl_extension("GL_EXT_texture_sRGB"));
 
 	// We may want to use round() at the end of the final shader,
 	// if supported. We need either GLSL 1.30 or this extension to do that,
 	// and 1.30 brings with it other things that we don't want to demand
 	// for now.
-	movit_shader_rounding_supported = glewIsSupported("GL_EXT_gpu_shader4");
+	movit_shader_rounding_supported =
+		(epoxy_gl_version() >= 30 || epoxy_has_gl_extension("GL_EXT_gpu_shader4"));
 
 	return true;
+}
+
+double get_glsl_version()
+{
+	char *glsl_version_str = strdup((const char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+	// Skip past the first period.
+	char *ptr = strchr(glsl_version_str, '.');
+	assert(ptr != NULL);
+	++ptr;
+
+	// Now cut the string off at the next period or space, whatever comes first
+	// (unless the string ends first).
+	while (*ptr && *ptr != '.' && *ptr != ' ') {
+		++ptr;
+	}
+	*ptr = '\0';
+
+	// Now we have something on the form X.YY. We convert it to a float, and hope
+	// that if it's inexact (e.g. 1.30), atof() will round the same way the
+	// compiler will.
+	float glsl_version = atof(glsl_version_str);
+	free(glsl_version_str);
+
+	return glsl_version;
+}
+
+void APIENTRY debug_callback(GLenum source,
+                             GLenum type,
+                             GLuint id,
+                             GLenum severity,
+                             GLsizei length,
+                             const char *message,
+                             const void *userParam)
+{
+	printf("Debug: %s\n", message);
 }
 
 }  // namespace
@@ -319,19 +381,32 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	movit_data_directory = new string(data_directory);
 	movit_debug_level = debug_level;
 
-	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		return false;
-	}
-
 	// geez	
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glDisable(GL_DITHER);
 
+	// You can turn this on if you want detailed debug messages from the driver.
+	// You should probably also ask for a debug context (see gtest_sdl_main.cpp),
+	// or you might not get much data back.
+	// glDebugMessageCallbackARB(callback, NULL);
+	// glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0, GL_TRUE);
+
 	if (!check_extensions()) {
 		return false;
 	}
+
+	// Find out what shader model we should compile for.
+	if (epoxy_is_desktop_gl()) {
+		if (get_glsl_version() >= 1.30) {
+			movit_shader_model = MOVIT_GLSL_130;
+		} else {
+			movit_shader_model = MOVIT_GLSL_110;
+		}
+	} else {
+		movit_shader_model = MOVIT_ESSL_300;
+	}
+
 	measure_texel_subpixel_precision();
 	measure_roundoff_problems();
 

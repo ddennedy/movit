@@ -19,7 +19,7 @@
 //
 //   Jain, Anil K.: “Fundamentals of Digital Image Processing”, Prentice Hall, 1988.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <Eigen/Dense>
 #include <string>
 

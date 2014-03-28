@@ -67,6 +67,15 @@ extern bool movit_shader_rounding_supported;
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
 
+// What shader model we are compiling for. This only affects the choice
+// of a few files (like header.frag); most of the shaders are the same.
+enum MovitShaderModel {
+	MOVIT_GLSL_110,
+	MOVIT_GLSL_130,
+	MOVIT_ESSL_300
+};
+extern MovitShaderModel movit_shader_model;
+
 }  // namespace movit
 
 #endif  // !defined(_MOVIT_INIT_H)

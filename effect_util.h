@@ -4,7 +4,7 @@
 // Utilities that are often useful for implementing Effect instances,
 // but don't need to be included from effect.h.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
 #include <Eigen/Core>

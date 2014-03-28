@@ -21,7 +21,7 @@
 // See corresponding comment in resource_pool.h. This holds even if you don't
 // allocate your own ResourcePool, but let EffectChain hold its own.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stdio.h>
 #include <map>
 #include <set>

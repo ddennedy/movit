@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,9 +12,9 @@
 #if defined(__DARWIN__)
 #include <OpenGL/OpenGL.h>
 #elif defined(WIN32)
-#include <GL/wglew.h>
+#include <epoxy/wgl.h>
 #else
-#include <GL/glxew.h>
+#include <epoxy/glx.h>
 #endif
 
 using namespace std;
@@ -94,6 +94,19 @@ string read_file(const string &filename)
 	fclose(fp);
 
 	return string(buf, len);
+}
+
+string read_version_dependent_file(const string &base, const string &extension)
+{
+	if (movit_shader_model == MOVIT_GLSL_110) {
+		return read_file(base + "." + extension);
+	} else if (movit_shader_model == MOVIT_GLSL_130) {
+		return read_file(base + ".130." + extension);
+	} else if (movit_shader_model == MOVIT_ESSL_300) {
+		return read_file(base + ".300es." + extension);
+	} else {
+		assert(false);
+	}
 }
 
 GLuint compile_shader(const string &shader_src, GLenum type)

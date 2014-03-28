@@ -21,12 +21,14 @@ OK, you need
   works fine on Linux and OS X, and Movit is not very POSIX-bound.)
 * GNU Make.
 * A GPU capable of running GLSL fragment shaders,
-  process floating-point textures, and a few other things. If your machine
-  is less than five years old _and you have the appropriate drivers_,
-  you're home free.
+  processing floating-point textures, and a few other things (all are
+  part of OpenGL 3.0 or newer, although most OpenGL 2.0 cards also
+  have what's needed through extensions). If your machine is less than five
+  years old _and you have the appropriate drivers_, you're home free.
+  GLES3 (for mobile devices) will also work.
 * The [Eigen 3], [FFTW3] and [Google Test] libraries. (The library itself
   does not depend on the latter, but you probably want to run the unit tests.)
-* The [GLEW] library, for dealing with OpenGL extensions on various
+* The [epoxy] library, for dealing with OpenGL extensions on various
   platforms.
 
 Movit has been tested with Intel GPUs with the Mesa drivers
@@ -54,7 +56,8 @@ all research-grade problems, and Movit is currently not there.)
 TL;DR, but I am interested in a programming example instead
 ===========================================================
 
-Assuming you have an OpenGL context already set up:
+Assuming you have an OpenGL context already set up (either a classic OpenGL
+context, a GL 3.x forward-compatible or core context, or a GLES3 context):
 
 <code>
   using namespace movit;

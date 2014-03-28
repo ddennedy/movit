@@ -9,7 +9,7 @@ vec4 FUNCNAME(vec2 tc) {
 	// and if there's any inaccuracy earlier in the chain so that it becomes e.g.
 	// 254.8, it's better to just get it rounded off than to dither and have it
 	// possibly get down to 254. This is not the case for the color components.
-	result.rgb += texture2D(PREFIX(dither_tex), tc * PREFIX(tc_scale)).xxx;
+	result.rgb += tex2D(PREFIX(dither_tex), tc * PREFIX(tc_scale)).xxx;
 
 	// NEED_EXPLICIT_ROUND will be #defined to 1 if the GPU has inaccurate
 	// fp32 -> int8 framebuffer rounding, and 0 otherwise.

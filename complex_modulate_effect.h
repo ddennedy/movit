@@ -21,7 +21,7 @@
 // don't care about the actual FFT result, just that the convolution property
 // holds.)
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

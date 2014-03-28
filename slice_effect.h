@@ -10,7 +10,7 @@
 // Note that vertical slices happen from the top, consistent with the rest of
 // Movit.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

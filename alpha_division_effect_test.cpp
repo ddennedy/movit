@@ -1,6 +1,6 @@
 // Unit tests for AlphaDivisionEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include "gtest/gtest.h"
 #include "image_format.h"
 #include "test_util.h"

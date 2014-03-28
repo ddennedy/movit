@@ -1,6 +1,6 @@
 // Unit tests for SliceEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "effect_chain.h"
 #include "flat_input.h"

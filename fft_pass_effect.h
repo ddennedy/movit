@@ -50,7 +50,7 @@
 // scaling), and as fp16 has quite limited range at times, this can be relevant
 // on some GPUs for larger sizes.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string>

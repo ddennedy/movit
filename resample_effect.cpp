@@ -1,7 +1,7 @@
 // Three-lobed Lanczos, the most common choice.
 #define LANCZOS_RADIUS 3.0
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <limits.h>
 #include <math.h>

@@ -12,7 +12,7 @@
 // where we first blur the picture, and then overlay it on the original
 // using the original as a matte.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 

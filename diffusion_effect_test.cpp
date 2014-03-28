@@ -1,6 +1,6 @@
 // Unit tests for DiffusionEffect.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 
 #include "diffusion_effect.h"
 #include "effect_chain.h"

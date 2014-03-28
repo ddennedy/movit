@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string.h>
 
 #include "complex_modulate_effect.h"

@@ -5,7 +5,7 @@
 // imprecisely, called “YUV”), which is typically what you get from a video decoder.
 // It upsamples planes as needed, using the default linear upsampling OpenGL gives you.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <assert.h>
 #include <string>
 

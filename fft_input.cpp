@@ -1,6 +1,6 @@
 #include <string.h>
 #include <assert.h>
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <fftw3.h>
 
 #include "effect_util.h"
@@ -104,7 +104,8 @@ void FFTInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsig
 
 string FFTInput::output_fragment_shader()
 {
-	return read_file("flat_input.frag");
+	return string("#define FIXUP_SWAP_RB 0\n#define FIXUP_RED_TO_GRAYSCALE 0\n") +
+		read_file("flat_input.frag");
 }
 
 void FFTInput::invalidate_pixel_data()

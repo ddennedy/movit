@@ -20,7 +20,7 @@
 // Also, gamma is a case where we would not want premultiplied alpha.
 // Thus, we have to divide away alpha first, and then re-multiply it back later.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <string>
 
 #include "effect.h"

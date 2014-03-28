@@ -19,7 +19,7 @@ vec4 PREFIX(do_sample)(vec2 tc, int i)
 #else
 	sample_tc.y = tc.x * PREFIX(num_loops);
 #endif
-	vec2 sample = texture2D(PREFIX(sample_tex), sample_tc).rg;
+	vec2 sample = tex2D(PREFIX(sample_tex), sample_tc).rg;
 
 #if DIRECTION_VERTICAL
 	tc.y = sample.g + floor(sample_tc.y) * PREFIX(slice_height);

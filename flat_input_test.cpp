@@ -1,6 +1,6 @@
 // Unit tests for FlatInput.
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <stddef.h>
 
 #include "effect_chain.h"
