@@ -186,6 +186,9 @@ void ResourcePool::release_glsl_program(GLuint glsl_program_num)
 
 GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLsizei height)
 {
+	assert(width > 0);
+	assert(height > 0);
+
 	pthread_mutex_lock(&lock);
 	// See if there's a texture on the freelist we can use.
 	for (list<GLuint>::iterator freelist_it = texture_freelist.begin();
