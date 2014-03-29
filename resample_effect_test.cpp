@@ -208,4 +208,100 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 	expect_equal(expected_data, out_data, dwidth, dheight, 0.1 / 1023.0);
 }
 
+TEST(ResampleEffectTest, ReadWholePixelFromLeft) {
+	const int size = 5;
+
+	float data[size * size] = {
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+	float expected_data[size * size] = {
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+	float out_data[size * size];
+
+	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", size));
+	ASSERT_TRUE(resample_effect->set_int("height", size));
+	ASSERT_TRUE(resample_effect->set_float("left", 1.0f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, size, size);
+}
+
+TEST(ResampleEffectTest, ReadQuarterPixelFromLeft) {
+	const int size = 5;
+
+	float data[size * size] = {
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+
+	float expected_data[size * size] = {
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+
+		// sin(x*pi)/(x*pi) * sin(x*pi/3)/(x*pi/3) for
+		// x = -1.75, -0.75, 0.25, 1.25, 2.25.
+		// Note that the weight is mostly on the left side.
+		-0.06779, 0.27019, 0.89007, -0.13287, 0.03002,
+
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+	float out_data[size * size];
+
+	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", size));
+	ASSERT_TRUE(resample_effect->set_int("height", size));
+	ASSERT_TRUE(resample_effect->set_float("left", 0.25f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, size, size);
+}
+
+TEST(ResampleEffectTest, ReadQuarterPixelFromTop) {
+	const int width = 3;
+	const int height = 5;
+
+	float data[width * height] = {
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+	};
+
+	// See ReadQuarterPixelFromLeft for explanation of the data.
+	float expected_data[width * height] = {
+		-0.06779, 0.0, 0.0,
+		 0.27019, 0.0, 0.0,
+		 0.89007, 0.0, 0.0,
+		-0.13287, 0.0, 0.0,
+		 0.03002, 0.0, 0.0,
+	};
+	float out_data[width * height];
+
+	EffectChainTester tester(data, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", width));
+	ASSERT_TRUE(resample_effect->set_int("height", height));
+	ASSERT_TRUE(resample_effect->set_float("top", 0.25f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, width, height);
+}
+
 }  // namespace movit

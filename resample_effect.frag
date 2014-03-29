@@ -8,6 +8,14 @@ uniform float PREFIX(sample_x_scale);
 uniform float PREFIX(sample_x_offset);
 uniform float PREFIX(slice_height);
 
+// We put the fractional part of the offset (-0.5 to 0.5 pixels) in the weights
+// because we have to (otherwise they'd do nothing). However, the support texture
+// has limited numerical precision and we'd need as much of it as we can for
+// getting the subpixel sampling right, and adding a large constant to each value
+// will reduce the precision further. Thus, the non-fractional part of the offset
+// is sent in through a uniform that we simply add in the beginning of the shader.
+uniform float PREFIX(whole_pixel_offset);
+
 // Sample a single weight. First fetch information about where to sample
 // and the weight from sample_tex, and then read the pixel itself.
 vec4 PREFIX(do_sample)(vec2 tc, int i)
@@ -30,6 +38,11 @@ vec4 PREFIX(do_sample)(vec2 tc, int i)
 }
 
 vec4 FUNCNAME(vec2 tc) {
+#if DIRECTION_VERTICAL
+	tc.y += PREFIX(whole_pixel_offset);
+#else
+	tc.x += PREFIX(whole_pixel_offset);
+#endif
 	vec4 sum = PREFIX(do_sample)(tc, 0);
 	for (int i = 1; i < PREFIX(num_samples); ++i) {
 		sum += PREFIX(do_sample)(tc, i);

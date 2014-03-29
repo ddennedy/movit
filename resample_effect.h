@@ -98,7 +98,9 @@ private:
 	Direction direction;
 	GLuint texnum;
 	int input_width, input_height, output_width, output_height;
+	float offset;
 	int last_input_width, last_input_height, last_output_width, last_output_height;
+	float last_offset;
 	int src_bilinear_samples, num_loops;
 	float slice_height;
 };

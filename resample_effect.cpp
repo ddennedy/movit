@@ -171,6 +171,13 @@ bool ResampleEffect::set_float(const string &key, float value) {
 		update_size();
 		return true;
 	}
+	if (key == "top") {
+		// Compensate for the bottom-left origin.
+		return vpass->set_float("offset", -value);
+	}
+	if (key == "left") {
+		return hpass->set_float("offset", value);
+	}
 	return false;
 }
 
@@ -179,16 +186,19 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	  direction(HORIZONTAL),
  	  input_width(1280),
  	  input_height(720),
+	  offset(0.0),
 	  last_input_width(-1),
 	  last_input_height(-1),
 	  last_output_width(-1),
-	  last_output_height(-1)
+	  last_output_height(-1),
+	  last_offset(0.0 / 0.0)  // NaN.
 {
 	register_int("direction", (int *)&direction);
 	register_int("input_width", &input_width);
 	register_int("input_height", &input_height);
 	register_int("output_width", &output_width);
 	register_int("output_height", &output_height);
+	register_float("offset", &offset);
 
 	glGenTextures(1, &texnum);
 }
@@ -294,10 +304,12 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
 	float *weights = new float[dst_samples * src_samples * 2];
+	float subpixel_offset = offset - lrintf(offset);  // The part not covered by whole_pixel_offset.
+	assert(subpixel_offset >= -0.5f && subpixel_offset <= 0.5f);
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
 		// compensating for differing pixel centers as the scale changes.
-		float center_src_y = (y + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
+		float center_src_y = (y + subpixel_offset + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
@@ -307,7 +319,6 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 			weights[(y * src_samples + i) * 2 + 0] = weight * radius_scaling_factor;
 			weights[(y * src_samples + i) * 2 + 1] = (src_y + 0.5) / float(src_size);
 		}
-
 	}
 
 	// Now make use of the bilinear filtering in the GPU to reduce the number of samples
@@ -388,12 +399,14 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	if (input_width != last_input_width ||
 	    input_height != last_input_height ||
 	    output_width != last_output_width ||
-	    output_height != last_output_height) {
+	    output_height != last_output_height ||
+	    offset != last_offset) {
 		update_texture(glsl_program_num, prefix, sampler_num);
 		last_input_width = input_width;
 		last_input_height = input_height;
 		last_output_width = output_width;
 		last_output_height = output_height;
+		last_offset = offset;
 	}
 
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
@@ -410,6 +423,14 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	// Instructions for how to convert integer sample numbers to positions in the weight texture.
 	set_uniform_float(glsl_program_num, prefix, "sample_x_scale", 1.0f / src_bilinear_samples);
 	set_uniform_float(glsl_program_num, prefix, "sample_x_offset", 0.5f / src_bilinear_samples);
+
+	float whole_pixel_offset;
+	if (direction == SingleResamplePassEffect::VERTICAL) {
+		whole_pixel_offset = lrintf(offset) / float(input_height);
+	} else {
+		whole_pixel_offset = lrintf(offset) / float(input_width);
+	}
+	set_uniform_float(glsl_program_num, prefix, "whole_pixel_offset", whole_pixel_offset);
 
 	// We specifically do not want mipmaps on the input texture;
 	// they break minification.
