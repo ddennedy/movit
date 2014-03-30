@@ -304,4 +304,41 @@ TEST(ResampleEffectTest, ReadQuarterPixelFromTop) {
 	expect_equal(expected_data, out_data, width, height);
 }
 
+TEST(ResampleEffectTest, ReadHalfPixelFromLeftAndScale) {
+	const int src_width = 4;
+	const int dst_width = 8;
+
+	float data[src_width * 1] = {
+		1.0, 2.0, 3.0, 4.0,
+	};
+	float expected_data[dst_width * 1] = {
+		// Empirical; the real test is that we are the same for 0.499 and 0.501.
+		1.1553, 1.7158, 2.2500, 2.7461, 3.2812, 3.8418, 4.0703, 4.0508
+	};
+	float out_data[dst_width * 1];
+
+	EffectChainTester tester(NULL, dst_width, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, src_width, 1);
+	input->set_pixel_data(data);
+	tester.get_chain()->add_input(input);
+
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", dst_width));
+	ASSERT_TRUE(resample_effect->set_int("height", 1));
+
+	// Check that we are (almost) the same no matter the rounding.
+	ASSERT_TRUE(resample_effect->set_float("left", 0.499f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, dst_width, 1);
+
+	ASSERT_TRUE(resample_effect->set_float("left", 0.501f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, dst_width, 1);
+}
+
 }  // namespace movit

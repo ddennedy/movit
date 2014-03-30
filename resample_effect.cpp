@@ -309,13 +309,13 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
 		// compensating for differing pixel centers as the scale changes.
-		float center_src_y = (y + subpixel_offset + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
+		float center_src_y = (y + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
-			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y), LANCZOS_RADIUS);
+			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y - subpixel_offset), LANCZOS_RADIUS);
 			weights[(y * src_samples + i) * 2 + 0] = weight * radius_scaling_factor;
 			weights[(y * src_samples + i) * 2 + 1] = (src_y + 0.5) / float(src_size);
 		}
