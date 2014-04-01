@@ -341,4 +341,64 @@ TEST(ResampleEffectTest, ReadHalfPixelFromLeftAndScale) {
 	expect_equal(expected_data, out_data, dst_width, 1);
 }
 
+TEST(ResampleEffectTest, Zoom) {
+	const int width = 5;
+	const int height = 3;
+
+	float data[width * height] = {
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.2, 0.4, 0.6, 0.4, 0.2,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+	float expected_data[width * height] = {
+		0.0, 0.0,    0.0, 0.0,    0.0,
+		0.4, 0.5396, 0.6, 0.5396, 0.4,
+		0.0, 0.0,    0.0, 0.0,    0.0,
+	};
+	float out_data[width * height];
+
+	EffectChainTester tester(data, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", width));
+	ASSERT_TRUE(resample_effect->set_int("height", height));
+	ASSERT_TRUE(resample_effect->set_float("zoom_x", 2.0f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, width, height);
+}
+
+TEST(ResampleEffectTest, VerticalZoomFromTop) {
+	const int width = 5;
+	const int height = 5;
+
+	float data[width * height] = {
+		0.2, 0.4, 0.6, 0.4, 0.2,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0,
+	};
+
+	// Largely empirical data; the main point is that the top line
+	// is unchanged, since that's our zooming point.
+	float expected_data[width * height] = {
+		 0.2000,  0.4000,  0.6000,  0.4000,  0.2000,
+		 0.1389,  0.2778,  0.4167,  0.2778,  0.1389,
+		 0.0600,  0.1199,  0.1798,  0.1199,  0.0600,
+		 0.0000,  0.0000,  0.0000,  0.0000,  0.0000,
+		-0.0229, -0.0459, -0.0688, -0.0459, -0.0229,
+	};
+	float out_data[width * height];
+
+	EffectChainTester tester(data, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", width));
+	ASSERT_TRUE(resample_effect->set_int("height", height));
+	ASSERT_TRUE(resample_effect->set_float("zoom_y", 3.0f));
+	ASSERT_TRUE(resample_effect->set_float("zoom_center_y", 0.5f / height));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, width, height);
+}
+
 }  // namespace movit

@@ -53,9 +53,14 @@ public:
 	
 private:
 	void update_size();
+	void update_offset_and_zoom();
 	
 	SingleResamplePassEffect *hpass, *vpass;
 	int input_width, input_height, output_width, output_height;
+
+	float offset_x, offset_y;
+	float zoom_x, zoom_y;
+	float zoom_center_x, zoom_center_y;
 };
 
 class SingleResamplePassEffect : public Effect {
@@ -98,9 +103,9 @@ private:
 	Direction direction;
 	GLuint texnum;
 	int input_width, input_height, output_width, output_height;
-	float offset;
+	float offset, zoom;
 	int last_input_width, last_input_height, last_output_width, last_output_height;
-	float last_offset;
+	float last_offset, last_zoom;
 	int src_bilinear_samples, num_loops;
 	float slice_height;
 };

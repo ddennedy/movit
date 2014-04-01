@@ -108,7 +108,10 @@ unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsig
 
 ResampleEffect::ResampleEffect()
 	: input_width(1280),
-	  input_height(720)
+	  input_height(720),
+	  offset_x(0.0f), offset_y(0.0f),
+	  zoom_x(1.0f), zoom_y(1.0f),
+	  zoom_center_x(0.5f), zoom_center_y(0.5f)
 {
 	register_int("width", &output_width);
 	register_int("height", &output_height);
@@ -158,6 +161,26 @@ void ResampleEffect::update_size()
 	ok |= vpass->set_int("output_height", output_height);
 
 	assert(ok);
+
+	// The offset added due to zoom may have changed with the size.
+	update_offset_and_zoom();
+}
+
+void ResampleEffect::update_offset_and_zoom()
+{
+	bool ok = true;
+
+	// Zoom from the right origin. (zoom_center is given in normalized coordinates,
+	// i.e. 0..1.)
+	float extra_offset_x = zoom_center_x * (1.0f - 1.0f / zoom_x) * input_width;
+	float extra_offset_y = (1.0f - zoom_center_y) * (1.0f - 1.0f / zoom_y) * input_height;
+
+	ok |= hpass->set_float("offset", extra_offset_x + offset_x);
+	ok |= vpass->set_float("offset", extra_offset_y - offset_y);  // Compensate for the bottom-left origin.
+	ok |= hpass->set_float("zoom", zoom_x);
+	ok |= vpass->set_float("zoom", zoom_y);
+
+	assert(ok);
 }
 
 bool ResampleEffect::set_float(const string &key, float value) {
@@ -172,11 +195,40 @@ bool ResampleEffect::set_float(const string &key, float value) {
 		return true;
 	}
 	if (key == "top") {
-		// Compensate for the bottom-left origin.
-		return vpass->set_float("offset", -value);
+		offset_y = value;
+		update_offset_and_zoom();
+		return true;
 	}
 	if (key == "left") {
-		return hpass->set_float("offset", value);
+		offset_x = value;
+		update_offset_and_zoom();
+		return true;
+	}
+	if (key == "zoom_x") {
+		if (value <= 0.0f) {
+			return false;
+		}
+		zoom_x = value;
+		update_offset_and_zoom();
+		return true;
+	}
+	if (key == "zoom_y") {
+		if (value <= 0.0f) {
+			return false;
+		}
+		zoom_y = value;
+		update_offset_and_zoom();
+		return true;
+	}
+	if (key == "zoom_center_x") {
+		zoom_center_x = value;
+		update_offset_and_zoom();
+		return true;
+	}
+	if (key == "zoom_center_y") {
+		zoom_center_y = value;
+		update_offset_and_zoom();
+		return true;
 	}
 	return false;
 }
@@ -187,11 +239,13 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
  	  input_width(1280),
  	  input_height(720),
 	  offset(0.0),
+	  zoom(1.0),
 	  last_input_width(-1),
 	  last_input_height(-1),
 	  last_output_width(-1),
 	  last_output_height(-1),
-	  last_offset(0.0 / 0.0)  // NaN.
+	  last_offset(0.0 / 0.0),  // NaN.
+	  last_zoom(0.0 / 0.0)  // NaN.
 {
 	register_int("direction", (int *)&direction);
 	register_int("input_width", &input_width);
@@ -199,6 +253,7 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	register_int("output_width", &output_width);
 	register_int("output_height", &output_height);
 	register_float("offset", &offset);
+	register_float("zoom", &zoom);
 
 	glGenTextures(1, &texnum);
 }
@@ -247,7 +302,19 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// the first such loop, and then ask the card to repeat the texture for us.
 	// This is both easier on the texture cache and lowers our CPU cost for
 	// generating the kernel somewhat.
-	num_loops = gcd(src_size, dst_size);
+	float scaling_factor;
+	if (fabs(zoom - 1.0f) < 1e-6) {
+		num_loops = gcd(src_size, dst_size);
+		scaling_factor = float(dst_size) / float(src_size);
+	} else {
+		// If zooming is enabled (ie., zoom != 1), we turn off the looping.
+		// We _could_ perhaps do it for rational zoom levels (especially
+		// things like 2:1), but it doesn't seem to be worth it, given that
+		// the most common use case would seem to be varying the zoom
+		// from frame to frame.
+		num_loops = 1;
+		scaling_factor = zoom * float(dst_size) / float(src_size);
+	}
 	slice_height = 1.0f / num_loops;
 	unsigned dst_samples = dst_size / num_loops;
 
@@ -300,7 +367,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// Anyhow, in this case we clearly need to look at more source pixels
 	// to compute the destination pixel, and how many depend on the scaling factor.
 	// Thus, the kernel width will vary with how much we scale.
-	float radius_scaling_factor = min(float(dst_size) / float(src_size), 1.0f);
+	float radius_scaling_factor = min(scaling_factor, 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
 	float *weights = new float[dst_samples * src_samples * 2];
@@ -309,7 +376,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
 		// compensating for differing pixel centers as the scale changes.
-		float center_src_y = (y + 0.5f) * float(src_size) / float(dst_size) - 0.5f;
+		float center_src_y = (y + 0.5f) / scaling_factor - 0.5f;
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
@@ -356,6 +423,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 		// Normalize so that the sum becomes one. Note that we do it twice;
 		// this sometimes helps a tiny little bit when we have many samples.
+#if 0
 		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
 			double sum = 0.0;
 			for (int i = 0; i < src_bilinear_samples; ++i) {
@@ -366,6 +434,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 					fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]) / sum);
 			}
 		}
+#endif
 	}
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
@@ -400,13 +469,15 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	    input_height != last_input_height ||
 	    output_width != last_output_width ||
 	    output_height != last_output_height ||
-	    offset != last_offset) {
+	    offset != last_offset ||
+	    zoom != last_zoom) {
 		update_texture(glsl_program_num, prefix, sampler_num);
 		last_input_width = input_width;
 		last_input_height = input_height;
 		last_output_width = output_width;
 		last_output_height = output_height;
 		last_offset = offset;
+		last_zoom = zoom;
 	}
 
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
