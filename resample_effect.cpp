@@ -423,7 +423,6 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 		// Normalize so that the sum becomes one. Note that we do it twice;
 		// this sometimes helps a tiny little bit when we have many samples.
-#if 0
 		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
 			double sum = 0.0;
 			for (int i = 0; i < src_bilinear_samples; ++i) {
@@ -434,7 +433,6 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 					fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]) / sum);
 			}
 		}
-#endif
 	}
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
