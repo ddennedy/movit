@@ -334,11 +334,11 @@ TEST(ResampleEffectTest, ReadHalfPixelFromLeftAndScale) {
 	// Check that we are (almost) the same no matter the rounding.
 	ASSERT_TRUE(resample_effect->set_float("left", 0.499f));
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
-	expect_equal(expected_data, out_data, dst_width, 1);
+	expect_equal(expected_data, out_data, dst_width, 1, 1.5f / 255.0f, 0.4f / 255.0f);
 
 	ASSERT_TRUE(resample_effect->set_float("left", 0.501f));
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
-	expect_equal(expected_data, out_data, dst_width, 1);
+	expect_equal(expected_data, out_data, dst_width, 1, 1.5f / 255.0f, 0.4f / 255.0f);
 }
 
 TEST(ResampleEffectTest, Zoom) {
