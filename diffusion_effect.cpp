@@ -12,8 +12,16 @@ namespace movit {
 
 DiffusionEffect::DiffusionEffect()
 	: blur(new BlurEffect),
-	  overlay_matte(new OverlayMatteEffect)
+	  overlay_matte(new OverlayMatteEffect),
+	  owns_overlay_matte(true)
 {
+}
+
+DiffusionEffect::~DiffusionEffect()
+{
+	if (owns_overlay_matte) {
+		delete overlay_matte;
+	}
 }
 
 void DiffusionEffect::rewrite_graph(EffectChain *graph, Node *self)
@@ -23,6 +31,7 @@ void DiffusionEffect::rewrite_graph(EffectChain *graph, Node *self)
 
 	Node *blur_node = graph->add_node(blur);
 	Node *overlay_matte_node = graph->add_node(overlay_matte);
+	owns_overlay_matte = false;
 	graph->replace_receiver(self, overlay_matte_node);
 	graph->connect_nodes(input, blur_node);
 	graph->connect_nodes(blur_node, overlay_matte_node);

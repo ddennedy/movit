@@ -28,6 +28,7 @@ class OverlayMatteEffect;
 class DiffusionEffect : public Effect {
 public:
 	DiffusionEffect();
+	~DiffusionEffect();
 	virtual std::string effect_type_id() const { return "DiffusionEffect"; }
 
 	virtual void rewrite_graph(EffectChain *graph, Node *self);
@@ -43,6 +44,7 @@ public:
 private:
 	BlurEffect *blur;
 	OverlayMatteEffect *overlay_matte;
+	bool owns_overlay_matte;
 };
 
 // Used internally by DiffusionEffect; combines the blurred and the original
