@@ -1332,7 +1332,11 @@ void EffectChain::finalize()
 {
 	// Save the current locale, and set it to C, so that we can output decimal
 	// numbers with printf and be sure to get them in the format mandated by GLSL.
-	char *saved_locale = setlocale(LC_NUMERIC, "C");
+	// Note that the OpenGL driver might call setlocale() behind-the-scenes,
+	// and that might corrupt the returned pointer, so we need to take our own
+	// copy of it here.
+	char *saved_locale = strdup(setlocale(LC_NUMERIC, NULL));
+	setlocale(LC_NUMERIC, "C");
 
 	// Output the graph as it is before we do any conversions on it.
 	output_dot("step0-start.dot");
@@ -1397,6 +1401,7 @@ void EffectChain::finalize()
 	
 	finalized = true;
 	setlocale(LC_NUMERIC, saved_locale);
+	free(saved_locale);
 }
 
 void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height)
