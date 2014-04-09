@@ -1,3 +1,31 @@
+Movit 1.1, April 10th, 2014
+
+ - NOTE: Movit now uses libepoxy rather than GLEW. This is needed because
+   of core context and GLES3 support (see below). Movit 1.1 should be
+   generally API-compatible with 1.0.3 (with the exception of the next
+   point), but is not ABI-compatible, so there has been a soname bump
+   to libmovit.so.2.
+
+ - NOTE: The rules for using an EffectChain or ResourcePool in multiple
+   OpenGL contexts or threads have changed somewhat; see the comments in
+   resource_pool.h.
+
+ - Movit will now work in OpenGL core contexts, and on GLES 3.0 or newer.
+   (GLES2 devices are not supported.) This also holds for all unit tests,
+   provided that you use SDL2 and not SDL1 (because SDL2 is needed to set
+   up such contexts). Note that the included demo application still requires
+   a classic OpenGL context.
+
+ - ResampleEffect can now do sub-pixel translate and/or zoom.
+
+ - LumaMixEffect now has an “invert” flag, as a convenience to e.g. change
+   a left-to-right wipe into a right-to-left one.
+
+ - Significant reduction in driver overhead, especially on NVIDIA drivers.
+
+ - Various smaller bugfixes and performance improvements.
+
+
 Movit 1.0.3, March 16th, 2014
 
  - Yet more build system tweaks mainly related to distribution packaging.
