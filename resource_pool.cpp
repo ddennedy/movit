@@ -401,6 +401,7 @@ void ResourcePool::cleanup_unlinked_fbos(void *context)
 		pair<void *, GLuint> key(context, fbo_num);
 		assert(fbo_formats.count(key) != 0);
 		if (fbo_formats[key].texture_num == 0) {
+			fbo_formats.erase(key);
 			glDeleteFramebuffers(1, &fbo_num);
 			check_error();
 			fbo_freelist[context].erase(freelist_it++);
