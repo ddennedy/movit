@@ -294,8 +294,8 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 	texture_freelist_bytes += estimate_texture_size(texture_formats[texture_num]);
 
 	while (texture_freelist_bytes > texture_freelist_max_bytes) {
-		GLuint free_texture_num = texture_freelist.front();
-		texture_freelist.pop_front();
+		GLuint free_texture_num = texture_freelist.back();
+		texture_freelist.pop_back();
 		assert(texture_formats.count(free_texture_num) != 0);
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
 		texture_formats.erase(free_texture_num);
