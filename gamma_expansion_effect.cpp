@@ -40,7 +40,7 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 	// However, pow() is relatively slow in GLSL, so we approximate this
 	// part by a minimax polynomial, whose coefficients are precalculated
 	// in Maple. (It is very hard to accurately model the curve as a whole
-	// using minimax polynomials; both Maple and Mathematically generally
+	// using minimax polynomials; both Maple and Mathematica generally
 	// just error out if you ask them to optimize over 0..1 with a higher-degree
 	// polynomial.)
 	//
