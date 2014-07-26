@@ -4,11 +4,11 @@
 
 #define NUM_TAPS 16
 
-uniform vec2 PREFIX(samples)[NUM_TAPS + 1];
+uniform vec2 PREFIX(samples)[NUM_TAPS / 2 + 1];
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 sum = vec4(PREFIX(samples)[0].y) * INPUT(tc);
-	for (int i = 1; i < NUM_TAPS + 1; ++i) {
+	for (int i = 1; i < NUM_TAPS / 2 + 1; ++i) {
 		vec2 sample = PREFIX(samples)[i];
 		vec2 sample1_tc = tc, sample2_tc = tc;
 #if DIRECTION_VERTICAL
