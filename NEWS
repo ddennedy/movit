@@ -1,3 +1,13 @@
+Movit 1.1.2, August 12th, 2014
+
+  - Performance bugfix: Fix texture freelist behavior so that it's
+    LRU instead of the exact opposite. Patch by Christophe Thommeret.
+
+  - Performance bugfix: Correct the number of blur taps read in the
+    blur filter (it was reading about twice as many as it should).
+    Also found by Christophe Thommeret.
+
+
 Movit 1.1.1, April 12th, 2014
 
  - Fix an issue that could cause assertion failure in ResourcePool
