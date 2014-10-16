@@ -484,7 +484,7 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	check_error();
 
 	set_uniform_int(glsl_program_num, prefix, "sample_tex", *sampler_num);
-	++sampler_num;
+	++*sampler_num;
 	set_uniform_int(glsl_program_num, prefix, "num_samples", src_bilinear_samples);
 	set_uniform_float(glsl_program_num, prefix, "num_loops", num_loops);
 	set_uniform_float(glsl_program_num, prefix, "slice_height", slice_height);

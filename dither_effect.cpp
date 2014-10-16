@@ -111,7 +111,7 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, u
 	check_error();
 
 	set_uniform_int(glsl_program_num, prefix, "dither_tex", *sampler_num);
-	++sampler_num;
+	++*sampler_num;
 
 	// In theory, we should adjust for the texel centers that have moved here as well,
 	// but since we use GL_NEAREST and we don't really care a lot what texel we sample,
