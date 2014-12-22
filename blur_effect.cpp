@@ -8,15 +8,13 @@
 #include "effect_util.h"
 #include "util.h"
 
-// Must match blur_effect.frag.
-#define NUM_TAPS 16
-
 using namespace std;
 
 namespace movit {
 	
 BlurEffect::BlurEffect()
-	: radius(3.0f),
+	: num_taps(16),
+	  radius(3.0f),
 	  input_width(1280),
 	  input_height(720)
 {
@@ -58,7 +56,7 @@ void BlurEffect::update_radius()
 	// box blurs) until we have what we need.
 	unsigned mipmap_width = input_width, mipmap_height = input_height;
 	float adjusted_radius = radius;
-	while ((mipmap_width > 1 || mipmap_height > 1) && adjusted_radius * 1.5f > NUM_TAPS / 2) {
+	while ((mipmap_width > 1 || mipmap_height > 1) && adjusted_radius * 1.5f > num_taps / 2) {
 		// Find the next mipmap size (round down, minimum 1 pixel).
 		mipmap_width = max(mipmap_width / 2, 1u);
 		mipmap_height = max(mipmap_height / 2, 1u);
@@ -72,12 +70,14 @@ void BlurEffect::update_radius()
 	ok |= hpass->set_int("height", mipmap_height);
 	ok |= hpass->set_int("virtual_width", mipmap_width);
 	ok |= hpass->set_int("virtual_height", mipmap_height);
+	ok |= hpass->set_int("num_taps", num_taps);
 
 	ok |= vpass->set_float("radius", adjusted_radius);
 	ok |= vpass->set_int("width", mipmap_width);
 	ok |= vpass->set_int("height", mipmap_height);
 	ok |= vpass->set_int("virtual_width", input_width);
 	ok |= vpass->set_int("virtual_height", input_height);
+	ok |= vpass->set_int("num_taps", num_taps);
 
 	assert(ok);
 }
@@ -91,8 +91,21 @@ bool BlurEffect::set_float(const string &key, float value) {
 	return false;
 }
 
+bool BlurEffect::set_int(const string &key, int value) {
+	if (key == "num_taps") {
+		if (value < 2 || value % 2 != 0) {
+			return false;
+		}
+		num_taps = value;
+		update_radius();
+		return true;
+	}
+	return false;
+}
+
 SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	: parent(parent),
+	  num_taps(16),
 	  radius(3.0f),
 	  direction(HORIZONTAL),
  	  width(1280),
@@ -104,12 +117,14 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	register_int("height", &height);
 	register_int("virtual_width", &virtual_width);
 	register_int("virtual_height", &virtual_height);
+	register_int("num_taps", &num_taps);
 }
 
 string SingleBlurPassEffect::output_fragment_shader()
 {
 	char buf[256];
-	sprintf(buf, "#define DIRECTION_VERTICAL %d\n", (direction == VERTICAL));
+	sprintf(buf, "#define DIRECTION_VERTICAL %d\n#define NUM_TAPS %d\n",
+		(direction == VERTICAL), num_taps);
 	return buf + read_file("blur_effect.frag");
 }
 
@@ -119,15 +134,15 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 
 	// Compute the weights; they will be symmetrical, so we only compute
 	// the right side.
-	float weight[NUM_TAPS + 1];
+	float* weight = new float[num_taps + 1];
 	if (radius < 1e-3) {
 		weight[0] = 1.0f;
-		for (unsigned i = 1; i < NUM_TAPS + 1; ++i) {
+		for (int i = 1; i < num_taps + 1; ++i) {
 			weight[i] = 0.0f;
 		}
 	} else {
 		float sum = 0.0f;
-		for (unsigned i = 0; i < NUM_TAPS + 1; ++i) {
+		for (int i = 0; i < num_taps + 1; ++i) {
 			// Gaussian blur is a common, but maybe not the prettiest choice;
 			// it can feel a bit too blurry in the fine detail and too little
 			// long-tail. This is a simple logistic distribution, which has
@@ -146,7 +161,7 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 				sum += 2.0f * weight[i];
 			}
 		}
-		for (unsigned i = 0; i < NUM_TAPS + 1; ++i) {
+		for (int i = 0; i < num_taps + 1; ++i) {
 			weight[i] /= sum;
 		}
 	}
@@ -161,14 +176,14 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 	//
 	// We pack the parameters into a float4: The relative sample coordinates
 	// in (x,y), and the weight in z. w is unused.
-	float samples[2 * (NUM_TAPS / 2 + 1)];
+	float* samples = new float[2 * (num_taps / 2 + 1)];
 
 	// Center sample.
 	samples[2 * 0 + 0] = 0.0f;
 	samples[2 * 0 + 1] = weight[0];
 
 	// All other samples.
-	for (unsigned i = 1; i < NUM_TAPS / 2 + 1; ++i) {
+	for (int i = 1; i < num_taps / 2 + 1; ++i) {
 		unsigned base_pos = i * 2 - 1;
 		float w1 = weight[base_pos];
 		float w2 = weight[base_pos + 1];
@@ -187,7 +202,10 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		samples[2 * i + 1] = total_weight;
 	}
 
-	set_uniform_vec2_array(glsl_program_num, prefix, "samples", samples, NUM_TAPS / 2 + 1);
+	set_uniform_vec2_array(glsl_program_num, prefix, "samples", samples, num_taps / 2 + 1);
+
+	delete[] weight;
+	delete[] samples;
 }
 
 void SingleBlurPassEffect::clear_gl_state()

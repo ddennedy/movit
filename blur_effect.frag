@@ -2,8 +2,6 @@
 // DIRECTION_VERTICAL will be #defined to 1 if we are doing a vertical blur,
 // 0 otherwise.
 
-#define NUM_TAPS 16
-
 uniform vec2 PREFIX(samples)[NUM_TAPS / 2 + 1];
 
 vec4 FUNCNAME(vec2 tc) {

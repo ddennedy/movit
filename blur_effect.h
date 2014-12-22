@@ -8,6 +8,11 @@
 // Works in two passes; first horizontal, then vertical (BlurEffect,
 // which is what the user is intended to use, instantiates two copies of
 // SingleBlurPassEffect behind the scenes).
+//
+// The recommended number of taps is the default (16). Fewer will be faster
+// but uglier; a tradeoff that might be worth it as part of more complicated
+// effects. This can be set only before finalization, and must be an
+// even number.
 
 #include <epoxy/gl.h>
 #include <assert.h>
@@ -45,10 +50,12 @@ public:
 
 	virtual void rewrite_graph(EffectChain *graph, Node *self);
 	virtual bool set_float(const std::string &key, float value);
+	virtual bool set_int(const std::string &key, int value);
 	
 private:
 	void update_radius();
-	
+
+	int num_taps;
 	float radius;
 	SingleBlurPassEffect *hpass, *vpass;
 	unsigned input_width, input_height;
@@ -89,6 +96,7 @@ public:
 
 private:
 	BlurEffect *parent;
+	int num_taps;
 	float radius;
 	Direction direction;
 	int width, height, virtual_width, virtual_height;
