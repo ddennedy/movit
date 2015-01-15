@@ -9,7 +9,7 @@
 #include "init.h"
 #include "util.h"
 
-#if defined(__DARWIN__)
+#if defined(__APPLE__)
 #include <OpenGL/OpenGL.h>
 #elif defined(WIN32)
 #include <epoxy/wgl.h>
@@ -256,7 +256,7 @@ unsigned next_power_of_two(unsigned v)
 
 void *get_gl_context_identifier()
 {
-#if defined(__DARWIN__)
+#if defined(__APPLE__)
 	return (void *)CGLGetCurrentContext();
 #elif defined(WIN32)
 	return (void *)wglGetCurrentContext();
