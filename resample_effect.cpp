@@ -20,6 +20,12 @@ namespace movit {
 
 namespace {
 
+template<class T>
+struct Tap {
+	T weight;
+	T pos;
+};
+
 float sinc(float x)
 {
 	if (fabs(x) < 1e-6) {
@@ -49,14 +55,13 @@ unsigned gcd(unsigned a, unsigned b)
 	return a;
 }
 
-unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsigned max_samples_saved)
+unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned num_src_samples, unsigned max_samples_saved)
 {
 	unsigned num_samples_saved = 0;
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
 		// Copy the sample directly; it will be overwritten later if we can combine.
 		if (dst != NULL) {
-			dst[j * 2 + 0] = src[i * 2 + 0];
-			dst[j * 2 + 1] = src[i * 2 + 1];
+			dst[j] = src[i];
 		}
 
 		if (i == num_src_samples - 1) {
@@ -69,15 +74,15 @@ unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsig
 			continue;
 		}
 
-		float w1 = src[i * 2 + 0];
-		float w2 = src[(i + 1) * 2 + 0];
+		float w1 = src[i].weight;
+		float w2 = src[i + 1].weight;
 		if (w1 * w2 < 0.0f) {
 			// Differing signs; cannot combine.
 			continue;
 		}
 
-		float pos1 = src[i * 2 + 1];
-		float pos2 = src[(i + 1) * 2 + 1];
+		float pos1 = src[i].pos;
+		float pos2 = src[i + 1].pos;
 		assert(pos2 > pos1);
 
 		float offset, total_weight, sum_sq_error;
@@ -94,8 +99,8 @@ unsigned combine_samples(float *src, float *dst, unsigned num_src_samples, unsig
 
 		// OK, we can combine this and the next sample.
 		if (dst != NULL) {
-			dst[j * 2 + 0] = total_weight;
-			dst[j * 2 + 1] = pos1 + offset * (pos2 - pos1);
+			dst[j].weight = total_weight;
+			dst[j].pos = pos1 + offset * (pos2 - pos1);
 		}
 
 		++i;  // Skip the next sample.
@@ -370,7 +375,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	float radius_scaling_factor = min(scaling_factor, 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
-	float *weights = new float[dst_samples * src_samples * 2];
+	Tap<float> *weights = new Tap<float>[dst_samples * src_samples];
 	float subpixel_offset = offset - lrintf(offset);  // The part not covered by whole_pixel_offset.
 	assert(subpixel_offset >= -0.5f && subpixel_offset <= 0.5f);
 	for (unsigned y = 0; y < dst_samples; ++y) {
@@ -383,8 +388,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
 			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y - subpixel_offset), LANCZOS_RADIUS);
-			weights[(y * src_samples + i) * 2 + 0] = weight * radius_scaling_factor;
-			weights[(y * src_samples + i) * 2 + 1] = (src_y + 0.5) / float(src_size);
+			weights[y * src_samples + i].weight = weight * radius_scaling_factor;
+			weights[y * src_samples + i].pos = (src_y + 0.5) / float(src_size);
 		}
 	}
 
@@ -398,18 +403,18 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// The greedy strategy for combining samples is optimal.
 	src_bilinear_samples = 0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples(weights + (y * src_samples) * 2, NULL, src_samples, UINT_MAX);
+		unsigned num_samples_saved = combine_samples(weights + y * src_samples, NULL, src_samples, UINT_MAX);
 		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
 	}
 
 	// Now that we know the right width, actually combine the samples.
-	float *bilinear_weights = new float[dst_samples * src_bilinear_samples * 2];
-	fp16_int_t *bilinear_weights_fp16 = new fp16_int_t[dst_samples * src_bilinear_samples * 2];
+	Tap<float> *bilinear_weights = new Tap<float>[dst_samples * src_bilinear_samples];
+	Tap<fp16_int_t> *bilinear_weights_fp16 = new Tap<fp16_int_t>[dst_samples * src_bilinear_samples];
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		float *bilinear_weights_ptr = bilinear_weights + (y * src_bilinear_samples) * 2;
-		fp16_int_t *bilinear_weights_fp16_ptr = bilinear_weights_fp16 + (y * src_bilinear_samples) * 2;
+		Tap<float> *bilinear_weights_ptr = bilinear_weights + y * src_bilinear_samples;
+		Tap<fp16_int_t> *bilinear_weights_fp16_ptr = bilinear_weights_fp16 + y * src_bilinear_samples;
 		unsigned num_samples_saved = combine_samples(
-			weights + (y * src_samples) * 2,
+			weights + y * src_samples,
 			bilinear_weights_ptr,
 			src_samples,
 			src_samples - src_bilinear_samples);
@@ -417,8 +422,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 		// Convert to fp16.
 		for (int i = 0; i < src_bilinear_samples; ++i) {
-			bilinear_weights_fp16_ptr[i * 2 + 0] = fp64_to_fp16(bilinear_weights_ptr[i * 2 + 0]);
-			bilinear_weights_fp16_ptr[i * 2 + 1] = fp64_to_fp16(bilinear_weights_ptr[i * 2 + 1]);
+			bilinear_weights_fp16_ptr[i].weight = fp64_to_fp16(bilinear_weights_ptr[i].weight);
+			bilinear_weights_fp16_ptr[i].pos    = fp64_to_fp16(bilinear_weights_ptr[i].pos);
 		}
 
 		// Normalize so that the sum becomes one. Note that we do it twice;
@@ -426,11 +431,11 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
 			double sum = 0.0;
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				sum += fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]);
+				sum += fp16_to_fp64(bilinear_weights_fp16_ptr[i].weight);
 			}
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				bilinear_weights_fp16_ptr[i * 2 + 0] = fp64_to_fp16(
-					fp16_to_fp64(bilinear_weights_fp16_ptr[i * 2 + 0]) / sum);
+				bilinear_weights_fp16_ptr[i].weight = fp64_to_fp16(
+					fp16_to_fp64(bilinear_weights_fp16_ptr[i].weight) / sum);
 			}
 		}
 	}
