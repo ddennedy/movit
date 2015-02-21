@@ -41,14 +41,29 @@ std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 // Calculate a / b, rounding up. Does not handle overflow correctly.
 unsigned div_round_up(unsigned a, unsigned b);
 
+enum CombineRoundingBehavior {
+	COMBINE_DO_NOT_ROUND = 0,
+	COMBINE_ROUND_TO_FP16 = 1,
+};
+
 // Calculate where to sample, and with what weight, if one wants to use
-// the GPU's bilinear hardware to sample w1 * x[0] + w2 * x[1].
+// the GPU's bilinear hardware to sample w1 * x[pos1] + w2 * x[pos2],
+// where pos1 and pos2 must be normalized coordinates describing neighboring
+// pixels in the mipmap level at which you sample, and the total number of
+// pixels (in given mipmap level) is <size>.
 //
 // Note that since the GPU might have limited precision in its linear
 // interpolation, the effective weights might be different from the ones you
 // asked for. sum_sq_error, if not NULL, will contain the sum of the
 // (estimated) squared errors of the two weights.
-void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error);
+//
+// The answer, in "offset", comes as a normalized coordinate,
+// so if e.g. w2 = 0, you have simply offset = pos1. If <rounding_behavior>
+// is COMBINE_ROUND_TO_FP16, the coordinate is assumed to be stored as a
+// rounded fp16 value. This enables more precise calculation of total_weight
+// and sum_sq_error.
+void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size, CombineRoundingBehavior rounding_behavior,
+                         float *offset, float *total_weight, float *sum_sq_error);
 
 // Create a VBO with the given data, and bind it to the vertex attribute
 // with name <attribute_name>. Returns the VBO number.

@@ -55,7 +55,7 @@ unsigned gcd(unsigned a, unsigned b)
 	return a;
 }
 
-unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned num_src_samples, unsigned max_samples_saved)
+unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
 {
 	unsigned num_samples_saved = 0;
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
@@ -85,8 +85,8 @@ unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned num_src_samp
 		float pos2 = src[i + 1].pos;
 		assert(pos2 > pos1);
 
-		float offset, total_weight, sum_sq_error;
-		combine_two_samples(w1, w2, &offset, &total_weight, &sum_sq_error);
+		float pos, total_weight, sum_sq_error;
+		combine_two_samples(w1, w2, pos1, pos2, src_size, COMBINE_ROUND_TO_FP16, &pos, &total_weight, &sum_sq_error);
 
 		// If the interpolation error is larger than that of about sqrt(2) of
 		// a level at 8-bit precision, don't combine. (You'd think 1.0 was enough,
@@ -100,7 +100,7 @@ unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned num_src_samp
 		// OK, we can combine this and the next sample.
 		if (dst != NULL) {
 			dst[j].weight = total_weight;
-			dst[j].pos = pos1 + offset * (pos2 - pos1);
+			dst[j].pos = pos;
 		}
 
 		++i;  // Skip the next sample.
@@ -403,7 +403,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// The greedy strategy for combining samples is optimal.
 	src_bilinear_samples = 0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples(weights + y * src_samples, NULL, src_samples, UINT_MAX);
+		unsigned num_samples_saved = combine_samples(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
 		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
 	}
 
@@ -416,6 +416,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		unsigned num_samples_saved = combine_samples(
 			weights + y * src_samples,
 			bilinear_weights_ptr,
+			src_size,
 			src_samples,
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);

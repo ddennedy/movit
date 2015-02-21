@@ -96,11 +96,11 @@ TEST(ResampleEffectTest, DownscaleByTwoGetsCorrectPixelCenters) {
 	// the texel center right (everything is nicely symmetric).
 	// The approximate magnitudes have been checked against ImageMagick.
 	float expected_data[size * size] = {
-		 0.0045, -0.0067, -0.0598, -0.0067,  0.0045, 
-		-0.0067,  0.0099,  0.0886,  0.0099, -0.0067, 
-		-0.0598,  0.0886,  0.7930,  0.0886, -0.0598, 
-		-0.0067,  0.0099,  0.0886,  0.0099, -0.0067, 
-		 0.0045, -0.0067, -0.0598, -0.0067,  0.0045, 
+		 0.0046, -0.0068, -0.0611, -0.0068,  0.0047,
+		-0.0068,  0.0100,  0.0895,  0.0100, -0.0068,
+		-0.0603,  0.0892,  0.7993,  0.0895, -0.0611,
+		-0.0067,  0.0100,  0.0892,  0.0100, -0.0068,
+		 0.0045, -0.0067, -0.0603, -0.0068,  0.0046,
 	};
 	float data[size * size * 4], out_data[size * size];
 
@@ -399,6 +399,30 @@ TEST(ResampleEffectTest, VerticalZoomFromTop) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, width, height);
+}
+
+TEST(ResampleEffectTest, Precision) {
+	const int size = 2048;
+	const int offset = 5;
+
+	// Deliberately put the data of interest very close to the right,
+	// where texture coordinates are farther from 0 and thus less precise.
+	float data[size] = {0};
+	data[size - offset] = 1.0f;
+	float expected_data[size * 2] = {0};
+	for (int x = 0; x < size * 2; ++x) {
+		expected_data[x] = lanczos((x - (size - 2 * offset + 1) + 0.5f) * 0.5f, 3.0f);
+	}
+	float out_data[size * 2];
+
+	EffectChainTester tester(data, size * 2, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+	ASSERT_TRUE(resample_effect->set_int("width", size * 2));
+	ASSERT_TRUE(resample_effect->set_int("height", 1));
+	ASSERT_TRUE(resample_effect->set_float("zoom_x", 2.0f));
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, size, 1);
 }
 
 }  // namespace movit

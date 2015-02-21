@@ -187,18 +187,21 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		unsigned base_pos = i * 2 - 1;
 		float w1 = weight[base_pos];
 		float w2 = weight[base_pos + 1];
-
-		float offset, total_weight;
-		combine_two_samples(w1, w2, &offset, &total_weight, NULL);
-
+		int size;
 		if (direction == HORIZONTAL) {
-			samples[2 * i + 0] = (base_pos + offset) / (float)width;
+			size = width;
 		} else if (direction == VERTICAL) {
-			samples[2 * i + 0] = (base_pos + offset) / (float)height;
+			size = height;
 		} else {
 			assert(false);
 		}
 
+		float pos1 = base_pos / (float)size;
+		float pos2 = (base_pos + 1) / (float)size;
+		float pos, total_weight;
+		combine_two_samples(w1, w2, pos1, pos2, size, COMBINE_DO_NOT_ROUND, &pos, &total_weight, NULL);
+
+		samples[2 * i + 0] = pos;
 		samples[2 * i + 1] = total_weight;
 	}
 

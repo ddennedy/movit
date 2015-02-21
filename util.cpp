@@ -6,6 +6,7 @@
 #include <string.h>
 #include <Eigen/Core>
 
+#include "fp16.h"
 #include "init.h"
 #include "util.h"
 
@@ -157,21 +158,33 @@ string output_glsl_mat3(const string &name, const Eigen::Matrix3d &m)
 	return buf;
 }
 
-void combine_two_samples(float w1, float w2, float *offset, float *total_weight, float *sum_sq_error)
+void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size, CombineRoundingBehavior rounding_behavior,
+                         float *offset, float *total_weight, float *sum_sq_error)
 {
 	assert(movit_initialized);
 	assert(w1 * w2 >= 0.0f);  // Should not have differing signs.
-	float z;  // Just a shorter name for offset.
+	float z;  // Normalized 0..1 between pos1 and pos2.
 	if (fabs(w1 + w2) < 1e-6) {
 		z = 0.5f;
 	} else {
 		z = w2 / (w1 + w2);
 	}
 
+	*offset = pos1 + z * (pos2 - pos1);
+	if (rounding_behavior == COMBINE_ROUND_TO_FP16) {	
+		// Round to fp16. Note that this might take z outside the 0..1 range.
+		*offset = fp16_to_fp64(fp64_to_fp16(*offset));
+		z = (z - pos1) / (pos2 - pos1);
+	} else {
+		assert(rounding_behavior == COMBINE_DO_NOT_ROUND);
+	}
+
 	// Round to the minimum number of bits we have measured earlier.
 	// The card will do this for us anyway, but if we know what the real z
 	// is, we can pick a better total_weight below.
-	z = lrintf(z / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;
+	z *= size;  // Move to pixel coordinates,
+	z = lrintf(z / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;  // Round.
+	z /= size;  // Move back to normalized coordinates.
 	
 	// Choose total weight w so that we minimize total squared error
 	// for the effective weights:
@@ -187,16 +200,12 @@ void combine_two_samples(float w1, float w2, float *offset, float *total_weight,
 	//
 	// If z had infinite precision, this would simply reduce to w = w1 + w2.
 	*total_weight = (w1 * (1 - z) + w2 * z) / (z * z + (1 - z) * (1 - z));
-	*offset = z;
 
 	if (sum_sq_error != NULL) {
 		float err1 = *total_weight * (1 - z) - w1;
 		float err2 = *total_weight * z - w2;
 		*sum_sq_error = err1 * err1 + err2 * err2;
 	}
-
-	assert(*offset >= 0.0f);
-	assert(*offset <= 1.0f);
 }
 
 GLuint fill_vertex_attribute(GLuint glsl_program_num, const string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
