@@ -174,7 +174,7 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned si
 	if (rounding_behavior == COMBINE_ROUND_TO_FP16) {	
 		// Round to fp16. Note that this might take z outside the 0..1 range.
 		*offset = fp16_to_fp64(fp64_to_fp16(*offset));
-		z = (z - pos1) / (pos2 - pos1);
+		z = (*offset - pos1) / (pos2 - pos1);
 	} else {
 		assert(rounding_behavior == COMBINE_DO_NOT_ROUND);
 	}

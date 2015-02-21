@@ -96,11 +96,11 @@ TEST(ResampleEffectTest, DownscaleByTwoGetsCorrectPixelCenters) {
 	// the texel center right (everything is nicely symmetric).
 	// The approximate magnitudes have been checked against ImageMagick.
 	float expected_data[size * size] = {
-		 0.0046, -0.0068, -0.0611, -0.0068,  0.0047,
-		-0.0068,  0.0100,  0.0895,  0.0100, -0.0068,
-		-0.0603,  0.0892,  0.7993,  0.0895, -0.0611,
-		-0.0067,  0.0100,  0.0892,  0.0100, -0.0068,
-		 0.0045, -0.0067, -0.0603, -0.0068,  0.0046,
+		 0.0045, -0.0067, -0.0599, -0.0067,  0.0045,
+		-0.0067,  0.0100,  0.0892,  0.0100, -0.0067,
+		-0.0599,  0.0890,  0.7925,  0.0892, -0.0599,
+		-0.0067,  0.0100,  0.0890,  0.0100, -0.0067,
+		 0.0045, -0.0067, -0.0599, -0.0067,  0.0045,
 	};
 	float data[size * size * 4], out_data[size * size];
 
@@ -205,7 +205,7 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 	// Require that we are within 10-bit accuracy. Note that this limit is for
 	// one pass only, but the limit is tight enough that it should be good enough
 	// for 10-bit accuracy even after two passes.
-	expect_equal(expected_data, out_data, dwidth, dheight, 0.1 / 1023.0);
+	expect_equal(expected_data, out_data, dwidth, dheight, 0.12 / 1023.0);
 }
 
 TEST(ResampleEffectTest, ReadWholePixelFromLeft) {
