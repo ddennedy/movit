@@ -22,6 +22,22 @@ fp16_int_t fp64_to_fp16(double x);
 double fp32_to_fp64(fp32_int_t x);
 fp32_int_t fp64_to_fp32(double x);
 
+// Overloads for use in templates.
+static inline double to_fp64(double x) { return x; }
+static inline double to_fp64(float x) { return x; }
+static inline double to_fp64(fp16_int_t x) { return fp16_to_fp64(x); }
+
+template<class T> inline T from_fp64(double x);
+template<> inline double from_fp64<double>(double x) { return x; }
+template<> inline float from_fp64<float>(double x) { return x; }
+template<> inline fp16_int_t from_fp64<fp16_int_t>(double x) { return fp64_to_fp16(x); }
+
+template<class From, class To>
+inline To convert_float(From x) { return from_fp64<To>(to_fp64(x)); }
+
+template<class Same>
+inline Same convert_float(Same x) { return x; }
+
 }  // namespace movit
 
 #endif  // _MOVIT_FP16_H
