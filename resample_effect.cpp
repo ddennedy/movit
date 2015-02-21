@@ -11,6 +11,7 @@
 #include "effect_chain.h"
 #include "effect_util.h"
 #include "fp16.h"
+#include "init.h"
 #include "resample_effect.h"
 #include "util.h"
 
@@ -56,7 +57,7 @@ unsigned gcd(unsigned a, unsigned b)
 }
 
 template<class DestFloat>
-unsigned combine_samples(Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
+unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
 {
 	unsigned num_samples_saved = 0;
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
@@ -96,7 +97,7 @@ unsigned combine_samples(Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size
 		// but since the artifacts are not really random, they can get quite
 		// visible. On the other hand, going to 0.25f, I can see no change at
 		// all with 8-bit output, so it would not seem to be worth it.)
-		if (sum_sq_error > 0.5f / (256.0f * 256.0f)) {
+		if (sum_sq_error > 0.5f / (255.0f * 255.0f)) {
 			continue;
 		}
 
@@ -110,6 +111,109 @@ unsigned combine_samples(Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size
 		++num_samples_saved;
 	}
 	return num_samples_saved;
+}
+
+// Make use of the bilinear filtering in the GPU to reduce the number of samples
+// we need to make. This is a bit more complex than BlurEffect since we cannot combine
+// two neighboring samples if their weights have differing signs, so we first need to
+// figure out the maximum number of samples. Then, we downconvert all the weights to
+// that number -- we could have gone for a variable-length system, but this is simpler,
+// and the gains would probably be offset by the extra cost of checking when to stop.
+//
+// The greedy strategy for combining samples is optimal.
+template<class DestFloat>
+unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, Tap<DestFloat> **bilinear_weights)
+{
+	int src_bilinear_samples = 0;
+	for (unsigned y = 0; y < dst_samples; ++y) {
+		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
+		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
+	}
+
+	// Now that we know the right width, actually combine the samples.
+	*bilinear_weights = new Tap<DestFloat>[dst_samples * src_bilinear_samples];
+	for (unsigned y = 0; y < dst_samples; ++y) {
+		Tap<DestFloat> *bilinear_weights_ptr = *bilinear_weights + y * src_bilinear_samples;
+		unsigned num_samples_saved = combine_samples(
+			weights + y * src_samples,
+			bilinear_weights_ptr,
+			src_size,
+			src_samples,
+			src_samples - src_bilinear_samples);
+		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
+
+		// Normalize so that the sum becomes one. Note that we do it twice;
+		// this sometimes helps a tiny little bit when we have many samples.
+		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
+			double sum = 0.0;
+			for (int i = 0; i < src_bilinear_samples; ++i) {
+				sum += to_fp64(bilinear_weights_ptr[i].weight);
+			}
+			for (int i = 0; i < src_bilinear_samples; ++i) {
+				bilinear_weights_ptr[i].weight = from_fp64<DestFloat>(
+					to_fp64(bilinear_weights_ptr[i].weight) / sum);
+			}
+		}
+	}
+	return src_bilinear_samples;
+}
+
+// Compute the sum of squared errors between the ideal weights (which are
+// assumed to fall exactly on pixel centers) and the weights that result
+// from sampling at <bilinear_weights>. The primary reason for the difference
+// is inaccuracy in the sampling positions, both due to limited precision
+// in storing them (already inherent in sending them in as fp16_int_t)
+// and in subtexel sampling precision (which we calculate in this function).
+template<class T>
+double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
+                            const Tap<T>* bilinear_weights, unsigned num_bilinear_weights,
+                            unsigned size)
+{
+	// Find the effective range of the bilinear-optimized kernel.
+	// Due to rounding of the positions, this is not necessarily the same
+	// as the intended range (ie., the range of the original weights).
+	int lower_pos = int(floor(to_fp64(bilinear_weights[0].pos) * size - 0.5));
+	int upper_pos = int(ceil(to_fp64(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5)) + 2;
+	lower_pos = min<int>(lower_pos, lrintf(weights[0].pos * size - 0.5));
+	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5));
+
+	float* effective_weights = new float[upper_pos - lower_pos];
+	for (int i = 0; i < upper_pos - lower_pos; ++i) {
+		effective_weights[i] = 0.0f;
+	}
+
+	// Now find the effective weights that result from this sampling.
+	for (unsigned i = 0; i < num_bilinear_weights; ++i) {
+		const float pixel_pos = to_fp64(bilinear_weights[i].pos) * size - 0.5f;
+		const int x0 = int(floor(pixel_pos)) - lower_pos;
+		const int x1 = x0 + 1;
+		const float f = lrintf((pixel_pos - (x0 + lower_pos)) / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;
+
+		assert(x0 >= 0);
+		assert(x1 >= 0);
+		assert(x0 < upper_pos - lower_pos);
+		assert(x1 < upper_pos - lower_pos);
+
+		effective_weights[x0] += to_fp64(bilinear_weights[i].weight) * (1.0 - f);
+		effective_weights[x1] += to_fp64(bilinear_weights[i].weight) * f;
+	}
+
+	// Subtract the desired weights to get the error.
+	for (unsigned i = 0; i < num_weights; ++i) {
+		const int x = lrintf(weights[i].pos * size - 0.5f) - lower_pos;
+		assert(x >= 0);
+		assert(x < upper_pos - lower_pos);
+
+		effective_weights[x] -= weights[i].weight;
+	}
+
+	double sum_sq_error = 0.0;
+	for (unsigned i = 0; i < num_weights; ++i) {
+		sum_sq_error += effective_weights[i] * effective_weights[i];
+	}
+
+	delete[] effective_weights;
+	return sum_sq_error;
 }
 
 }  // namespace
@@ -397,43 +501,25 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	}
 
 	// Now make use of the bilinear filtering in the GPU to reduce the number of samples
-	// we need to make. This is a bit more complex than BlurEffect since we cannot combine
-	// two neighboring samples if their weights have differing signs, so we first need to
-	// figure out the maximum number of samples. Then, we downconvert all the weights to
-	// that number -- we could have gone for a variable-length system, but this is simpler,
-	// and the gains would probably be offset by the extra cost of checking when to stop.
-	//
-	// The greedy strategy for combining samples is optimal.
-	src_bilinear_samples = 0;
+	// we need to make. Try fp16 first; if it's not accurate enough, we go to fp32.
+	Tap<fp16_int_t> *bilinear_weights_fp16;
+	src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp16);
+	Tap<float> *bilinear_weights_fp32 = NULL;
+	bool fallback_to_fp32 = false;
+	double max_sum_sq_error_fp16 = 0.0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples<fp16_int_t>(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
-		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
+		double sum_sq_error_fp16 = compute_sum_sq_error(
+			weights + y * src_samples, src_samples,
+			bilinear_weights_fp16 + y * src_bilinear_samples, src_bilinear_samples,
+			src_size);
+		max_sum_sq_error_fp16 = std::max(max_sum_sq_error_fp16, sum_sq_error_fp16);
 	}
 
-	// Now that we know the right width, actually combine the samples.
-	Tap<fp16_int_t> *bilinear_weights = new Tap<fp16_int_t>[dst_samples * src_bilinear_samples];
-	for (unsigned y = 0; y < dst_samples; ++y) {
-		Tap<fp16_int_t> *bilinear_weights_ptr = bilinear_weights + y * src_bilinear_samples;
-		unsigned num_samples_saved = combine_samples(
-			weights + y * src_samples,
-			bilinear_weights_ptr,
-			src_size,
-			src_samples,
-			src_samples - src_bilinear_samples);
-		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
-
-		// Normalize so that the sum becomes one. Note that we do it twice;
-		// this sometimes helps a tiny little bit when we have many samples.
-		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
-			double sum = 0.0;
-			for (int i = 0; i < src_bilinear_samples; ++i) {
-				sum += fp16_to_fp64(bilinear_weights_ptr[i].weight);
-			}
-			for (int i = 0; i < src_bilinear_samples; ++i) {
-				bilinear_weights_ptr[i].weight = fp64_to_fp16(
-					fp16_to_fp64(bilinear_weights_ptr[i].weight) / sum);
-			}
-		}
+	// Our tolerance level for total error is a bit higher than the one for invididual
+	// samples, since one would assume overall errors in the shape don't matter as much.
+	if (max_sum_sq_error_fp16 > 2.0f / (255.0f * 255.0f)) {
+		fallback_to_fp32 = true;
+		src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp32);
 	}
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
@@ -447,11 +533,16 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights);
+	if (fallback_to_fp32) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_FLOAT, bilinear_weights_fp32);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights_fp16);
+	}
 	check_error();
 
 	delete[] weights;
-	delete[] bilinear_weights;
+	delete[] bilinear_weights_fp16;
+	delete[] bilinear_weights_fp32;
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)

@@ -402,7 +402,7 @@ TEST(ResampleEffectTest, VerticalZoomFromTop) {
 }
 
 TEST(ResampleEffectTest, Precision) {
-	const int size = 2048;
+	const int size = 1920;  // Difficult non-power-of-two size.
 	const int offset = 5;
 
 	// Deliberately put the data of interest very close to the right,
