@@ -62,8 +62,9 @@ enum CombineRoundingBehavior {
 // is COMBINE_ROUND_TO_FP16, the coordinate is assumed to be stored as a
 // rounded fp16 value. This enables more precise calculation of total_weight
 // and sum_sq_error.
-void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size, CombineRoundingBehavior rounding_behavior,
-                         float *offset, float *total_weight, float *sum_sq_error);
+template<class DestFloat>
+void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size,
+                         DestFloat *offset, DestFloat *total_weight, float *sum_sq_error);
 
 // Create a VBO with the given data, and bind it to the vertex attribute
 // with name <attribute_name>. Returns the VBO number.

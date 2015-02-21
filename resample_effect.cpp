@@ -55,13 +55,15 @@ unsigned gcd(unsigned a, unsigned b)
 	return a;
 }
 
-unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
+template<class DestFloat>
+unsigned combine_samples(Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
 {
 	unsigned num_samples_saved = 0;
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
 		// Copy the sample directly; it will be overwritten later if we can combine.
 		if (dst != NULL) {
-			dst[j] = src[i];
+			dst[j].weight = convert_float<float, DestFloat>(src[i].weight);
+			dst[j].pos = convert_float<float, DestFloat>(src[i].pos);
 		}
 
 		if (i == num_src_samples - 1) {
@@ -85,8 +87,9 @@ unsigned combine_samples(Tap<float> *src, Tap<float> *dst, unsigned src_size, un
 		float pos2 = src[i + 1].pos;
 		assert(pos2 > pos1);
 
-		float pos, total_weight, sum_sq_error;
-		combine_two_samples(w1, w2, pos1, pos2, src_size, COMBINE_ROUND_TO_FP16, &pos, &total_weight, &sum_sq_error);
+		fp16_int_t pos, total_weight;
+		float sum_sq_error;
+		combine_two_samples(w1, w2, pos1, pos2, src_size, &pos, &total_weight, &sum_sq_error);
 
 		// If the interpolation error is larger than that of about sqrt(2) of
 		// a level at 8-bit precision, don't combine. (You'd think 1.0 was enough,
@@ -403,16 +406,14 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// The greedy strategy for combining samples is optimal.
 	src_bilinear_samples = 0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
+		unsigned num_samples_saved = combine_samples<fp16_int_t>(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
 		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
 	}
 
 	// Now that we know the right width, actually combine the samples.
-	Tap<float> *bilinear_weights = new Tap<float>[dst_samples * src_bilinear_samples];
-	Tap<fp16_int_t> *bilinear_weights_fp16 = new Tap<fp16_int_t>[dst_samples * src_bilinear_samples];
+	Tap<fp16_int_t> *bilinear_weights = new Tap<fp16_int_t>[dst_samples * src_bilinear_samples];
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		Tap<float> *bilinear_weights_ptr = bilinear_weights + y * src_bilinear_samples;
-		Tap<fp16_int_t> *bilinear_weights_fp16_ptr = bilinear_weights_fp16 + y * src_bilinear_samples;
+		Tap<fp16_int_t> *bilinear_weights_ptr = bilinear_weights + y * src_bilinear_samples;
 		unsigned num_samples_saved = combine_samples(
 			weights + y * src_samples,
 			bilinear_weights_ptr,
@@ -421,22 +422,16 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
 
-		// Convert to fp16.
-		for (int i = 0; i < src_bilinear_samples; ++i) {
-			bilinear_weights_fp16_ptr[i].weight = fp64_to_fp16(bilinear_weights_ptr[i].weight);
-			bilinear_weights_fp16_ptr[i].pos    = fp64_to_fp16(bilinear_weights_ptr[i].pos);
-		}
-
 		// Normalize so that the sum becomes one. Note that we do it twice;
 		// this sometimes helps a tiny little bit when we have many samples.
 		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
 			double sum = 0.0;
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				sum += fp16_to_fp64(bilinear_weights_fp16_ptr[i].weight);
+				sum += fp16_to_fp64(bilinear_weights_ptr[i].weight);
 			}
 			for (int i = 0; i < src_bilinear_samples; ++i) {
-				bilinear_weights_fp16_ptr[i].weight = fp64_to_fp16(
-					fp16_to_fp64(bilinear_weights_fp16_ptr[i].weight) / sum);
+				bilinear_weights_ptr[i].weight = fp64_to_fp16(
+					fp16_to_fp64(bilinear_weights_ptr[i].weight) / sum);
 			}
 		}
 	}
@@ -452,12 +447,11 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights_fp16);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights);
 	check_error();
 
 	delete[] weights;
 	delete[] bilinear_weights;
-	delete[] bilinear_weights_fp16;
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
