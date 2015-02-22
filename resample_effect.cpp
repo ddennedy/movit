@@ -266,7 +266,7 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 //   sum(w_kj sum( d_i w_ij, i ), j) = sum(w_kj c_j, j)
 //
 // where again, we remember where the sums over j are over at most two elements,
-// since w_ij is nonzero for at most two values of j.
+// since w_kj is nonzero for at most two values of j.
 template<class T>
 void optimize_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
                            Tap<T>* bilinear_weights, unsigned num_bilinear_weights,
