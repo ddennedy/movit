@@ -7,6 +7,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
+#include <Eigen/Sparse>
+#include <Eigen/SparseQR>
+#include <Eigen/OrderingMethods>
 
 #include "effect_chain.h"
 #include "effect_util.h"
@@ -15,6 +18,7 @@
 #include "resample_effect.h"
 #include "util.h"
 
+using namespace Eigen;
 using namespace std;
 
 namespace movit {
@@ -113,6 +117,22 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, unsigned sr
 	return num_samples_saved;
 }
 
+// Normalize so that the sum becomes one. Note that we do it twice;
+// this sometimes helps a tiny little bit when we have many samples.
+template<class T>
+void normalize_sum(Tap<T>* vals, unsigned num)
+{
+	for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
+		double sum = 0.0;
+		for (unsigned i = 0; i < num; ++i) {
+			sum += to_fp64(vals[i].weight);
+		}
+		for (unsigned i = 0; i < num; ++i) {
+			vals[i].weight = from_fp64<T>(to_fp64(vals[i].weight) / sum);
+		}
+	}
+}
+
 // Make use of the bilinear filtering in the GPU to reduce the number of samples
 // we need to make. This is a bit more complex than BlurEffect since we cannot combine
 // two neighboring samples if their weights have differing signs, so we first need to
@@ -141,19 +161,7 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 			src_samples,
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
-
-		// Normalize so that the sum becomes one. Note that we do it twice;
-		// this sometimes helps a tiny little bit when we have many samples.
-		for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
-			double sum = 0.0;
-			for (int i = 0; i < src_bilinear_samples; ++i) {
-				sum += to_fp64(bilinear_weights_ptr[i].weight);
-			}
-			for (int i = 0; i < src_bilinear_samples; ++i) {
-				bilinear_weights_ptr[i].weight = from_fp64<DestFloat>(
-					to_fp64(bilinear_weights_ptr[i].weight) / sum);
-			}
-		}
+		normalize_sum(bilinear_weights_ptr, src_bilinear_samples);
 	}
 	return src_bilinear_samples;
 }
@@ -214,6 +222,112 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 
 	delete[] effective_weights;
 	return sum_sq_error;
+}
+
+// Given a predefined, fixed set of bilinear weight positions, try to optimize
+// their weights through some linear algebra. This can do a better job than
+// the weight calculation in combine_samples() because it can look at the entire
+// picture (an effective weight can sometimes be affected by multiple samples).
+// It will also optimize weights for non-combined samples, which is useful when
+// a sample happens in-between texels for numerical reasons.
+//
+// The math goes as follows: The desired result is a weighted sum, where the
+// weights are the coefficients in <weights>:
+//
+//   y = sum(c_j x_j, j)
+//
+// We try to approximate this by a different set of coefficients, which have
+// weights d_i and are placed at some fraction to the right of a source texel x_j.
+// This means it will influence two texels (x_j and x_{j+1}); generalizing this,
+// let us define that w_ij means the amount texel <j> influences bilinear weight
+// <i> (keeping in mind that w_ij = 0 for all but at most two different j).
+// This means the actually computed result is:
+//
+//   y' = sum(d_i w_ij x_j, j)
+//
+// We assume w_ij fixed and wish to find {d_i} so that y' gets as close to y
+// as possible. Specifically, let us consider the sum of squred errors of the
+// coefficients:
+//
+//   ε² = sum((sum( d_i w_ij, i ) - c_j)², j)
+//
+// The standard trick, which also applies just fine here, is to differentiate
+// the error with respect to each variable we wish to optimize, and set each
+// such expression to zero. Solving this equation set (which we can do efficiently
+// by letting Eigen invert a sparse matrix for us) yields the minimum possible
+// error. To see the form each such equation takes, pick any value k and
+// differentiate the expression by d_k:
+//
+//   ∂(ε²)/∂(d_k) = sum(2(sum( d_i w_ij, i ) - c_j) w_kj, j)
+//
+// Setting this expression equal to zero, dropping the irrelevant factor 2 and
+// rearranging yields:
+//
+//   sum(w_kj sum( d_i w_ij, i ), j) = sum(w_kj c_j, j)
+//
+// where again, we remember where the sums over j are over at most two elements,
+// since w_ij is nonzero for at most two values of j.
+template<class T>
+void optimize_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
+                           Tap<T>* bilinear_weights, unsigned num_bilinear_weights,
+                           unsigned size)
+{
+	// Find the range of the desired weights.
+	int c_lower_pos = lrintf(weights[0].pos * size - 0.5);
+	int c_upper_pos = lrintf(weights[num_weights - 1].pos * size - 0.5) + 1;
+
+	SparseMatrix<float> A(num_bilinear_weights, num_bilinear_weights);
+	SparseVector<float> b(num_bilinear_weights);
+
+	// Convert each bilinear weight to the (x, frac) form for less junk in the code below.
+	int* pos = new int[num_bilinear_weights];
+	float* fracs = new float[num_bilinear_weights];
+	for (unsigned i = 0; i < num_bilinear_weights; ++i) {
+		const float pixel_pos = to_fp64(bilinear_weights[i].pos) * size - 0.5f;
+		const float f = pixel_pos - floor(pixel_pos);
+		pos[i] = int(floor(pixel_pos));
+		fracs[i] = lrintf(f / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;
+	}
+
+	// The index ordering is a bit unusual to fit better with the
+	// notation in the derivation above.
+	for (unsigned k = 0; k < num_bilinear_weights; ++k) {
+		for (int j = pos[k]; j <= pos[k] + 1; ++j) {
+			const float f_kj = (j == pos[k]) ? (1.0f - fracs[k]) : fracs[k];
+			for (unsigned i = 0; i < num_bilinear_weights; ++i) {
+				float f_ij;
+				if (j == pos[i]) {
+					f_ij = 1.0f - fracs[i];
+				} else if (j == pos[i] + 1) {
+					f_ij = fracs[i];
+				} else {
+					// f_ij = 0
+					continue;
+				}
+				A.coeffRef(i, k) += f_kj * f_ij;
+			}
+			float c_j;
+			if (j >= c_lower_pos && j < c_upper_pos) {
+				c_j = weights[j - c_lower_pos].weight;
+			} else {
+				c_j = 0.0f;
+			}
+			b.coeffRef(k) += f_kj * c_j;
+		}
+	}
+	delete[] pos;
+	delete[] fracs;
+
+	A.makeCompressed();
+	SparseQR<SparseMatrix<float>, COLAMDOrdering<int> > qr(A);
+	assert(qr.info() == Success);
+	SparseMatrix<float> new_weights = qr.solve(b);
+	assert(qr.info() == Success);
+
+	for (unsigned i = 0; i < num_bilinear_weights; ++i) {
+		bilinear_weights[i].weight = from_fp64<T>(new_weights.coeff(i, 0));
+	}
+	normalize_sum(bilinear_weights, num_bilinear_weights);
 }
 
 }  // namespace
@@ -508,6 +622,10 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	bool fallback_to_fp32 = false;
 	double max_sum_sq_error_fp16 = 0.0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
+		optimize_sum_sq_error(
+			weights + y * src_samples, src_samples,
+			bilinear_weights_fp16 + y * src_bilinear_samples, src_bilinear_samples,
+			src_size);
 		double sum_sq_error_fp16 = compute_sum_sq_error(
 			weights + y * src_samples, src_samples,
 			bilinear_weights_fp16 + y * src_bilinear_samples, src_bilinear_samples,
@@ -520,6 +638,12 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	if (max_sum_sq_error_fp16 > 2.0f / (255.0f * 255.0f)) {
 		fallback_to_fp32 = true;
 		src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp32);
+		for (unsigned y = 0; y < dst_samples; ++y) {
+			optimize_sum_sq_error(
+				weights + y * src_samples, src_samples,
+				bilinear_weights_fp32 + y * src_bilinear_samples, src_bilinear_samples,
+				src_size);
+		}
 	}
 
 	// Encode as a two-component texture. Note the GL_REPEAT.
