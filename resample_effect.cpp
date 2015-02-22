@@ -293,18 +293,18 @@ void optimize_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 	// notation in the derivation above.
 	for (unsigned k = 0; k < num_bilinear_weights; ++k) {
 		for (int j = pos[k]; j <= pos[k] + 1; ++j) {
-			const float f_kj = (j == pos[k]) ? (1.0f - fracs[k]) : fracs[k];
+			const float w_kj = (j == pos[k]) ? (1.0f - fracs[k]) : fracs[k];
 			for (unsigned i = 0; i < num_bilinear_weights; ++i) {
-				float f_ij;
+				float w_ij;
 				if (j == pos[i]) {
-					f_ij = 1.0f - fracs[i];
+					w_ij = 1.0f - fracs[i];
 				} else if (j == pos[i] + 1) {
-					f_ij = fracs[i];
+					w_ij = fracs[i];
 				} else {
-					// f_ij = 0
+					// w_ij = 0
 					continue;
 				}
-				A.coeffRef(i, k) += f_kj * f_ij;
+				A.coeffRef(i, k) += w_kj * w_ij;
 			}
 			float c_j;
 			if (j >= c_lower_pos && j < c_upper_pos) {
@@ -312,7 +312,7 @@ void optimize_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 			} else {
 				c_j = 0.0f;
 			}
-			b.coeffRef(k) += f_kj * c_j;
+			b.coeffRef(k) += w_kj * c_j;
 		}
 	}
 	delete[] pos;
