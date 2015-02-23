@@ -209,6 +209,8 @@ const int FP16_MAX_EXPONENT = (1 << FP16_EXPONENT_BITS) - 1;
 
 }  // namespace
 
+#ifndef __F16C__
+
 double fp16_to_fp64(fp16_int_t x)
 {
 	return fp_upconvert<fp16_int_t,
@@ -222,6 +224,8 @@ fp16_int_t fp64_to_fp16(double x)
 	       FP16_BIAS, FP16_MANTISSA_BITS, FP16_EXPONENT_BITS, FP16_MAX_EXPONENT,
 	       FP64_BIAS, FP64_MANTISSA_BITS, FP64_EXPONENT_BITS, FP64_MAX_EXPONENT>(x);
 }
+
+#endif
 
 double fp32_to_fp64(fp32_int_t x)
 {
