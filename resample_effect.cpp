@@ -63,7 +63,22 @@ unsigned gcd(unsigned a, unsigned b)
 template<class DestFloat>
 unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
 {
+	// Cut off near-zero values at both sides.
 	unsigned num_samples_saved = 0;
+	while (num_samples_saved < max_samples_saved &&
+	       num_src_samples > 0 &&
+	       fabs(src[0].weight) < 1e-6) {
+		++src;
+		--num_src_samples;
+		++num_samples_saved;
+	}
+	while (num_samples_saved < max_samples_saved &&
+	       num_src_samples > 0 &&
+	       fabs(src[num_src_samples - 1].weight) < 1e-6) {
+		--num_src_samples;
+		++num_samples_saved;
+	}
+
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
 		// Copy the sample directly; it will be overwritten later if we can combine.
 		if (dst != NULL) {
@@ -183,7 +198,7 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 	int lower_pos = int(floor(to_fp64(bilinear_weights[0].pos) * size - 0.5));
 	int upper_pos = int(ceil(to_fp64(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5)) + 2;
 	lower_pos = min<int>(lower_pos, lrintf(weights[0].pos * size - 0.5));
-	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5));
+	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5) + 1);
 
 	float* effective_weights = new float[upper_pos - lower_pos];
 	for (int i = 0; i < upper_pos - lower_pos; ++i) {
