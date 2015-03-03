@@ -1041,4 +1041,41 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	movit_debug_level = MOVIT_DEBUG_OFF;
 }
 
+// A dummy effect whose only purpose is to test sprintf decimal behavior.
+class PrintfingBlueEffect : public Effect {
+public:
+	PrintfingBlueEffect() {}
+	virtual string effect_type_id() const { return "PrintfingBlueEffect"; }
+	string output_fragment_shader() {
+		char buf[256];
+		snprintf(buf, sizeof(buf), "vec4 FUNCNAME(vec2 tc) { return vec4(%f, %f, %f, %f); }\n",
+			0.0f, 0.0f, 1.0f, 1.0f);
+		return buf;
+	}
+};
+
+TEST(EffectChainTest, LocaleIsIgnoredDuringFinalize) {
+	// An example of a locale with comma instead of period as decimal separator.
+	// Obviously, if you run on a machine without this locale available,
+	// the test will always succeed. Note that the OpenGL driver might call
+	// setlocale() behind-the-scenes, and that might corrupt the returned
+	// pointer, so we need to take our own copy of it here.
+	char *saved_locale = strdup(setlocale(LC_ALL, "nb_NO.UTF_8"));
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float expected_data[] = {
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	float out_data[4];
+	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->add_effect(new PrintfingBlueEffect());
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 1);
+
+	setlocale(LC_ALL, saved_locale);
+	free(saved_locale);
+}
+
 }  // namespace movit
