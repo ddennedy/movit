@@ -2,6 +2,10 @@
 //
 // Note that this also contains the tests for some of the simpler effects.
 
+#include <locale>
+#include <sstream>
+#include <string>
+
 #include <epoxy/gl.h>
 #include <assert.h>
 
@@ -1047,14 +1051,17 @@ public:
 	PrintfingBlueEffect() {}
 	virtual string effect_type_id() const { return "PrintfingBlueEffect"; }
 	string output_fragment_shader() {
-		char buf[256];
-		snprintf(buf, sizeof(buf), "vec4 FUNCNAME(vec2 tc) { return vec4(%f, %f, %f, %f); }\n",
-			0.0f, 0.0f, 1.0f, 1.0f);
-		return buf;
+		stringstream ss;
+		ss.imbue(locale("C"));
+		ss.precision(8);
+		ss << "vec4 FUNCNAME(vec2 tc) { return vec4("
+		   << 0.0f << ", " << 0.0f << ", "
+		   << 0.5f << ", " << 1.0f << "); }\n";
+		return ss.str();
 	}
 };
 
-TEST(EffectChainTest, LocaleIsIgnoredDuringFinalize) {
+TEST(EffectChainTest, StringStreamLocalesWork) {
 	// An example of a locale with comma instead of period as decimal separator.
 	// Obviously, if you run on a machine without this locale available,
 	// the test will always succeed. Note that the OpenGL driver might call
@@ -1065,7 +1072,7 @@ TEST(EffectChainTest, LocaleIsIgnoredDuringFinalize) {
 		0.0f, 0.0f, 0.0f, 0.0f,
 	};
 	float expected_data[] = {
-		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 0.5f, 1.0f,
 	};
 	float out_data[4];
 	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -1077,5 +1084,6 @@ TEST(EffectChainTest, LocaleIsIgnoredDuringFinalize) {
 	setlocale(LC_ALL, saved_locale);
 	free(saved_locale);
 }
+
 
 }  // namespace movit

@@ -212,31 +212,20 @@ string YCbCrInput::output_fragment_shader()
 	string frag_shader;
 
 	frag_shader = output_glsl_mat3("PREFIX(inv_ycbcr_matrix)", ycbcr_to_rgb);
-
-	char buf[256];
-	sprintf(buf, "const vec3 PREFIX(offset) = vec3(%.8f, %.8f, %.8f);\n",
-		offset[0], offset[1], offset[2]);
-	frag_shader += buf;
-
-	sprintf(buf, "const vec3 PREFIX(scale) = vec3(%.8f, %.8f, %.8f);\n",
-		scale[0], scale[1], scale[2]);
-	frag_shader += buf;
+	frag_shader += output_glsl_vec3("PREFIX(offset)", offset[0], offset[1], offset[2]);
+	frag_shader += output_glsl_vec3("PREFIX(scale)", scale[0], scale[1], scale[2]);
 
 	float cb_offset_x = compute_chroma_offset(
 		ycbcr_format.cb_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
 	float cb_offset_y = compute_chroma_offset(
 		ycbcr_format.cb_y_position, ycbcr_format.chroma_subsampling_y, heights[1]);
-	sprintf(buf, "const vec2 PREFIX(cb_offset) = vec2(%.8f, %.8f);\n",
-		cb_offset_x, cb_offset_y);
-	frag_shader += buf;
+	frag_shader += output_glsl_vec2("PREFIX(cb_offset)", cb_offset_x, cb_offset_y);
 
 	float cr_offset_x = compute_chroma_offset(
 		ycbcr_format.cr_x_position, ycbcr_format.chroma_subsampling_x, widths[2]);
 	float cr_offset_y = compute_chroma_offset(
 		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
-	sprintf(buf, "const vec2 PREFIX(cr_offset) = vec2(%.8f, %.8f);\n",
-		cr_offset_x, cr_offset_y);
-	frag_shader += buf;
+	frag_shader += output_glsl_vec2("PREFIX(cr_offset)", cr_offset_x, cr_offset_y);
 
 	frag_shader += read_file("ycbcr_input.frag");
 	return frag_shader;

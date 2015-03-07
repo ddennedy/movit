@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale>
+#include <sstream>
+#include <string>
 #include <Eigen/Core>
 
 #include "fp16.h"
@@ -145,17 +148,35 @@ void print_3x3_matrix(const Eigen::Matrix3d& m)
 
 string output_glsl_mat3(const string &name, const Eigen::Matrix3d &m)
 {
-	char buf[1024];
-	sprintf(buf,
-		"const mat3 %s = mat3(\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f,\n"
-		"    %.8f, %.8f, %.8f);\n\n",
-		name.c_str(),
-		m(0,0), m(1,0), m(2,0),
-		m(0,1), m(1,1), m(2,1),
-		m(0,2), m(1,2), m(2,2));
-	return buf;
+	// Use stringstream to be independent of the current locale in a thread-safe manner.
+	stringstream ss;
+	ss.imbue(locale("C"));
+	ss.precision(8);
+	ss << "const mat3 " << name << " = mat3(\n";
+	ss << "    " << m(0,0) << ", " << m(1,0) << ", " << m(2,0) << ",\n";
+	ss << "    " << m(0,1) << ", " << m(1,1) << ", " << m(2,1) << ",\n";
+	ss << "    " << m(0,2) << ", " << m(1,2) << ", " << m(2,2) << ");\n\n";
+	return ss.str();
+}
+
+string output_glsl_vec2(const string &name, float x, float y)
+{
+	// Use stringstream to be independent of the current locale in a thread-safe manner.
+	stringstream ss;
+	ss.imbue(locale("C"));
+	ss.precision(8);
+	ss << "const vec2 " << name << " = vec2(" << x << ", " << y << ");\n";
+	return ss.str();
+}
+
+string output_glsl_vec3(const string &name, float x, float y, float z)
+{
+	// Use stringstream to be independent of the current locale in a thread-safe manner.
+	stringstream ss;
+	ss.imbue(locale("C"));
+	ss.precision(8);
+	ss << "const vec3 " << name << " = vec3(" << x << ", " << y << ", " << z << ");\n";
+	return ss.str();
 }
 
 template<class DestFloat>

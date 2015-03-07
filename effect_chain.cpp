@@ -2,7 +2,6 @@
 
 #include <epoxy/gl.h>
 #include <assert.h>
-#include <locale.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -13,9 +12,6 @@
 #include <stack>
 #include <utility>
 #include <vector>
-#if defined(__APPLE__)
-#include <xlocale.h>
-#endif
 
 #include "alpha_division_effect.h"
 #include "alpha_multiplication_effect.h"
@@ -1333,19 +1329,6 @@ Node *EffectChain::find_output_node()
 
 void EffectChain::finalize()
 {
-	// Save the current locale, and set it to C, so that we can output decimal
-	// numbers with printf and be sure to get them in the format mandated by GLSL.
-#if defined(__MINGW32__)
-	// Note that the OpenGL driver might call setlocale() behind-the-scenes,
-	// and that might corrupt the returned pointer, so we need to take our own
-	// copy of it here.
-	char *saved_locale = strdup(setlocale(LC_NUMERIC, NULL));
-	setlocale(LC_NUMERIC, "C");
-#else
-	locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
-	locale_t saved_locale = uselocale(c_locale);
-#endif
-
 	// Output the graph as it is before we do any conversions on it.
 	output_dot("step0-start.dot");
 
@@ -1408,13 +1391,6 @@ void EffectChain::finalize()
 	assert(phases[0]->inputs.empty());
 	
 	finalized = true;
-#if defined(__MINGW32__)
-	setlocale(LC_NUMERIC, saved_locale);
-	free(saved_locale);
-#else
-	uselocale(saved_locale);
-	freelocale(c_locale);
-#endif
 }
 
 void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height)
