@@ -87,17 +87,41 @@ string read_file(const string &filename)
 {
 	const string full_pathname = *movit_data_directory + "/" + filename;
 
-	static char buf[131072];
 	FILE *fp = fopen(full_pathname.c_str(), "r");
 	if (fp == NULL) {
 		perror(full_pathname.c_str());
 		exit(1);
 	}
 
-	int len = fread(buf, 1, sizeof(buf), fp);
+	int ret = fseek(fp, 0, SEEK_END);
+	if (ret == -1) {
+		perror("fseek(SEEK_END)");
+		exit(1);
+	}
+
+	int size = ftell(fp);
+
+	ret = fseek(fp, 0, SEEK_SET);
+	if (ret == -1) {
+		perror("fseek(SEEK_SET)");
+		exit(1);
+	}
+
+	string str;
+	str.resize(size);
+	ret = fread(&str[0], size, 1, fp);
+	if (ret == -1) {
+		perror("fread");
+		exit(1);
+	}
+	if (ret == 0) {
+		fprintf(stderr, "Short read when trying to read %d bytes from %s\n",
+		        size, full_pathname.c_str());
+		exit(1);
+	}
 	fclose(fp);
 
-	return string(buf, len);
+	return str;
 }
 
 string read_version_dependent_file(const string &base, const string &extension)
