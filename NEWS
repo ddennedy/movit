@@ -1,3 +1,17 @@
+Movit 1.1.3, March 29th, 2015
+
+  - Fix accuracy issues in ResampleEffect, particularly when
+    zooming. Note that this might cost a few percent performance.
+    Reported by Christophe Thommeret.
+
+  - Make the number of BlurEffect taps configurable.
+    Based on patch by Christophe Thommeret.
+
+  - Multiple other bugfixes, some courtesy Dan Dennedy and
+    Christophe Thommeret. In particular, thread-safety fixes
+    related to locales and chain finalization.
+
+
 Movit 1.1.2, August 12th, 2014
 
   - Performance bugfix: Fix texture freelist behavior so that it's

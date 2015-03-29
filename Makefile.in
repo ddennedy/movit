@@ -6,8 +6,8 @@ GTEST_DIR ?= /usr/src/gtest
 # strive towards having a rock-stable ABI, but at least the soversion will increase
 # whenever it breaks, so that you will not have silent failures, and distribution package
 # management can run its course.
-movit_ltversion = 2:2:0
-movit_version = 1.1.2
+movit_ltversion = 2:3:0
+movit_version = 1.1.3
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
