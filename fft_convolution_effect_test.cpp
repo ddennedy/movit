@@ -52,10 +52,10 @@ TEST(FFTConvolutionEffectTest, Constant) {
 		0.4, 1.4, 2.4, 3.4,
 	};
 	float expected_data[size * size] = {
-		f * 0.1, f * 1.1, f * 2.1, f * 3.1,
-		f * 0.2, f * 1.2, f * 2.2, f * 3.2,
-		f * 0.3, f * 1.3, f * 2.3, f * 3.3,
-		f * 0.4, f * 1.4, f * 2.4, f * 3.4,
+		f * 0.1f, f * 1.1f, f * 2.1f, f * 3.1f,
+		f * 0.2f, f * 1.2f, f * 2.2f, f * 3.2f,
+		f * 0.3f, f * 1.3f, f * 2.3f, f * 3.3f,
+		f * 0.4f, f * 1.4f, f * 2.4f, f * 3.4f,
 	};
 	float out_data[size * size];
 	float kernel[convolve_size * convolve_size];
