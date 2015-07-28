@@ -14,7 +14,6 @@ vec4 FUNCNAME(vec2 tc) {
 	ycbcr.z = tex2D(PREFIX(tex_cr), tc + PREFIX(cr_offset)).x;
 
 	ycbcr -= PREFIX(offset);
-	ycbcr *= PREFIX(scale);
 
 	vec4 rgba;
 	rgba.rgb = PREFIX(inv_ycbcr_matrix) * ycbcr;

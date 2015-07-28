@@ -143,7 +143,8 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 string YCbCrInput::output_fragment_shader()
 {
-	float coeff[3], offset[3], scale[3];
+	float coeff[3], offset[3];
+	double scale[3];
 
 	switch (ycbcr_format.luma_coefficients) {
 	case YCBCR_REC_601:
@@ -209,11 +210,13 @@ string YCbCrInput::output_fragment_shader()
 	// Inverting the matrix gives us what we need to go from YCbCr back to RGB.
 	Matrix3d ycbcr_to_rgb = rgb_to_ycbcr.inverse();
 
+	// Fold in the scaling.
+	ycbcr_to_rgb *= Map<const Vector3d>(scale).asDiagonal();
+
 	string frag_shader;
 
 	frag_shader = output_glsl_mat3("PREFIX(inv_ycbcr_matrix)", ycbcr_to_rgb);
 	frag_shader += output_glsl_vec3("PREFIX(offset)", offset[0], offset[1], offset[2]);
-	frag_shader += output_glsl_vec3("PREFIX(scale)", scale[0], scale[1], scale[2]);
 
 	float cb_offset_x = compute_chroma_offset(
 		ycbcr_format.cb_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
