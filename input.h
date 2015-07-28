@@ -24,6 +24,10 @@ public:
 	// to activate it.)
 	virtual bool can_output_linear_gamma() const = 0;
 
+	// Whether this input can supply mipmaps if asked to (by setting
+	// the "needs_mipmaps" integer parameter set to 1).
+	virtual bool can_supply_mipmaps() const { return true; }
+
 	virtual unsigned get_width() const = 0;
 	virtual unsigned get_height() const = 0;
 	virtual Colorspace get_color_space() const = 0;

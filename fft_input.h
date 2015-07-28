@@ -48,6 +48,7 @@ public:
 	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA; }
 	virtual bool is_single_texture() const { return true; }
 	virtual bool can_output_linear_gamma() const { return true; }
+	virtual bool can_supply_mipmaps() const { return false; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer

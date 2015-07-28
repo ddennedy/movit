@@ -1,5 +1,4 @@
 // Unit tests for YCbCrInput.
-// FIXME: This class really ought to support mipmaps.
 
 #include <epoxy/gl.h>
 #include <stddef.h>

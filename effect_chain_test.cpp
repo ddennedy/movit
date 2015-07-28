@@ -604,6 +604,81 @@ TEST(EffectChainTest, MipmapGenerationWorks) {
 	expect_equal(expected_data, out_data, 4, 16);
 }
 
+class NonMipmapCapableInput : public FlatInput {
+public:
+	NonMipmapCapableInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
+		: FlatInput(format, pixel_format, type, width, height) {}
+
+	virtual bool can_supply_mipmaps() const { return false; }
+	bool set_int(const std::string& key, int value) {
+		if (key == "needs_mipmaps") {
+			assert(value == 0);
+		}
+		return FlatInput::set_int(key, value);
+	}
+};
+
+// The same test as MipmapGenerationWorks, but with an input that refuses
+// to supply mipmaps.
+TEST(EffectChainTest, MipmapsWithNonMipmapCapableInput) {
+	float data[] = {  // In 4x4 blocks.
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float expected_data[] = {  // Repeated four times each way.
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+	};
+	float out_data[4 * 16];
+	EffectChainTester tester(NULL, 4, 16, FORMAT_GRAYSCALE);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	NonMipmapCapableInput *input = new NonMipmapCapableInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 16);
+	input->set_pixel_data(data);
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(new MipmapNeedingEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 16);
+}
+
 TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 	float data[] = {  // In 4x4 blocks.
 		1.0f, 0.0f, 0.0f, 0.0f,

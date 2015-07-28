@@ -83,6 +83,7 @@ private:
 	Colorspace output_color_space;
 	GammaCurve output_gamma_curve;
 	AlphaType output_alpha_type;
+	bool needs_mipmaps;  // Directly or indirectly.
 
 	friend class EffectChain;
 };

@@ -65,7 +65,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        unsigned width, unsigned height)
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
-	  needs_mipmaps(false),
 	  width(width),
 	  height(height),
 	  resource_pool(NULL)
@@ -84,8 +83,6 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	heights[2] = height / ycbcr_format.chroma_subsampling_y;
 
 	pixel_data[0] = pixel_data[1] = pixel_data[2] = NULL;
-
-	register_int("needs_mipmaps", &needs_mipmaps);
 }
 
 YCbCrInput::~YCbCrInput()

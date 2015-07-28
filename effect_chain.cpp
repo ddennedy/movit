@@ -87,6 +87,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
 	node->output_alpha_type = ALPHA_INVALID;
+	node->needs_mipmaps = false;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
@@ -310,6 +311,10 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 		Node *node = effects_todo_this_phase.top();
 		effects_todo_this_phase.pop();
 
+		if (node->effect->needs_mipmaps()) {
+			node->needs_mipmaps = true;
+		}
+
 		// This should currently only happen for effects that are inputs
 		// (either true inputs or phase outputs). We special-case inputs,
 		// and then deduplicate phase outputs below.
@@ -332,6 +337,21 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			if (node->effect->needs_texture_bounce() &&
 			    !deps[i]->effect->is_single_texture()) {
 				start_new_phase = true;
+			}
+
+			// Propagate information about needing mipmaps down the chain,
+			// breaking the phase if we notice an incompatibility.
+			//
+			// Note that we cannot do this propagation as a normal pass,
+			// because it needs information about where the phases end
+			// (we should not propagate the flag across phases).
+			if (node->needs_mipmaps) {
+				if (deps[i]->effect->num_inputs() == 0) {
+					Input *input = static_cast<Input *>(deps[i]->effect);
+					start_new_phase |= !input->can_supply_mipmaps();
+				} else {
+					deps[i]->needs_mipmaps = true;
+				}
 			}
 
 			if (deps[i]->outgoing_links.size() > 1) {
@@ -392,7 +412,9 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		if (node->effect->num_inputs() == 0) {
-			CHECK(node->effect->set_int("needs_mipmaps", phase->input_needs_mipmaps));
+			Input *input = static_cast<Input *>(node->effect);
+			assert(!phase->input_needs_mipmaps || input->can_supply_mipmaps());
+			CHECK(input->set_int("needs_mipmaps", phase->input_needs_mipmaps));
 		}
 	}
 
