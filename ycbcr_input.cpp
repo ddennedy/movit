@@ -241,4 +241,13 @@ void YCbCrInput::invalidate_pixel_data()
 	}
 }
 
+bool YCbCrInput::set_int(const std::string& key, int value)
+{
+	if (key == "needs_mipmaps") {
+		// We currently do not support this.
+		return (value == 0);
+	}
+	return Effect::set_int(key, value);
+}
+
 }  // namespace movit

@@ -91,6 +91,8 @@ public:
 		resource_pool = chain->get_resource_pool();
 	}
 
+	bool set_int(const std::string& key, int value);
+
 private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
