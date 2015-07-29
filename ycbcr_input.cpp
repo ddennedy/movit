@@ -58,6 +58,81 @@ float compute_chroma_offset(float pos, unsigned subsampling_factor, unsigned res
 	return (0.5 - local_chroma_pos) / resolution;
 }
 
+// Given <ycbcr_format>, compute the values needed to turn Y'CbCr into R'G'B';
+// first subtract the returned offset, then left-multiply the returned matrix
+// (the scaling is already folded into it).
+void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycbcr_to_rgb)
+{
+	double coeff[3], scale[3];
+
+	switch (ycbcr_format.luma_coefficients) {
+	case YCBCR_REC_601:
+		// Rec. 601, page 2.
+		coeff[0] = 0.299;
+		coeff[1] = 0.587;
+		coeff[2] = 0.114;
+		break;
+
+	case YCBCR_REC_709:
+		// Rec. 709, page 19.
+		coeff[0] = 0.2126;
+		coeff[1] = 0.7152;
+		coeff[2] = 0.0722;
+		break;
+
+	case YCBCR_REC_2020:
+		// Rec. 2020, page 4.
+		coeff[0] = 0.2627;
+		coeff[1] = 0.6780;
+		coeff[2] = 0.0593;
+		break;
+
+	default:
+		assert(false);
+	}
+
+	if (ycbcr_format.full_range) {
+		offset[0] = 0.0 / 255.0;
+		offset[1] = 128.0 / 255.0;
+		offset[2] = 128.0 / 255.0;
+
+		scale[0] = 1.0;
+		scale[1] = 1.0;
+		scale[2] = 1.0;
+	} else {
+		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 4.
+		offset[0] = 16.0 / 255.0;
+		offset[1] = 128.0 / 255.0;
+		offset[2] = 128.0 / 255.0;
+
+		scale[0] = 255.0 / 219.0;
+		scale[1] = 255.0 / 224.0;
+		scale[2] = 255.0 / 224.0;
+	}
+
+	// Matrix to convert RGB to YCbCr. See e.g. Rec. 601.
+	Matrix3d rgb_to_ycbcr;
+	rgb_to_ycbcr(0,0) = coeff[0];
+	rgb_to_ycbcr(0,1) = coeff[1];
+	rgb_to_ycbcr(0,2) = coeff[2];
+
+	float cb_fac = (224.0 / 219.0) / (coeff[0] + coeff[1] + 1.0f - coeff[2]);
+	rgb_to_ycbcr(1,0) = -coeff[0] * cb_fac;
+	rgb_to_ycbcr(1,1) = -coeff[1] * cb_fac;
+	rgb_to_ycbcr(1,2) = (1.0f - coeff[2]) * cb_fac;
+
+	float cr_fac = (224.0 / 219.0) / (1.0f - coeff[0] + coeff[1] + coeff[2]);
+	rgb_to_ycbcr(2,0) = (1.0f - coeff[0]) * cr_fac;
+	rgb_to_ycbcr(2,1) = -coeff[1] * cr_fac;
+	rgb_to_ycbcr(2,2) = -coeff[2] * cr_fac;
+
+	// Inverting the matrix gives us what we need to go from YCbCr back to RGB.
+	*ycbcr_to_rgb = rgb_to_ycbcr.inverse();
+
+	// Fold in the scaling.
+	*ycbcr_to_rgb *= Map<const Vector3d>(scale).asDiagonal();
+}
+
 }  // namespace
 
 YCbCrInput::YCbCrInput(const ImageFormat &image_format,
@@ -140,75 +215,9 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 string YCbCrInput::output_fragment_shader()
 {
-	float coeff[3], offset[3];
-	double scale[3];
-
-	switch (ycbcr_format.luma_coefficients) {
-	case YCBCR_REC_601:
-		// Rec. 601, page 2.
-		coeff[0] = 0.299;
-		coeff[1] = 0.587;
-		coeff[2] = 0.114;
-		break;
-
-	case YCBCR_REC_709:
-		// Rec. 709, page 19.
-		coeff[0] = 0.2126;
-		coeff[1] = 0.7152;
-		coeff[2] = 0.0722;
-		break;
-
-	case YCBCR_REC_2020:
-		// Rec. 2020, page 4.
-		coeff[0] = 0.2627;
-		coeff[1] = 0.6780;
-		coeff[2] = 0.0593;
-		break;
-
-	default:
-		assert(false);
-	}
-
-	if (ycbcr_format.full_range) {
-		offset[0] = 0.0 / 255.0;
-		offset[1] = 128.0 / 255.0;
-		offset[2] = 128.0 / 255.0;
-
-		scale[0] = 1.0;
-		scale[1] = 1.0;
-		scale[2] = 1.0;
-	} else {
-		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 4.
-		offset[0] = 16.0 / 255.0;
-		offset[1] = 128.0 / 255.0;
-		offset[2] = 128.0 / 255.0;
-
-		scale[0] = 255.0 / 219.0;
-		scale[1] = 255.0 / 224.0;
-		scale[2] = 255.0 / 224.0;
-	}
-
-	// Matrix to convert RGB to YCbCr. See e.g. Rec. 601.
-	Matrix3d rgb_to_ycbcr;
-	rgb_to_ycbcr(0,0) = coeff[0];
-	rgb_to_ycbcr(0,1) = coeff[1];
-	rgb_to_ycbcr(0,2) = coeff[2];
-
-	float cb_fac = (224.0 / 219.0) / (coeff[0] + coeff[1] + 1.0f - coeff[2]);
-	rgb_to_ycbcr(1,0) = -coeff[0] * cb_fac;
-	rgb_to_ycbcr(1,1) = -coeff[1] * cb_fac;
-	rgb_to_ycbcr(1,2) = (1.0f - coeff[2]) * cb_fac;
-
-	float cr_fac = (224.0 / 219.0) / (1.0f - coeff[0] + coeff[1] + coeff[2]);
-	rgb_to_ycbcr(2,0) = (1.0f - coeff[0]) * cr_fac;
-	rgb_to_ycbcr(2,1) = -coeff[1] * cr_fac;
-	rgb_to_ycbcr(2,2) = -coeff[2] * cr_fac;
-
-	// Inverting the matrix gives us what we need to go from YCbCr back to RGB.
-	Matrix3d ycbcr_to_rgb = rgb_to_ycbcr.inverse();
-
-	// Fold in the scaling.
-	ycbcr_to_rgb *= Map<const Vector3d>(scale).asDiagonal();
+	float offset[3];
+	Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
 
 	string frag_shader;
 
