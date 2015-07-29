@@ -38,7 +38,8 @@ void print_3x3_matrix(const Eigen::Matrix3d &m);
 // Output a GLSL 3x3 matrix declaration.
 std::string output_glsl_mat3(const std::string &name, const Eigen::Matrix3d &m);
 
-// Output GLSL 2-length and 3-length vector declarations.
+// Output GLSL scalar, 2-length and 3-length vector declarations.
+std::string output_glsl_float(const std::string &name, float x);
 std::string output_glsl_vec2(const std::string &name, float x, float y);
 std::string output_glsl_vec3(const std::string &name, float x, float y, float z);
 

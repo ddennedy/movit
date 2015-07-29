@@ -461,6 +461,9 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 	case GL_R16F:
 		bytes_per_pixel = 2;
 		break;
+	case GL_RG8:
+		bytes_per_pixel = 2;
+		break;
 	case GL_R8:
 		bytes_per_pixel = 1;
 		break;

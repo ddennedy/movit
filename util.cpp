@@ -183,6 +183,16 @@ string output_glsl_mat3(const string &name, const Eigen::Matrix3d &m)
 	return ss.str();
 }
 
+string output_glsl_float(const string &name, float x)
+{
+	// Use stringstream to be independent of the current locale in a thread-safe manner.
+	stringstream ss;
+	ss.imbue(locale("C"));
+	ss.precision(8);
+	ss << "const float " << name << " = " << x << ";\n";
+	return ss.str();
+}
+
 string output_glsl_vec2(const string &name, float x, float y)
 {
 	// Use stringstream to be independent of the current locale in a thread-safe manner.

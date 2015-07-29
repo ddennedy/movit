@@ -32,6 +32,7 @@ glow_effect_test
 padding_effect_test
 flat_input_test
 ycbcr_input_test
+ycbcr_422interleaved_input_test
 complex_modulate_effect_test
 fft_pass_effect_test
 fp16_test
