@@ -11,7 +11,7 @@
 
 namespace movit {
 
-TEST(YCbCrInput, Simple444) {
+TEST(YCbCrInputTest, Simple444) {
 	const int width = 1;
 	const int height = 5;
 
@@ -64,7 +64,7 @@ TEST(YCbCrInput, Simple444) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
-TEST(YCbCrInput, FullRangeRec601) {
+TEST(YCbCrInputTest, FullRangeRec601) {
 	const int width = 1;
 	const int height = 5;
 
@@ -118,7 +118,7 @@ TEST(YCbCrInput, FullRangeRec601) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
-TEST(YCbCrInput, Rec709) {
+TEST(YCbCrInputTest, Rec709) {
 	const int width = 1;
 	const int height = 5;
 
@@ -171,7 +171,7 @@ TEST(YCbCrInput, Rec709) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
-TEST(YCbCrInput, Rec2020) {
+TEST(YCbCrInputTest, Rec2020) {
 	const int width = 1;
 	const int height = 5;
 
@@ -226,7 +226,7 @@ TEST(YCbCrInput, Rec2020) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
-TEST(YCbCrInput, Subsampling420) {
+TEST(YCbCrInputTest, Subsampling420) {
 	const int width = 4;
 	const int height = 4;
 
@@ -287,7 +287,7 @@ TEST(YCbCrInput, Subsampling420) {
 	expect_equal(expected_data, out_data, width, height, 0.01, 0.001);
 }
 
-TEST(YCbCrInput, Subsampling420WithNonCenteredSamples) {
+TEST(YCbCrInputTest, Subsampling420WithNonCenteredSamples) {
 	const int width = 4;
 	const int height = 4;
 
@@ -349,7 +349,7 @@ TEST(YCbCrInput, Subsampling420WithNonCenteredSamples) {
 }
 
 // Yes, some 4:2:2 formats actually have this craziness.
-TEST(YCbCrInput, DifferentCbAndCrPositioning) {
+TEST(YCbCrInputTest, DifferentCbAndCrPositioning) {
 	const int width = 4;
 	const int height = 4;
 
@@ -419,7 +419,7 @@ TEST(YCbCrInput, DifferentCbAndCrPositioning) {
 	expect_equal(expected_data_blue, out_data, width, height, 0.01, 0.001);
 }
 
-TEST(YCbCrInput, PBO) {
+TEST(YCbCrInputTest, PBO) {
 	const int width = 1;
 	const int height = 5;
 
