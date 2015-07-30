@@ -177,6 +177,7 @@ string output_glsl_mat3(const string &name, const Eigen::Matrix3d &m)
 	stringstream ss;
 	ss.imbue(locale("C"));
 	ss.precision(8);
+	ss << scientific;
 	ss << "const mat3 " << name << " = mat3(\n";
 	ss << "    " << m(0,0) << ", " << m(1,0) << ", " << m(2,0) << ",\n";
 	ss << "    " << m(0,1) << ", " << m(1,1) << ", " << m(2,1) << ",\n";
@@ -190,6 +191,7 @@ string output_glsl_float(const string &name, float x)
 	stringstream ss;
 	ss.imbue(locale("C"));
 	ss.precision(8);
+	ss << scientific;
 	ss << "const float " << name << " = " << x << ";\n";
 	return ss.str();
 }
@@ -200,6 +202,7 @@ string output_glsl_vec2(const string &name, float x, float y)
 	stringstream ss;
 	ss.imbue(locale("C"));
 	ss.precision(8);
+	ss << scientific;
 	ss << "const vec2 " << name << " = vec2(" << x << ", " << y << ");\n";
 	return ss.str();
 }
@@ -210,6 +213,7 @@ string output_glsl_vec3(const string &name, float x, float y, float z)
 	stringstream ss;
 	ss.imbue(locale("C"));
 	ss.precision(8);
+	ss << scientific;
 	ss << "const vec3 " << name << " = vec3(" << x << ", " << y << ", " << z << ");\n";
 	return ss.str();
 }
