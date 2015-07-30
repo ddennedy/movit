@@ -156,6 +156,7 @@ GLuint compile_shader(const string &shader_src, GLenum type)
 	GLint status;
 	glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
+		fprintf(stderr, "Failed to compile shader: %s\n", shader_src.c_str());
 		exit(1);
 	}
 
