@@ -48,7 +48,12 @@ namespace movit {
 float compute_chroma_offset(float pos, unsigned subsampling_factor, unsigned resolution)
 {
 	float local_chroma_pos = (0.5 + pos * (subsampling_factor - 1)) / subsampling_factor;
-	return (0.5 - local_chroma_pos) / resolution;
+	if (fabs(local_chroma_pos - 0.5) < 1e-10) {
+		// x + (-0) can be optimized away freely, as opposed to x + 0.
+		return -0.0;
+	} else {
+		return (local_chroma_pos - 0.5) / resolution;
+	}
 }
 
 // Given <ycbcr_format>, compute the values needed to turn Y'CbCr into R'G'B';
