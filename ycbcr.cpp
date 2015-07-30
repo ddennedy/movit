@@ -1,3 +1,6 @@
+// Note: This file does not have its own unit test; it is tested mainly
+// through YCbCrInput's unit tests.
+
 #include <Eigen/Core>
 #include <Eigen/LU>
 
