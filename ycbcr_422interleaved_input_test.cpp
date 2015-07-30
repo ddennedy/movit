@@ -7,6 +7,7 @@
 #include "gtest/gtest.h"
 #include "test_util.h"
 #include "util.h"
+#include "resize_effect.h"
 #include "ycbcr_422interleaved_input.h"
 
 namespace movit {
@@ -60,6 +61,56 @@ TEST(YCbCr422InterleavedInputTest, Simple422) {
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
 	// so we need some leeway.
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
+TEST(YCbCr422InterleavedInputTest, LumaLinearInterpolation) {
+	const int width = 4;
+	const int height = 1;
+	const int out_width = width * 3;
+
+	// Black, white, black and then gray.
+	unsigned char uyvy[width * height * 2] = {
+		/*U=*/128, /*Y=*/ 16,
+		/*V=*/128, /*Y=*/235,
+		/*U=*/128, /*Y=*/ 16,
+		/*V=*/128, /*Y=*/128,
+	};
+
+	float expected_data[out_width * height] = {
+		0.0, /**/0.0, 0.333, 0.667, /**/1.0, 0.667, 0.333, /**/0.0, 0.167, 0.333, /**/0.5, 0.5
+	};
+	float out_data[out_width * height];
+
+	EffectChainTester tester(NULL, out_width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.chroma_subsampling_x = 2;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.0f;  // Doesn't really matter here, since U/V are constant.
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.0f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCr422InterleavedInput *input = new YCbCr422InterleavedInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(uyvy);
+	tester.get_chain()->add_input(input);
+
+	ResizeEffect *upscale = new ResizeEffect();
+	ASSERT_TRUE(upscale->set_int("width", out_width));
+	ASSERT_TRUE(upscale->set_int("height", height));
+	tester.get_chain()->add_effect(upscale);
+
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, out_width, height, 0.025, 0.002);
 }
 
 // Adapted from the YCbCrInput test of the same name.
