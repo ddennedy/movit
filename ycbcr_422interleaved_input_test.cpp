@@ -57,9 +57,9 @@ TEST(YCbCr422InterleavedInputTest, Simple422) {
 
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 
-        // Y'CbCr isn't 100% accurate (the input values are rounded),
-        // so we need some leeway.
-        expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
 // Adapted from the YCbCrInput test of the same name.
