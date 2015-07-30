@@ -35,6 +35,7 @@ ycbcr_input_test
 ycbcr_422interleaved_input_test
 complex_modulate_effect_test
 fft_pass_effect_test
+fft_convolution_effect_test
 fp16_test
 luma_mix_effect_test
 slice_effect_test
