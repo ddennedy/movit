@@ -52,7 +52,7 @@ float compute_chroma_offset(float pos, unsigned subsampling_factor, unsigned res
 		// x + (-0) can be optimized away freely, as opposed to x + 0.
 		return -0.0;
 	} else {
-		return (local_chroma_pos - 0.5) / resolution;
+		return (0.5 - local_chroma_pos) / resolution;
 	}
 }
 
