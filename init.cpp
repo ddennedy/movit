@@ -16,6 +16,7 @@ bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
 bool movit_srgb_textures_supported;
+bool movit_timer_queries_supported;
 int movit_num_wrongly_rounded;
 bool movit_shader_rounding_supported;
 MovitShaderModel movit_shader_model;
@@ -354,6 +355,12 @@ bool check_extensions()
 	// for now.
 	movit_shader_rounding_supported =
 		(epoxy_gl_version() >= 30 || epoxy_has_gl_extension("GL_EXT_gpu_shader4"));
+
+	// The user can specify that they want a timing report for each
+	// phase in an effect chain. However, that depends on this extension;
+	// without it, we do cannot even create the query objects.
+	movit_timer_queries_supported =
+		(epoxy_gl_version() >= 33 || epoxy_has_gl_extension("GL_ARB_timer_query"));
 
 	return true;
 }

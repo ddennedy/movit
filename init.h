@@ -67,6 +67,9 @@ extern bool movit_shader_rounding_supported;
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
 
+// Whether the OpenGL driver (or GPU) in use supports GL_ARB_timer_query.
+extern bool movit_timer_queries_supported;
+
 // What shader model we are compiling for. This only affects the choice
 // of a few files (like header.frag); most of the shaders are the same.
 enum MovitShaderModel {

@@ -104,6 +104,11 @@ struct Phase {
 	// Identifier used to create unique variables in GLSL.
 	// Unique per-phase to increase cacheability of compiled shaders.
 	std::map<Node *, std::string> effect_ids;
+
+	// For measurement of GPU time used.
+	GLuint timer_query_object;
+	uint64_t time_elapsed_ns;
+	uint64_t num_measured_iterations;
 };
 
 class EffectChain {
@@ -161,6 +166,14 @@ public:
 
 	void finalize();
 
+	// Measure the GPU time used for each actual phase during rendering.
+	// Note that this is only available if GL_ARB_timer_query
+	// (or, equivalently, OpenGL 3.3) is available. Also note that measurement
+	// will incur a performance cost, as we wait for the measurements to
+	// complete at the end of rendering.
+	void enable_phase_timing(bool enable);
+	void reset_phase_timing();
+	void print_phase_timing();
 
 	//void render(unsigned char *src, unsigned char *dst);
 	void render_to_screen()
@@ -300,6 +313,8 @@ private:
 
 	ResourcePool *resource_pool;
 	bool owns_resource_pool;
+
+	bool do_phase_timing;
 };
 
 }  // namespace movit

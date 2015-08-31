@@ -36,7 +36,8 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	  dither_effect(NULL),
 	  num_dither_bits(0),
 	  finalized(false),
-	  resource_pool(resource_pool) {
+	  resource_pool(resource_pool),
+	  do_phase_timing(false) {
 	if (resource_pool == NULL) {
 		this->resource_pool = new ResourcePool();
 		owns_resource_pool = true;
@@ -420,6 +421,13 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 	// Actually make the shader for this phase.
 	compile_glsl_program(phase);
+
+	// Initialize timer objects.
+	if (movit_timer_queries_supported) {
+		glGenQueries(1, &phase->timer_query_object);
+		phase->time_elapsed_ns = 0;
+		phase->num_measured_iterations = 0;
+	}
 
 	assert(completed_effects->count(output) == 0);
 	completed_effects->insert(make_pair(output, phase));
@@ -1448,6 +1456,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
 		Phase *phase = phases[phase_num];
 
+		if (do_phase_timing) {
+			glBeginQuery(GL_TIME_ELAPSED, phase->timer_query_object);
+		}
 		if (phase_num == phases.size() - 1) {
 			// Last phase goes to the output the user specified.
 			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
@@ -1461,6 +1472,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			}
 		}
 		execute_phase(phase, phase_num == phases.size() - 1, &output_textures, &generated_mipmaps);
+		if (do_phase_timing) {
+			glEndQuery(GL_TIME_ELAPSED);
+		}
 	}
 
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
@@ -1473,6 +1487,57 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	check_error();
 	glUseProgram(0);
 	check_error();
+
+	if (do_phase_timing) {
+		// Get back the timer queries.
+		for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
+			Phase *phase = phases[phase_num];
+			GLint available = 0;
+			while (!available) {
+				glGetQueryObjectiv(phase->timer_query_object, GL_QUERY_RESULT_AVAILABLE, &available);
+			}
+			GLuint64 time_elapsed;
+			glGetQueryObjectui64v(phase->timer_query_object, GL_QUERY_RESULT, &time_elapsed);
+			phase->time_elapsed_ns += time_elapsed;
+			++phase->num_measured_iterations;
+		}
+	}
+}
+
+void EffectChain::enable_phase_timing(bool enable)
+{
+	if (enable) {
+		assert(movit_timer_queries_supported);
+	}
+	this->do_phase_timing = enable;
+}
+
+void EffectChain::reset_phase_timing()
+{
+	for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
+		Phase *phase = phases[phase_num];
+		phase->time_elapsed_ns = 0;
+		phase->num_measured_iterations = 0;
+	}
+}
+
+void EffectChain::print_phase_timing()
+{
+	double total_time_ms = 0.0;
+	for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
+		Phase *phase = phases[phase_num];
+		double avg_time_ms = phase->time_elapsed_ns * 1e-6 / phase->num_measured_iterations;
+		printf("Phase %d: %5.1f ms  [", phase_num, avg_time_ms);
+		for (unsigned effect_num = 0; effect_num < phase->effects.size(); ++effect_num) {
+			if (effect_num != 0) {
+				printf(", ");
+			}
+			printf("%s", phase->effects[effect_num]->effect->effect_type_id().c_str());
+		}
+		printf("]\n");
+		total_time_ms += avg_time_ms;
+	}
+	printf("Total:   %5.1f ms\n", total_time_ms);
 }
 
 void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLuint> *output_textures, set<Phase *> *generated_mipmaps)
