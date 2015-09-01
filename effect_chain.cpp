@@ -623,7 +623,8 @@ void EffectChain::inform_input_sizes(Phase *phase)
 	// Now propagate from the inputs towards the end, and inform as we go.
 	// The rules are simple:
 	//
-	//   1. Don't touch effects that already have given sizes (ie., inputs).
+	//   1. Don't touch effects that already have given sizes (ie., inputs
+	//      or effects that change the output size).
 	//   2. If all of your inputs have the same size, that will be your output size.
 	//   3. Otherwise, your output size is 0x0.
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
@@ -645,8 +646,16 @@ void EffectChain::inform_input_sizes(Phase *phase)
 				this_output_height = 0;
 			}
 		}
-		node->output_width = this_output_width;
-		node->output_height = this_output_height;
+		if (node->effect->changes_output_size()) {
+			// We cannot call get_output_size() before we've done inform_input_size()
+			// on all inputs.
+			unsigned real_width_ignored, real_height_ignored;
+			node->effect->get_output_size(&real_width_ignored, &real_height_ignored,
+			                              &node->output_width, &node->output_height);
+		} else {
+			node->output_width = this_output_width;
+			node->output_height = this_output_height;
+		}
 	}
 }
 
