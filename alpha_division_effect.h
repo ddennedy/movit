@@ -1,7 +1,7 @@
 #ifndef _MOVIT_ALPHA_DIVISION_EFFECT_H
 #define _MOVIT_ALPHA_DIVISION_EFFECT_H 1
 
-// Convert premultiplied alpha to postmultiplied alpha, simply by multiplying.
+// Convert postmultiplied alpha to premultiplied alpha, simply by dividing.
 
 #include <string>
 
