@@ -1607,10 +1607,9 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 
 	// Now draw!
 	float vertices[] = {
-		0.0f, 1.0f,
+		0.0f, 2.0f,
 		0.0f, 0.0f,
-		1.0f, 1.0f,
-		1.0f, 0.0f
+		2.0f, 0.0f
 	};
 
 	GLuint vao;
@@ -1622,7 +1621,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
 	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
 
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	check_error();
 
 	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
