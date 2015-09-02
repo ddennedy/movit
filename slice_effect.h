@@ -24,6 +24,7 @@ public:
 	std::string output_fragment_shader();
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return false; }
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 	virtual void get_output_size(unsigned *width, unsigned *height,
 	                             unsigned *virtual_width, unsigned *virtual_height) const;

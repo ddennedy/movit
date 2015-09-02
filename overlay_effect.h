@@ -24,6 +24,7 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual unsigned num_inputs() const { return 2; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 	// Actually, if _either_ image has blank alpha, our output will have
 	// blank alpha, too (this only tells the framework that having _both_

@@ -41,6 +41,7 @@ public:
 	// no way of expressing that currently.
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return false; }
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 	virtual void get_output_size(unsigned *width, unsigned *height,

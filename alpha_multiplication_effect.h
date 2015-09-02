@@ -14,6 +14,7 @@ public:
 	AlphaMultiplicationEffect() {}
 	virtual std::string effect_type_id() const { return "AlphaMultiplicationEffect"; }
 	std::string output_fragment_shader();
+	virtual bool one_to_one_sampling() const { return true; }
 };
 
 }  // namespace movit

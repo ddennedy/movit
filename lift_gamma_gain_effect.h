@@ -32,6 +32,7 @@ public:
 	LiftGammaGainEffect();
 	virtual std::string effect_type_id() const { return "LiftGammaGainEffect"; }
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	virtual bool one_to_one_sampling() const { return true; }
 	std::string output_fragment_shader();
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);

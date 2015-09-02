@@ -85,6 +85,7 @@ public:
 	// in our own phase, which is exactly what we want.
 	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return false; }
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height)
 	{

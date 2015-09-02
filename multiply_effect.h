@@ -18,6 +18,7 @@ public:
 	MultiplyEffect();
 	virtual std::string effect_type_id() const { return "MultiplyEffect"; }
 	std::string output_fragment_shader();
+	virtual bool one_to_one_sampling() const { return true; }
 
 private:
 	RGBATuple factor;

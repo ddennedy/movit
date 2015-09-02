@@ -18,6 +18,7 @@ public:
 	SaturationEffect();
 	virtual std::string effect_type_id() const { return "SaturationEffect"; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	virtual bool one_to_one_sampling() const { return true; }
 	std::string output_fragment_shader();
 
 private:

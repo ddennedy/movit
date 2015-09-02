@@ -1053,6 +1053,93 @@ TEST(EffectChainTest, VirtualSizeIsSentOnToInputs) {
 	expect_equal(data, out_data, size, size);
 }
 
+// An effect that is like VirtualResizeEffect, but always has virtual and real
+// sizes the same (and promises this).
+class NonVirtualResizeEffect : public VirtualResizeEffect {
+public:
+	NonVirtualResizeEffect(int width, int height)
+		: VirtualResizeEffect(width, height, width, height) {}
+	virtual string effect_type_id() const { return "NonVirtualResizeEffect"; }
+	virtual bool sets_virtual_output_size() const { return false; }
+};
+
+// An effect that promises one-to-one sampling (unlike IdentityEffect).
+class OneToOneEffect : public Effect {
+public:
+	OneToOneEffect() {}
+	virtual string effect_type_id() const { return "OneToOneEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
+	virtual bool one_to_one_sampling() const { return true; }
+};
+
+TEST(EffectChainTest, NoBounceWithOneToOneSampling) {
+	const int size = 2;
+	float data[size * size] = {
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+	};
+	float out_data[size * size];
+
+	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	RewritingEffect<OneToOneEffect> *effect1 = new RewritingEffect<OneToOneEffect>();
+	RewritingEffect<OneToOneEffect> *effect2 = new RewritingEffect<OneToOneEffect>();
+
+	tester.get_chain()->add_effect(new NonVirtualResizeEffect(size, size));
+	tester.get_chain()->add_effect(effect1);
+	tester.get_chain()->add_effect(effect2);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, size, size);
+
+	// The first OneToOneEffect should be in the same phase as its input.
+	ASSERT_EQ(1, effect1->replaced_node->incoming_links.size());
+	EXPECT_EQ(effect1->replaced_node->incoming_links[0]->containing_phase,
+	          effect1->replaced_node->containing_phase);
+
+	// The second OneToOneEffect, too.
+	EXPECT_EQ(effect1->replaced_node->containing_phase,
+	          effect2->replaced_node->containing_phase);
+}
+
+TEST(EffectChainTest, BounceWhenOneToOneIsBroken) {
+	const int size = 2;
+	float data[size * size] = {
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+	};
+	float out_data[size * size];
+
+	EffectChainTester tester(data, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	RewritingEffect<OneToOneEffect> *effect1 = new RewritingEffect<OneToOneEffect>();
+	RewritingEffect<OneToOneEffect> *effect2 = new RewritingEffect<OneToOneEffect>();
+	RewritingEffect<IdentityEffect> *effect3 = new RewritingEffect<IdentityEffect>();
+	RewritingEffect<OneToOneEffect> *effect4 = new RewritingEffect<OneToOneEffect>();
+
+	tester.get_chain()->add_effect(new NonVirtualResizeEffect(size, size));
+	tester.get_chain()->add_effect(effect1);
+	tester.get_chain()->add_effect(effect2);
+	tester.get_chain()->add_effect(effect3);
+	tester.get_chain()->add_effect(effect4);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, size, size);
+
+	// The NonVirtualResizeEffect should be in a different phase from
+	// the IdentityEffect (since the latter is not one-to-one),
+	// ie., the chain should be broken somewhere between them, but exactly
+	// where doesn't matter.
+	ASSERT_EQ(1, effect1->replaced_node->incoming_links.size());
+	EXPECT_NE(effect1->replaced_node->incoming_links[0]->containing_phase,
+	          effect3->replaced_node->containing_phase);
+
+	// The last OneToOneEffect should also be in the same phase as the
+	// IdentityEffect (the phase was already broken).
+	EXPECT_EQ(effect3->replaced_node->containing_phase,
+	          effect4->replaced_node->containing_phase);
+}
+
 // Does not use EffectChainTest, so that it can construct an EffectChain without
 // a shared ResourcePool (which is also properly destroyed afterwards).
 // Also turns on debugging to test that code path.

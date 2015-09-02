@@ -161,11 +161,37 @@ public:
 	// needs mipmaps, you will also get them).
 	virtual bool needs_mipmaps() const { return false; }
 
+	// Whether there is a direct correspondence between input and output
+	// texels. Specifically, the effect must not:
+	//
+	//   1. Try to sample in the border (ie., outside the 0.0 to 1.0 area).
+	//   2. Try to sample between texels.
+	//   3. Sample with an x- or y-derivative different from -1 or 1.
+	//      (This also means needs_mipmaps() and one_to_one_sampling()
+	//      together would make no sense.)
+	//
+	// The most common case for this would be an effect that has an exact
+	// 1:1-correspondence between input and output texels, e.g. SaturationEffect.
+	// However, more creative things, like mirroring/flipping or padding,
+	// would also be allowed.
+	//
+	// The primary gain from setting this is that you can sample directly
+	// from an effect that changes output size (see changes_output_size() below),
+	// without going through a bounce texture. It won't work for effects that
+	// set sets_virtual_output_size(), though.
+	//
+	// Does not make a lot of sense together with needs_texture_bounce().
+	virtual bool one_to_one_sampling() const { return false; }
+
 	// Whether this effect wants to output to a different size than
-	// its input(s) (see inform_input_size(), below). If you set this to
-	// true, the output will be bounced to a texture (similarly to if the
-	// next effect set needs_texture_bounce()).
+	// its input(s) (see inform_input_size(), below). See also
+	// sets_virtual_output_size() below.
 	virtual bool changes_output_size() const { return false; }
+
+	// Whether your get_output_size() function (see below) intends to ever set
+	// virtual_width different from width, or similar for height.
+	// It does not make sense to set this to true if changes_output_size() is false.
+	virtual bool sets_virtual_output_size() const { return changes_output_size(); }
 
 	// Whether this effect is effectively sampling from a a single texture.
 	// If so, it will override needs_texture_bounce(); however, there are also

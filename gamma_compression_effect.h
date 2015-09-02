@@ -29,6 +29,7 @@ public:
 	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 	virtual bool needs_srgb_primaries() const { return false; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 	// Actually needs postmultiplied input as well as outputting it.
 	// EffectChain will take care of that.

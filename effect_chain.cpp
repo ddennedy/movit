@@ -89,6 +89,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->output_gamma_curve = GAMMA_INVALID;
 	node->output_alpha_type = ALPHA_INVALID;
 	node->needs_mipmaps = false;
+	node->one_to_one_sampling = false;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
@@ -289,8 +290,8 @@ void EffectChain::compile_glsl_program(Phase *phase)
 // Construct GLSL programs, starting at the given effect and following
 // the chain from there. We end a program every time we come to an effect
 // marked as "needs texture bounce", one that is used by multiple other
-// effects, every time an effect wants to change the output size,
-// and of course at the end.
+// effects, every time we need to bounce due to output size change
+// (not all size changes require ending), and of course at the end.
 //
 // We follow a quite simple depth-first search from the output, although
 // without recursing explicitly within each phase.
@@ -302,6 +303,13 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 	Phase *phase = new Phase;
 	phase->output_node = output;
+
+	// If the output effect has one-to-one sampling, we try to trace this
+	// status down through the dependency chain. This is important in case
+	// we hit an effect that changes output size (and not sets a virtual
+	// output size); if we have one-to-one sampling, we don't have to break
+	// the phase.
+	output->one_to_one_sampling = output->effect->one_to_one_sampling();
 
 	// Effects that we have yet to calculate, but that we know should
 	// be in the current phase.
@@ -380,7 +388,14 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				}
 			}
 
-			if (deps[i]->effect->changes_output_size()) {
+			if (deps[i]->effect->sets_virtual_output_size()) {
+				assert(deps[i]->effect->changes_output_size());
+				// If the next effect sets a virtual size to rely on OpenGL's
+				// bilinear sampling, we'll really need to break the phase here.
+				start_new_phase = true;
+			} else if (deps[i]->effect->changes_output_size() && !node->one_to_one_sampling) {
+				// If the next effect changes size and we don't have one-to-one sampling,
+				// we also need to break here.
 				start_new_phase = true;
 			}
 
@@ -388,6 +403,10 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				phase->inputs.push_back(construct_phase(deps[i], completed_effects));
 			} else {
 				effects_todo_this_phase.push(deps[i]);
+
+				// Propagate the one-to-one status down through the dependency.
+				deps[i]->one_to_one_sampling = node->one_to_one_sampling &&
+					deps[i]->effect->one_to_one_sampling();
 			}
 		}
 	}
@@ -417,6 +436,14 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			assert(!phase->input_needs_mipmaps || input->can_supply_mipmaps());
 			CHECK(input->set_int("needs_mipmaps", phase->input_needs_mipmaps));
 		}
+	}
+
+	// Tell each node which phase it ended up in, so that the unit test
+	// can check that the phases were split in the right place.
+	// Note that this ignores that effects may be part of multiple phases;
+	// if the unit tests need to test such cases, we'll reconsider.
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		phase->effects[i]->containing_phase = phase;
 	}
 
 	// Actually make the shader for this phase.
@@ -649,9 +676,12 @@ void EffectChain::inform_input_sizes(Phase *phase)
 		if (node->effect->changes_output_size()) {
 			// We cannot call get_output_size() before we've done inform_input_size()
 			// on all inputs.
-			unsigned real_width_ignored, real_height_ignored;
-			node->effect->get_output_size(&real_width_ignored, &real_height_ignored,
+			unsigned real_width, real_height;
+			node->effect->get_output_size(&real_width, &real_height,
 			                              &node->output_width, &node->output_height);
+			assert(node->effect->sets_virtual_output_size() ||
+			       (real_width == node->output_width &&
+			        real_height == node->output_height));
 		} else {
 			node->output_width = this_output_width;
 			node->output_height = this_output_height;
@@ -669,6 +699,9 @@ void EffectChain::find_output_size(Phase *phase)
 	if (output_node->effect->changes_output_size()) {
 		output_node->effect->get_output_size(&phase->output_width, &phase->output_height,
 		                                     &phase->virtual_output_width, &phase->virtual_output_height);
+		assert(output_node->effect->sets_virtual_output_size() ||
+		       (phase->output_width == phase->virtual_output_width &&
+			phase->output_height == phase->virtual_output_height));
 		return;
 	}
 

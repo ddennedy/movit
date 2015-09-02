@@ -31,6 +31,8 @@ public:
 	virtual AlphaHandling alpha_handling() const;
 	
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return false; }
+	virtual bool one_to_one_sampling() const { return true; }
 	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 

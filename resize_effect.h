@@ -24,6 +24,7 @@ public:
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return false; }
 	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
 
 private:

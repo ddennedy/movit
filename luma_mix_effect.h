@@ -26,6 +26,7 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual unsigned num_inputs() const { return 3; }
+	virtual bool one_to_one_sampling() const { return true; }
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 private:

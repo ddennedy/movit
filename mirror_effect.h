@@ -18,6 +18,7 @@ public:
 	virtual bool needs_linear_light() const { return false; }
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	virtual bool one_to_one_sampling() const { return true; }
 };
 
 }  // namespace movit

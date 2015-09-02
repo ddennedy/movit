@@ -30,6 +30,7 @@ public:
 
 	virtual bool needs_linear_light() const { return false; }
 	virtual bool needs_srgb_primaries() const { return false; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 	// Actually processes its input in a nonlinear fashion,
 	// but does not touch alpha, and we are a special case anyway.

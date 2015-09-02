@@ -81,6 +81,8 @@ public:
 		}
 	}
 	virtual bool changes_output_size() const { return true; }
+	virtual bool sets_virtual_output_size() const { return true; }
+	virtual bool one_to_one_sampling() const { return false; }  // Can sample outside the border.
 
 	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const {
 		*width = this->width;

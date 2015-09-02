@@ -62,6 +62,10 @@ public:
 	std::vector<Node *> outgoing_links;
 	std::vector<Node *> incoming_links;
 
+	// For unit tests only. Do not use from other code.
+	// Will contain an arbitrary choice if the node is in multiple phases.
+	Phase *containing_phase;
+
 private:
 	// Logical size of the output of this effect, ie. the resolution
 	// you would get if you sampled it as a texture. If it is undefined
@@ -84,6 +88,10 @@ private:
 	GammaCurve output_gamma_curve;
 	AlphaType output_alpha_type;
 	bool needs_mipmaps;  // Directly or indirectly.
+
+	// Set if this effect, and all effects consuming output from this node
+	// (in the same phase) have one_to_one_sampling() set.
+	bool one_to_one_sampling;
 
 	friend class EffectChain;
 };

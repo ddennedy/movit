@@ -57,6 +57,7 @@ public:
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	unsigned num_inputs() const { return 2; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 private:
 	float blurred_mix_amount;

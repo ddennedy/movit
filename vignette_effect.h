@@ -19,6 +19,7 @@ public:
 
 	virtual bool needs_srgb_primaries() const { return false; }
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);

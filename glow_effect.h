@@ -52,6 +52,7 @@ public:
 	std::string output_fragment_shader();
 	
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	virtual bool one_to_one_sampling() const { return true; }
 
 private:
 	float cutoff;
