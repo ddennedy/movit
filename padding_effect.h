@@ -5,8 +5,13 @@
 // (although the latter is implemented slightly less efficiently, and you cannot both
 // pad and crop in the same effect).
 //
-// The source image is cut off at the texel borders (so there is no interpolation
-// outside them), and then given a user-specific color; by default, full transparent.
+// The source image is cut off at the texture border, and then given a user-specific color;
+// by default, full transparent. You can give a fractional border size (non-integral
+// "top" or "left" offset) if you wish, which will give you linear interpolation of
+// both pixel data of and the border. Furthermore, you can offset where the border falls
+// by using the "border_offset_{top,bottom,left,right}" settings; this is particularly
+// useful if you use ResampleEffect earlier in the chain for high-quality fractional-pixel
+// translation and just want PaddingEffect to get the border right.
 //
 // The border color is taken to be in linear gamma, sRGB, with premultiplied alpha.
 // You may not change it after calling finalize(), since that could change the
@@ -15,6 +20,11 @@
 // IntegralPaddingEffect is like PaddingEffect, except that "top" and "left" parameters
 // are int parameters instead of float. This allows it to guarantee one-to-one sampling,
 // which can speed up processing by allowing more effect passes to be collapsed.
+// border_offset_* are still allowed to be float, although you should beware that if
+// you set e.g. border_offset_top to a negative value, you will be sampling outside
+// the edge and will read data that is undefined in one-to-one-mode (could be
+// edge repeat, could be something else). With regular PaddingEffect, such samples
+// are guaranteed to be edge repeat.
 
 #include <epoxy/gl.h>
 #include <string>
@@ -44,6 +54,8 @@ private:
 	int input_width, input_height;
 	int output_width, output_height;
 	float top, left;
+	float border_offset_top, border_offset_left;
+	float border_offset_bottom, border_offset_right;
 };
 
 class IntegralPaddingEffect : public PaddingEffect {

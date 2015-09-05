@@ -1,16 +1,24 @@
 uniform vec2 PREFIX(offset);
 uniform vec2 PREFIX(scale);
-uniform vec2 PREFIX(texcoord_min);
-uniform vec2 PREFIX(texcoord_max);
+
+uniform vec2 PREFIX(normalized_coords_to_texels);
+uniform vec2 PREFIX(offset_bottomleft);
+uniform vec2 PREFIX(offset_topright);
 
 vec4 FUNCNAME(vec2 tc) {
 	tc -= PREFIX(offset);
 	tc *= PREFIX(scale);
 
-	if (any(lessThan(tc, PREFIX(texcoord_min))) ||
-	    any(greaterThan(tc, PREFIX(texcoord_max)))) {
-		return PREFIX(border_color);
-	}
+	vec2 tc_texels = tc * PREFIX(normalized_coords_to_texels);
+	vec2 coverage_bottomleft = clamp(tc_texels + PREFIX(offset_bottomleft), 0.0f, 1.0f);
+	vec2 coverare_topright = clamp(PREFIX(offset_topright) - tc_texels, 0.0f, 1.0f);
+	vec2 coverage_both = coverage_bottomleft * coverare_topright;
+	float coverage = coverage_both.x * coverage_both.y;
 
-	return INPUT(tc);
+	if (coverage <= 0.0f) {
+		// Short-circuit in case the underlying function is expensive to call.
+		return PREFIX(border_color);
+	} else {
+		return mix(PREFIX(border_color), INPUT(tc), coverage);
+	}
 }

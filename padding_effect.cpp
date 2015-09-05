@@ -14,13 +14,21 @@ PaddingEffect::PaddingEffect()
 	  output_width(1280),
 	  output_height(720),
 	  top(0),
-	  left(0)
+	  left(0),
+	  border_offset_top(0.0f),
+	  border_offset_left(0.0f),
+	  border_offset_bottom(0.0f),
+	  border_offset_right(0.0f)
 {
 	register_vec4("border_color", (float *)&border_color);
 	register_int("width", &output_width);
 	register_int("height", &output_height);
 	register_float("top", &top);
 	register_float("left", &left);
+	register_float("border_offset_top", &border_offset_top);
+	register_float("border_offset_left", &border_offset_left);
+	register_float("border_offset_bottom", &border_offset_bottom);
+	register_float("border_offset_right", &border_offset_right);
 }
 
 string PaddingEffect::output_fragment_shader()
@@ -44,23 +52,24 @@ void PaddingEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 	};
 	set_uniform_vec2(glsl_program_num, prefix, "scale", scale);
 
-	// Due to roundoff errors, the test against 0.5 is seldom exact,
-	// even though we test for less than and not less-than-or-equal.
-	// We'd rather keep an extra border pixel in those very rare cases
-	// (where the image is shifted pretty much exactly a half-pixel)
-	// than losing a pixel in the common cases of integer shift.
-	// Thus the 1e-3 fudge factors.
-	float texcoord_min[2] = {
-		float((0.5f - 1e-3) / input_width),
-		float((0.5f - 1e-3) / input_height)
+	float normalized_coords_to_texels[2] = {
+		float(input_width), float(input_height)
 	};
-	set_uniform_vec2(glsl_program_num, prefix, "texcoord_min", texcoord_min);
+	set_uniform_vec2(glsl_program_num, prefix, "normalized_coords_to_texels", normalized_coords_to_texels);
 
-	float texcoord_max[2] = {
-		float(1.0f - (0.5f - 1e-3) / input_width),
-		float(1.0f - (0.5f - 1e-3) / input_height)
+	// Texels -0.5..0.5 should map to light level 0..1 (and then we
+	// clamp the rest).
+	float offset_bottomleft[2] = {
+		0.5f - border_offset_left, 0.5f + border_offset_bottom,
 	};
-	set_uniform_vec2(glsl_program_num, prefix, "texcoord_max", texcoord_max);
+
+	// Texels size-0.5..size+0.5 should map to light level 1..0 (and then clamp).
+	float offset_topright[2] = {
+		input_width + 0.5f + border_offset_right, input_height + 0.5f - border_offset_top,
+	};
+
+	set_uniform_vec2(glsl_program_num, prefix, "offset_bottomleft", offset_bottomleft);
+	set_uniform_vec2(glsl_program_num, prefix, "offset_topright", offset_topright);
 }
 	
 // We don't change the pixels of the image itself, so the only thing that 
