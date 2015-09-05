@@ -1,4 +1,4 @@
-// Unit tests for AlphaMultiplicationEffect.
+// Unit tests for PaddingEffect.
 
 #include <epoxy/gl.h>
 #include <stddef.h>
