@@ -11,6 +11,10 @@
 // The border color is taken to be in linear gamma, sRGB, with premultiplied alpha.
 // You may not change it after calling finalize(), since that could change the
 // graph (need_linear_light() etc. depend on the border color you choose).
+//
+// IntegralPaddingEffect is like PaddingEffect, except that "top" and "left" parameters
+// are int parameters instead of float. This allows it to guarantee one-to-one sampling,
+// which can speed up processing by allowing more effect passes to be collapsed.
 
 #include <epoxy/gl.h>
 #include <string>
@@ -32,7 +36,6 @@ public:
 	
 	virtual bool changes_output_size() const { return true; }
 	virtual bool sets_virtual_output_size() const { return false; }
-	virtual bool one_to_one_sampling() const { return true; }
 	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 
@@ -41,6 +44,15 @@ private:
 	int input_width, input_height;
 	int output_width, output_height;
 	float top, left;
+};
+
+class IntegralPaddingEffect : public PaddingEffect {
+public:
+	IntegralPaddingEffect();
+	virtual std::string effect_type_id() const { return "IntegralPaddingEffect"; }
+	virtual bool one_to_one_sampling() const { return true; }
+	virtual bool set_int(const std::string&, int value);
+	virtual bool set_float(const std::string &key, float value);
 };
 
 }  // namespace movit

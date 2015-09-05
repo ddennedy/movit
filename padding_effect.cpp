@@ -133,4 +133,25 @@ void PaddingEffect::inform_input_size(unsigned input_num, unsigned width, unsign
 	input_height = height;
 }
 
+IntegralPaddingEffect::IntegralPaddingEffect() {}
+
+bool IntegralPaddingEffect::set_int(const std::string &key, int value)
+{
+	if (key == "top" || key == "left") {
+		return PaddingEffect::set_float(key, value);
+	} else {
+		return PaddingEffect::set_int(key, value);
+	}
+}
+
+bool IntegralPaddingEffect::set_float(const std::string &key, float value)
+{
+	if (key == "top" || key == "left") {
+		// These are removed as float parameters from this version.
+		return false;
+	} else {
+		return PaddingEffect::set_float(key, value);
+	}
+}
+
 }  // namespace movit
