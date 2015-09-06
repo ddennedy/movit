@@ -109,6 +109,8 @@ private:
 	float last_offset, last_zoom;
 	int src_bilinear_samples, num_loops;
 	float slice_height;
+	int last_texture_width, last_texture_height;
+	GLuint last_texture_internal_format;
 };
 
 }  // namespace movit

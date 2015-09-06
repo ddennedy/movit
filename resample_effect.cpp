@@ -380,7 +380,8 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	  last_output_width(-1),
 	  last_output_height(-1),
 	  last_offset(0.0 / 0.0),  // NaN.
-	  last_zoom(0.0 / 0.0)  // NaN.
+	  last_zoom(0.0 / 0.0),  // NaN.
+	  last_texture_width(-1), last_texture_height(-1)
 {
 	register_int("direction", (int *)&direction);
 	register_int("input_width", &input_width);
@@ -554,16 +555,39 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	check_error();
+	if (last_texture_width == -1) {
+		// Need to set this state the first time.
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		check_error();
+	}
+
+	GLenum type, internal_format;
+	void *pixels;
 	if (fallback_to_fp32) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_FLOAT, bilinear_weights_fp32);
+		type = GL_FLOAT;
+		internal_format = GL_RG32F;
+		pixels = bilinear_weights_fp32;
 	} else {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, src_bilinear_samples, dst_samples, 0, GL_RG, GL_HALF_FLOAT, bilinear_weights_fp16);
+		type = GL_HALF_FLOAT;
+		internal_format = GL_RG16F;
+		pixels = bilinear_weights_fp16;
+	}
+
+	if (int(src_bilinear_samples) == last_texture_width &&
+	    int(dst_samples) == last_texture_height &&
+	    internal_format == last_texture_internal_format) {
+		// Texture dimensions and type are unchanged; it is more efficient
+		// to just update it rather than making an entirely new texture.
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, src_bilinear_samples, dst_samples, GL_RG, type, pixels);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, src_bilinear_samples, dst_samples, 0, GL_RG, type, pixels);
+		last_texture_width = src_bilinear_samples;
+		last_texture_height = dst_samples;
+		last_texture_internal_format = internal_format;
 	}
 	check_error();
 
