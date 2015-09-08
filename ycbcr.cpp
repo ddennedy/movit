@@ -90,6 +90,7 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 	}
 
 	if (ycbcr_format.full_range) {
+		// TODO: Use num_levels.
 		offset[0] = 0.0 / 255.0;
 		offset[1] = 128.0 / 255.0;
 		offset[2] = 128.0 / 255.0;
@@ -99,6 +100,7 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 		scale[2] = 1.0;
 	} else {
 		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 4.
+		// TODO: Use num_levels.
 		offset[0] = 16.0 / 255.0;
 		offset[1] = 128.0 / 255.0;
 		offset[2] = 128.0 / 255.0;

@@ -44,6 +44,7 @@ TEST(YCbCrInputTest, Simple444) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.5f;
@@ -98,6 +99,7 @@ TEST(YCbCrInputTest, FullRangeRec601) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = true;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.5f;
@@ -151,6 +153,7 @@ TEST(YCbCrInputTest, Rec709) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_709;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.5f;
@@ -206,6 +209,7 @@ TEST(YCbCrInputTest, Rec2020) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_2020;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.5f;
@@ -267,6 +271,7 @@ TEST(YCbCrInputTest, Subsampling420) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 2;
 	ycbcr_format.cb_x_position = 0.5f;
@@ -328,6 +333,7 @@ TEST(YCbCrInputTest, Subsampling420WithNonCenteredSamples) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 2;
 	ycbcr_format.cb_x_position = 0.0f;
@@ -397,6 +403,7 @@ TEST(YCbCrInputTest, DifferentCbAndCrPositioning) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.0f;
@@ -454,6 +461,7 @@ TEST(YCbCrInputTest, PBO) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 1;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.5f;

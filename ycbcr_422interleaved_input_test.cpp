@@ -45,6 +45,7 @@ TEST(YCbCr422InterleavedInputTest, Simple422) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.0f;  // Doesn't really matter here, since Y is constant.
@@ -90,6 +91,7 @@ TEST(YCbCr422InterleavedInputTest, LumaLinearInterpolation) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.0f;  // Doesn't really matter here, since U/V are constant.
@@ -150,6 +152,7 @@ TEST(YCbCr422InterleavedInputTest, DifferentCbAndCrPositioning) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.0f;
@@ -208,6 +211,7 @@ TEST(YCbCr422InterleavedInputTest, PBO) {
 	YCbCrFormat ycbcr_format;
 	ycbcr_format.luma_coefficients = YCBCR_REC_601;
 	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
 	ycbcr_format.chroma_subsampling_x = 2;
 	ycbcr_format.chroma_subsampling_y = 1;
 	ycbcr_format.cb_x_position = 0.0f;  // Doesn't really matter here, since Y is constant.
