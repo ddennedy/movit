@@ -47,7 +47,7 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve,
                                      GLenum framebuffer_format)
-	: chain(width, height, get_static_pool()), width(width), height(height), finalized(false)
+	: chain(width, height, get_static_pool()), width(width), height(height), output_added(false), finalized(false)
 {
 	CHECK(init_movit(".", MOVIT_DEBUG_OFF));
 
@@ -215,13 +215,28 @@ void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace c
 	vertical_flip(out_data, width, height);
 }
 
+void EffectChainTester::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)
+{
+	chain.add_output(format, alpha_format);
+	output_added = true;
+}
+
+void EffectChainTester::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format, const YCbCrFormat &ycbcr_format)
+{
+	chain.add_ycbcr_output(format, alpha_format, ycbcr_format);
+	output_added = true;
+}
+
 void EffectChainTester::finalize_chain(Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
 	assert(!finalized);
-	ImageFormat image_format;
-	image_format.color_space = color_space;
-	image_format.gamma_curve = gamma_curve;
-	chain.add_output(image_format, alpha_format);
+	if (!output_added) {
+		ImageFormat image_format;
+		image_format.color_space = color_space;
+		image_format.gamma_curve = gamma_curve;
+		chain.add_output(image_format, alpha_format);
+		output_added = true;
+	}
 	chain.finalize();
 	finalized = true;
 }

@@ -40,6 +40,7 @@ fp16_test
 luma_mix_effect_test
 slice_effect_test
 vignette_effect_test
+ycbcr_conversion_effect_test
 chain-*.frag
 movit.info
 coverage/

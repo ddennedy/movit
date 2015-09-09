@@ -25,6 +25,7 @@
 #include "input.h"
 #include "resource_pool.h"
 #include "util.h"
+#include "ycbcr_conversion_effect.h"
 
 using namespace std;
 
@@ -74,6 +75,20 @@ void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_
 	assert(!finalized);
 	output_format = format;
 	output_alpha_format = alpha_format;
+	output_color_type = OUTPUT_COLOR_RGB;
+}
+
+void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
+                                   const YCbCrFormat &ycbcr_format)
+{
+	assert(!finalized);
+	output_format = format;
+	output_alpha_format = alpha_format;
+	output_color_type = OUTPUT_COLOR_YCBCR;
+	output_ycbcr_format = ycbcr_format;
+
+	assert(ycbcr_format.chroma_subsampling_x == 1);
+	assert(ycbcr_format.chroma_subsampling_y == 1);
 }
 
 Node *EffectChain::add_node(Effect *effect)
@@ -1363,6 +1378,22 @@ void EffectChain::fix_output_gamma()
 		connect_nodes(output, conversion);
 	}
 }
+
+// If the user has requested Y'CbCr output, we need to do this conversion
+// _after_ GammaCompressionEffect etc., but before dither (see below).
+// This is because Y'CbCr, with the exception of a special optional mode
+// in Rec. 2020 (which we currently don't support), is defined to work on
+// gamma-encoded data.
+void EffectChain::add_ycbcr_conversion_if_needed()
+{
+	assert(output_color_type == OUTPUT_COLOR_RGB || output_color_type == OUTPUT_COLOR_YCBCR);
+	if (output_color_type != OUTPUT_COLOR_YCBCR) {
+		return;
+	}
+	Node *output = find_output_node();
+	Node *ycbcr = add_node(new YCbCrConversionEffect(output_ycbcr_format));
+	connect_nodes(output, ycbcr);
+}
 	
 // If the user has requested dither, add a DitherEffect right at the end
 // (after GammaCompressionEffect etc.). This needs to be done after everything else,
@@ -1445,11 +1476,13 @@ void EffectChain::finalize()
 	fix_internal_gamma_by_asking_inputs(15);
 	fix_internal_gamma_by_inserting_nodes(16);
 
-	output_dot("step17-before-dither.dot");
+	output_dot("step17-before-ycbcr.dot");
+	add_ycbcr_conversion_if_needed();
 
+	output_dot("step18-before-dither.dot");
 	add_dither_if_needed();
 
-	output_dot("step18-final.dot");
+	output_dot("step19-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
 	// We need to keep track of which effects have already been computed,
@@ -1458,7 +1491,7 @@ void EffectChain::finalize()
 	map<Node *, Phase *> completed_effects;
 	construct_phase(find_output_node(), &completed_effects);
 
-	output_dot("step19-split-to-phases.dot");
+	output_dot("step20-split-to-phases.dot");
 
 	assert(phases[0]->inputs.empty());
 	

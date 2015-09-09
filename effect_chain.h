@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "image_format.h"
+#include "ycbcr.h"
 
 namespace movit {
 
@@ -162,7 +163,14 @@ public:
 	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
+	// Adds an RGB output. Note that you can only have one output.
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
+
+	// Adds an YCbCr output. Note that you can only have one output.
+	// Currently, only chunked packed output is supported, and only 4:4:4
+	// (so chroma_subsampling_x and chroma_subsampling_y must both be 1).
+	void add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
+	                      const YCbCrFormat &ycbcr_format);
 
 	// Set number of output bits, to scale the dither.
 	// 8 is the right value for most outputs.
@@ -303,11 +311,16 @@ private:
 	void fix_internal_gamma_by_asking_inputs(unsigned step);
 	void fix_internal_gamma_by_inserting_nodes(unsigned step);
 	void fix_output_gamma();
+	void add_ycbcr_conversion_if_needed();
 	void add_dither_if_needed();
 
 	float aspect_nom, aspect_denom;
 	ImageFormat output_format;
 	OutputAlphaFormat output_alpha_format;
+
+	enum OutputColorType { OUTPUT_COLOR_RGB, OUTPUT_COLOR_YCBCR };
+	OutputColorType output_color_type;
+	YCbCrFormat output_ycbcr_format;  // If output_color_type == OUTPUT_COLOR_YCBCR.
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;

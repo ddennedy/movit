@@ -1,7 +1,8 @@
 #ifndef _MOVIT_YCBCR_H
 #define _MOVIT_YCBCR_H 1
 
-// Shared utility functions between YCbCrInput and YCbCr422InterleavedInput.
+// Shared utility functions between YCbCrInput, YCbCr422InterleavedInput
+// and YCbCrConversionEffect.
 //
 // Conversion from integer to floating-point representation in case of
 // Y'CbCr is seemingly tricky:
