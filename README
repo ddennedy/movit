@@ -93,12 +93,12 @@ OK, I can read a bit. What do you mean by “modern”?
 Backwards compatibility is fine and all, but sometimes we can do better
 by observing that the world has moved on. In particular:
 
-* It's 2014, so people want to edit HD video.
-* It's 2014, so everybody has a GPU.
-* It's 2014, so everybody has a working C++ compiler.
+* It's 2015, so people want to edit HD video.
+* It's 2015, so everybody has a GPU.
+* It's 2015, so everybody has a working C++ compiler.
   (Even Microsoft fixed theirs around 2003!)
 
-While from a programming standpoint I'd love to say that it's 2014
+While from a programming standpoint I'd love to say that it's 2015
 and interlacing does no longer exist, but that's not true (and interlacing,
 hated as it might be, is actually a useful and underrated technique for
 bandwidth reduction in broadcast video). Movit will eventually provide
