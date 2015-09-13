@@ -247,6 +247,55 @@ string replace_prefix(const string &text, const string &prefix)
 	return output;
 }
 
+namespace {
+
+template<class T>
+void extract_uniform_declarations(const vector<Uniform<T> > &effect_uniforms,
+                                  const string &type_specifier,
+                                  const string &effect_id,
+                                  vector<Uniform<T> > *phase_uniforms,
+                                  string *glsl_string)
+{
+	for (unsigned i = 0; i < effect_uniforms.size(); ++i) {
+		phase_uniforms->push_back(effect_uniforms[i]);
+		phase_uniforms->back().prefix = effect_id;
+
+		*glsl_string += string("uniform ") + type_specifier + " " + effect_id
+			+ "_" + effect_uniforms[i].name + ";\n";
+	}
+}
+
+template<class T>
+void extract_uniform_array_declarations(const vector<Uniform<T> > &effect_uniforms,
+                                        const string &type_specifier,
+                                        const string &effect_id,
+                                        vector<Uniform<T> > *phase_uniforms,
+                                        string *glsl_string)
+{
+	for (unsigned i = 0; i < effect_uniforms.size(); ++i) {
+		phase_uniforms->push_back(effect_uniforms[i]);
+		phase_uniforms->back().prefix = effect_id;
+
+		char buf[256];
+		snprintf(buf, sizeof(buf), "uniform %s %s_%s[%d];\n",
+			type_specifier.c_str(), effect_id.c_str(),
+			effect_uniforms[i].name.c_str(),
+			int(effect_uniforms[i].num_values));
+		*glsl_string += buf;
+	}
+}
+
+template<class T>
+void collect_uniform_locations(GLuint glsl_program_num, vector<Uniform<T> > *phase_uniforms)
+{
+	for (unsigned i = 0; i < phase_uniforms->size(); ++i) {
+		Uniform<T> &uniform = (*phase_uniforms)[i];
+		uniform.location = get_uniform_location(glsl_program_num, uniform.prefix, uniform.name);
+	}
+}
+
+}  // namespace
+
 void EffectChain::compile_glsl_program(Phase *phase)
 {
 	string frag_shader_header = read_version_dependent_file("header", "frag");
@@ -325,72 +374,16 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *node = phase->effects[i];
 		Effect *effect = node->effect;
 		const string effect_id = phase->effect_ids[node];
-		for (unsigned j = 0; j < effect->uniforms_sampler2d.size(); ++j) {
-			phase->uniforms_sampler2d.push_back(effect->uniforms_sampler2d[j]);
-			phase->uniforms_sampler2d.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform sampler2D ") + effect_id
-				+ "_" + effect->uniforms_sampler2d[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_bool.size(); ++j) {
-			phase->uniforms_bool.push_back(effect->uniforms_bool[j]);
-			phase->uniforms_bool.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform bool ") + effect_id
-				+ "_" + effect->uniforms_bool[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_int.size(); ++j) {
-			phase->uniforms_int.push_back(effect->uniforms_int[j]);
-			phase->uniforms_int.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform int ") + effect_id
-				+ "_" + effect->uniforms_int[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_float.size(); ++j) {
-			phase->uniforms_float.push_back(effect->uniforms_float[j]);
-			phase->uniforms_float.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform float ") + effect_id
-				+ "_" + effect->uniforms_float[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_vec2.size(); ++j) {
-			phase->uniforms_vec2.push_back(effect->uniforms_vec2[j]);
-			phase->uniforms_vec2.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform vec2 ") + effect_id
-				+ "_" + effect->uniforms_vec2[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_vec3.size(); ++j) {
-			phase->uniforms_vec3.push_back(effect->uniforms_vec3[j]);
-			phase->uniforms_vec3.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform vec3 ") + effect_id
-				+ "_" + effect->uniforms_vec3[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_vec4.size(); ++j) {
-			phase->uniforms_vec4.push_back(effect->uniforms_vec4[j]);
-			phase->uniforms_vec4.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform vec4 ") + effect_id
-				+ "_" + effect->uniforms_vec4[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_vec2_array.size(); ++j) {
-			char buf[256];
-			phase->uniforms_vec2.push_back(effect->uniforms_vec2_array[j]);
-			phase->uniforms_vec2.back().prefix = effect_id;
-			snprintf(buf, sizeof(buf), "uniform vec2 %s_%s[%d];\n",
-				effect_id.c_str(), effect->uniforms_vec2_array[j].name.c_str(),
-				int(effect->uniforms_vec2_array[j].num_values));
-			frag_shader_uniforms += buf;
-		}
-		for (unsigned j = 0; j < effect->uniforms_vec4_array.size(); ++j) {
-			char buf[256];
-			phase->uniforms_vec4.push_back(effect->uniforms_vec4_array[j]);
-			phase->uniforms_vec4.back().prefix = effect_id;
-			snprintf(buf, sizeof(buf), "uniform vec4 %s_%s[%d];\n",
-				effect_id.c_str(), effect->uniforms_vec4_array[j].name.c_str(),
-				int(effect->uniforms_vec4_array[j].num_values));
-			frag_shader_uniforms += buf;
-		}
-		for (unsigned j = 0; j < effect->uniforms_mat3.size(); ++j) {
-			phase->uniforms_mat3.push_back(effect->uniforms_mat3[j]);
-			phase->uniforms_mat3.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform mat3 ") + effect_id
-				+ "_" + effect->uniforms_mat3[j].name + ";\n";
-		}
+		extract_uniform_declarations(effect->uniforms_sampler2d, "sampler2D", effect_id, &phase->uniforms_sampler2d, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_bool, "bool", effect_id, &phase->uniforms_bool, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_int, "int", effect_id, &phase->uniforms_int, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_float, "float", effect_id, &phase->uniforms_float, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_vec2, "vec2", effect_id, &phase->uniforms_vec2, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_vec3, "vec3", effect_id, &phase->uniforms_vec3, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_vec4, "vec4", effect_id, &phase->uniforms_vec4, &frag_shader_uniforms);
+		extract_uniform_array_declarations(effect->uniforms_vec2_array, "vec2", effect_id, &phase->uniforms_vec2, &frag_shader_uniforms);
+		extract_uniform_array_declarations(effect->uniforms_vec4_array, "vec4", effect_id, &phase->uniforms_vec4, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_mat3, "mat3", effect_id, &phase->uniforms_mat3, &frag_shader_uniforms);
 	}
 
 	frag_shader = frag_shader_header + frag_shader_uniforms + frag_shader;
@@ -398,39 +391,15 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	string vert_shader = read_version_dependent_file("vs", "vert");
 	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
 
-	// Collect the resulting program numbers for each uniform.
-	for (unsigned i = 0; i < phase->uniforms_sampler2d.size(); ++i) {
-		Uniform<int> &uniform = phase->uniforms_sampler2d[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_bool.size(); ++i) {
-		Uniform<bool> &uniform = phase->uniforms_bool[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_int.size(); ++i) {
-		Uniform<int> &uniform = phase->uniforms_int[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_float.size(); ++i) {
-		Uniform<float> &uniform = phase->uniforms_float[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_vec2.size(); ++i) {
-		Uniform<float> &uniform = phase->uniforms_vec2[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_vec3.size(); ++i) {
-		Uniform<float> &uniform = phase->uniforms_vec3[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_vec4.size(); ++i) {
-		Uniform<float> &uniform = phase->uniforms_vec4[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
-	for (unsigned i = 0; i < phase->uniforms_mat3.size(); ++i) {
-		Uniform<Matrix3d> &uniform = phase->uniforms_mat3[i];
-		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
-	}
+	// Collect the resulting location numbers for each uniform.
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_sampler2d);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_bool);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_int);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_float);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_vec2);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_vec3);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_vec4);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_mat3);
 }
 
 // Construct GLSL programs, starting at the given effect and following
