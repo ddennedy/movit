@@ -252,7 +252,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	string frag_shader_header = read_version_dependent_file("header", "frag");
 	string frag_shader = "";
 
-	// Create functions for all the texture inputs that we need.
+	// Create functions and uniforms for all the texture inputs that we need.
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
 		Node *input = phase->inputs[i]->output_node;
 		char effect_id[256];
@@ -264,6 +264,14 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\treturn tex2D(tex_" + string(effect_id) + ", tc);\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
+
+		Uniform<int> uniform;
+		uniform.name = effect_id;
+		uniform.value = &phase->input_samplers[i];
+		uniform.prefix = "tex";
+		uniform.num_values = 1;
+		uniform.location = -1;
+		phase->uniforms_sampler2d.push_back(uniform);
 	}
 
 	// Give each effect in the phase its own ID.
@@ -556,6 +564,9 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	// Deduplicate the inputs.
 	sort(phase->inputs.begin(), phase->inputs.end());
 	phase->inputs.erase(unique(phase->inputs.begin(), phase->inputs.end()), phase->inputs.end());
+
+	// Allocate samplers for each input.
+	phase->input_samplers.resize(phase->inputs.size());
 
 	// We added the effects from the output and back, but we need to output
 	// them in topological sort order in the shader.
@@ -1768,7 +1779,8 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 			check_error();
 			generated_mipmaps->insert(input);
 		}
-		setup_rtt_sampler(glsl_program_num, sampler, phase->effect_ids[input->output_node], phase->input_needs_mipmaps);
+		setup_rtt_sampler(sampler, phase->input_needs_mipmaps);
+		phase->input_samplers[sampler] = sampler;  // Bind the sampler to the right uniform.
 	}
 
 	// And now the output. (Already set up for us if it is the last phase.)
@@ -1898,7 +1910,7 @@ void EffectChain::setup_uniforms(Phase *phase)
 	}
 }
 
-void EffectChain::setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const string &effect_id, bool use_mipmaps)
+void EffectChain::setup_rtt_sampler(int sampler_num, bool use_mipmaps)
 {
 	glActiveTexture(GL_TEXTURE0 + sampler_num);
 	check_error();
@@ -1912,10 +1924,6 @@ void EffectChain::setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, co
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	check_error();
-
-	string texture_name = string("tex_") + effect_id;
-	glUniform1i(glGetUniformLocation(glsl_program_num, texture_name.c_str()), sampler_num);
 	check_error();
 }
 

@@ -109,6 +109,10 @@ struct Phase {
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
 	// input textures are counted as part of <effects>.
 	std::vector<Phase *> inputs;
+	// Bound sampler numbers for each input. Redundant in a sense
+	// (it always corresponds to the index), but we need somewhere
+	// to hold the value for the uniform.
+	std::vector<int> input_samplers;
 	std::vector<Node *> effects;  // In order.
 	unsigned output_width, output_height, virtual_output_width, virtual_output_height;
 
@@ -280,9 +284,8 @@ private:
 	// Set up uniforms for one phase. The program must already be bound.
 	void setup_uniforms(Phase *phase);
 
-	// Set up the given sampler number for sampling from an RTT texture,
-	// and bind it to "tex_" plus the given GLSL variable.
-	void setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const std::string &effect_id, bool use_mipmaps);
+	// Set up the given sampler number for sampling from an RTT texture.
+	void setup_rtt_sampler(int sampler_num, bool use_mipmaps);
 
 	// Output the current graph to the given file in a Graphviz-compatible format;
 	// only useful for debugging.
