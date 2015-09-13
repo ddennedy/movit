@@ -25,6 +25,7 @@ class Node;
 
 // Can alias on a float[2].
 struct Point2D {
+	Point2D() {}
 	Point2D(float x, float y)
 		: x(x), y(y) {}
 
@@ -33,6 +34,7 @@ struct Point2D {
 
 // Can alias on a float[3].
 struct RGBTriplet {
+	RGBTriplet() {}
 	RGBTriplet(float r, float g, float b)
 		: r(r), g(g), b(b) {}
 
@@ -41,6 +43,7 @@ struct RGBTriplet {
 
 // Can alias on a float[4].
 struct RGBATuple {
+	RGBATuple() {}
 	RGBATuple(float r, float g, float b, float a)
 		: r(r), g(g), b(b), a(a) {}
 
