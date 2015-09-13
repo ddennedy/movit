@@ -40,6 +40,9 @@ private:
 	int input_slice_size, output_slice_size;
 	int offset;
 	Direction direction;
+
+	float uniform_output_coord_to_slice_num, uniform_slice_num_to_input_coord;
+	float uniform_slice_offset_to_input_coord, uniform_offset;
 };
 
 }  // namespace movit

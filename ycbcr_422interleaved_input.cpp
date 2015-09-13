@@ -36,6 +36,9 @@ YCbCr422InterleavedInput::YCbCr422InterleavedInput(const ImageFormat &image_form
 	pitches[CHANNEL_CHROMA] = width / ycbcr_format.chroma_subsampling_x;
 
 	pixel_data = NULL;
+
+	register_uniform_sampler2d("tex_y", &uniform_tex_y);
+	register_uniform_sampler2d("tex_cbcr", &uniform_tex_cbcr);
 }
 
 YCbCr422InterleavedInput::~YCbCr422InterleavedInput()
@@ -94,8 +97,8 @@ void YCbCr422InterleavedInput::set_gl_state(GLuint glsl_program_num, const strin
 	check_error();
 
 	// Bind samplers.
-	set_uniform_int(glsl_program_num, prefix, "tex_y", *sampler_num + 0);
-	set_uniform_int(glsl_program_num, prefix, "tex_cbcr", *sampler_num + 1);
+	uniform_tex_y = *sampler_num + 0;
+	uniform_tex_cbcr = *sampler_num + 1;
 
 	*sampler_num += 2;
 }

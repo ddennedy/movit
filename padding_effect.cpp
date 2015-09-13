@@ -29,6 +29,11 @@ PaddingEffect::PaddingEffect()
 	register_float("border_offset_left", &border_offset_left);
 	register_float("border_offset_bottom", &border_offset_bottom);
 	register_float("border_offset_right", &border_offset_right);
+	register_uniform_vec2("offset", uniform_offset);
+	register_uniform_vec2("scale", uniform_scale);
+	register_uniform_vec2("normalized_coords_to_texels", uniform_normalized_coords_to_texels);
+	register_uniform_vec2("offset_bottomleft", uniform_offset_bottomleft);
+	register_uniform_vec2("offset_topright", uniform_offset_topright);
 }
 
 string PaddingEffect::output_fragment_shader()
@@ -40,36 +45,23 @@ void PaddingEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	float offset[2] = {
-		left / output_width,
-		(output_height - input_height - top) / output_height
-	};
-	set_uniform_vec2(glsl_program_num, prefix, "offset", offset);
+	uniform_offset[0] = left / output_width;
+	uniform_offset[1] = (output_height - input_height - top) / output_height;
 
-	float scale[2] = {
-		float(output_width) / input_width,
-		float(output_height) / input_height
-	};
-	set_uniform_vec2(glsl_program_num, prefix, "scale", scale);
+	uniform_scale[0] = float(output_width) / input_width;
+	uniform_scale[1] = float(output_height) / input_height;
 
-	float normalized_coords_to_texels[2] = {
-		float(input_width), float(input_height)
-	};
-	set_uniform_vec2(glsl_program_num, prefix, "normalized_coords_to_texels", normalized_coords_to_texels);
+	uniform_normalized_coords_to_texels[0] = float(input_width);
+	uniform_normalized_coords_to_texels[1] = float(input_height);
 
 	// Texels -0.5..0.5 should map to light level 0..1 (and then we
 	// clamp the rest).
-	float offset_bottomleft[2] = {
-		0.5f - border_offset_left, 0.5f + border_offset_bottom,
-	};
+	uniform_offset_bottomleft[0] = 0.5f - border_offset_left;
+	uniform_offset_bottomleft[1] = 0.5f + border_offset_bottom;
 
 	// Texels size-0.5..size+0.5 should map to light level 1..0 (and then clamp).
-	float offset_topright[2] = {
-		input_width + 0.5f + border_offset_right, input_height + 0.5f - border_offset_top,
-	};
-
-	set_uniform_vec2(glsl_program_num, prefix, "offset_bottomleft", offset_bottomleft);
-	set_uniform_vec2(glsl_program_num, prefix, "offset_topright", offset_topright);
+	uniform_offset_topright[0] = input_width + 0.5f + border_offset_right;
+	uniform_offset_topright[1] = input_height + 0.5f - border_offset_top;
 }
 	
 // We don't change the pixels of the image itself, so the only thing that 

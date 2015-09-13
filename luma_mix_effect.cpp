@@ -12,6 +12,8 @@ LumaMixEffect::LumaMixEffect()
 	register_float("transition_width", &transition_width);
 	register_float("progress", &progress);
 	register_int("inverse", &inverse);
+	register_uniform_bool("inverse", &uniform_inverse);
+	register_uniform_float("progress_mul_w_plus_one", &uniform_progress_mul_w_plus_one);
 }
 
 string LumaMixEffect::output_fragment_shader()
@@ -22,8 +24,8 @@ string LumaMixEffect::output_fragment_shader()
 void LumaMixEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
-	set_uniform_float(glsl_program_num, prefix, "progress_mul_w_plus_one", progress * (transition_width + 1.0));
-	set_uniform_int(glsl_program_num, prefix, "inverse", inverse);
+	uniform_progress_mul_w_plus_one = progress * (transition_width + 1.0);
+	uniform_inverse = inverse;
 }
 
 }  // namespace movit

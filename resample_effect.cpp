@@ -390,6 +390,13 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	register_int("output_height", &output_height);
 	register_float("offset", &offset);
 	register_float("zoom", &zoom);
+	register_uniform_sampler2d("sample_tex", &uniform_sample_tex);
+	register_uniform_int("num_samples", &uniform_num_samples);  // FIXME: What about GLSL pre-1.30?
+	register_uniform_float("num_loops", &uniform_num_loops);
+	register_uniform_float("slice_height", &uniform_slice_height);
+	register_uniform_float("sample_x_scale", &uniform_sample_x_scale);
+	register_uniform_float("sample_x_offset", &uniform_sample_x_offset);
+	register_uniform_float("whole_pixel_offset", &uniform_whole_pixel_offset);
 
 	glGenTextures(1, &texnum);
 }
@@ -625,23 +632,21 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
 
-	set_uniform_int(glsl_program_num, prefix, "sample_tex", *sampler_num);
+	uniform_sample_tex = *sampler_num;
 	++*sampler_num;
-	set_uniform_int(glsl_program_num, prefix, "num_samples", src_bilinear_samples);
-	set_uniform_float(glsl_program_num, prefix, "num_loops", num_loops);
-	set_uniform_float(glsl_program_num, prefix, "slice_height", slice_height);
+	uniform_num_samples = src_bilinear_samples;
+	uniform_num_loops = num_loops;
+	uniform_slice_height = slice_height;
 
 	// Instructions for how to convert integer sample numbers to positions in the weight texture.
-	set_uniform_float(glsl_program_num, prefix, "sample_x_scale", 1.0f / src_bilinear_samples);
-	set_uniform_float(glsl_program_num, prefix, "sample_x_offset", 0.5f / src_bilinear_samples);
+	uniform_sample_x_scale = 1.0f / src_bilinear_samples;
+	uniform_sample_x_offset = 0.5f / src_bilinear_samples;
 
-	float whole_pixel_offset;
 	if (direction == SingleResamplePassEffect::VERTICAL) {
-		whole_pixel_offset = lrintf(offset) / float(input_height);
+		uniform_whole_pixel_offset = lrintf(offset) / float(input_height);
 	} else {
-		whole_pixel_offset = lrintf(offset) / float(input_width);
+		uniform_whole_pixel_offset = lrintf(offset) / float(input_width);
 	}
-	set_uniform_float(glsl_program_num, prefix, "whole_pixel_offset", whole_pixel_offset);
 
 	// We specifically do not want mipmaps on the input texture;
 	// they break minification.

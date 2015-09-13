@@ -79,6 +79,7 @@ private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint pbos[3], texture_num[3];
+	GLint uniform_tex_y, uniform_tex_cb, uniform_tex_cr;
 
 	unsigned width, height, widths[3], heights[3];
 	const unsigned char *pixel_data[3];

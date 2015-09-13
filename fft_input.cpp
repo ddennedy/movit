@@ -23,6 +23,7 @@ FFTInput::FFTInput(unsigned width, unsigned height)
 {
 	register_int("fft_width", &fft_width);
 	register_int("fft_height", &fft_height);
+	register_uniform_sampler2d("tex", &uniform_tex);
 }
 
 FFTInput::~FFTInput()
@@ -98,7 +99,7 @@ void FFTInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsig
 	}
 
 	// Bind it to a sampler.
-	set_uniform_int(glsl_program_num, prefix, "tex", *sampler_num);
+	uniform_tex = *sampler_num;
 	++*sampler_num;
 }
 

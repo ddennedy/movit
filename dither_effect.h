@@ -78,6 +78,9 @@ private:
 	int texture_width, texture_height;
 
 	GLuint texnum;
+	float uniform_round_fac, uniform_inv_round_fac;
+	float uniform_tc_scale[2];
+	GLint uniform_dither_tex;
 };
 
 }  // namespace movit

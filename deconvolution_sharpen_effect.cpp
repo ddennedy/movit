@@ -31,13 +31,19 @@ DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	  last_circle_radius(-1.0f),
 	  last_gaussian_radius(-1.0f),
 	  last_correlation(-1.0f),
-	  last_noise(-1.0f)
+	  last_noise(-1.0f),
+	  uniform_samples(NULL)
 {
 	register_int("matrix_size", &R);
 	register_float("circle_radius", &circle_radius);
 	register_float("gaussian_radius", &gaussian_radius);
 	register_float("correlation", &correlation);
 	register_float("noise", &noise);
+}
+
+DeconvolutionSharpenEffect::~DeconvolutionSharpenEffect()
+{
+	delete[] uniform_samples;
 }
 
 string DeconvolutionSharpenEffect::output_fragment_shader()
@@ -47,6 +53,9 @@ string DeconvolutionSharpenEffect::output_fragment_shader()
 
 	assert(R >= 1);
 	assert(R <= 25);  // Same limit as Refocus.
+
+	uniform_samples = new float[4 * (R + 1) * (R + 1)];
+	register_uniform_vec4_array("samples", uniform_samples, (R + 1) * (R + 1));
 
 	last_R = R;
 	return buf + read_file("deconvolution_sharpen_effect.frag");
@@ -433,18 +442,15 @@ void DeconvolutionSharpenEffect::set_gl_state(GLuint glsl_program_num, const str
 		update_deconvolution_kernel();
 	}
 	// Now encode it as uniforms, and pass it on to the shader.
-	float samples[4 * (R + 1) * (R + 1)];
 	for (int y = 0; y <= R; ++y) {
 		for (int x = 0; x <= R; ++x) {
 			int i = y * (R + 1) + x;
-			samples[i * 4 + 0] = x / float(width);
-			samples[i * 4 + 1] = y / float(height);
-			samples[i * 4 + 2] = g(y, x);
-			samples[i * 4 + 3] = 0.0f;
+			uniform_samples[i * 4 + 0] = x / float(width);
+			uniform_samples[i * 4 + 1] = y / float(height);
+			uniform_samples[i * 4 + 2] = g(y, x);
+			uniform_samples[i * 4 + 3] = 0.0f;
 		}
 	}
-
-	set_uniform_vec4_array(glsl_program_num, prefix, "samples", samples, (R + 1) * (R + 1));
 }
 
 }  // namespace movit

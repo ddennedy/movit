@@ -127,6 +127,7 @@ private:
 	const void *pixel_data;
 	ResourcePool *resource_pool;
 	bool fixup_swap_rb, fixup_red_to_grayscale;
+	GLint uniform_tex;
 };
 
 }  // namespace movit

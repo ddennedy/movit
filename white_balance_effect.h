@@ -5,6 +5,7 @@
 
 #include <epoxy/gl.h>
 #include <string>
+#include <Eigen/Core>
 
 #include "effect.h"
 
@@ -27,6 +28,8 @@ private:
 	// Output color temperature (in Kelvins).
 	// Choosing 6500 will lead to no color cast (ie., the neutral color becomes perfectly gray).
 	float output_color_temperature;
+
+	Eigen::Matrix3d uniform_correction_matrix;
 };
 
 }  // namespace movit

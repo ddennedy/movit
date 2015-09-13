@@ -1,4 +1,5 @@
-uniform vec4 PREFIX(samples)[(R + 1) * (R + 1)];
+// Implicit uniforms:
+// uniform vec4 PREFIX(samples)[(R + 1) * (R + 1)];
 
 vec4 FUNCNAME(vec2 tc) {
 	// The full matrix has five different symmetry cases, that look like this:

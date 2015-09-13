@@ -1,5 +1,6 @@
-uniform float PREFIX(progress_mul_w_plus_one);
-uniform bool PREFIX(inverse);
+// Implicit uniforms:
+// uniform float PREFIX(progress_mul_w_plus_one);
+// uniform bool PREFIX(inverse);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 first = INPUT1(tc);

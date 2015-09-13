@@ -32,6 +32,8 @@ public:
 private:
 	float transition_width, progress;
 	int inverse;  // 0 or 1.
+	bool uniform_inverse;
+	float uniform_progress_mul_w_plus_one;
 };
 
 }  // namespace movit

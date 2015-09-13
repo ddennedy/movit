@@ -12,6 +12,7 @@
 #include <stack>
 #include <utility>
 #include <vector>
+#include <Eigen/Core>
 
 #include "alpha_division_effect.h"
 #include "alpha_multiplication_effect.h"
@@ -19,6 +20,7 @@
 #include "dither_effect.h"
 #include "effect.h"
 #include "effect_chain.h"
+#include "effect_util.h"
 #include "gamma_compression_effect.h"
 #include "gamma_expansion_effect.h"
 #include "init.h"
@@ -27,6 +29,7 @@
 #include "util.h"
 #include "ycbcr_conversion_effect.h"
 
+using namespace Eigen;
 using namespace std;
 
 namespace movit {
@@ -246,7 +249,8 @@ string replace_prefix(const string &text, const string &prefix)
 
 void EffectChain::compile_glsl_program(Phase *phase)
 {
-	string frag_shader = read_version_dependent_file("header", "frag");
+	string frag_shader_header = read_version_dependent_file("header", "frag");
+	string frag_shader = "";
 
 	// Create functions for all the texture inputs that we need.
 	for (unsigned i = 0; i < phase->inputs.size(); ++i) {
@@ -262,12 +266,17 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 	}
 
+	// Give each effect in the phase its own ID.
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		char effect_id[256];
 		sprintf(effect_id, "eff%u", i);
 		phase->effect_ids.insert(make_pair(node, effect_id));
+	}
 
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		const string effect_id = phase->effect_ids[node];
 		if (node->incoming_links.size() == 1) {
 			frag_shader += string("#define INPUT ") + phase->effect_ids[node->incoming_links[0]] + "\n";
 		} else {
@@ -280,7 +289,6 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	
 		frag_shader += "\n";
 		frag_shader += string("#define FUNCNAME ") + effect_id + "\n";
-		frag_shader += replace_prefix(node->effect->output_convenience_uniforms(), effect_id);
 		frag_shader += replace_prefix(node->effect->output_fragment_shader(), effect_id);
 		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
@@ -298,8 +306,119 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
 	frag_shader.append(read_version_dependent_file("footer", "frag"));
 
+	// Collect uniforms from all effects and output them. Note that this needs
+	// to happen after output_fragment_shader(), even though the uniforms come
+	// before in the output source, since output_fragment_shader() is allowed
+	// to register new uniforms (e.g. arrays that are of unknown length until
+	// finalization time).
+	// TODO: Make a uniform block for platforms that support it.
+	string frag_shader_uniforms = "";
+	for (unsigned i = 0; i < phase->effects.size(); ++i) {
+		Node *node = phase->effects[i];
+		Effect *effect = node->effect;
+		const string effect_id = phase->effect_ids[node];
+		for (unsigned j = 0; j < effect->uniforms_bool.size(); ++j) {
+			phase->uniforms_bool.push_back(effect->uniforms_bool[j]);
+			phase->uniforms_bool.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform bool ") + effect_id
+				+ "_" + effect->uniforms_bool[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_int.size(); ++j) {
+			phase->uniforms_int.push_back(effect->uniforms_int[j]);
+			phase->uniforms_int.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform int ") + effect_id
+				+ "_" + effect->uniforms_int[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_sampler2d.size(); ++j) {
+			phase->uniforms_int.push_back(effect->uniforms_sampler2d[j]);
+			phase->uniforms_int.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform sampler2D ") + effect_id
+				+ "_" + effect->uniforms_sampler2d[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_float.size(); ++j) {
+			phase->uniforms_float.push_back(effect->uniforms_float[j]);
+			phase->uniforms_float.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform float ") + effect_id
+				+ "_" + effect->uniforms_float[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_vec2.size(); ++j) {
+			phase->uniforms_vec2.push_back(effect->uniforms_vec2[j]);
+			phase->uniforms_vec2.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform vec2 ") + effect_id
+				+ "_" + effect->uniforms_vec2[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_vec3.size(); ++j) {
+			phase->uniforms_vec3.push_back(effect->uniforms_vec3[j]);
+			phase->uniforms_vec3.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform vec3 ") + effect_id
+				+ "_" + effect->uniforms_vec3[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_vec4.size(); ++j) {
+			phase->uniforms_vec4.push_back(effect->uniforms_vec4[j]);
+			phase->uniforms_vec4.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform vec4 ") + effect_id
+				+ "_" + effect->uniforms_vec4[j].name + ";\n";
+		}
+		for (unsigned j = 0; j < effect->uniforms_vec2_array.size(); ++j) {
+			char buf[256];
+			phase->uniforms_vec2.push_back(effect->uniforms_vec2_array[j]);
+			phase->uniforms_vec2.back().prefix = effect_id;
+			snprintf(buf, sizeof(buf), "uniform vec2 %s_%s[%d];\n",
+				effect_id.c_str(), effect->uniforms_vec2_array[j].name.c_str(),
+				int(effect->uniforms_vec2_array[j].num_values));
+			frag_shader_uniforms += buf;
+		}
+		for (unsigned j = 0; j < effect->uniforms_vec4_array.size(); ++j) {
+			char buf[256];
+			phase->uniforms_vec4.push_back(effect->uniforms_vec4_array[j]);
+			phase->uniforms_vec4.back().prefix = effect_id;
+			snprintf(buf, sizeof(buf), "uniform vec4 %s_%s[%d];\n",
+				effect_id.c_str(), effect->uniforms_vec4_array[j].name.c_str(),
+				int(effect->uniforms_vec4_array[j].num_values));
+			frag_shader_uniforms += buf;
+		}
+		for (unsigned j = 0; j < effect->uniforms_mat3.size(); ++j) {
+			phase->uniforms_mat3.push_back(effect->uniforms_mat3[j]);
+			phase->uniforms_mat3.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform mat3 ") + effect_id
+				+ "_" + effect->uniforms_mat3[j].name + ";\n";
+		}
+	}
+
+	frag_shader = frag_shader_header + frag_shader_uniforms + frag_shader;
+
 	string vert_shader = read_version_dependent_file("vs", "vert");
 	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
+
+	// Collect the resulting program numbers for each uniform.
+	for (unsigned i = 0; i < phase->uniforms_bool.size(); ++i) {
+		Uniform<bool> &uniform = phase->uniforms_bool[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_int.size(); ++i) {
+		Uniform<int> &uniform = phase->uniforms_int[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_float.size(); ++i) {
+		Uniform<float> &uniform = phase->uniforms_float[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_vec2.size(); ++i) {
+		Uniform<float> &uniform = phase->uniforms_vec2[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_vec3.size(); ++i) {
+		Uniform<float> &uniform = phase->uniforms_vec3[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_vec4.size(); ++i) {
+		Uniform<float> &uniform = phase->uniforms_vec4[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
+	for (unsigned i = 0; i < phase->uniforms_mat3.size(); ++i) {
+		Uniform<Matrix3d> &uniform = phase->uniforms_mat3[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
 }
 
 // Construct GLSL programs, starting at the given effect and following
@@ -1671,6 +1790,10 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 		}
 	}
 
+	// Uniforms need to come after set_gl_state(), since they can be updated
+	// from there.
+	setup_uniforms(phase);
+
 	// Now draw!
 	float vertices[] = {
 		0.0f, 2.0f,
@@ -1707,6 +1830,62 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 
 	glDeleteVertexArrays(1, &vao);
 	check_error();
+}
+
+void EffectChain::setup_uniforms(Phase *phase)
+{
+	// TODO: Use UBO blocks.
+	for (size_t i = 0; i < phase->uniforms_bool.size(); ++i) {
+		const Uniform<bool> &uniform = phase->uniforms_bool[i];
+		assert(uniform.num_values == 1);
+		if (uniform.location != -1) {
+			glUniform1i(uniform.location, *uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_int.size(); ++i) {
+		const Uniform<int> &uniform = phase->uniforms_int[i];
+		if (uniform.location != -1) {
+			glUniform1iv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_float.size(); ++i) {
+		const Uniform<float> &uniform = phase->uniforms_float[i];
+		if (uniform.location != -1) {
+			glUniform1fv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_vec2.size(); ++i) {
+		const Uniform<float> &uniform = phase->uniforms_vec2[i];
+		if (uniform.location != -1) {
+			glUniform2fv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_vec3.size(); ++i) {
+		const Uniform<float> &uniform = phase->uniforms_vec3[i];
+		if (uniform.location != -1) {
+			glUniform3fv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_vec4.size(); ++i) {
+		const Uniform<float> &uniform = phase->uniforms_vec4[i];
+		if (uniform.location != -1) {
+			glUniform4fv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_mat3.size(); ++i) {
+		const Uniform<Matrix3d> &uniform = phase->uniforms_mat3[i];
+		assert(uniform.num_values == 1);
+		if (uniform.location != -1) {
+			// Convert to float (GLSL has no double matrices).
+		        float matrixf[9];
+			for (unsigned y = 0; y < 3; ++y) {
+				for (unsigned x = 0; x < 3; ++x) {
+					matrixf[y + x * 3] = (*uniform.value)(y, x);
+				}
+			}
+			glUniformMatrix3fv(uniform.location, 1, GL_FALSE, matrixf);
+		}
+	}
 }
 
 void EffectChain::setup_rtt_sampler(GLuint glsl_program_num, int sampler_num, const string &effect_id, bool use_mipmaps)

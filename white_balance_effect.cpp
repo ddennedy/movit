@@ -105,6 +105,7 @@ WhiteBalanceEffect::WhiteBalanceEffect()
 {
 	register_vec3("neutral_color", (float *)&neutral_color);
 	register_float("output_color_temperature", &output_color_temperature);
+	register_uniform_mat3("correction_matrix", &uniform_correction_matrix);
 }
 
 string WhiteBalanceEffect::output_fragment_shader()
@@ -142,13 +143,12 @@ void WhiteBalanceEffect::set_gl_state(GLuint glsl_program_num, const string &pre
 	 * Note that since we postmultiply our vectors, the order of the matrices
 	 * has to be the opposite of the execution order.
 	 */
-	Matrix3d corr_matrix =
+	uniform_correction_matrix =
 		rgb_to_xyz_matrix.inverse() *
 		Map<const Matrix3d>(xyz_to_lms_matrix).inverse() *
 		lms_scale.asDiagonal() *
 		Map<const Matrix3d>(xyz_to_lms_matrix) *
 		rgb_to_xyz_matrix;
-	set_uniform_mat3(glsl_program_num, prefix, "correction_matrix", corr_matrix);
 }
 
 }  // namespace movit

@@ -2,7 +2,8 @@
 // DIRECTION_VERTICAL will be #defined to 1 if we are doing a vertical blur,
 // 0 otherwise.
 
-uniform vec2 PREFIX(samples)[NUM_TAPS / 2 + 1];
+// Implicit uniforms:
+// uniform vec2 PREFIX(samples)[NUM_TAPS / 2 + 1];
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 sum = vec4(PREFIX(samples)[0].y) * INPUT(tc);

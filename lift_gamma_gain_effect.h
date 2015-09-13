@@ -39,6 +39,7 @@ public:
 
 private:
 	RGBTriplet lift, gamma, gain;
+	RGBTriplet uniform_gain_pow_inv_gamma, uniform_inv_gamma22;
 };
 
 }  // namespace movit

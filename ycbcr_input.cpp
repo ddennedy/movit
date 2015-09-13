@@ -39,6 +39,10 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	heights[2] = height / ycbcr_format.chroma_subsampling_y;
 
 	pixel_data[0] = pixel_data[1] = pixel_data[2] = NULL;
+
+	register_uniform_sampler2d("tex_y", &uniform_tex_y);
+	register_uniform_sampler2d("tex_cb", &uniform_tex_cb);
+	register_uniform_sampler2d("tex_cr", &uniform_tex_cr);
 }
 
 YCbCrInput::~YCbCrInput()
@@ -87,9 +91,9 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 	check_error();
 
 	// Bind samplers.
-	set_uniform_int(glsl_program_num, prefix, "tex_y", *sampler_num + 0);
-	set_uniform_int(glsl_program_num, prefix, "tex_cb", *sampler_num + 1);
-	set_uniform_int(glsl_program_num, prefix, "tex_cr", *sampler_num + 2);
+	uniform_tex_y = *sampler_num + 0;
+	uniform_tex_cb = *sampler_num + 1;
+	uniform_tex_cr = *sampler_num + 2;
 
 	*sampler_num += 3;
 }

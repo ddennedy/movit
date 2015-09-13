@@ -20,6 +20,8 @@ class EffectChain;
 class Node;
 
 // Convenience functions that deal with prepending the prefix.
+// Note that using EffectChain::register_uniform_*() is more efficient
+// than calling these from set_gl_state().
 GLint get_uniform_location(GLuint glsl_program_num, const std::string &prefix, const std::string &key);
 void set_uniform_int(GLuint glsl_program_num, const std::string &prefix, const std::string &key, int value);
 void set_uniform_float(GLuint glsl_program_num, const std::string &prefix, const std::string &key, float value);

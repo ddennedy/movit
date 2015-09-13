@@ -15,6 +15,8 @@
 #include <stddef.h>
 #include <map>
 #include <string>
+#include <vector>
+#include <Eigen/Core>
 
 #include "defs.h"
 
@@ -48,6 +50,16 @@ struct RGBATuple {
 		: r(r), g(g), b(b), a(a) {}
 
 	float r, g, b, a;
+};
+
+// Represents a registered uniform.
+template<class T>
+struct Uniform {
+	std::string name;  // Without prefix.
+	const T *value;  // Owner by the effect.
+	size_t num_values;  // Number of elements; for arrays only. _Not_ the vector length.
+	std::string prefix;  // Filled in only after phases have been constructed.
+	GLint location;  // Filled in only after phases have been constructed. -1 if no location.
 };
 
 class Effect {
@@ -256,11 +268,6 @@ public:
 	// itself from all other effects.
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {}
 
-	// Outputs one GLSL uniform declaration for each registered parameter
-	// (see below), with the right prefix prepended to each uniform name.
-	// If you do not want this behavior, you can override this function.
-	virtual std::string output_convenience_uniforms() const;
-
 	// Returns the GLSL fragment shader string for this effect.
 	virtual std::string output_fragment_shader() = 0;
 
@@ -289,7 +296,9 @@ public:
 protected:
 	// Register a parameter. Whenever set_*() is called with the same key,
 	// it will update the value in the given pointer (typically a pointer
-	// to some private member variable in your effect).
+	// to some private member variable in your effect). It will also
+	// register a uniform of the same name (plus an arbitrary prefix
+	// which you can access using the PREFIX macro) that you can access.
 	//
 	// Neither of these take ownership of the pointer.
 
@@ -303,12 +312,56 @@ protected:
 	void register_vec3(const std::string &key, float *values);
 	void register_vec4(const std::string &key, float *values);
 
+	// Register uniforms, such that they will automatically be set
+	// before the shader runs. This is more efficient than set_uniform_*
+	// in effect_util.h, because it doesn't need to do name lookups
+	// every time. Also, in the future, it will use uniform buffer objects
+	// (UBOs) if available to reduce the number of calls into the driver.
+	//
+	// May not be called after output_fragment_shader() has returned.
+	// The pointer must be valid for the entire lifetime of the Effect,
+	// since the value is pulled from it each execution. The value is
+	// guaranteed to be read after set_gl_state() for the effect has
+	// returned, so you can safely update its value from there.
+	//
+	// Note that this will also declare the uniform in the shader for you,
+	// so you should not do that yourself. (This is so it can be part of
+	// the right uniform block.) However, it is probably a good idea to
+	// have a commented-out declaration so that it is easier to see the
+	// type and thus understand the shader on its own.
+	//
+	// Calling register_* will automatically imply register_uniform_*,
+	// except for register_int as noted above.
+	void register_uniform_bool(const std::string &key, const bool *value);
+	void register_uniform_int(const std::string &key, const int *value);  // Note: Requires GLSL 1.30 or newer.
+	void register_uniform_sampler2d(const std::string &key, const int *value);
+	void register_uniform_float(const std::string &key, const float *value);
+	void register_uniform_vec2(const std::string &key, const float *values);
+	void register_uniform_vec3(const std::string &key, const float *values);
+	void register_uniform_vec4(const std::string &key, const float *values);
+	void register_uniform_vec2_array(const std::string &key, const float *values, size_t num_values);
+	void register_uniform_vec4_array(const std::string &key, const float *values, size_t num_values);
+	void register_uniform_mat3(const std::string &key, const Eigen::Matrix3d *matrix);
+
 private:
 	std::map<std::string, int *> params_int;
 	std::map<std::string, float *> params_float;
 	std::map<std::string, float *> params_vec2;
 	std::map<std::string, float *> params_vec3;
 	std::map<std::string, float *> params_vec4;
+
+	// Picked out by EffectChain during finalization.
+	std::vector<Uniform<bool> > uniforms_bool;
+	std::vector<Uniform<int> > uniforms_int;
+	std::vector<Uniform<int> > uniforms_sampler2d;
+	std::vector<Uniform<float> > uniforms_float;
+	std::vector<Uniform<float> > uniforms_vec2;
+	std::vector<Uniform<float> > uniforms_vec3;
+	std::vector<Uniform<float> > uniforms_vec4;
+	std::vector<Uniform<float> > uniforms_vec2_array;
+	std::vector<Uniform<float> > uniforms_vec4_array;
+	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
+	friend class EffectChain;
 };
 
 }  // namespace movit

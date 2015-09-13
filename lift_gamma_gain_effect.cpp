@@ -17,6 +17,8 @@ LiftGammaGainEffect::LiftGammaGainEffect()
 	register_vec3("lift", (float *)&lift);
 	register_vec3("gamma", (float *)&gamma);
 	register_vec3("gain", (float *)&gain);
+	register_uniform_vec3("gain_pow_inv_gamma", (float *)&uniform_gain_pow_inv_gamma);
+	register_uniform_vec3("inv_gamma_22", (float *)&uniform_inv_gamma22);
 }
 
 string LiftGammaGainEffect::output_fragment_shader()
@@ -28,17 +30,15 @@ void LiftGammaGainEffect::set_gl_state(GLuint glsl_program_num, const string &pr
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	RGBTriplet gain_pow_inv_gamma(
+	uniform_gain_pow_inv_gamma = RGBTriplet(
 		pow(gain.r, 1.0f / gamma.r),
 		pow(gain.g, 1.0f / gamma.g),
 		pow(gain.b, 1.0f / gamma.b));
-	set_uniform_vec3(glsl_program_num, prefix, "gain_pow_inv_gamma", (float *)&gain_pow_inv_gamma);
 
-	RGBTriplet inv_gamma_22(
+	uniform_inv_gamma22 = RGBTriplet(
 		2.2f / gamma.r,
 		2.2f / gamma.g,
 		2.2f / gamma.b);
-	set_uniform_vec3(glsl_program_num, prefix, "inv_gamma_22", (float *)&inv_gamma_22);
 }
 
 }  // namespace movit

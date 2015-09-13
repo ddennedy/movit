@@ -28,6 +28,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format_in,
 	assert(type == GL_FLOAT || type == GL_HALF_FLOAT || type == GL_UNSIGNED_SHORT || type == GL_UNSIGNED_BYTE);
 	register_int("output_linear_gamma", &output_linear_gamma);
 	register_int("needs_mipmaps", &needs_mipmaps);
+	register_uniform_sampler2d("tex", &uniform_tex);
 
 	// Some types are not supported in all GL versions (e.g. GLES),
 	// and will corrected into the right format in the shader.
@@ -168,7 +169,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 	}
 
 	// Bind it to a sampler.
-	set_uniform_int(glsl_program_num, prefix, "tex", *sampler_num);
+	uniform_tex = *sampler_num;
 	++*sampler_num;
 }
 

@@ -35,6 +35,10 @@ DitherEffect::DitherEffect()
 	register_int("output_width", &width);
 	register_int("output_height", &height);
 	register_int("num_bits", &num_bits);
+	register_uniform_float("round_fac", &uniform_round_fac);
+	register_uniform_float("inv_round_fac", &uniform_inv_round_fac);
+	register_uniform_vec2("tc_scale", uniform_tc_scale);
+	register_uniform_sampler2d("dither_tex", &uniform_dither_tex);
 
 	glGenTextures(1, &texnum);
 }
@@ -110,19 +114,19 @@ void DitherEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, u
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
 
-	set_uniform_int(glsl_program_num, prefix, "dither_tex", *sampler_num);
+	uniform_dither_tex = *sampler_num;
 	++*sampler_num;
 
 	// In theory, we should adjust for the texel centers that have moved here as well,
 	// but since we use GL_NEAREST and we don't really care a lot what texel we sample,
 	// we don't have to worry about it.	
-	float tc_scale[] = { float(width) / float(texture_width), float(height) / float(texture_height) };
-	set_uniform_vec2(glsl_program_num, prefix, "tc_scale", tc_scale);
+	uniform_tc_scale[0] = float(width) / float(texture_width);
+	uniform_tc_scale[1] = float(height) / float(texture_height);
 
 	// Used if the shader needs to do explicit rounding.
 	int round_fac = (1 << num_bits) - 1;
-	set_uniform_float(glsl_program_num, prefix, "round_fac", round_fac);
-	set_uniform_float(glsl_program_num, prefix, "inv_round_fac", 1.0f / round_fac);
+	uniform_round_fac = round_fac;
+	uniform_inv_round_fac = 1.0f / round_fac;
 }
 
 }  // namespace movit

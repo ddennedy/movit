@@ -1,4 +1,5 @@
-uniform sampler2D PREFIX(tex);
+// Implicit uniforms:
+// uniform sampler2D PREFIX(tex);
 
 vec4 FUNCNAME(vec2 tc) {
 	// OpenGL's origin is bottom-left, but most graphics software assumes

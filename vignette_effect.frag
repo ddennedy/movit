@@ -1,8 +1,10 @@
 // A simple, circular vignette, with a cos² falloff.
-	
-uniform float PREFIX(pihalf_div_radius);
-uniform vec2 PREFIX(aspect_correction);
-uniform vec2 PREFIX(flipped_center);
+
+// Implicit uniforms:
+// uniform float PREFIX(pihalf_div_radius);
+//
+// uniform vec2 PREFIX(aspect_correction);
+// uniform vec2 PREFIX(flipped_center);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 x = INPUT(tc);

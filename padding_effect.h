@@ -56,6 +56,9 @@ private:
 	float top, left;
 	float border_offset_top, border_offset_left;
 	float border_offset_bottom, border_offset_right;
+	float uniform_offset[2], uniform_scale[2];
+	float uniform_normalized_coords_to_texels[2];
+	float uniform_offset_bottomleft[2], uniform_offset_topright[2];
 };
 
 class IntegralPaddingEffect : public PaddingEffect {

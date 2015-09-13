@@ -1,4 +1,5 @@
-uniform vec2 PREFIX(num_repeats);
+// Implicit uniforms:
+// uniform vec2 PREFIX(num_repeats);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 pixel = INPUT1(tc);

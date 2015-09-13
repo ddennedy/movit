@@ -108,8 +108,9 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	  num_taps(16),
 	  radius(3.0f),
 	  direction(HORIZONTAL),
- 	  width(1280),
- 	  height(720)
+	  width(1280),
+	  height(720),
+	  uniform_samples(NULL)
 {
 	register_float("radius", &radius);
 	register_int("direction", (int *)&direction);
@@ -120,11 +121,18 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	register_int("num_taps", &num_taps);
 }
 
+SingleBlurPassEffect::~SingleBlurPassEffect()
+{
+	delete[] uniform_samples;
+}
+
 string SingleBlurPassEffect::output_fragment_shader()
 {
 	char buf[256];
 	sprintf(buf, "#define DIRECTION_VERTICAL %d\n#define NUM_TAPS %d\n",
 		(direction == VERTICAL), num_taps);
+	uniform_samples = new float[2 * (num_taps / 2 + 1)];
+	register_uniform_vec2_array("samples", uniform_samples, num_taps / 2 + 1);
 	return buf + read_file("blur_effect.frag");
 }
 
@@ -176,11 +184,10 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 	//
 	// We pack the parameters into a float4: The relative sample coordinates
 	// in (x,y), and the weight in z. w is unused.
-	float* samples = new float[2 * (num_taps / 2 + 1)];
 
 	// Center sample.
-	samples[2 * 0 + 0] = 0.0f;
-	samples[2 * 0 + 1] = weight[0];
+	uniform_samples[2 * 0 + 0] = 0.0f;
+	uniform_samples[2 * 0 + 1] = weight[0];
 
 	// All other samples.
 	for (int i = 1; i < num_taps / 2 + 1; ++i) {
@@ -201,14 +208,11 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		float pos, total_weight;
 		combine_two_samples(w1, w2, pos1, pos2, size, &pos, &total_weight, NULL);
 
-		samples[2 * i + 0] = pos;
-		samples[2 * i + 1] = total_weight;
+		uniform_samples[2 * i + 0] = pos;
+		uniform_samples[2 * i + 1] = total_weight;
 	}
 
-	set_uniform_vec2_array(glsl_program_num, prefix, "samples", samples, num_taps / 2 + 1);
-
 	delete[] weight;
-	delete[] samples;
 }
 
 void SingleBlurPassEffect::clear_gl_state()

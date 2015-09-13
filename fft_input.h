@@ -75,6 +75,7 @@ private:
 	unsigned convolve_width, convolve_height;
 	const float *pixel_data;
 	ResourcePool *resource_pool;
+	GLint uniform_tex;
 };
 
 }  // namespace movit

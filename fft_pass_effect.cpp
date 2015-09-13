@@ -25,6 +25,8 @@ FFTPassEffect::FFTPassEffect()
 	register_int("direction", (int *)&direction);
 	register_int("pass_number", &pass_number);
 	register_int("inverse", &inverse);
+	register_uniform_float("num_repeats", &uniform_num_repeats);
+	register_uniform_sampler2d("support_tex", &uniform_support_tex);
 	glGenTextures(1, &tex);
 }
 
@@ -83,11 +85,11 @@ void FFTPassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, 
 		generate_support_texture();
 	}
 
-	set_uniform_int(glsl_program_num, prefix, "support_tex", *sampler_num);
+	uniform_support_tex = *sampler_num;
 	++*sampler_num;
 
 	assert(input_size % fft_size == 0);
-	set_uniform_float(glsl_program_num, prefix, "num_repeats", input_size / fft_size);
+	uniform_num_repeats = input_size / fft_size;
 }
 
 void FFTPassEffect::generate_support_texture()

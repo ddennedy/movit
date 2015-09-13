@@ -27,7 +27,9 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <Eigen/Core>
 
+#include "effect.h"
 #include "image_format.h"
 #include "ycbcr.h"
 
@@ -113,6 +115,15 @@ struct Phase {
 	// Identifier used to create unique variables in GLSL.
 	// Unique per-phase to increase cacheability of compiled shaders.
 	std::map<Node *, std::string> effect_ids;
+
+	// Uniforms for this phase; combined from all the effects.
+	std::vector<Uniform<bool> > uniforms_bool;
+	std::vector<Uniform<int> > uniforms_int;
+	std::vector<Uniform<float> > uniforms_float;
+	std::vector<Uniform<float> > uniforms_vec2;
+	std::vector<Uniform<float> > uniforms_vec3;
+	std::vector<Uniform<float> > uniforms_vec4;
+	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
 
 	// For measurement of GPU time used.
 	GLuint timer_query_object;
@@ -264,6 +275,9 @@ private:
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
 	void execute_phase(Phase *phase, bool last_phase, std::map<Phase *, GLuint> *output_textures, std::set<Phase *> *generated_mipmaps);
+
+	// Set up uniforms for one phase. The program must already be bound.
+	void setup_uniforms(Phase *phase);
 
 	// Set up the given sampler number for sampling from an RTT texture,
 	// and bind it to "tex_" plus the given GLSL variable.

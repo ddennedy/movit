@@ -55,6 +55,7 @@ private:
 	EffectChain *chain;
 	int primary_input_width, primary_input_height;
 	int num_repeats_x, num_repeats_y;
+	float uniform_num_repeats[2];
 };
 
 }  // namespace movit

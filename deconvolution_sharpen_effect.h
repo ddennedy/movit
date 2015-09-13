@@ -30,6 +30,7 @@ namespace movit {
 class DeconvolutionSharpenEffect : public Effect {
 public:
 	DeconvolutionSharpenEffect();
+	virtual ~DeconvolutionSharpenEffect();
 	virtual std::string effect_type_id() const { return "DeconvolutionSharpenEffect"; }
 	std::string output_fragment_shader();
 
@@ -66,6 +67,8 @@ private:
 	Eigen::MatrixXf g;
 	int last_R;
 	float last_circle_radius, last_gaussian_radius, last_correlation, last_noise;
+
+	float *uniform_samples;
 	
 	void update_deconvolution_kernel();
 };

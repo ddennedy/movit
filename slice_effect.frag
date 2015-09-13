@@ -1,7 +1,8 @@
-uniform float PREFIX(output_coord_to_slice_num);
-uniform float PREFIX(slice_num_to_input_coord);
-uniform float PREFIX(slice_offset_to_input_coord);
-uniform float PREFIX(offset);
+// Implicit uniforms:
+// uniform float PREFIX(output_coord_to_slice_num);
+// uniform float PREFIX(slice_num_to_input_coord);
+// uniform float PREFIX(slice_offset_to_input_coord);
+// uniform float PREFIX(offset);
  
 vec4 FUNCNAME(vec2 tc) {
 	// DIRECTION_VERTICAL will be #defined to 1 if we are expanding vertically,

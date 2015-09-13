@@ -66,6 +66,7 @@ public:
 	// If parent is non-NULL, calls to inform_input_size will be forwarded
 	// so that it can make reasonable decisions for both blur passes.
 	SingleBlurPassEffect(BlurEffect *parent);
+	virtual ~SingleBlurPassEffect();
 	virtual std::string effect_type_id() const { return "SingleBlurPassEffect"; }
 
 	std::string output_fragment_shader();
@@ -102,6 +103,7 @@ private:
 	float radius;
 	Direction direction;
 	int width, height, virtual_width, virtual_height;
+	float *uniform_samples;
 };
 
 }  // namespace movit

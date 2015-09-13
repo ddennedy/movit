@@ -12,6 +12,13 @@ GammaCompressionEffect::GammaCompressionEffect()
 	: destination_curve(GAMMA_LINEAR)
 {
 	register_int("destination_curve", (int *)&destination_curve);
+	register_uniform_float("linear_scale", &uniform_linear_scale);
+	register_uniform_float("c0", &uniform_c0);
+	register_uniform_float("c1", &uniform_c1);
+	register_uniform_float("c2", &uniform_c2);
+	register_uniform_float("c3", &uniform_c3);
+	register_uniform_float("c4", &uniform_c4);
+	register_uniform_float("beta", &uniform_beta);
 }
 
 string GammaCompressionEffect::output_fragment_shader()
@@ -73,25 +80,25 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		// β = 0.0031308, ɣ = 1/2.4.
 		// maxerror      = 0.000785 = 0.200 * 255
 		// error at 1.0  = 0.000078 = 0.020 * 255
-		set_uniform_float(glsl_program_num, prefix, "linear_scale", 12.92);
-		set_uniform_float(glsl_program_num, prefix, "c0", -0.03679675939);
-		set_uniform_float(glsl_program_num, prefix, "c1", 1.443803073);
-		set_uniform_float(glsl_program_num, prefix, "c2", -0.9239780987);
-		set_uniform_float(glsl_program_num, prefix, "c3", 0.8060491596);
-		set_uniform_float(glsl_program_num, prefix, "c4", -0.2891558568);
-		set_uniform_float(glsl_program_num, prefix, "beta", 0.0031308);
+		uniform_linear_scale = 12.92;
+		uniform_c0 = -0.03679675939;
+		uniform_c1 = 1.443803073;
+		uniform_c2 = -0.9239780987;
+		uniform_c3 = 0.8060491596;
+		uniform_c4 = -0.2891558568;
+		uniform_beta = 0.0031308;
 	}
 	if (destination_curve == GAMMA_REC_709) {  // Also includes Rec. 601, and 10-bit Rec. 2020.
 		// Rec. 2020, page 3; ɑ = 1.099, β = 0.018, ɣ = 0.45.
 		// maxerror      = 0.000131 = 0.033 * 255 = 0.134 * 1023
 		// error at 1.0  = 0.000013 = 0.003 * 255 = 0.013 * 1023
-		set_uniform_float(glsl_program_num, prefix, "linear_scale", 4.5);
-		set_uniform_float(glsl_program_num, prefix, "c0", -0.08541688528);
-		set_uniform_float(glsl_program_num, prefix, "c1", 1.292793370);
-		set_uniform_float(glsl_program_num, prefix, "c2", -0.4070417645);
-		set_uniform_float(glsl_program_num, prefix, "c3", 0.2923891828);
-		set_uniform_float(glsl_program_num, prefix, "c4", -0.09273699351);
-		set_uniform_float(glsl_program_num, prefix, "beta", 0.018);
+		uniform_linear_scale = 4.5;
+		uniform_c0 = -0.08541688528;
+		uniform_c1 = 1.292793370;
+		uniform_c2 = -0.4070417645;
+		uniform_c3 = 0.2923891828;
+		uniform_c4 = -0.09273699351;
+		uniform_beta = 0.018;
 	}
 	if (destination_curve == GAMMA_REC_2020_12_BIT) {
 		// Rec. 2020, page 3; ɑ = 1.0993, β = 0.0181, ɣ = 0.45.
@@ -103,13 +110,13 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		// bit. (Removing the constraint for x=1 will only take this down
 		// from 0.553 to 0.501; adding a fifth order can get it down to
 		// 0.167, although this assumes working in fp64 and not fp32.)
-		set_uniform_float(glsl_program_num, prefix, "linear_scale", 4.5);
-		set_uniform_float(glsl_program_num, prefix, "c0", -0.08569685663);
-		set_uniform_float(glsl_program_num, prefix, "c1", 1.293000900);
-		set_uniform_float(glsl_program_num, prefix, "c2", -0.4067291321);
-		set_uniform_float(glsl_program_num, prefix, "c3", 0.2919741179);
-		set_uniform_float(glsl_program_num, prefix, "c4", -0.09256205770);
-		set_uniform_float(glsl_program_num, prefix, "beta", 0.0181);
+		uniform_linear_scale = 4.5;
+		uniform_c0 = -0.08569685663;
+		uniform_c1 = 1.293000900;
+		uniform_c2 = -0.4067291321;
+		uniform_c3 = 0.2919741179;
+		uniform_c4 = -0.09256205770;
+		uniform_beta = 0.0181;
 	}
 }
 

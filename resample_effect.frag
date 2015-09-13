@@ -1,12 +1,13 @@
 // DIRECTION_VERTICAL will be #defined to 1 if we are scaling vertically,
 // and 0 otherwise.
 
-uniform sampler2D PREFIX(sample_tex);
-uniform int PREFIX(num_samples);
-uniform float PREFIX(num_loops);
-uniform float PREFIX(sample_x_scale);
-uniform float PREFIX(sample_x_offset);
-uniform float PREFIX(slice_height);
+// Implicit uniforms:
+// uniform sampler2D PREFIX(sample_tex);
+// uniform int PREFIX(num_samples);
+// uniform float PREFIX(num_loops);
+// uniform float PREFIX(sample_x_scale);
+// uniform float PREFIX(sample_x_offset);
+// uniform float PREFIX(slice_height);
 
 // We put the fractional part of the offset (-0.5 to 0.5 pixels) in the weights
 // because we have to (otherwise they'd do nothing). However, the support texture
@@ -24,7 +25,9 @@ uniform float PREFIX(slice_height);
 // measured in _input_ pixels and tc is in _output_ pixels, although we could
 // compensate for that.) However, the shader should be mostly bandwidth bound
 // and not ALU bound, so an extra add per sample shouldn't be too hopeless.
-uniform float PREFIX(whole_pixel_offset);
+//
+// Implicitly declared:
+// uniform float PREFIX(whole_pixel_offset);
 
 // Sample a single weight. First fetch information about where to sample
 // and the weight from sample_tex, and then read the pixel itself.

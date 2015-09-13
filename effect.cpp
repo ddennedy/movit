@@ -7,6 +7,7 @@
 #include "effect.h"
 #include "effect_util.h"
 
+using namespace Eigen;
 using namespace std;
 
 namespace movit {
@@ -66,86 +67,132 @@ void Effect::register_float(const string &key, float *value)
 {
 	assert(params_float.count(key) == 0);
 	params_float[key] = value;
+	register_uniform_float(key, value);
 }
 
 void Effect::register_vec2(const string &key, float *values)
 {
 	assert(params_vec2.count(key) == 0);
 	params_vec2[key] = values;
+	register_uniform_vec2(key, values);
 }
 
 void Effect::register_vec3(const string &key, float *values)
 {
 	assert(params_vec3.count(key) == 0);
 	params_vec3[key] = values;
+	register_uniform_vec3(key, values);
 }
 
 void Effect::register_vec4(const string &key, float *values)
 {
 	assert(params_vec4.count(key) == 0);
 	params_vec4[key] = values;
+	register_uniform_vec4(key, values);
 }
 
-// Output convenience uniforms for each parameter.
-// These will be filled in per-frame.
-string Effect::output_convenience_uniforms() const
-{
-	string output = "";
-	for (map<string, float*>::const_iterator it = params_float.begin();
-	     it != params_float.end();
-	     ++it) {
-		char buf[256];
-		sprintf(buf, "uniform float PREFIX(%s);\n", it->first.c_str());
-		output.append(buf);
-	}
-	for (map<string, float*>::const_iterator it = params_vec2.begin();
-	     it != params_vec2.end();
-	     ++it) {
-		char buf[256];
-		sprintf(buf, "uniform vec2 PREFIX(%s);\n", it->first.c_str());
-		output.append(buf);
-	}
-	for (map<string, float*>::const_iterator it = params_vec3.begin();
-	     it != params_vec3.end();
-	     ++it) {
-		char buf[256];
-		sprintf(buf, "uniform vec3 PREFIX(%s);\n", it->first.c_str());
-		output.append(buf);
-	}
-	for (map<string, float*>::const_iterator it = params_vec4.begin();
-	     it != params_vec4.end();
-	     ++it) {
-		char buf[256];
-		sprintf(buf, "uniform vec4 PREFIX(%s);\n", it->first.c_str());
-		output.append(buf);
-	}
-	return output;
-}
-
-void Effect::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
-{
-	for (map<string, float*>::const_iterator it = params_float.begin();
-	     it != params_float.end();
-	     ++it) {
-		set_uniform_float(glsl_program_num, prefix, it->first, *it->second);
-	}
-	for (map<string, float*>::const_iterator it = params_vec2.begin();
-	     it != params_vec2.end();
-	     ++it) {
-		set_uniform_vec2(glsl_program_num, prefix, it->first, it->second);
-	}
-	for (map<string, float*>::const_iterator it = params_vec3.begin();
-	     it != params_vec3.end();
-	     ++it) {
-		set_uniform_vec3(glsl_program_num, prefix, it->first, it->second);
-	}
-	for (map<string, float*>::const_iterator it = params_vec4.begin();
-	     it != params_vec4.end();
-	     ++it) {
-		set_uniform_vec4(glsl_program_num, prefix, it->first, it->second);
-	}
-}
+void Effect::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num) {}
 
 void Effect::clear_gl_state() {}
+
+void Effect::register_uniform_bool(const std::string &key, const bool *value)
+{
+	Uniform<bool> uniform;
+	uniform.name = key;
+	uniform.value = value;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_bool.push_back(uniform);
+}
+
+void Effect::register_uniform_int(const std::string &key, const int *value)
+{
+	Uniform<int> uniform;
+	uniform.name = key;
+	uniform.value = value;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_int.push_back(uniform);
+}
+
+void Effect::register_uniform_sampler2d(const std::string &key, const GLint *value)
+{
+	Uniform<int> uniform;
+	uniform.name = key;
+	uniform.value = value;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_sampler2d.push_back(uniform);
+}
+
+void Effect::register_uniform_float(const std::string &key, const float *value)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = value;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_float.push_back(uniform);
+}
+
+void Effect::register_uniform_vec2(const std::string &key, const float *values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_vec2.push_back(uniform);
+}
+
+void Effect::register_uniform_vec3(const std::string &key, const float *values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_vec3.push_back(uniform);
+}
+
+void Effect::register_uniform_vec4(const std::string &key, const float *values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_vec4.push_back(uniform);
+}
+
+void Effect::register_uniform_vec2_array(const std::string &key, const float *values, size_t num_values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = num_values;
+	uniform.location = -1;
+	uniforms_vec2_array.push_back(uniform);
+}
+
+void Effect::register_uniform_vec4_array(const std::string &key, const float *values, size_t num_values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = num_values;
+	uniform.location = -1;
+	uniforms_vec4_array.push_back(uniform);
+}
+
+void Effect::register_uniform_mat3(const std::string &key, const Matrix3d *matrix)
+{
+	Uniform<Matrix3d> uniform;
+	uniform.name = key;
+	uniform.value = matrix;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_mat3.push_back(uniform);
+}
 
 }  // namespace movit

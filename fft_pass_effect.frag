@@ -1,8 +1,9 @@
 // DIRECTION_VERTICAL will be #defined to 1 if we are doing a vertical FFT,
 // and 0 otherwise.
 
-uniform float PREFIX(num_repeats);
-uniform sampler2D PREFIX(support_tex);
+// Implicit uniforms:
+// uniform float PREFIX(num_repeats);
+// uniform sampler2D PREFIX(support_tex);
 
 vec4 FUNCNAME(vec2 tc) {
 #if DIRECTION_VERTICAL

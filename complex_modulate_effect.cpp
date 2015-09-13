@@ -14,6 +14,7 @@ ComplexModulateEffect::ComplexModulateEffect()
 {
 	register_int("num_repeats_x", &num_repeats_x);
 	register_int("num_repeats_y", &num_repeats_y);
+	register_vec2("num_repeats", uniform_num_repeats);
 }
 
 string ComplexModulateEffect::output_fragment_shader()
@@ -25,8 +26,8 @@ void ComplexModulateEffect::set_gl_state(GLuint glsl_program_num, const string &
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	float num_repeats[] = { float(num_repeats_x), float(num_repeats_y) };
-	set_uniform_vec2(glsl_program_num, prefix, "num_repeats", num_repeats);
+	uniform_num_repeats[0] = float(num_repeats_x);
+	uniform_num_repeats[1] = float(num_repeats_y);
 
 	// Set the secondary input to repeat (and nearest while we're at it).
 	Node *self = chain->find_node_for_effect(this);

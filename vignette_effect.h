@@ -25,8 +25,10 @@ public:
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
 private:
-	Point2D center, aspect_correction;
+	Point2D center;
+	Point2D uniform_aspect_correction, uniform_flipped_center;
 	float radius, inner_radius;
+	float uniform_pihalf_div_radius;
 };
 
 }  // namespace movit

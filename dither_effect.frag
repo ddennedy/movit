@@ -1,6 +1,7 @@
-uniform sampler2D PREFIX(dither_tex);
-uniform vec2 PREFIX(tc_scale);
-uniform float PREFIX(round_fac), PREFIX(inv_round_fac);
+// Implicit uniforms:
+// uniform sampler2D PREFIX(dither_tex);
+// uniform vec2 PREFIX(tc_scale);
+// uniform float PREFIX(round_fac), PREFIX(inv_round_fac);
 
 vec4 FUNCNAME(vec2 tc) {
 	vec4 result = INPUT(tc);

@@ -1,9 +1,10 @@
-uniform vec2 PREFIX(offset);
-uniform vec2 PREFIX(scale);
-
-uniform vec2 PREFIX(normalized_coords_to_texels);
-uniform vec2 PREFIX(offset_bottomleft);
-uniform vec2 PREFIX(offset_topright);
+// Implicit uniforms:
+// uniform vec2 PREFIX(offset);
+// uniform vec2 PREFIX(scale);
+//
+// uniform vec2 PREFIX(normalized_coords_to_texels);
+// uniform vec2 PREFIX(offset_bottomleft);
+// uniform vec2 PREFIX(offset_topright);
 
 vec4 FUNCNAME(vec2 tc) {
 	tc -= PREFIX(offset);

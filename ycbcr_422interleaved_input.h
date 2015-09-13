@@ -123,6 +123,8 @@ private:
 	unsigned width, height;
 	const unsigned char *pixel_data;
 	ResourcePool *resource_pool;
+
+	GLint uniform_tex_y, uniform_tex_cbcr;
 };
 
 }  // namespace movit

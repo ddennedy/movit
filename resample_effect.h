@@ -103,6 +103,11 @@ private:
 	EffectChain *chain;
 	Direction direction;
 	GLuint texnum;
+	GLint uniform_sample_tex;
+	float uniform_num_loops, uniform_slice_height, uniform_sample_x_scale, uniform_sample_x_offset;
+	float uniform_whole_pixel_offset;
+	int uniform_num_samples;
+
 	int input_width, input_height, output_width, output_height;
 	float offset, zoom;
 	int last_input_width, last_input_height, last_output_width, last_output_height;

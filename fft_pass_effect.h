@@ -110,6 +110,8 @@ private:
 	EffectChain *chain;
 	int input_width, input_height;
 	GLuint tex;
+	float uniform_num_repeats;
+	GLint uniform_support_tex;
 
 	int fft_size;
 	Direction direction;

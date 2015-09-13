@@ -12,13 +12,17 @@ namespace movit {
 
 VignetteEffect::VignetteEffect()
 	: center(0.5f, 0.5f),
-	  aspect_correction(1.0f, 1.0f),
+	  uniform_aspect_correction(1.0f, 1.0f),
+	  uniform_flipped_center(0.5f, 0.5f),
 	  radius(0.3f),
 	  inner_radius(0.3f)
 {
 	register_vec2("center", (float *)&center);
 	register_float("radius", (float *)&radius);
 	register_float("inner_radius", (float *)&inner_radius);
+	register_uniform_float("pihalf_div_radius", &uniform_pihalf_div_radius);
+	register_uniform_vec2("aspect_correction", (float *)&uniform_aspect_correction);
+	register_uniform_vec2("flipped_center", (float *)&uniform_flipped_center);
 }
 
 string VignetteEffect::output_fragment_shader()
@@ -29,9 +33,9 @@ string VignetteEffect::output_fragment_shader()
 void VignetteEffect::inform_input_size(unsigned input_num, unsigned width, unsigned height) {
 	assert(input_num == 0);
 	if (width >= height) {
-		aspect_correction = Point2D(float(width) / float(height), 1.0f);
+		uniform_aspect_correction = Point2D(float(width) / float(height), 1.0f);
 	} else {
-		aspect_correction = Point2D(1.0f, float(height) / float(width));
+		uniform_aspect_correction = Point2D(1.0f, float(height) / float(width));
 	}
 }
 
@@ -39,11 +43,8 @@ void VignetteEffect::set_gl_state(GLuint glsl_program_num, const string &prefix,
 {
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
-	set_uniform_float(glsl_program_num, prefix, "pihalf_div_radius", 0.5 * M_PI / radius);
-	set_uniform_vec2(glsl_program_num, prefix, "aspect_correction", (float *)&aspect_correction);
-
-	Point2D flipped_center(center.x, 1.0f - center.y);
-	set_uniform_vec2(glsl_program_num, prefix, "flipped_center", (float *)&flipped_center);
+	uniform_pihalf_div_radius = 0.5 * M_PI / radius;
+	uniform_flipped_center = Point2D(center.x, 1.0f - center.y);
 }
 
 }  // namespace movit
