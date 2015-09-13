@@ -317,6 +317,12 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *node = phase->effects[i];
 		Effect *effect = node->effect;
 		const string effect_id = phase->effect_ids[node];
+		for (unsigned j = 0; j < effect->uniforms_sampler2d.size(); ++j) {
+			phase->uniforms_sampler2d.push_back(effect->uniforms_sampler2d[j]);
+			phase->uniforms_sampler2d.back().prefix = effect_id;
+			frag_shader_uniforms += string("uniform sampler2D ") + effect_id
+				+ "_" + effect->uniforms_sampler2d[j].name + ";\n";
+		}
 		for (unsigned j = 0; j < effect->uniforms_bool.size(); ++j) {
 			phase->uniforms_bool.push_back(effect->uniforms_bool[j]);
 			phase->uniforms_bool.back().prefix = effect_id;
@@ -328,12 +334,6 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			phase->uniforms_int.back().prefix = effect_id;
 			frag_shader_uniforms += string("uniform int ") + effect_id
 				+ "_" + effect->uniforms_int[j].name + ";\n";
-		}
-		for (unsigned j = 0; j < effect->uniforms_sampler2d.size(); ++j) {
-			phase->uniforms_int.push_back(effect->uniforms_sampler2d[j]);
-			phase->uniforms_int.back().prefix = effect_id;
-			frag_shader_uniforms += string("uniform sampler2D ") + effect_id
-				+ "_" + effect->uniforms_sampler2d[j].name + ";\n";
 		}
 		for (unsigned j = 0; j < effect->uniforms_float.size(); ++j) {
 			phase->uniforms_float.push_back(effect->uniforms_float[j]);
@@ -391,6 +391,10 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
 
 	// Collect the resulting program numbers for each uniform.
+	for (unsigned i = 0; i < phase->uniforms_sampler2d.size(); ++i) {
+		Uniform<int> &uniform = phase->uniforms_sampler2d[i];
+		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
+	}
 	for (unsigned i = 0; i < phase->uniforms_bool.size(); ++i) {
 		Uniform<bool> &uniform = phase->uniforms_bool[i];
 		uniform.location = get_uniform_location(phase->glsl_program_num, uniform.prefix, uniform.name);
@@ -1835,6 +1839,12 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 void EffectChain::setup_uniforms(Phase *phase)
 {
 	// TODO: Use UBO blocks.
+	for (size_t i = 0; i < phase->uniforms_sampler2d.size(); ++i) {
+		const Uniform<int> &uniform = phase->uniforms_sampler2d[i];
+		if (uniform.location != -1) {
+			glUniform1iv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
 	for (size_t i = 0; i < phase->uniforms_bool.size(); ++i) {
 		const Uniform<bool> &uniform = phase->uniforms_bool[i];
 		assert(uniform.num_values == 1);

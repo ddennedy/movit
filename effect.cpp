@@ -95,6 +95,16 @@ void Effect::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigne
 
 void Effect::clear_gl_state() {}
 
+void Effect::register_uniform_sampler2d(const std::string &key, const GLint *value)
+{
+	Uniform<int> uniform;
+	uniform.name = key;
+	uniform.value = value;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_sampler2d.push_back(uniform);
+}
+
 void Effect::register_uniform_bool(const std::string &key, const bool *value)
 {
 	Uniform<bool> uniform;
@@ -113,16 +123,6 @@ void Effect::register_uniform_int(const std::string &key, const int *value)
 	uniform.num_values = 1;
 	uniform.location = -1;
 	uniforms_int.push_back(uniform);
-}
-
-void Effect::register_uniform_sampler2d(const std::string &key, const GLint *value)
-{
-	Uniform<int> uniform;
-	uniform.name = key;
-	uniform.value = value;
-	uniform.num_values = 1;
-	uniform.location = -1;
-	uniforms_sampler2d.push_back(uniform);
 }
 
 void Effect::register_uniform_float(const std::string &key, const float *value)

@@ -332,9 +332,9 @@ protected:
 	//
 	// Calling register_* will automatically imply register_uniform_*,
 	// except for register_int as noted above.
+	void register_uniform_sampler2d(const std::string &key, const int *value);
 	void register_uniform_bool(const std::string &key, const bool *value);
 	void register_uniform_int(const std::string &key, const int *value);  // Note: Requires GLSL 1.30 or newer.
-	void register_uniform_sampler2d(const std::string &key, const int *value);
 	void register_uniform_float(const std::string &key, const float *value);
 	void register_uniform_vec2(const std::string &key, const float *values);
 	void register_uniform_vec3(const std::string &key, const float *values);
@@ -351,9 +351,9 @@ private:
 	std::map<std::string, float *> params_vec4;
 
 	// Picked out by EffectChain during finalization.
+	std::vector<Uniform<int> > uniforms_sampler2d;
 	std::vector<Uniform<bool> > uniforms_bool;
 	std::vector<Uniform<int> > uniforms_int;
-	std::vector<Uniform<int> > uniforms_sampler2d;
 	std::vector<Uniform<float> > uniforms_float;
 	std::vector<Uniform<float> > uniforms_vec2;
 	std::vector<Uniform<float> > uniforms_vec3;

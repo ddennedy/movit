@@ -117,6 +117,7 @@ struct Phase {
 	std::map<Node *, std::string> effect_ids;
 
 	// Uniforms for this phase; combined from all the effects.
+	std::vector<Uniform<int> > uniforms_sampler2d;
 	std::vector<Uniform<bool> > uniforms_bool;
 	std::vector<Uniform<int> > uniforms_int;
 	std::vector<Uniform<float> > uniforms_float;
