@@ -43,9 +43,9 @@ vec4 PREFIX(do_sample)(vec2 tc, int i)
 	vec2 sample = tex2D(PREFIX(sample_tex), sample_tc).rg;
 
 #if DIRECTION_VERTICAL
-	tc.y = sample.g + floor(sample_tc.y) * PREFIX(slice_height) + PREFIX(whole_pixel_offset);
+	tc.y = sample.g + (floor(sample_tc.y) * PREFIX(slice_height) + PREFIX(whole_pixel_offset));
 #else
-	tc.x = sample.g + floor(sample_tc.y) * PREFIX(slice_height) + PREFIX(whole_pixel_offset);
+	tc.x = sample.g + (floor(sample_tc.y) * PREFIX(slice_height) + PREFIX(whole_pixel_offset));
 #endif
 	return vec4(sample.r) * INPUT(tc);
 }
