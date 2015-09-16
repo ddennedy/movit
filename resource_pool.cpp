@@ -124,8 +124,11 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader, const str
 	} else {
 		// Not in the cache. Compile the shaders.
 		glsl_program_num = glCreateProgram();
+		check_error();
 		GLuint vs_obj = compile_shader(vertex_shader, GL_VERTEX_SHADER);
+		check_error();
 		GLuint fs_obj = compile_shader(fragment_shader, GL_FRAGMENT_SHADER);
+		check_error();
 		glAttachShader(glsl_program_num, vs_obj);
 		check_error();
 		glAttachShader(glsl_program_num, fs_obj);
