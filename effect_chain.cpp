@@ -39,6 +39,7 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	  aspect_denom(aspect_denom),
 	  dither_effect(NULL),
 	  num_dither_bits(0),
+	  output_origin(OUTPUT_ORIGIN_BOTTOM_LEFT),
 	  finalized(false),
 	  resource_pool(resource_pool),
 	  do_phase_timing(false) {
@@ -407,6 +408,17 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	frag_shader = frag_shader_header + frag_shader_uniforms + frag_shader;
 
 	string vert_shader = read_version_dependent_file("vs", "vert");
+
+	// If we're the last phase and need to flip the picture to compensate for
+	// the origin, tell the vertex shader so.
+	if (phase->output_node->outgoing_links.empty() && output_origin == OUTPUT_ORIGIN_TOP_LEFT) {
+		const string needle = "#define FLIP_ORIGIN 0";
+		size_t pos = vert_shader.find(needle);
+		assert(pos != string::npos);
+
+		vert_shader[pos + needle.size() - 1] = '1';
+	}
+
 	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
 
 	// Collect the resulting location numbers for each uniform.

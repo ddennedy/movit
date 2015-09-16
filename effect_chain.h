@@ -83,6 +83,21 @@ enum YCbCrOutputSplitting {
 	YCBCR_OUTPUT_PLANAR,
 };
 
+// Where (0,0) is taken to be in the output. If you want to render to an
+// OpenGL screen, you should keep the default of bottom-left, as that is
+// OpenGL's natural coordinate system. However, there are cases, such as if you
+// render to an FBO and read the pixels back into some other system, where
+// you'd want a top-left origin; if so, an additional flip step will be added
+// at the very end (but done in a vertex shader, so it will have zero extra
+// cost).
+//
+// Note that Movit's coordinate system in general consistently puts (0,0) in
+// the top left for _input_, no matter what you set as output origin.
+enum OutputOrigin {
+	OUTPUT_ORIGIN_BOTTOM_LEFT,
+	OUTPUT_ORIGIN_TOP_LEFT,
+};
+
 // A node in the graph; basically an effect and some associated information.
 class Node {
 public:
@@ -223,6 +238,14 @@ public:
 	void set_dither_bits(unsigned num_bits)
 	{
 		this->num_dither_bits = num_bits;
+	}
+
+	// Set where (0,0) is taken to be in the output. The default is
+	// OUTPUT_ORIGIN_BOTTOM_LEFT, which is usually what you want
+	// (see OutputOrigin above for more details).
+	void set_output_origin(OutputOrigin output_origin)
+	{
+		this->output_origin = output_origin;
 	}
 
 	void finalize();
@@ -378,6 +401,7 @@ private:
 	std::vector<Phase *> phases;
 
 	unsigned num_dither_bits;
+	OutputOrigin output_origin;
 	bool finalized;
 
 	ResourcePool *resource_pool;

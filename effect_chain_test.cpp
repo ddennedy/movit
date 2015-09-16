@@ -98,6 +98,25 @@ TEST(MirrorTest, BasicTest) {
 	expect_equal(expected_data, out_data, 3, 2);
 }
 
+TEST(EffectChainTest, TopLeftOrigin) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f,
+		0.75f, 1.0f, 1.0f,
+	};
+	// Note that EffectChainTester assumes bottom-left origin, so by setting
+	// top-left, we will get flipped data back.
+	float expected_data[6] = {
+		0.75f, 1.0f, 1.0f,
+		0.0f, 0.25f, 0.3f,
+	};
+	float out_data[6];
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->set_output_origin(OUTPUT_ORIGIN_TOP_LEFT);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 3, 2);
+}
+
 // A dummy effect that inverts its input.
 class InvertEffect : public Effect {
 public:
