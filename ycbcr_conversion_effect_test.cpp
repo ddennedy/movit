@@ -182,4 +182,122 @@ TEST(YCbCrConversionEffectTest, LimitedRangeToFullRange) {
 	expect_equal(expected_data, out_data, 4 * width, height);
 }
 
+TEST(YCbCrConversionEffectTest, PlanarOutput) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 90, 54, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 34, 110,
+	};
+
+	unsigned char out_y[width * height], out_cb[width * height], out_cr[width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format, YCBCR_OUTPUT_PLANAR);
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	expect_equal(y, out_y, width, height);
+	expect_equal(cb, out_cb, width, height);
+	expect_equal(cr, out_cr, width, height);
+}
+
+TEST(YCbCrConversionEffectTest, SplitLumaAndChroma) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 90, 54, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 34, 110,
+	};
+
+	// The R and A data, rearranged. Note: The G and B channels
+	// (the middle columns) are undefined. If we change the behavior,
+	// the test will need to be updated, but a failure is expected.
+	unsigned char expected_y[width * height * 4] = {
+		 16, /*undefined:*/  16, /*undefined:*/  16, 255,
+		235, /*undefined:*/ 235, /*undefined:*/ 235, 255,
+		 81, /*undefined:*/  81, /*undefined:*/  81, 255,
+		145, /*undefined:*/ 145, /*undefined:*/ 145, 255,
+		 41, /*undefined:*/  41, /*undefined:*/  41, 255,
+	};
+
+	// Just the Cb and Cr data, rearranged. The B and A channels
+	// are undefined, as below.
+	unsigned char expected_cbcr[width * height * 4] = {
+		128, 128, /*undefined:*/ 128, /*undefined:*/ 255,
+		128, 128, /*undefined:*/ 128, /*undefined:*/ 255,
+		 90, 240, /*undefined:*/ 240, /*undefined:*/ 255,
+		 54,  34, /*undefined:*/  34, /*undefined:*/ 255,
+		240, 110, /*undefined:*/ 110, /*undefined:*/ 255,
+	};
+
+	unsigned char out_y[width * height], out_cbcr[width * height * 4];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format, YCBCR_OUTPUT_SPLIT_Y_AND_CBCR);
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_y, out_cbcr, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	expect_equal(expected_y, out_y, width * 4, height);
+	expect_equal(expected_cbcr, out_cbcr, width * 4, height);
+}
+
 }  // namespace movit

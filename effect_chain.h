@@ -55,6 +55,34 @@ enum OutputAlphaFormat {
 	OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED,
 };
 
+// RGBA output is nearly always packed; Y'CbCr, however, is often planar
+// due to chroma subsampling. This enum controls how add_ycbcr_output()
+// distributes the color channels between the fragment shader outputs.
+// Obviously, anything except YCBCR_OUTPUT_INTERLEAVED will be meaningless
+// unless you use render_to_fbo() and have an FBO with multiple render
+// targets attached (the other outputs will be discarded).
+enum YCbCrOutputSplitting {
+	// Only one output: Store Y'CbCr into the first three output channels,
+	// respectively, plus alpha. This is also called “chunked” or
+	// ”packed” mode.
+	YCBCR_OUTPUT_INTERLEAVED,
+
+	// Store Y' and alpha into the first output (in the red and alpha
+	// channels; effect to the others is undefined), and Cb and Cr into
+	// the first two channels of the second output. This is particularly
+	// useful if you want to end up in a format like NV12, where all the
+	// Y' samples come first and then Cb and Cr come interlevaed afterwards.
+	// You will still need to do the chroma subsampling yourself to actually
+	// get down to NV12, though.
+	YCBCR_OUTPUT_SPLIT_Y_AND_CBCR,
+
+	// Store Y' and alpha into the first output, Cb into the first channel
+	// of the second output and Cr into the first channel of the third output.
+	// (Effect on the other channels is undefined.) Essentially gives you
+	// 4:4:4 planar, or ”yuv444p”.
+	YCBCR_OUTPUT_PLANAR,
+};
+
 // A node in the graph; basically an effect and some associated information.
 class Node {
 public:
@@ -186,7 +214,8 @@ public:
 	// Currently, only chunked packed output is supported, and only 4:4:4
 	// (so chroma_subsampling_x and chroma_subsampling_y must both be 1).
 	void add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
-	                      const YCbCrFormat &ycbcr_format);
+	                      const YCbCrFormat &ycbcr_format,
+			      YCbCrOutputSplitting output_splitting = YCBCR_OUTPUT_INTERLEAVED);
 
 	// Set number of output bits, to scale the dither.
 	// 8 is the right value for most outputs.
@@ -338,7 +367,8 @@ private:
 
 	enum OutputColorType { OUTPUT_COLOR_RGB, OUTPUT_COLOR_YCBCR };
 	OutputColorType output_color_type;
-	YCbCrFormat output_ycbcr_format;  // If output_color_type == OUTPUT_COLOR_YCBCR.
+	YCbCrFormat output_ycbcr_format;              // If output_color_type == OUTPUT_COLOR_YCBCR.
+	YCbCrOutputSplitting output_ycbcr_splitting;  // If output_color_type == OUTPUT_COLOR_YCBCR.
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;

@@ -82,13 +82,14 @@ void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_
 }
 
 void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
-                                   const YCbCrFormat &ycbcr_format)
+                                   const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
 {
 	assert(!finalized);
 	output_format = format;
 	output_alpha_format = alpha_format;
 	output_color_type = OUTPUT_COLOR_YCBCR;
 	output_ycbcr_format = ycbcr_format;
+	output_ycbcr_splitting = output_splitting;
 
 	assert(ycbcr_format.chroma_subsampling_x == 1);
 	assert(ycbcr_format.chroma_subsampling_y == 1);
@@ -361,6 +362,23 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 	}
 	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
+
+	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
+	if (phase->output_node->outgoing_links.empty() && output_color_type == OUTPUT_COLOR_YCBCR) {
+		switch (output_ycbcr_splitting) {
+		case YCBCR_OUTPUT_INTERLEAVED:
+			// No #defines set.
+			break;
+		case YCBCR_OUTPUT_SPLIT_Y_AND_CBCR:
+			frag_shader += "#define YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 1\n";
+			break;
+		case YCBCR_OUTPUT_PLANAR:
+			frag_shader += "#define YCBCR_OUTPUT_PLANAR 1\n";
+			break;
+		default:
+			assert(false);
+		}
+	}
 	frag_shader.append(read_version_dependent_file("footer", "frag"));
 
 	// Collect uniforms from all effects and output them. Note that this needs
