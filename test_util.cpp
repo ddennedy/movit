@@ -47,52 +47,17 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve,
                                      GLenum framebuffer_format)
-	: chain(width, height, get_static_pool()), width(width), height(height), output_added(false), finalized(false)
+	: chain(width, height, get_static_pool()), width(width), height(height), framebuffer_format(framebuffer_format), output_added(false), finalized(false)
 {
 	CHECK(init_movit(".", MOVIT_DEBUG_OFF));
 
 	if (data != NULL) {
 		add_input(data, pixel_format, color_space, gamma_curve);
 	}
-
-	GLuint type;
-	if (framebuffer_format == GL_RGBA8) {
-		type = GL_UNSIGNED_BYTE;
-	} else if (framebuffer_format == GL_RGBA16F || framebuffer_format == GL_RGBA32F) {
-		type = GL_FLOAT;
-	} else {
-		// Add more here as needed.
-		assert(false);
-	}
-
-	glGenTextures(1, &texnum);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, texnum);
-	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, NULL);
-	check_error();
-
-	glGenFramebuffers(1, &fbo);
-	check_error();
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	check_error();
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER,
-		GL_COLOR_ATTACHMENT0,
-		GL_TEXTURE_2D,
-		texnum,
-		0);
-	check_error();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	check_error();
 }
 
 EffectChainTester::~EffectChainTester()
 {
-	glDeleteFramebuffers(1, &fbo);
-	check_error();
-	glDeleteTextures(1, &texnum);
-	check_error();
 }
 
 Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width, int input_height)
@@ -150,6 +115,39 @@ void EffectChainTester::internal_run(T *out_data, GLenum internal_format, GLenum
 		finalize_chain(color_space, gamma_curve, alpha_format);
 	}
 
+	GLuint type;
+	if (framebuffer_format == GL_RGBA8) {
+		type = GL_UNSIGNED_BYTE;
+	} else if (framebuffer_format == GL_RGBA16F || framebuffer_format == GL_RGBA32F) {
+		type = GL_FLOAT;
+	} else {
+		// Add more here as needed.
+		assert(false);
+	}
+
+	GLuint fbo, texnum;
+
+	glGenTextures(1, &texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, NULL);
+	check_error();
+
+	glGenFramebuffers(1, &fbo);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	check_error();
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		texnum,
+		0);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
+
 	chain.render_to_fbo(fbo, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -177,6 +175,11 @@ void EffectChainTester::internal_run(T *out_data, GLenum internal_format, GLenum
 		glReadPixels(0, 0, width, height, format, internal_format, out_data);
 		check_error();
 	}
+
+	glDeleteFramebuffers(1, &fbo);
+	check_error();
+	glDeleteTextures(1, &texnum);
+	check_error();
 
 	if (format == GL_RGBA) {
 		width *= 4;

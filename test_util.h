@@ -33,8 +33,8 @@ private:
 	void internal_run(T *out_data, GLenum internal_format, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 
 	EffectChain chain;
-	GLuint fbo, texnum;
 	unsigned width, height;
+	GLenum framebuffer_format;
 	bool output_added;
 	bool finalized;
 };
