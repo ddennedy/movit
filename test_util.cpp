@@ -135,46 +135,16 @@ Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat 
 
 void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	if (!finalized) {
-		finalize_chain(color_space, gamma_curve, alpha_format);
-	}
-
-	chain.render_to_fbo(fbo, width, height);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	check_error();
-	if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
-		// GLES will only read GL_RGBA.
-		float *temp = new float[width * height * 4];
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, temp);
-		check_error();
-		if (format == GL_ALPHA) {
-			for (unsigned i = 0; i < width * height; ++i) {
-				out_data[i] = temp[i * 4 + 3];
-			}
-		} else if (format == GL_BLUE) {
-			for (unsigned i = 0; i < width * height; ++i) {
-				out_data[i] = temp[i * 4 + 2];
-			}
-		} else {
-			for (unsigned i = 0; i < width * height; ++i) {
-				out_data[i] = temp[i * 4];
-			}
-		}
-		delete[] temp;
-	} else {
-		glReadPixels(0, 0, width, height, format, GL_FLOAT, out_data);
-		check_error();
-	}
-
-	if (format == GL_RGBA) {
-		width *= 4;
-	}
-
-	vertical_flip(out_data, width, height);
+	internal_run(out_data, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run(out_data, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
+}
+
+template<class T>
+void EffectChainTester::internal_run(T *out_data, GLenum internal_format, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
 	if (!finalized) {
 		finalize_chain(color_space, gamma_curve, alpha_format);
@@ -186,8 +156,8 @@ void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace c
 	check_error();
 	if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
 		// GLES will only read GL_RGBA.
-		unsigned char *temp = new unsigned char[width * height * 4];
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+		T *temp = new T[width * height * 4];
+		glReadPixels(0, 0, width, height, GL_RGBA, internal_format, temp);
 		check_error();
 		if (format == GL_ALPHA) {
 			for (unsigned i = 0; i < width * height; ++i) {
@@ -204,7 +174,7 @@ void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace c
 		}
 		delete[] temp;
 	} else {
-		glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, out_data);
+		glReadPixels(0, 0, width, height, format, internal_format, out_data);
 		check_error();
 	}
 
