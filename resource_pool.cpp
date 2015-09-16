@@ -312,17 +312,28 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 		for (map<pair<void *, GLuint>, FBO>::iterator format_it = fbo_formats.begin();
 		     format_it != fbo_formats.end();
 		     ++format_it) {
-			if (format_it->second.texture_num == free_texture_num) {
-				format_it->second.texture_num = 0;
+			for (unsigned i = 0; i < num_fbo_attachments; ++i) {
+				if (format_it->second.texture_num[i] == free_texture_num) {
+					format_it->second.texture_num[i] = GL_INVALID_INDEX;
+				}
 			}
 		}
 	}
 	pthread_mutex_unlock(&lock);
 }
 
-GLuint ResourcePool::create_fbo(GLuint texture_num)
+GLuint ResourcePool::create_fbo(GLuint texture0_num, GLuint texture1_num, GLuint texture2_num, GLuint texture3_num)
 {
 	void *context = get_gl_context_identifier();
+
+	// Make sure we are filled from the bottom.
+	assert(texture0_num != 0);
+	if (texture1_num == 0) {
+		assert(texture2_num == 0);
+	}
+	if (texture2_num == 0) {
+		assert(texture3_num == 0);
+	}
 
 	pthread_mutex_lock(&lock);
 	if (fbo_freelist.count(context) != 0) {
@@ -334,7 +345,10 @@ GLuint ResourcePool::create_fbo(GLuint texture_num)
 			map<pair<void *, GLuint>, FBO>::const_iterator format_it =
 				fbo_formats.find(make_pair(context, fbo_num));
 			assert(format_it != fbo_formats.end());
-			if (format_it->second.texture_num == texture_num) {
+			if (format_it->second.texture_num[0] == texture0_num &&
+			    format_it->second.texture_num[1] == texture1_num &&
+			    format_it->second.texture_num[2] == texture2_num &&
+			    format_it->second.texture_num[3] == texture3_num) {
 				fbo_freelist[context].erase(freelist_it);
 				pthread_mutex_unlock(&lock);
 				return fbo_num;
@@ -343,25 +357,42 @@ GLuint ResourcePool::create_fbo(GLuint texture_num)
 	}
 
 	// Create a new one.
+	FBO fbo_format;
+	fbo_format.texture_num[0] = texture0_num;
+	fbo_format.texture_num[1] = texture1_num;
+	fbo_format.texture_num[2] = texture2_num;
+	fbo_format.texture_num[3] = texture3_num;
+
 	GLuint fbo_num;
 	glGenFramebuffers(1, &fbo_num);
 	check_error();
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo_num);
 	check_error();
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER,
-		GL_COLOR_ATTACHMENT0,
-		GL_TEXTURE_2D,
-		texture_num,
-		0);
+
+	GLenum bufs[num_fbo_attachments];
+	unsigned num_active_attachments = 0;
+	for (unsigned i = 0; i < num_fbo_attachments; ++i, ++num_active_attachments) {
+		if (fbo_format.texture_num[i] == 0) {
+			break;
+		}
+		glFramebufferTexture2D(
+			GL_FRAMEBUFFER,
+			GL_COLOR_ATTACHMENT0 + i,
+			GL_TEXTURE_2D,
+			fbo_format.texture_num[i],
+			0);
+		check_error();
+		bufs[i] = GL_COLOR_ATTACHMENT0 + i;
+	}
+
+	glDrawBuffers(num_active_attachments, bufs);
 	check_error();
+
 	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 	assert(status == GL_FRAMEBUFFER_COMPLETE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
 
-	FBO fbo_format;
-	fbo_format.texture_num = texture_num;
 	pair<void *, GLuint> key(context, fbo_num);
 	assert(fbo_formats.count(key) == 0);
 	fbo_formats.insert(make_pair(key, fbo_format));
@@ -403,7 +434,16 @@ void ResourcePool::cleanup_unlinked_fbos(void *context)
 		GLuint fbo_num = *freelist_it;
 		pair<void *, GLuint> key(context, fbo_num);
 		assert(fbo_formats.count(key) != 0);
-		if (fbo_formats[key].texture_num == 0) {
+
+		bool all_unlinked = true;
+		for (unsigned i = 0; i < num_fbo_attachments; ++i) {
+			if (fbo_formats[key].texture_num[i] != 0 &&
+			    fbo_formats[key].texture_num[i] != GL_INVALID_INDEX) {
+				all_unlinked = false;
+				break;
+			}
+		}
+		if (all_unlinked) {
 			fbo_formats.erase(key);
 			glDeleteFramebuffers(1, &fbo_num);
 			check_error();

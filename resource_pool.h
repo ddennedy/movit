@@ -66,7 +66,7 @@ public:
 	GLuint create_2d_texture(GLint internal_format, GLsizei width, GLsizei height);
 	void release_2d_texture(GLuint texture_num);
 
-	// Allocate an FBO with the the given texture bound as a framebuffer attachment,
+	// Allocate an FBO with the the given texture(s) bound as framebuffer attachment(s),
 	// or fetch a previous used if possible. Unbinds GL_FRAMEBUFFER afterwards.
 	// Keeps ownership of the FBO; you must call release_fbo() of deleting
 	// it when you no longer want it.
@@ -77,7 +77,10 @@ public:
 	// in particular on NVidia cards. Also, keep in mind that FBOs are not
 	// shareable across contexts, so you must have the context that's supposed
 	// to own the FBO current when you create or release it.
-	GLuint create_fbo(GLuint texture_num);
+	GLuint create_fbo(GLuint texture0_num,
+	                  GLuint texture1_num = 0,
+	                  GLuint texture2_num = 0,
+	                  GLuint texture3_num = 0);
 	void release_fbo(GLuint fbo_num);
 
 	// Informs the ResourcePool that the current context is going away soon,
@@ -138,8 +141,11 @@ private:
 	std::list<GLuint> texture_freelist;
 	size_t texture_freelist_bytes;
 
+	static const unsigned num_fbo_attachments = 4;
 	struct FBO {
-		GLuint texture_num;  // 0 means associated to a texture that has since been deleted.
+		// GL_INVALID_INDEX means associated to a texture that has since been deleted.
+		// 0 means the output isn't bound.
+		GLuint texture_num[num_fbo_attachments];
 	};
 
 	// For each context, a mapping from FBO number to format details. This is
