@@ -161,14 +161,15 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 {
 	float num_subtexels = src_size / movit_texel_subpixel_precision;
 	float inv_num_subtexels = movit_texel_subpixel_precision / src_size;
-	int src_bilinear_samples = 0;
 
-	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, UINT_MAX);
-		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
+	unsigned max_samples_saved = UINT_MAX;
+	for (unsigned y = 0; y < dst_samples && max_samples_saved > 0; ++y) {
+		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, max_samples_saved);
+		max_samples_saved = min(max_samples_saved, num_samples_saved);
 	}
 
 	// Now that we know the right width, actually combine the samples.
+	unsigned src_bilinear_samples = src_samples - max_samples_saved;
 	*bilinear_weights = new Tap<DestFloat>[dst_samples * src_bilinear_samples];
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		Tap<DestFloat> *bilinear_weights_ptr = *bilinear_weights + y * src_bilinear_samples;
@@ -178,8 +179,8 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 			num_subtexels,
 			inv_num_subtexels,
 			src_samples,
-			src_samples - src_bilinear_samples);
-		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);
+			max_samples_saved);
+		assert(num_samples_saved == max_samples_saved);
 		normalize_sum(bilinear_weights_ptr, src_bilinear_samples);
 	}
 	return src_bilinear_samples;
