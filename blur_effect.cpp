@@ -6,6 +6,7 @@
 #include "blur_effect.h"
 #include "effect_chain.h"
 #include "effect_util.h"
+#include "init.h"
 #include "util.h"
 
 using namespace std;
@@ -189,24 +190,27 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 	uniform_samples[2 * 0 + 0] = 0.0f;
 	uniform_samples[2 * 0 + 1] = weight[0];
 
+	int size;
+	if (direction == HORIZONTAL) {
+		size = width;
+	} else if (direction == VERTICAL) {
+		size = height;
+	} else {
+		assert(false);
+	}
+	float num_subtexels = size / movit_texel_subpixel_precision;
+	float inv_num_subtexels = movit_texel_subpixel_precision / size;
+
 	// All other samples.
 	for (int i = 1; i < num_taps / 2 + 1; ++i) {
 		unsigned base_pos = i * 2 - 1;
 		float w1 = weight[base_pos];
 		float w2 = weight[base_pos + 1];
-		int size;
-		if (direction == HORIZONTAL) {
-			size = width;
-		} else if (direction == VERTICAL) {
-			size = height;
-		} else {
-			assert(false);
-		}
 
 		float pos1 = base_pos / (float)size;
 		float pos2 = (base_pos + 1) / (float)size;
 		float pos, total_weight;
-		combine_two_samples(w1, w2, pos1, pos2, size, &pos, &total_weight, NULL);
+		combine_two_samples(w1, w2, pos1, pos2, num_subtexels, inv_num_subtexels, &pos, &total_weight, NULL);
 
 		uniform_samples[2 * i + 0] = pos;
 		uniform_samples[2 * i + 1] = total_weight;

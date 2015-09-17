@@ -54,8 +54,11 @@ enum CombineRoundingBehavior {
 // Calculate where to sample, and with what weight, if one wants to use
 // the GPU's bilinear hardware to sample w1 * x[pos1] + w2 * x[pos2],
 // where pos1 and pos2 must be normalized coordinates describing neighboring
-// pixels in the mipmap level at which you sample, and the total number of
-// pixels (in given mipmap level) is <size>.
+// texels in the mipmap level at which you sample. <num_subtexels> is the
+// number of distinct accessible subtexels in the given mipmap level,
+// calculated by num_texels / movit_texel_subpixel_precision. It is a float
+// for performance reasons, even though it is expected to be a whole number.
+// <inv_num_subtexels> is simply its inverse (1/x).
 //
 // Note that since the GPU might have limited precision in its linear
 // interpolation, the effective weights might be different from the ones you
@@ -68,7 +71,7 @@ enum CombineRoundingBehavior {
 // rounded fp16 value. This enables more precise calculation of total_weight
 // and sum_sq_error.
 template<class DestFloat>
-void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size,
+void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                          DestFloat *offset, DestFloat *total_weight, float *sum_sq_error);
 
 // Create a VBO with the given data, and bind it to the vertex attribute

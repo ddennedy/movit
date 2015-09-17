@@ -61,7 +61,7 @@ unsigned gcd(unsigned a, unsigned b)
 }
 
 template<class DestFloat>
-unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, unsigned src_size, unsigned num_src_samples, unsigned max_samples_saved)
+unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_subtexels, float inv_num_subtexels, unsigned num_src_samples, unsigned max_samples_saved)
 {
 	// Cut off near-zero values at both sides.
 	unsigned num_samples_saved = 0;
@@ -109,7 +109,7 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, unsigned sr
 
 		fp16_int_t pos, total_weight;
 		float sum_sq_error;
-		combine_two_samples(w1, w2, pos1, pos2, src_size, &pos, &total_weight, &sum_sq_error);
+		combine_two_samples(w1, w2, pos1, pos2, num_subtexels, inv_num_subtexels, &pos, &total_weight, &sum_sq_error);
 
 		// If the interpolation error is larger than that of about sqrt(2) of
 		// a level at 8-bit precision, don't combine. (You'd think 1.0 was enough,
@@ -159,9 +159,12 @@ void normalize_sum(Tap<T>* vals, unsigned num)
 template<class DestFloat>
 unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, Tap<DestFloat> **bilinear_weights)
 {
+	float num_subtexels = src_size / movit_texel_subpixel_precision;
+	float inv_num_subtexels = movit_texel_subpixel_precision / src_size;
 	int src_bilinear_samples = 0;
+
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, src_size, src_samples, UINT_MAX);
+		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, UINT_MAX);
 		src_bilinear_samples = max<int>(src_bilinear_samples, src_samples - num_samples_saved);
 	}
 
@@ -172,7 +175,8 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 		unsigned num_samples_saved = combine_samples(
 			weights + y * src_samples,
 			bilinear_weights_ptr,
-			src_size,
+			num_subtexels,
+			inv_num_subtexels,
 			src_samples,
 			src_samples - src_bilinear_samples);
 		assert(int(src_samples) - int(num_samples_saved) == src_bilinear_samples);

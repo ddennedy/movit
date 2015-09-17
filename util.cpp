@@ -219,7 +219,7 @@ string output_glsl_vec3(const string &name, float x, float y, float z)
 }
 
 template<class DestFloat>
-void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned size,
+void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                          DestFloat *offset, DestFloat *total_weight, float *sum_sq_error)
 {
 	assert(movit_initialized);
@@ -238,9 +238,7 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned si
 	// Round to the minimum number of bits we have measured earlier.
 	// The card will do this for us anyway, but if we know what the real z
 	// is, we can pick a better total_weight below.
-	z *= size;  // Move to pixel coordinates,
-	z = lrintf(z / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;  // Round.
-	z /= size;  // Move back to normalized coordinates.
+	z = lrintf(z * num_subtexels) * inv_num_subtexels;
 	
 	// Choose total weight w so that we minimize total squared error
 	// for the effective weights:
@@ -255,7 +253,7 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned si
 	//   w = (a(1-z) + bz) / ((1-z)² + z²)
 	//
 	// If z had infinite precision, this would simply reduce to w = w1 + w2.
-	*total_weight = (w1 * (1 - z) + w2 * z) / (z * z + (1 - z) * (1 - z));
+	*total_weight = (w1 + z * (w2 - w1)) / (z * z + (1 - z) * (1 - z));
 
 	if (sum_sq_error != NULL) {
 		float err1 = *total_weight * (1 - z) - w1;
@@ -266,11 +264,11 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, unsigned si
 
 // Explicit instantiations.
 template
-void combine_two_samples<float>(float w1, float w2, float pos1, float pos2, unsigned size,
+void combine_two_samples<float>(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                                 float *offset, float *total_weight, float *sum_sq_error);
 
 template
-void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos2, unsigned size,
+void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                                      fp16_int_t *offset, fp16_int_t *total_weight, float *sum_sq_error);
 
 GLuint fill_vertex_attribute(GLuint glsl_program_num, const string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
