@@ -19,11 +19,28 @@ namespace movit {
 
 class ResourcePool;
 
+// Whether the data is fully planar (Y', Cb and Cr in one texture each)
+// or not. Note that this input does currently not support fully interleaved
+// data (Y', Cb and Cr next to each other), as 4:4:4 interleaved Y'CbCr seems
+// to be rare; however, YCbCr422InterleavedInput supports the important special
+// case of 4:2:2 interleaved.
+enum YCbCrInputSplitting {
+	// The standard, default case; Y', Cb and Cr in one texture each.
+	YCBCR_INPUT_PLANAR,
+
+	// Y' in one texture, and then Cb and Cr interleaved in one texture.
+	// In particular, this is a superset of the relatively popular NV12 mode.
+	// If you specify this mode, the “Cr” pointer texture will be unused
+	// (the ”Cb” texture contains both).
+	YCBCR_INPUT_SPLIT_Y_AND_CBCR,
+};
+
 class YCbCrInput : public Input {
 public:
 	YCbCrInput(const ImageFormat &image_format,
 	           const YCbCrFormat &ycbcr_format,
-	           unsigned width, unsigned height);
+	           unsigned width, unsigned height,
+	           YCbCrInputSplitting ycbcr_input_splitting = YCBCR_INPUT_PLANAR);
 	~YCbCrInput();
 
 	virtual std::string effect_type_id() const { return "YCbCrInput"; }
@@ -54,7 +71,7 @@ public:
 	// the pointer (and PBO, if set) has to be valid at the time of the render call.
 	void set_pixel_data(unsigned channel, const unsigned char *pixel_data, GLuint pbo = 0)
 	{
-		assert(channel >= 0 && channel < 3);
+		assert(channel >= 0 && channel < num_channels);
 		this->pixel_data[channel] = pixel_data;
 		this->pbos[channel] = pbo;
 		invalidate_pixel_data();
@@ -63,7 +80,7 @@ public:
 	void invalidate_pixel_data();
 
 	void set_pitch(unsigned channel, unsigned pitch) {
-		assert(channel >= 0 && channel < 3);
+		assert(channel >= 0 && channel < num_channels);
 		this->pitch[channel] = pitch;
 		invalidate_pixel_data();
 	}
@@ -78,6 +95,8 @@ public:
 private:
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
+	GLuint num_channels;
+	YCbCrInputSplitting ycbcr_input_splitting;
 	GLuint pbos[3], texture_num[3];
 	GLint uniform_tex_y, uniform_tex_cb, uniform_tex_cr;
 

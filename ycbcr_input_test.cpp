@@ -484,4 +484,58 @@ TEST(YCbCrInputTest, PBO) {
 	glDeleteBuffers(1, &pbo);
 }
 
+TEST(YCbCrInputTest, CombinedCbAndCr) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb_cr[width * height * 2] = {
+		128, 128,
+		128, 128,
+		 90, 240,
+		 54,  34,
+		240, 110,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_SPLIT_Y_AND_CBCR);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb_cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
 }  // namespace movit

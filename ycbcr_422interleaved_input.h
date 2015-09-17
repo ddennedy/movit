@@ -28,6 +28,11 @@
 // RGBA texture (from which we sample chroma). We throw away half of the color
 // channels each time, so bandwidth is wasted, but it makes for a very
 // uncomplicated shader.
+//
+// Note that if you can shuffle your data around very cheaply on the CPU
+// (say, while you're decoding it out of some other buffer anyway),
+// regular YCbCrInput with YCBCR_INPUT_SPLIT_Y_AND_CBCR will probably be
+// more efficient, as it doesn't need this bandwidth waste.
 
 #include <epoxy/gl.h>
 #include <string>

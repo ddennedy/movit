@@ -18,9 +18,11 @@ namespace movit {
 
 YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        const YCbCrFormat &ycbcr_format,
-                       unsigned width, unsigned height)
+                       unsigned width, unsigned height,
+                       YCbCrInputSplitting ycbcr_input_splitting)
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
+	  ycbcr_input_splitting(ycbcr_input_splitting),
 	  width(width),
 	  height(height),
 	  resource_pool(NULL)
@@ -41,13 +43,21 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	pixel_data[0] = pixel_data[1] = pixel_data[2] = NULL;
 
 	register_uniform_sampler2d("tex_y", &uniform_tex_y);
-	register_uniform_sampler2d("tex_cb", &uniform_tex_cb);
-	register_uniform_sampler2d("tex_cr", &uniform_tex_cr);
+
+	if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+		num_channels = 2;
+		register_uniform_sampler2d("tex_cbcr", &uniform_tex_cb);
+	} else {
+		assert(ycbcr_input_splitting == YCBCR_INPUT_PLANAR);
+		num_channels = 3;
+		register_uniform_sampler2d("tex_cb", &uniform_tex_cb);
+		register_uniform_sampler2d("tex_cr", &uniform_tex_cr);
+	}
 }
 
 YCbCrInput::~YCbCrInput()
 {
-	for (unsigned channel = 0; channel < 3; ++channel) {
+	for (unsigned channel = 0; channel < num_channels; ++channel) {
 		if (texture_num[channel] != 0) {
 			resource_pool->release_2d_texture(texture_num[channel]);
 		}
@@ -56,13 +66,22 @@ YCbCrInput::~YCbCrInput()
 
 void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
-	for (unsigned channel = 0; channel < 3; ++channel) {
+	for (unsigned channel = 0; channel < num_channels; ++channel) {
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
 		check_error();
 
 		if (texture_num[channel] == 0) {
+			GLenum format, internal_format;
+			if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+				format = GL_RG;
+				internal_format = GL_RG8;
+			} else {
+				format = GL_RED;
+				internal_format = GL_R8;
+			}
+
 			// (Re-)upload the texture.
-			texture_num[channel] = resource_pool->create_2d_texture(GL_R8, widths[channel], heights[channel]);
+			texture_num[channel] = resource_pool->create_2d_texture(internal_format, widths[channel], heights[channel]);
 			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -73,7 +92,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch[channel]);
 			check_error();
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], GL_RED, GL_UNSIGNED_BYTE, pixel_data[channel]);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], format, GL_UNSIGNED_BYTE, pixel_data[channel]);
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			check_error();
@@ -93,9 +112,11 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 	// Bind samplers.
 	uniform_tex_y = *sampler_num + 0;
 	uniform_tex_cb = *sampler_num + 1;
-	uniform_tex_cr = *sampler_num + 2;
+	if (ycbcr_input_splitting == YCBCR_INPUT_PLANAR) {
+		uniform_tex_cr = *sampler_num + 2;
+	}
 
-	*sampler_num += 3;
+	*sampler_num += num_channels;
 }
 
 string YCbCrInput::output_fragment_shader()
@@ -120,6 +141,15 @@ string YCbCrInput::output_fragment_shader()
 	float cr_offset_y = compute_chroma_offset(
 		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
 	frag_shader += output_glsl_vec2("PREFIX(cr_offset)", cr_offset_x, cr_offset_y);
+
+	if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+		char buf[256];
+		snprintf(buf, sizeof(buf), "#define CB_CR_SAME_TEXTURE 1\n#define CB_CR_OFFSETS_EQUAL %d\n",
+			(fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6));
+		frag_shader += buf;
+	} else {
+		frag_shader += "#define CB_CR_SAME_TEXTURE 0\n";
+	}
 
 	frag_shader += read_file("ycbcr_input.frag");
 	return frag_shader;
