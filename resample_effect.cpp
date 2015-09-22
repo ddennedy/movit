@@ -142,8 +142,9 @@ void normalize_sum(Tap<T>* vals, unsigned num)
 		for (unsigned i = 0; i < num; ++i) {
 			sum += to_fp64(vals[i].weight);
 		}
+		double inv_sum = 1.0 / sum;
 		for (unsigned i = 0; i < num; ++i) {
-			vals[i].weight = from_fp64<T>(to_fp64(vals[i].weight) / sum);
+			vals[i].weight = from_fp64<T>(to_fp64(vals[i].weight) * inv_sum);
 		}
 	}
 }
