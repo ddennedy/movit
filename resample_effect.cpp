@@ -107,7 +107,7 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_s
 		float pos2 = src[i + 1].pos;
 		assert(pos2 > pos1);
 
-		fp16_int_t pos, total_weight;
+		DestFloat pos, total_weight;
 		float sum_sq_error;
 		combine_two_samples(w1, w2, pos1, pos2, num_subtexels, inv_num_subtexels, &pos, &total_weight, &sum_sq_error);
 

@@ -14,8 +14,13 @@
 
 namespace movit {
 
-typedef unsigned int fp32_int_t;
-typedef unsigned short fp16_int_t;
+// structs instead of ints, so that they are not implicitly convertible.
+struct fp32_int_t {
+	unsigned int val;
+};
+struct fp16_int_t {
+	unsigned short val;
+};
 
 #ifdef __F16C__
 
@@ -23,14 +28,16 @@ typedef unsigned short fp16_int_t;
 // are at compile time).
 static inline double fp16_to_fp64(fp16_int_t x)
 {
-	return _cvtsh_ss(x);
+	return _cvtsh_ss(x.val);
 }
 
 static inline fp16_int_t fp64_to_fp16(double x)
 {
 	// NOTE: Strictly speaking, there are some select values where this isn't correct,
 	// since we first round to fp32 and then to fp16.
-	return _cvtss_sh(x, 0);
+	fp16_int_t ret;
+	ret.val = _cvtss_sh(x, 0);
+	return ret;
 }
 
 #else

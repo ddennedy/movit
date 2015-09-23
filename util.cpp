@@ -253,11 +253,11 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_s
 	//   w = (a(1-z) + bz) / ((1-z)² + z²)
 	//
 	// If z had infinite precision, this would simply reduce to w = w1 + w2.
-	*total_weight = (w1 + z * (w2 - w1)) / (z * z + (1 - z) * (1 - z));
+	*total_weight = from_fp64<DestFloat>((w1 + z * (w2 - w1)) / (z * z + (1 - z) * (1 - z)));
 
 	if (sum_sq_error != NULL) {
-		float err1 = *total_weight * (1 - z) - w1;
-		float err2 = *total_weight * z - w2;
+		float err1 = to_fp64(*total_weight) * (1 - z) - w1;
+		float err2 = to_fp64(*total_weight) * z - w2;
 		*sum_sq_error = err1 * err1 + err2 * err2;
 	}
 }

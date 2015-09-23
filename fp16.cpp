@@ -13,9 +13,9 @@ template<class FP16_INT_T,
          int FP64_BIAS, int FP64_MANTISSA_BITS, int FP64_EXPONENT_BITS, int FP64_MAX_EXPONENT>
 inline double fp_upconvert(FP16_INT_T x)
 {
-	int sign = x >> (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS);
-	int exponent = (x & ((1ULL << (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS)) - 1)) >> FP16_MANTISSA_BITS;
-	unsigned long long mantissa = x & ((1ULL << FP16_MANTISSA_BITS) - 1);
+	int sign = x.val >> (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS);
+	int exponent = (x.val & ((1ULL << (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS)) - 1)) >> FP16_MANTISSA_BITS;
+	unsigned long long mantissa = x.val & ((1ULL << FP16_MANTISSA_BITS) - 1);
 
 	int sign64;
 	int exponent64;
@@ -187,9 +187,11 @@ inline FP16_INT_T fp_downconvert(double x)
 		}
 	}
 
-	return (sign16 << (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS))
+	FP16_INT_T ret;
+	ret.val = (sign16 << (FP16_MANTISSA_BITS + FP16_EXPONENT_BITS))
 	    | (exponent16 << FP16_MANTISSA_BITS)
 	    | mantissa16;
+	return ret;
 }
 
 const int FP64_BIAS = 1023;
