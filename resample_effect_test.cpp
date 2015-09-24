@@ -162,8 +162,8 @@ TEST(ResampleEffectTest, UpscaleByThreeGetsCorrectPixelCenters) {
 	EXPECT_FLOAT_EQ(1.0, out_data[7 * (size * 3) + 7]);
 	for (unsigned y = 0; y < size * 3; ++y) {
 		for (unsigned x = 0; x < size * 3; ++x) {
-			EXPECT_FLOAT_EQ(out_data[y * (size * 3) + x], out_data[(size * 3 - y - 1) * (size * 3) + x]);
-			EXPECT_FLOAT_EQ(out_data[y * (size * 3) + x], out_data[y * (size * 3) + (size * 3 - x - 1)]);
+			EXPECT_NEAR(out_data[y * (size * 3) + x], out_data[(size * 3 - y - 1) * (size * 3) + x], 1e-6);
+			EXPECT_NEAR(out_data[y * (size * 3) + x], out_data[y * (size * 3) + (size * 3 - x - 1)], 1e-6);
 		}
 	}
 }

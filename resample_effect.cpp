@@ -1,4 +1,6 @@
 // Three-lobed Lanczos, the most common choice.
+// Note that if you change this, the accuracy for LANCZOS_TABLE_SIZE
+// needs to be recomputed.
 #define LANCZOS_RADIUS 3.0
 
 #include <epoxy/gl.h>
@@ -40,13 +42,67 @@ float sinc(float x)
 	}
 }
 
-float lanczos_weight(float x, float a)
+float lanczos_weight(float x)
 {
-	if (fabs(x) > a) {
+	if (fabs(x) > LANCZOS_RADIUS) {
 		return 0.0f;
 	} else {
-		return sinc(M_PI * x) * sinc(M_PI * x / a);
+		return sinc(M_PI * x) * sinc((M_PI / LANCZOS_RADIUS) * x);
 	}
+}
+
+// The weight function can be expensive to compute over and over again
+// (which will happen during e.g. a zoom), but it is also easy to interpolate
+// linearly. We compute the right half of the function (in the range of
+// 0..LANCZOS_RADIUS), with two guard elements for easier interpolation, and
+// linearly interpolate to get our function.
+//
+// We want to scale the table so that the maximum error is always smaller
+// than 1e-6. As per http://www-solar.mcs.st-andrews.ac.uk/~clare/Lectures/num-analysis/Numan_chap3.pdf,
+// the error for interpolating a function linearly between points [a,b] is
+//
+//   e = 1/2 (x-a)(x-b) f''(u_x)
+//
+// for some point u_x in [a,b] (where f(x) is our Lanczos function; we're
+// assuming LANCZOS_RADIUS=3 from here on). Obviously this is bounded by
+// f''(x) over the entire range. Numeric optimization shows the maximum of
+// |f''(x)| to be in x=1.09369819474562880, with the value 2.40067758733152381.
+// So if the steps between consecutive values are called d, we get
+//
+//   |e| <= 1/2 (d/2)^2 2.4007
+//   |e| <= 0.1367 d^2
+//
+// Solve for e = 1e-6 yields a step size of 0.0027, which to cover the range
+// 0..3 needs 1109 steps. We round up to the next power of two, just to be sure.
+#define LANCZOS_TABLE_SIZE 2048
+bool lanczos_table_init_done = false;
+float lanczos_table[LANCZOS_TABLE_SIZE + 2];
+
+void init_lanczos_table()
+{
+	for (unsigned i = 0; i < LANCZOS_TABLE_SIZE + 2; ++i) {
+		lanczos_table[i] = lanczos_weight(float(i) * (LANCZOS_RADIUS / LANCZOS_TABLE_SIZE));
+	}
+	lanczos_table_init_done = true;
+}
+
+float lanczos_weight_cached(float x)
+{
+	if (!lanczos_table_init_done) {
+		// Could in theory race between two threads if we are unlucky,
+		// but that is harmless, since they'll write the same data.
+		init_lanczos_table();
+	}
+	x = fabs(x);
+	if (x > LANCZOS_RADIUS) {
+		return 0.0f;
+	}
+	float table_pos = x * (LANCZOS_TABLE_SIZE / LANCZOS_RADIUS);
+	int table_pos_int = int(table_pos);  // Truncate towards zero.
+	float table_pos_frac = table_pos - table_pos_int;
+	assert(table_pos < LANCZOS_TABLE_SIZE + 2);
+	return lanczos_table[table_pos_int] +
+		table_pos_frac * (lanczos_table[table_pos_int + 1] - lanczos_table[table_pos_int]);
 }
 
 // Euclid's algorithm, from Wikipedia.
@@ -531,7 +587,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		// Now sample <int_radius> pixels on each side around that point.
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
-			float weight = lanczos_weight(radius_scaling_factor * (src_y - center_src_y - subpixel_offset), LANCZOS_RADIUS);
+			float weight = lanczos_weight_cached(radius_scaling_factor * (src_y - center_src_y - subpixel_offset));
 			weights[y * src_samples + i].weight = weight * radius_scaling_factor;
 			weights[y * src_samples + i].pos = (src_y + 0.5) / float(src_size);
 		}
