@@ -1,3 +1,49 @@
+Movit 1.2.0, September 24th, 2015
+
+  - Movit now ships a version.h with a #define MOVIT_VERSION that
+    increases on every API change, including in git. (The number
+    itself carries no semantic meaning beyond this.) Movit 1.2.0
+    is not API or ABI compatible with 1.1.x, so there has been a
+    soname bump to libmovit.so.3.
+
+  - More flexible Y'CbCr input; in particular, a special input
+    for 4:2:2 interleaved data (UYVY), and support for semi-planar
+    input (Cb and Cr in the same texture, like in NV12). Note that
+    you should now also set the new “num_levels” member of
+    YCbYCbCrFormat to 256 (signifying 8-bit input), although
+    it is not used yet; this is a stepping stone towards supporting
+    10- and 12-bit Y'CbCr.
+
+  - Basic support for Y'CbCr _output_. Currently only 8-bit,
+    and only 4:4:4 (ie., you'll need to subsample yourself
+    afterwards). It is possible to split the output into multiple
+    textures, though, if you want a luma/chroma split (NV12-like)
+    or full planar.
+
+  - Support top-left origin for output. This is only really useful
+    if you are rendering directly into some memory area with top-left
+    origin; most users will get the expected behavior by using
+    bottom-left as before.
+
+  - Rework uniform handling for less OpenGL overhead. Note that
+    this means your effects now need to register uniforms in the
+    C++ code instead of declaring them in the .frag file.
+
+  - Make the PaddingEffect border subpixel-aware, and also support
+    an arbitrary (subpixel) border offset. This means that you can
+    compose PaddingEffect with an integral left/top offset
+    (use the new IntegralPaddingEffect for potentially more speed)
+    and ResampleEffect with a subpixel left/top offset (and zoom to
+    compensate) to get Lanczos interpolation for the pixels and a
+    simple bilinear interpolation for the border itself.
+
+  - Fix a bug that could cause very bad filter weights in
+    ResampleEffect.
+
+  - Various performance improvements, in particular with regards to
+    CPU usage in ResampleEffect.
+
+
 Movit 1.1.3, March 29th, 2015
 
   - Fix accuracy issues in ResampleEffect, particularly when
