@@ -268,7 +268,7 @@ TEST(YCbCrConversionEffectTest, SplitLumaAndChroma) {
 		240, 110, /*undefined:*/ 110, /*undefined:*/ 255,
 	};
 
-	unsigned char out_y[width * height], out_cbcr[width * height * 4];
+	unsigned char out_y[width * height * 4], out_cbcr[width * height * 4];
 
 	EffectChainTester tester(NULL, width, height);
 
