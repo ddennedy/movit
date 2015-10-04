@@ -428,12 +428,14 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	}
 
 	// Find out what shader model we should compile for.
+	// We need at least 1.30, due to use of (among others) integers.
 	if (epoxy_is_desktop_gl()) {
-		if (get_glsl_version() >= 1.30) {
-			movit_shader_model = MOVIT_GLSL_130;
-		} else {
-			movit_shader_model = MOVIT_GLSL_110;
+		if (get_glsl_version() < 1.30f) {
+			fprintf(stderr, "Movit system requirements: Needs at least GLSL version 1.30 (has version %.1f)\n",
+				get_glsl_version());
+			return false;
 		}
+		movit_shader_model = MOVIT_GLSL_130;
 	} else {
 		movit_shader_model = MOVIT_ESSL_300;
 	}

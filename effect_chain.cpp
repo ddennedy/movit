@@ -208,7 +208,7 @@ Effect *EffectChain::add_effect(Effect *effect, const vector<Effect *> &inputs)
 	return effect;
 }
 
-// GLSL pre-1.30 doesn't support token pasting. Replace PREFIX(x) with <effect_id>_x.
+// ESSL doesn't support token pasting. Replace PREFIX(x) with <effect_id>_x.
 string replace_prefix(const string &text, const string &prefix)
 {
 	string output;

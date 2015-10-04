@@ -453,7 +453,7 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	register_float("offset", &offset);
 	register_float("zoom", &zoom);
 	register_uniform_sampler2d("sample_tex", &uniform_sample_tex);
-	register_uniform_int("num_samples", &uniform_num_samples);  // FIXME: What about GLSL pre-1.30?
+	register_uniform_int("num_samples", &uniform_num_samples);
 	register_uniform_float("num_loops", &uniform_num_loops);
 	register_uniform_float("slice_height", &uniform_slice_height);
 	register_uniform_float("sample_x_scale", &uniform_sample_x_scale);
