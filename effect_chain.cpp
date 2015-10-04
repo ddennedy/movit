@@ -391,7 +391,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			frag_shader_header += "#define YCBCR_ALSO_OUTPUT_RGBA 1\n";
 		}
 	}
-	frag_shader.append(read_version_dependent_file("footer", "frag"));
+	frag_shader.append(read_file("footer.frag"));
 
 	// Collect uniforms from all effects and output them. Note that this needs
 	// to happen after output_fragment_shader(), even though the uniforms come
