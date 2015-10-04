@@ -300,4 +300,76 @@ TEST(YCbCrConversionEffectTest, SplitLumaAndChroma) {
 	expect_equal(expected_cbcr, out_cbcr, width * 4, height);
 }
 
+TEST(YCbCrConversionEffectTest, OutputChunkyAndRGBA) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 90, 54, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 34, 110,
+	};
+	unsigned char expected_ycbcr[width * height * 4] = {
+		// The same data, just rearranged.
+		 16, 128, 128, 255,
+		235, 128, 128, 255,
+		 81,  90, 240, 255,
+		145,  54,  34, 255,
+		 41, 240, 110, 255
+	};
+	unsigned char expected_rgba[width * height * 4] = {
+		  0,   0,   0, 255,
+		255, 255, 255, 255,
+		255,   0,   0, 255,
+		  0, 255,   0, 255,
+		  0,   0, 255, 255,
+	};
+
+	unsigned char out_ycbcr[width * height * 4];
+	unsigned char out_rgba[width * height * 4];
+
+	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format);
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	// Note: We don't test that the values actually get dithered,
+	// just that the shader compiles and doesn't mess up badly.
+	tester.get_chain()->set_dither_bits(8);
+
+	tester.run(out_ycbcr, out_rgba, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	expect_equal(expected_ycbcr, out_ycbcr, width * 4, height);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_rgba, out_rgba, 4 * width, height, 7, 255 * 0.002);
+}
+
 }  // namespace movit

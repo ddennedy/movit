@@ -1,4 +1,7 @@
 // Unit tests for DitherEffect.
+//
+// Note: Dithering of multiple outputs is tested (somewhat weakly)
+// in YCbCrConversionEffectTest.
 
 #include <epoxy/gl.h>
 #include <math.h>

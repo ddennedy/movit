@@ -37,6 +37,8 @@ namespace movit {
 EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
+	  output_color_rgba(false),
+	  output_color_ycbcr(false),
 	  dither_effect(NULL),
 	  num_dither_bits(0),
 	  output_origin(OUTPUT_ORIGIN_BOTTOM_LEFT),
@@ -77,18 +79,20 @@ Input *EffectChain::add_input(Input *input)
 void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)
 {
 	assert(!finalized);
+	assert(!output_color_rgba);
 	output_format = format;
 	output_alpha_format = alpha_format;
-	output_color_type = OUTPUT_COLOR_RGB;
+	output_color_rgba = true;
 }
 
 void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
                                    const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
 {
 	assert(!finalized);
+	assert(!output_color_ycbcr);
 	output_format = format;
 	output_alpha_format = alpha_format;
-	output_color_type = OUTPUT_COLOR_YCBCR;
+	output_color_ycbcr = true;
 	output_ycbcr_format = ycbcr_format;
 	output_ycbcr_splitting = output_splitting;
 
@@ -365,7 +369,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
 
 	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
-	if (phase->output_node->outgoing_links.empty() && output_color_type == OUTPUT_COLOR_YCBCR) {
+	if (phase->output_node->outgoing_links.empty() && output_color_ycbcr) {
 		switch (output_ycbcr_splitting) {
 		case YCBCR_OUTPUT_INTERLEAVED:
 			// No #defines set.
@@ -378,6 +382,13 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			break;
 		default:
 			assert(false);
+		}
+
+		if (output_color_rgba) {
+			// Note: Needs to come in the header, because not only the
+			// output needs to see it (YCbCrConversionEffect and DitherEffect
+			// do, too).
+			frag_shader_header += "#define YCBCR_ALSO_OUTPUT_RGBA 1\n";
 		}
 	}
 	frag_shader.append(read_version_dependent_file("footer", "frag"));
@@ -1519,8 +1530,8 @@ void EffectChain::fix_output_gamma()
 // gamma-encoded data.
 void EffectChain::add_ycbcr_conversion_if_needed()
 {
-	assert(output_color_type == OUTPUT_COLOR_RGB || output_color_type == OUTPUT_COLOR_YCBCR);
-	if (output_color_type != OUTPUT_COLOR_YCBCR) {
+	assert(output_color_rgba || output_color_ycbcr);
+	if (!output_color_ycbcr) {
 		return;
 	}
 	Node *output = find_output_node();

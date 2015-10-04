@@ -2,7 +2,11 @@ uniform sampler2D PREFIX(tex_y);
 uniform sampler2D PREFIX(tex_cb);
 uniform sampler2D PREFIX(tex_cr);
 
+#if YCBCR_ALSO_OUTPUT_RGBA
+vec4[2] FUNCNAME(vec2 tc) {
+#else
 vec4 FUNCNAME(vec2 tc) {
+#endif
 	vec4 rgba = INPUT(tc);
 	vec4 ycbcr_a;
 
@@ -20,5 +24,10 @@ vec4 FUNCNAME(vec2 tc) {
 #endif
 
 	ycbcr_a.a = rgba.a;
+
+#if YCBCR_ALSO_OUTPUT_RGBA
+	return vec4[2](ycbcr_a, rgba);
+#else
 	return ycbcr_a;
+#endif
 }

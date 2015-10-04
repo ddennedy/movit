@@ -222,12 +222,17 @@ public:
 	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
-	// Adds an RGB output. Note that you can only have one output.
+	// Adds an RGBA output. Note that you can have at most one RGBA output and one
+	// Y'CbCr output (see below for details).
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
 	// Adds an YCbCr output. Note that you can only have one output.
 	// Currently, only chunked packed output is supported, and only 4:4:4
 	// (so chroma_subsampling_x and chroma_subsampling_y must both be 1).
+	//
+	// If you have both RGBA and Y'CbCr output, the RGBA output will come
+	// in the last draw buffer. Also, <format> and <alpha_format> must be
+	// identical between the two.
 	void add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
 	                      const YCbCrFormat &ycbcr_format,
 			      YCbCrOutputSplitting output_splitting = YCBCR_OUTPUT_INTERLEAVED);
@@ -388,10 +393,9 @@ private:
 	ImageFormat output_format;
 	OutputAlphaFormat output_alpha_format;
 
-	enum OutputColorType { OUTPUT_COLOR_RGB, OUTPUT_COLOR_YCBCR };
-	OutputColorType output_color_type;
-	YCbCrFormat output_ycbcr_format;              // If output_color_type == OUTPUT_COLOR_YCBCR.
-	YCbCrOutputSplitting output_ycbcr_splitting;  // If output_color_type == OUTPUT_COLOR_YCBCR.
+	bool output_color_rgba, output_color_ycbcr;
+	YCbCrFormat output_ycbcr_format;              // If output_color_ycbcr is true.
+	YCbCrOutputSplitting output_ycbcr_splitting;  // If output_color_ycbcr is true.
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;

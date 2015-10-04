@@ -9,17 +9,32 @@ out vec4 Chroma;
 out vec4 FragColor;
 #endif
 
+#if YCBCR_ALSO_OUTPUT_RGBA
+out vec4 RGBA;
+#endif
+
 void main()
 {
-	vec4 color = INPUT(tc);
-#if YCBCR_OUTPUT_PLANAR
-	Y = color.rrra;
-	Cb = color.ggga;
-	Cr = color.bbba;
-#elif YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
-	Y = color.rrra;
-	Chroma = color.gbba;
+#if YCBCR_ALSO_OUTPUT_RGBA
+	vec4 color[2] = INPUT(tc);
+	vec4 color0 = color[0];
+	vec4 color1 = color[1];
 #else
-	FragColor = color;
+	vec4 color0 = INPUT(tc);
+#endif
+
+#if YCBCR_OUTPUT_PLANAR
+	Y = color0.rrra;
+	Cb = color0.ggga;
+	Cr = color0.bbba;
+#elif YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
+	Y = color0.rrra;
+	Chroma = color0.gbba;
+#else
+	FragColor = color0;
+#endif
+
+#if YCBCR_ALSO_OUTPUT_RGBA
+	RGBA = color1;
 #endif
 }
