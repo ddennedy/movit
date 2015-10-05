@@ -74,6 +74,9 @@ float lanczos_weight(float x)
 //
 // Solve for e = 1e-6 yields a step size of 0.0027, which to cover the range
 // 0..3 needs 1109 steps. We round up to the next power of two, just to be sure.
+//
+// You need to call lanczos_table_init_done before the first call to
+// lanczos_weight_cached.
 #define LANCZOS_TABLE_SIZE 2048
 bool lanczos_table_init_done = false;
 float lanczos_table[LANCZOS_TABLE_SIZE + 2];
@@ -88,11 +91,6 @@ void init_lanczos_table()
 
 float lanczos_weight_cached(float x)
 {
-	if (!lanczos_table_init_done) {
-		// Could in theory race between two threads if we are unlucky,
-		// but that is harmless, since they'll write the same data.
-		init_lanczos_table();
-	}
 	x = fabs(x);
 	if (x > LANCZOS_RADIUS) {
 		return 0.0f;
@@ -461,6 +459,12 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	register_uniform_float("whole_pixel_offset", &uniform_whole_pixel_offset);
 
 	glGenTextures(1, &texnum);
+
+	if (!lanczos_table_init_done) {
+		// Could in theory race between two threads if we are unlucky,
+		// but that is harmless, since they'll write the same data.
+		init_lanczos_table();
+	}
 }
 
 SingleResamplePassEffect::~SingleResamplePassEffect()
