@@ -19,6 +19,7 @@
 #include <epoxy/wgl.h>
 #else
 #include <epoxy/glx.h>
+#include <epoxy/egl.h>
 #endif
 
 using namespace std;
@@ -331,7 +332,11 @@ void *get_gl_context_identifier()
 #elif defined(WIN32)
 	return (void *)wglGetCurrentContext();
 #else
-	return (void *)glXGetCurrentContext();
+	void *ret = (void *)glXGetCurrentContext();
+	if (ret != NULL) {
+		return ret;
+	}
+	return (void *)eglGetCurrentContext();
 #endif
 }
 
