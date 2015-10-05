@@ -6,6 +6,7 @@
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "gtest/gtest.h"
+#include "resource_pool.h"
 #include "test_util.h"
 #include "util.h"
 
@@ -265,6 +266,58 @@ TEST(FlatInput, PBO) {
 	expect_equal(expected_data, out_data, 4 * width, height);
 
 	glDeleteBuffers(1, &pbo);
+}
+
+TEST(FlatInput, ExternalTexture) {
+	const int size = 5;
+
+	float data[3 * size] = {
+		0.0, 0.0, 0.0,
+		0.5, 0.0, 0.0,
+		0.0, 0.5, 0.0,
+		0.0, 0.0, 0.7,
+		0.0, 0.3, 0.7,
+	};
+	float expected_data[4 * size] = {
+		0.0, 0.0, 0.0, 1.0,
+		0.5, 0.0, 0.0, 1.0,
+		0.0, 0.5, 0.0, 1.0,
+		0.0, 0.0, 0.7, 1.0,
+		0.0, 0.3, 0.7, 1.0,
+	};
+	float out_data[4 * size];
+
+	EffectChainTester tester(NULL, 1, size, FORMAT_RGB, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	ResourcePool pool;
+	GLuint tex = pool.create_2d_texture(GL_RGB8, 1, size);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, tex);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	check_error();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	check_error();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, size, GL_RGB, GL_FLOAT, data);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
+
+	FlatInput *input = new FlatInput(format, FORMAT_RGB, GL_FLOAT, 1, size);
+	input->set_texture_num(tex);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	pool.release_2d_texture(tex);
+
+	expect_equal(expected_data, out_data, 4, size);
 }
 
 }  // namespace movit

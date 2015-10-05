@@ -21,6 +21,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format_in,
 	  width(width),
 	  height(height),
 	  pitch(width),
+	  owns_texture(false),
 	  pixel_data(NULL),
 	  fixup_swap_rb(false),
 	  fixup_red_to_grayscale(false)
@@ -57,9 +58,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format_in,
 
 FlatInput::~FlatInput()
 {
-	if (texture_num != 0) {
-		resource_pool->release_2d_texture(texture_num);
-	}
+	possibly_release_texture();
 }
 
 void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
@@ -163,6 +162,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 		check_error();
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 		check_error();
+		owns_texture = true;
 	} else {
 		glBindTexture(GL_TEXTURE_2D, texture_num);
 		check_error();
@@ -183,9 +183,15 @@ string FlatInput::output_fragment_shader()
 
 void FlatInput::invalidate_pixel_data()
 {
-	if (texture_num != 0) {
+	possibly_release_texture();
+}
+
+void FlatInput::possibly_release_texture()
+{
+	if (texture_num != 0 && owns_texture) {
 		resource_pool->release_2d_texture(texture_num);
 		texture_num = 0;
+		owns_texture = false;
 	}
 }
 

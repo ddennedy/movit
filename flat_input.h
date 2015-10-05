@@ -112,18 +112,40 @@ public:
 		invalidate_pixel_data();
 	}
 
+	// Tells the input to use the specific OpenGL texture as pixel data.
+	// This is useful if you want to share the same texture between multiple
+	// EffectChain instances, or if you somehow can get the data into a texture more
+	// efficiently than through a normal upload (e.g. a video codec decoding straight
+	// into a texture). Note that you are responsible for setting the right sampler
+	// parameters (e.g. clamp-to-edge) yourself, as well as generate any mipmaps
+	// if they are needed.
+	//
+	// NOTE: The input does not take ownership of this texture; you are responsible
+	// for releasing it yourself. In particular, if you call invalidate_pixel_data()
+	// or anything calling it, the texture will silently be removed from the input.
+	void set_texture_num(GLuint texture_num)
+	{
+		possibly_release_texture();
+		this->texture_num = texture_num;
+		this->owns_texture = false;
+	}
+
 	virtual void inform_added(EffectChain *chain)
 	{
 		resource_pool = chain->get_resource_pool();
 	}
 
 private:
+	// Release the texture if we have any, and it is owned by us.
+	void possibly_release_texture();
+
 	ImageFormat image_format;
 	MovitPixelFormat pixel_format;
 	GLenum type;
 	GLuint pbo, texture_num;
 	int output_linear_gamma, needs_mipmaps;
 	unsigned width, height, pitch;
+	bool owns_texture;
 	const void *pixel_data;
 	ResourcePool *resource_pool;
 	bool fixup_swap_rb, fixup_red_to_grayscale;

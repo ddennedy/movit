@@ -85,6 +85,16 @@ public:
 		invalidate_pixel_data();
 	}
 
+	// Tells the input to use the specific OpenGL texture as pixel data for the given
+	// channel. The comments on FlatInput::set_texture_num() also apply here, except
+	// that this input generally does not use mipmaps.
+	void set_texture_num(unsigned channel, GLuint texture_num)
+	{
+		possibly_release_texture(channel);
+		this->texture_num[channel] = texture_num;
+		this->owns_texture[channel] = false;
+	}
+
 	virtual void inform_added(EffectChain *chain)
 	{
 		resource_pool = chain->get_resource_pool();
@@ -93,6 +103,9 @@ public:
 	bool set_int(const std::string& key, int value);
 
 private:
+	// Release the texture in the given channel if we have any, and it is owned by us.
+	void possibly_release_texture(unsigned channel);
+
 	ImageFormat image_format;
 	YCbCrFormat ycbcr_format;
 	GLuint num_channels;
@@ -103,6 +116,7 @@ private:
 	unsigned width, height, widths[3], heights[3];
 	const unsigned char *pixel_data[3];
 	unsigned pitch[3];
+	bool owns_texture[3];
 	ResourcePool *resource_pool;
 };
 

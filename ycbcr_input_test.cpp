@@ -7,6 +7,7 @@
 #include "gtest/gtest.h"
 #include "test_util.h"
 #include "util.h"
+#include "resource_pool.h"
 #include "ycbcr_input.h"
 
 namespace movit {
@@ -532,6 +533,79 @@ TEST(YCbCrInputTest, CombinedCbAndCr) {
 	tester.get_chain()->add_input(input);
 
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
+TEST(YCbCrInputTest, ExternalTexture) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 90, 54, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 34, 110,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	// Make a texture for the Cb data; keep the others as regular uploads.
+	ResourcePool pool;
+	GLuint cb_tex = pool.create_2d_texture(GL_R8, width, height);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, cb_tex);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	check_error();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	check_error();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, cb);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_texture_num(1, cb_tex);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	pool.release_2d_texture(cb_tex);
 
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
 	// so we need some leeway.

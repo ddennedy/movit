@@ -41,6 +41,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	heights[2] = height / ycbcr_format.chroma_subsampling_y;
 
 	pixel_data[0] = pixel_data[1] = pixel_data[2] = NULL;
+	owns_texture[0] = owns_texture[1] = owns_texture[2] = false;
 
 	register_uniform_sampler2d("tex_y", &uniform_tex_y);
 
@@ -58,9 +59,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 YCbCrInput::~YCbCrInput()
 {
 	for (unsigned channel = 0; channel < num_channels; ++channel) {
-		if (texture_num[channel] != 0) {
-			resource_pool->release_2d_texture(texture_num[channel]);
-		}
+		possibly_release_texture(channel);
 	}
 }
 
@@ -100,6 +99,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			check_error();
+			owns_texture[channel] = true;
 		} else {
 			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 			check_error();
@@ -158,10 +158,7 @@ string YCbCrInput::output_fragment_shader()
 void YCbCrInput::invalidate_pixel_data()
 {
 	for (unsigned channel = 0; channel < 3; ++channel) {
-		if (texture_num[channel] != 0) {
-			resource_pool->release_2d_texture(texture_num[channel]);
-			texture_num[channel] = 0;
-		}
+		possibly_release_texture(channel);
 	}
 }
 
@@ -172,6 +169,15 @@ bool YCbCrInput::set_int(const std::string& key, int value)
 		return (value == 0);
 	}
 	return Effect::set_int(key, value);
+}
+
+void YCbCrInput::possibly_release_texture(unsigned channel)
+{
+	if (texture_num[channel] != 0 && owns_texture[channel]) {
+		resource_pool->release_2d_texture(texture_num[channel]);
+		texture_num[channel] = 0;
+		owns_texture[channel] = false;
+	}
 }
 
 }  // namespace movit
