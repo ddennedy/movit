@@ -143,6 +143,7 @@ private:
 
 	static const unsigned num_fbo_attachments = 4;
 	struct FBO {
+		GLuint fbo_num;
 		// GL_INVALID_INDEX means associated to a texture that has since been deleted.
 		// 0 means the output isn't bound.
 		GLuint texture_num[num_fbo_attachments];
@@ -152,11 +153,14 @@ private:
 	// filled if the FBO is given out to a client or on the freelist, but
 	// not if it is deleted from the freelist.
 	std::map<std::pair<void *, GLuint>, FBO> fbo_formats;
+	typedef std::map<std::pair<void *, GLuint>, FBO>::iterator FBOFormatIterator;
 
 	// For each context, a list of all FBOs that are released but not freed
 	// (most recently freed first). Once this reaches <fbo_freelist_max_length>,
 	// the last element will be deleted.
-	std::map<void *, std::list<GLuint> > fbo_freelist;
+	//
+	// We store iterators directly into <fbo_format> for efficiency.
+	std::map<void *, std::list<FBOFormatIterator> > fbo_freelist;
 
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);

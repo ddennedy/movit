@@ -55,7 +55,7 @@ ResourcePool::~ResourcePool()
 	void *context = get_gl_context_identifier();
 	cleanup_unlinked_fbos(context);
 
-	for (map<void *, std::list<GLuint> >::iterator context_it = fbo_freelist.begin();
+	for (map<void *, std::list<FBOFormatIterator> >::iterator context_it = fbo_freelist.begin();
 	     context_it != fbo_freelist.end();
 	     ++context_it) {
 		if (context_it->first != context) {
@@ -63,15 +63,13 @@ ResourcePool::~ResourcePool()
 			assert(context_it->second.empty());
 			continue;
 		}
-		for (list<GLuint>::const_iterator freelist_it = context_it->second.begin();
+		for (list<FBOFormatIterator>::const_iterator freelist_it = context_it->second.begin();
 		     freelist_it != context_it->second.end();
 		     ++freelist_it) {
-			pair<void *, GLuint> key(context, *freelist_it);
-			GLuint free_fbo_num = *freelist_it;
-			assert(fbo_formats.count(key) != 0);
-			fbo_formats.erase(key);
-			glDeleteFramebuffers(1, &free_fbo_num);
+			FBOFormatIterator fbo_it = *freelist_it;
+			glDeleteFramebuffers(1, &fbo_it->second.fbo_num);
 			check_error();
+			fbo_formats.erase(fbo_it);
 		}
 	}
 
@@ -342,20 +340,17 @@ GLuint ResourcePool::create_fbo(GLuint texture0_num, GLuint texture1_num, GLuint
 	pthread_mutex_lock(&lock);
 	if (fbo_freelist.count(context) != 0) {
 		// See if there's an FBO on the freelist we can use.
-		for (list<GLuint>::iterator freelist_it = fbo_freelist[context].begin();
-		     freelist_it != fbo_freelist[context].end();
-		     ++freelist_it) {
-			GLuint fbo_num = *freelist_it;
-			map<pair<void *, GLuint>, FBO>::const_iterator format_it =
-				fbo_formats.find(make_pair(context, fbo_num));
-			assert(format_it != fbo_formats.end());
-			if (format_it->second.texture_num[0] == texture0_num &&
-			    format_it->second.texture_num[1] == texture1_num &&
-			    format_it->second.texture_num[2] == texture2_num &&
-			    format_it->second.texture_num[3] == texture3_num) {
+		list<FBOFormatIterator>::iterator end = fbo_freelist[context].end();
+		for (list<FBOFormatIterator>::iterator freelist_it = fbo_freelist[context].begin();
+		     freelist_it != end; ++freelist_it) {
+			FBOFormatIterator fbo_it = *freelist_it;
+			if (fbo_it->second.texture_num[0] == texture0_num &&
+			    fbo_it->second.texture_num[1] == texture1_num &&
+			    fbo_it->second.texture_num[2] == texture2_num &&
+			    fbo_it->second.texture_num[3] == texture3_num) {
 				fbo_freelist[context].erase(freelist_it);
 				pthread_mutex_unlock(&lock);
-				return fbo_num;
+				return fbo_it->second.fbo_num;
 			}
 		}
 	}
@@ -367,10 +362,9 @@ GLuint ResourcePool::create_fbo(GLuint texture0_num, GLuint texture1_num, GLuint
 	fbo_format.texture_num[2] = texture2_num;
 	fbo_format.texture_num[3] = texture3_num;
 
-	GLuint fbo_num;
-	glGenFramebuffers(1, &fbo_num);
+	glGenFramebuffers(1, &fbo_format.fbo_num);
 	check_error();
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo_num);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_format.fbo_num);
 	check_error();
 
 	GLenum bufs[num_fbo_attachments];
@@ -397,12 +391,12 @@ GLuint ResourcePool::create_fbo(GLuint texture0_num, GLuint texture1_num, GLuint
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
 
-	pair<void *, GLuint> key(context, fbo_num);
+	pair<void *, GLuint> key(context, fbo_format.fbo_num);
 	assert(fbo_formats.count(key) == 0);
 	fbo_formats.insert(make_pair(key, fbo_format));
 
 	pthread_mutex_unlock(&lock);
-	return fbo_num;
+	return fbo_format.fbo_num;
 }
 
 void ResourcePool::release_fbo(GLuint fbo_num)
@@ -410,8 +404,9 @@ void ResourcePool::release_fbo(GLuint fbo_num)
 	void *context = get_gl_context_identifier();
 
 	pthread_mutex_lock(&lock);
-	fbo_freelist[context].push_front(fbo_num);
-	assert(fbo_formats.count(make_pair(context, fbo_num)) != 0);
+	FBOFormatIterator fbo_it = fbo_formats.find(make_pair(context, fbo_num));
+	assert(fbo_it != fbo_formats.end());
+	fbo_freelist[context].push_front(fbo_it);
 
 	// Now that we're in this context, free up any FBOs that are connected
 	// to deleted textures (in release_2d_texture).
@@ -433,24 +428,22 @@ void ResourcePool::clean_context()
 
 void ResourcePool::cleanup_unlinked_fbos(void *context)
 {
-	for (list<GLuint>::iterator freelist_it = fbo_freelist[context].begin();
-	     freelist_it != fbo_freelist[context].end(); ) {
-		GLuint fbo_num = *freelist_it;
-		pair<void *, GLuint> key(context, fbo_num);
-		assert(fbo_formats.count(key) != 0);
+	list<FBOFormatIterator>::iterator end = fbo_freelist[context].end();
+	for (list<FBOFormatIterator>::iterator freelist_it = fbo_freelist[context].begin(); freelist_it != end; ) {
+		FBOFormatIterator fbo_it = *freelist_it;
 
 		bool all_unlinked = true;
 		for (unsigned i = 0; i < num_fbo_attachments; ++i) {
-			if (fbo_formats[key].texture_num[i] != 0 &&
-			    fbo_formats[key].texture_num[i] != GL_INVALID_INDEX) {
+			if (fbo_it->second.texture_num[i] != 0 &&
+			    fbo_it->second.texture_num[i] != GL_INVALID_INDEX) {
 				all_unlinked = false;
 				break;
 			}
 		}
 		if (all_unlinked) {
-			fbo_formats.erase(key);
-			glDeleteFramebuffers(1, &fbo_num);
+			glDeleteFramebuffers(1, &fbo_it->second.fbo_num);
 			check_error();
+			fbo_formats.erase(fbo_it);
 			fbo_freelist[context].erase(freelist_it++);
 		} else {
 			freelist_it++;
@@ -460,14 +453,13 @@ void ResourcePool::cleanup_unlinked_fbos(void *context)
 
 void ResourcePool::shrink_fbo_freelist(void *context, size_t max_length)
 {
-	while (fbo_freelist[context].size() > max_length) {
-		GLuint free_fbo_num = fbo_freelist[context].back();
-		pair<void *, GLuint> key(context, free_fbo_num);
-		fbo_freelist[context].pop_back();
-		assert(fbo_formats.count(key) != 0);
-		fbo_formats.erase(key);
-		glDeleteFramebuffers(1, &free_fbo_num);
+	list<FBOFormatIterator> &freelist = fbo_freelist[context];
+	while (freelist.size() > max_length) {
+		FBOFormatIterator free_fbo_it = freelist.back();
+		glDeleteFramebuffers(1, &free_fbo_it->second.fbo_num);
 		check_error();
+		fbo_formats.erase(free_fbo_it);
+		freelist.pop_back();
 	}
 }
 
