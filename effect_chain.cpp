@@ -1646,6 +1646,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 {
 	assert(finalized);
 
+	// This needs to be set anew, in case we are coming from a different context
+	// from when we initialized.
+	glDisable(GL_DITHER);
+
 	// Save original viewport.
 	GLuint x = 0, y = 0;
 
