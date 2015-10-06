@@ -1,3 +1,18 @@
+// GLSL is pickier than the C++ preprocessor in if-testing for undefined
+// tokens; do some fixups here to keep it happy.
+
+#ifndef YCBCR_OUTPUT_PLANAR
+#define YCBCR_OUTPUT_PLANAR 0
+#endif
+
+#ifndef YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
+#define YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 0
+#endif
+
+#ifndef YCBCR_ALSO_OUTPUT_RGBA
+#define YCBCR_ALSO_OUTPUT_RGBA 0
+#endif
+
 #if YCBCR_OUTPUT_PLANAR
 out vec4 Y;
 out vec4 Cb;

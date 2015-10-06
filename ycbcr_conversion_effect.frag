@@ -1,3 +1,8 @@
+// See footer.frag for details about this if statement.
+#ifndef YCBCR_ALSO_OUTPUT_RGBA
+#define YCBCR_ALSO_OUTPUT_RGBA 0
+#endif
+
 uniform sampler2D PREFIX(tex_y);
 uniform sampler2D PREFIX(tex_cb);
 uniform sampler2D PREFIX(tex_cr);
