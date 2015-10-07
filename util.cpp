@@ -129,6 +129,8 @@ string read_version_dependent_file(const string &base, const string &extension)
 {
 	if (movit_shader_model == MOVIT_GLSL_130) {
 		return read_file(base + ".130." + extension);
+	} else if (movit_shader_model == MOVIT_GLSL_150) {
+		return read_file(base + ".150." + extension);
 	} else if (movit_shader_model == MOVIT_ESSL_300) {
 		return read_file(base + ".300es." + extension);
 	} else {

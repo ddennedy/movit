@@ -435,7 +435,16 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 				get_glsl_version());
 			return false;
 		}
-		movit_shader_model = MOVIT_GLSL_130;
+		if (get_glsl_version() < 1.50f) {
+			movit_shader_model = MOVIT_GLSL_130;
+		} else {
+			// Note: All of our 1.50 shaders are identical to our 1.30 shaders,
+			// but OS X does not support 1.30; only 1.10 (which we don't support
+			// anymore) and 1.50 (and then only with core contexts). So we keep
+			// a second set of shaders around whose only difference is the different
+			// #version declaration.
+			movit_shader_model = MOVIT_GLSL_150;
+		}
 	} else {
 		movit_shader_model = MOVIT_ESSL_300;
 	}

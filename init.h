@@ -75,7 +75,8 @@ extern bool movit_timer_queries_supported;
 enum MovitShaderModel {
 	MOVIT_GLSL_110,  // No longer in use, but kept until next ABI break in order not to change the enums.
 	MOVIT_GLSL_130,
-	MOVIT_ESSL_300
+	MOVIT_ESSL_300,
+	MOVIT_GLSL_150,
 };
 extern MovitShaderModel movit_shader_model;
 
