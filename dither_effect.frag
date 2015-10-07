@@ -3,6 +3,11 @@
 // uniform vec2 PREFIX(tc_scale);
 // uniform float PREFIX(round_fac), PREFIX(inv_round_fac);
 
+// See footer.frag for details about this if statement.
+#ifndef YCBCR_ALSO_OUTPUT_RGBA
+#define YCBCR_ALSO_OUTPUT_RGBA 0
+#endif
+
 #if YCBCR_ALSO_OUTPUT_RGBA
 
 // There are two values to dither; otherwise, exactly the same as the algorithm below
