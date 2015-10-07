@@ -7,7 +7,8 @@ namespace movit {
 
 void draw_hsv_wheel(float y, float rad, float theta, float value);
 void draw_saturation_bar(float y, float saturation);
-void make_hsv_wheel_texture();
+void init_hsv_resources();
+void cleanup_hsv_resources();
 void read_colorwheel(float xf, float yf, float *rad, float *theta, float *value);
 
 }  // namespace movit

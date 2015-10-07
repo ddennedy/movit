@@ -1,6 +1,7 @@
 #include <epoxy/gl.h>
 #include <math.h>
 
+#include "resource_pool.h"
 #include "widgets.h"
 #include "util.h"
 
@@ -8,109 +9,152 @@
 
 namespace movit {
 
-GLuint hsv_wheel_num;
+GLuint hsv_wheel_texnum = 0;
+GLuint textured_program_num = 0, colored_program_num = 0, hsv_vao = 0;
+ResourcePool resource_pool;
+
+void draw_black_point(float x, float y, float point_size)
+{
+	glUseProgram(colored_program_num);
+	check_error();
+
+	float vertices[] = { x, y };
+	float colors[] = { 0.0f, 0.0f, 0.0f };
+
+	glPointSize(point_size);
+	check_error();
+	GLuint position_vbo = fill_vertex_attribute(colored_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+	GLuint color_vbo = fill_vertex_attribute(colored_program_num, "color", 3, GL_FLOAT, sizeof(colors), colors);
+	check_error();
+	glDrawArrays(GL_POINTS, 0, 1);
+	check_error();
+	cleanup_vertex_attribute(colored_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(colored_program_num, "color", color_vbo);
+}
 
 void draw_hsv_wheel(float y, float rad, float theta, float value)
 {
-	glUseProgram(0);
+	glUseProgram(textured_program_num);
 	check_error();
 	glActiveTexture(GL_TEXTURE0);
 	check_error();
-	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, hsv_wheel_texnum);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, hsv_wheel_num);
+	glUniform1i(glGetUniformLocation(textured_program_num, "tex"), 0);  // Bind the 2D sampler.
 	check_error();
-	glActiveTexture(GL_TEXTURE1);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, 0);
-	check_error();
-	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_BLEND);
 	check_error();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	check_error();
 
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	check_error();
+	glBindVertexArray(vao);
+	check_error();
+
 	// wheel
-	glBegin(GL_QUADS);
+	float wheel_vertices[] = {
+		0.0f, y,
+		0.0f, y + 0.2f,
+		0.2f * 9.0f / 16.0f, y,
+		0.2f * 9.0f / 16.0f, y + 0.2f,
+	};
+	float wheel_texcoords[] = {
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	GLuint position_vbo = fill_vertex_attribute(textured_program_num, "position", 2, GL_FLOAT, sizeof(wheel_vertices), wheel_vertices);
+	GLuint texcoord_vbo = fill_vertex_attribute(textured_program_num, "texcoord", 2, GL_FLOAT, sizeof(wheel_texcoords), wheel_texcoords);
+	check_error();
 
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(0.0f, y);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	check_error();
 
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(0.2f * 9.0f / 16.0f, y);
-
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(0.2f * 9.0f / 16.0f, y + 0.2f);
-
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(0.0f, y + 0.2f);
-
-	glEnd();
+	cleanup_vertex_attribute(textured_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(textured_program_num, "texcoord", texcoord_vbo);
 
 	// wheel selector
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glPointSize(5.0f);
-	glBegin(GL_POINTS);
-	glVertex2f((0.1f + rad * cos(theta) * 0.1f) * 9.0f / 16.0f, y + 0.1f - rad * sin(theta) * 0.1f);
-	glEnd();
-	
+	draw_black_point(
+	    (0.1f + rad * cos(theta) * 0.1f) * 9.0f / 16.0f,
+	    y + 0.1f - rad * sin(theta) * 0.1f,
+	    5.0f);
+
 	// value slider
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glVertex2f(0.22f * 9.0f / 16.0f, y);
-	glVertex2f(0.24f * 9.0f / 16.0f, y);
-
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex2f(0.24f * 9.0f / 16.0f, y + 0.2f);
-	glVertex2f(0.22f * 9.0f / 16.0f, y + 0.2f);
-
-	glEnd();
+	glUseProgram(colored_program_num);
+	float value_vertices[] = {
+		0.22f * 9.0f / 16.0f, y,
+		0.22f * 9.0f / 16.0f, y + 0.2f,
+		0.24f * 9.0f / 16.0f, y,
+		0.24f * 9.0f / 16.0f, y + 0.2f,
+	};
+	float value_colors[] = {
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,
+	};
+	position_vbo = fill_vertex_attribute(colored_program_num, "position", 2, GL_FLOAT, sizeof(value_vertices), value_vertices);
+	GLuint color_vbo = fill_vertex_attribute(colored_program_num, "color", 3, GL_FLOAT, sizeof(value_colors), value_colors);
+	check_error();
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	check_error();
+	cleanup_vertex_attribute(colored_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(colored_program_num, "color", color_vbo);
 
 	// value selector
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glPointSize(5.0f);
-	glBegin(GL_POINTS);
-	glVertex2f(0.23f * 9.0f / 16.0f, y + value * 0.2f);
-	glEnd();
+	draw_black_point(0.23f * 9.0f / 16.0f, y + value * 0.2f, 5.0f);
 
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glDeleteVertexArrays(1, &vao);
+	check_error();
+	glUseProgram(0);
+	check_error();
 }
 
 void draw_saturation_bar(float y, float saturation)
 {
-	glUseProgram(0);
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	check_error();
+	glBindVertexArray(vao);
 	check_error();
 
 	// value slider
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glVertex2f(0.0f * 9.0f / 16.0f, y + 0.02f);
-	glVertex2f(0.0f * 9.0f / 16.0f, y);
-
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex2f(0.2f * 9.0f / 16.0f, y);
-	glVertex2f(0.2f * 9.0f / 16.0f, y + 0.02f);
-
-	glEnd();
+	glUseProgram(colored_program_num);
+	float value_vertices[] = {
+		0.0f * 9.0f / 16.0f, y + 0.02f,
+		0.2f * 9.0f / 16.0f, y + 0.02f,
+		0.0f * 9.0f / 16.0f, y,
+		0.2f * 9.0f / 16.0f, y,
+	};
+	float value_colors[] = {
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f,
+	};
+	GLuint position_vbo = fill_vertex_attribute(colored_program_num, "position", 2, GL_FLOAT, sizeof(value_vertices), value_vertices);
+	GLuint color_vbo = fill_vertex_attribute(colored_program_num, "color", 3, GL_FLOAT, sizeof(value_colors), value_colors);
+	check_error();
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	check_error();
+	cleanup_vertex_attribute(colored_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(colored_program_num, "color", color_vbo);
 
 	// value selector
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glPointSize(5.0f);
-	glBegin(GL_POINTS);
-	glVertex2f(0.2f * saturation * 9.0f / 16.0f, y + 0.01f);
-	glEnd();
+	draw_black_point(0.2f * saturation * 9.0f / 16.0f, y + 0.01f, 5.0f);
 
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glDeleteVertexArrays(1, &vao);
+	check_error();
+	glUseProgram(0);
+	check_error();
 }
 
 void make_hsv_wheel_texture()
 {
-	glGenTextures(1, &hsv_wheel_num);
+	glGenTextures(1, &hsv_wheel_texnum);
 
 	static unsigned char hsv_pix[HSV_WHEEL_SIZE * HSV_WHEEL_SIZE * 4];
 	for (int y = 0; y < HSV_WHEEL_SIZE; ++y) {
@@ -134,12 +178,29 @@ void make_hsv_wheel_texture()
 		}
 	}
 
-	glBindTexture(GL_TEXTURE_2D, hsv_wheel_num);
+	glBindTexture(GL_TEXTURE_2D, hsv_wheel_texnum);
 	check_error();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	check_error();
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, HSV_WHEEL_SIZE, HSV_WHEEL_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, hsv_pix);
 	check_error();
+}
+
+void init_hsv_resources()
+{
+	textured_program_num = resource_pool.compile_glsl_program(
+		read_version_dependent_file("vs", "vert"),
+		read_version_dependent_file("texture1d", "frag"));
+	colored_program_num = resource_pool.compile_glsl_program(
+		read_version_dependent_file("vs-color", "vert"),
+		read_version_dependent_file("color", "frag"));
+	make_hsv_wheel_texture();
+}
+
+void cleanup_hsv_resources()
+{
+	resource_pool.release_glsl_program(textured_program_num);
+	resource_pool.release_glsl_program(colored_program_num);
 }
 
 void read_colorwheel(float xf, float yf, float *rad, float *theta, float *value)

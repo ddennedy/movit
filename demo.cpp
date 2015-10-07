@@ -191,6 +191,9 @@ int main(int argc, char **argv)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 #ifdef HAVE_SDL2
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 	// SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 	SDL_Window *window = SDL_CreateWindow("OpenGL window",
 		SDL_WINDOWPOS_UNDEFINED,
@@ -223,13 +226,6 @@ int main(int argc, char **argv)
 	EffectChain chain(WIDTH, HEIGHT);
 	glViewport(0, 0, WIDTH, HEIGHT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	ImageFormat inout_format;
 	inout_format.color_space = COLORSPACE_sRGB;
 	inout_format.gamma_curve = GAMMA_sRGB;
@@ -254,7 +250,8 @@ int main(int argc, char **argv)
 	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
 	glBufferData(GL_PIXEL_PACK_BUFFER_ARB, WIDTH * HEIGHT * 4, NULL, GL_STREAM_READ);
 
-	make_hsv_wheel_texture();
+	init_hsv_resources();
+	check_error();
 
 	int frame = 0;
 	bool screenshot = false;
@@ -302,7 +299,6 @@ int main(int argc, char **argv)
 		glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
 		check_error();
 
-		glLoadIdentity();
 		draw_hsv_wheel(0.0f, lift_rad, lift_theta, lift_v);
 		draw_hsv_wheel(0.2f, gamma_rad, gamma_theta, gamma_v);
 		draw_hsv_wheel(0.4f, gain_rad, gain_theta, gain_v);
@@ -361,5 +357,6 @@ int main(int argc, char **argv)
 		}
 #endif
 	}
+	cleanup_hsv_resources();
 	return 0; 
 }
