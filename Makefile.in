@@ -167,7 +167,7 @@ HDRS += $(EFFECTS:=.h)
 
 SHADERS = vs.vert vs.130.vert vs.150.vert vs.300es.vert
 SHADERS += header.130.frag header.150.frag header.300es.frag
-SHADERS += footer.frag
+SHADERS += footer.frag identity.frag
 SHADERS += texture1d.130.frag texture1d.150.frag texture1d.300es.frag
 SHADERS += $(INPUTS:=.frag)
 SHADERS += $(EFFECTS:=.frag)
