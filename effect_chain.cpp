@@ -1648,7 +1648,9 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 	// This needs to be set anew, in case we are coming from a different context
 	// from when we initialized.
+	check_error();
 	glDisable(GL_DITHER);
+	check_error();
 
 	// Save original viewport.
 	GLuint x = 0, y = 0;
@@ -1663,6 +1665,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	}
 
 	// Basic state.
+	check_error();
 	glDisable(GL_BLEND);
 	check_error();
 	glDisable(GL_DEPTH_TEST);
