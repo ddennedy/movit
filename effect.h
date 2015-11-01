@@ -217,6 +217,20 @@ public:
 	//     and allow dependent effects to change that sampler state.
 	virtual bool is_single_texture() const { return false; }
 
+	// If set, this effect should never be bounced to an output, even if a
+	// dependent effect demands texture bounce.
+	//
+	// Note that setting this can invoke undefined behavior, up to and including crashing,
+	// so you should only use it if you have deep understanding of your entire chain
+	// and Movit's processing of it. The most likely use case is if you have an input
+	// that's cheap to compute but not a single texture (e.g. YCbCrInput), and want
+	// to run a ResampleEffect directly from it. Normally, this would require a bounce,
+	// but it's faster not to. (However, also note that in this case, effective texel
+	// subpixel precision will be too optimistic, since chroma is already subsampled.)
+	//
+	// Has no effect if is_single_texture() is set.
+	virtual bool override_disable_bounce() const { return false; }
+
 	// If changes_output_size() is true, you must implement this to tell
 	// the framework what output size you want. Also, you can set a
 	// virtual width/height, which is the size the next effect (if any)

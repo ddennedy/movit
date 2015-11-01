@@ -303,6 +303,13 @@ public:
 	// single-sampler input, or from an RTT texture.
 	GLenum get_input_sampler(Node *node, unsigned input_num) const;
 
+	// Whether input <input_num> of <node> corresponds to a single sampler
+	// (see get_input_sampler()). Normally, you should not need to call this;
+	// however, if the input Effect has set override_texture_bounce(),
+	// this will return false, and you could be flexible and check it first
+	// if you want.
+	GLenum has_input_sampler(Node *node, unsigned input_num) const;
+
 	// Get the current resource pool assigned to this EffectChain.
 	// Primarily to let effects allocate textures as needed.
 	// Any resources you get from the pool must be returned to the pool

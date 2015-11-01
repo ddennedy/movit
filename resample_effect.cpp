@@ -717,10 +717,12 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	// We specifically do not want mipmaps on the input texture;
 	// they break minification.
 	Node *self = chain->find_node_for_effect(this);
-	glActiveTexture(chain->get_input_sampler(self, 0));
-	check_error();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	check_error();
+	if (chain->has_input_sampler(self, 0)) {
+		glActiveTexture(chain->get_input_sampler(self, 0));
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		check_error();
+	}
 }
 
 }  // namespace movit

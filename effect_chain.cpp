@@ -184,6 +184,13 @@ GLenum EffectChain::get_input_sampler(Node *node, unsigned input_num) const
 	return GL_TEXTURE0 + node->incoming_links[input_num]->bound_sampler_num;
 }
 
+GLenum EffectChain::has_input_sampler(Node *node, unsigned input_num) const
+{
+	assert(input_num < node->incoming_links.size());
+	return node->incoming_links[input_num]->bound_sampler_num >= 0 &&
+		node->incoming_links[input_num]->bound_sampler_num < 8;
+}
+
 void EffectChain::find_all_nonlinear_inputs(Node *node, vector<Node *> *nonlinear_inputs)
 {
 	if (node->output_gamma_curve == GAMMA_LINEAR &&
@@ -500,7 +507,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			bool start_new_phase = false;
 
 			if (node->effect->needs_texture_bounce() &&
-			    !deps[i]->effect->is_single_texture()) {
+			    !deps[i]->effect->is_single_texture() &&
+			    !deps[i]->effect->override_disable_bounce()) {
 				start_new_phase = true;
 			}
 
