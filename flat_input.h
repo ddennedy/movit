@@ -107,6 +107,20 @@ public:
 
 	void invalidate_pixel_data();
 
+	// Note: Sets pitch to width, so even if your pitch is unchanged,
+	// you will need to re-set it after this call.
+	void set_width(unsigned width)
+	{
+		this->pitch = this->width = width;
+		invalidate_pixel_data();
+	}
+
+	void set_height(unsigned height)
+	{
+		this->height = height;
+		invalidate_pixel_data();
+	}
+
 	void set_pitch(unsigned pitch) {
 		this->pitch = pitch;
 		invalidate_pixel_data();

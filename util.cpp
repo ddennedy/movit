@@ -334,11 +334,11 @@ void *get_gl_context_identifier()
 #elif defined(WIN32)
 	return (void *)wglGetCurrentContext();
 #else
-	void *ret = (void *)glXGetCurrentContext();
+	void *ret = (void *)eglGetCurrentContext();
 	if (ret != NULL) {
 		return ret;
 	}
-	return (void *)eglGetCurrentContext();
+	return (void *)glXGetCurrentContext();
 #endif
 }
 

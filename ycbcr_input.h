@@ -79,7 +79,32 @@ public:
 
 	void invalidate_pixel_data();
 
-	void set_pitch(unsigned channel, unsigned pitch) {
+	// Note: Sets pitch to width, so even if your pitch is unchanged,
+	// you will need to re-set it after this call.
+	void set_width(unsigned width)
+	{
+		this->width = width;
+
+		assert(width % ycbcr_format.chroma_subsampling_x == 0);
+		pitch[0] = widths[0] = width;
+		pitch[1] = widths[1] = width / ycbcr_format.chroma_subsampling_x;
+		pitch[2] = widths[2] = width / ycbcr_format.chroma_subsampling_x;
+		invalidate_pixel_data();
+	}
+
+	void set_height(unsigned height)
+	{
+		this->height = height;
+
+		assert(height % ycbcr_format.chroma_subsampling_y == 0);
+		heights[0] = height;
+		heights[1] = height / ycbcr_format.chroma_subsampling_y;
+		heights[2] = height / ycbcr_format.chroma_subsampling_y;
+		invalidate_pixel_data();
+	}
+
+	void set_pitch(unsigned channel, unsigned pitch)
+	{
 		assert(channel >= 0 && channel < num_channels);
 		this->pitch[channel] = pitch;
 		invalidate_pixel_data();
