@@ -418,7 +418,9 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		extract_uniform_declarations(effect->uniforms_vec2, "vec2", effect_id, &phase->uniforms_vec2, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_vec3, "vec3", effect_id, &phase->uniforms_vec3, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_vec4, "vec4", effect_id, &phase->uniforms_vec4, &frag_shader_uniforms);
+		extract_uniform_array_declarations(effect->uniforms_float_array, "float", effect_id, &phase->uniforms_float, &frag_shader_uniforms);
 		extract_uniform_array_declarations(effect->uniforms_vec2_array, "vec2", effect_id, &phase->uniforms_vec2, &frag_shader_uniforms);
+		extract_uniform_array_declarations(effect->uniforms_vec3_array, "vec3", effect_id, &phase->uniforms_vec3, &frag_shader_uniforms);
 		extract_uniform_array_declarations(effect->uniforms_vec4_array, "vec4", effect_id, &phase->uniforms_vec4, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_mat3, "mat3", effect_id, &phase->uniforms_mat3, &frag_shader_uniforms);
 	}

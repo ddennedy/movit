@@ -165,6 +165,16 @@ void Effect::register_uniform_vec4(const std::string &key, const float *values)
 	uniforms_vec4.push_back(uniform);
 }
 
+void Effect::register_uniform_float_array(const std::string &key, const float *values, size_t num_values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = num_values;
+	uniform.location = -1;
+	uniforms_float_array.push_back(uniform);
+}
+
 void Effect::register_uniform_vec2_array(const std::string &key, const float *values, size_t num_values)
 {
 	Uniform<float> uniform;
@@ -173,6 +183,16 @@ void Effect::register_uniform_vec2_array(const std::string &key, const float *va
 	uniform.num_values = num_values;
 	uniform.location = -1;
 	uniforms_vec2_array.push_back(uniform);
+}
+
+void Effect::register_uniform_vec3_array(const std::string &key, const float *values, size_t num_values)
+{
+	Uniform<float> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = num_values;
+	uniform.location = -1;
+	uniforms_vec3_array.push_back(uniform);
 }
 
 void Effect::register_uniform_vec4_array(const std::string &key, const float *values, size_t num_values)

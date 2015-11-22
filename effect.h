@@ -353,7 +353,9 @@ protected:
 	void register_uniform_vec2(const std::string &key, const float *values);
 	void register_uniform_vec3(const std::string &key, const float *values);
 	void register_uniform_vec4(const std::string &key, const float *values);
+	void register_uniform_float_array(const std::string &key, const float *values, size_t num_values);
 	void register_uniform_vec2_array(const std::string &key, const float *values, size_t num_values);
+	void register_uniform_vec3_array(const std::string &key, const float *values, size_t num_values);
 	void register_uniform_vec4_array(const std::string &key, const float *values, size_t num_values);
 	void register_uniform_mat3(const std::string &key, const Eigen::Matrix3d *matrix);
 
@@ -372,7 +374,9 @@ private:
 	std::vector<Uniform<float> > uniforms_vec2;
 	std::vector<Uniform<float> > uniforms_vec3;
 	std::vector<Uniform<float> > uniforms_vec4;
+	std::vector<Uniform<float> > uniforms_float_array;
 	std::vector<Uniform<float> > uniforms_vec2_array;
+	std::vector<Uniform<float> > uniforms_vec3_array;
 	std::vector<Uniform<float> > uniforms_vec4_array;
 	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
 	friend class EffectChain;
