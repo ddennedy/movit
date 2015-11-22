@@ -45,10 +45,10 @@ Blur, diffusion, FFT-based convolution, glow, lift/gamma/gain (color
 correction), mirror, mix (add two inputs), luma mix (use a map to wipe between
 two inputs), overlay (the Porter-Duff “over” operation), scale (bilinear and
 Lanczos), sharpen (both by unsharp mask and by Wiener filters), saturation
-(or desaturation), vignette, and white balance.
+(or desaturation), vignette, white balance, and a deinterlacer (YADIF).
 
 Yes, that's a short list. But they all look great, are fast and don't give
-you any nasty surprises. (I'd love to include denoise, deinterlace and
+you any nasty surprises. (I'd love to include denoise and
 framerate up-/downconversion to the list, but doing them well are
 all research-grade problems, and Movit is currently not there.)
 
@@ -102,7 +102,8 @@ While from a programming standpoint I'd love to say that it's 2015
 and interlacing does no longer exist, but that's not true (and interlacing,
 hated as it might be, is actually a useful and underrated technique for
 bandwidth reduction in broadcast video). Movit will eventually provide
-limited support for working with interlaced video, but currently does not.
+limited support for working with interlaced video; it has a deinterlacer,
+but cannot currently process video in interlaced form.
 
 
 What do you mean by “high-performance”?

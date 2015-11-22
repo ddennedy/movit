@@ -77,6 +77,7 @@ TESTED_EFFECTS += complex_modulate_effect
 TESTED_EFFECTS += luma_mix_effect
 TESTED_EFFECTS += fft_convolution_effect
 TESTED_EFFECTS += ycbcr_conversion_effect
+TESTED_EFFECTS += deinterlace_effect
 
 UNTESTED_EFFECTS = sandbox_effect
 UNTESTED_EFFECTS += mirror_effect
