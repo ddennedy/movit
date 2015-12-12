@@ -29,6 +29,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace movit {
 
@@ -56,7 +57,14 @@ public:
 	// compiled program from the cache if possible. Keeps ownership of the
 	// program; you must call release_glsl_program() instead of deleting it
 	// when you no longer want it.
-	GLuint compile_glsl_program(const std::string& vertex_shader, const std::string& fragment_shader);
+	//
+	// If <fragment_shader_outputs> contains more than one value, the given
+	// outputs will be bound to fragment shader output colors in the order
+	// they appear in the vector. Otherwise, output order is undefined and
+	// determined by the OpenGL driver.
+	GLuint compile_glsl_program(const std::string& vertex_shader,
+	                            const std::string& fragment_shader,
+	                            const std::vector<std::string>& frag_shader_outputs);
 	void release_glsl_program(GLuint glsl_program_num);
 
 	// Allocate a 2D texture of the given internal format and dimensions,

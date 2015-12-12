@@ -79,9 +79,11 @@ void measure_texel_subpixel_precision()
 
 	glViewport(0, 0, width, 1);
 
+	vector<string> frag_shader_outputs;
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
 		read_version_dependent_file("vs", "vert"),
-		read_version_dependent_file("texture1d", "frag"));
+		read_version_dependent_file("texture1d", "frag"),
+		frag_shader_outputs);
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.
@@ -211,9 +213,11 @@ void measure_roundoff_problems()
 
 	glViewport(0, 0, 512, 1);
 
+	vector<string> frag_shader_outputs;
 	GLuint glsl_program_num = resource_pool.compile_glsl_program(
 		read_version_dependent_file("vs", "vert"),
-		read_version_dependent_file("texture1d", "frag"));
+		read_version_dependent_file("texture1d", "frag"),
+		frag_shader_outputs);
 	glUseProgram(glsl_program_num);
 	check_error();
 	glUniform1i(glGetUniformLocation(glsl_program_num, "tex"), 0);  // Bind the 2D sampler.

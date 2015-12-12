@@ -1,11 +1,16 @@
 #include <epoxy/gl.h>
 #include <math.h>
 
+#include <string>
+#include <vector>
+
 #include "resource_pool.h"
 #include "widgets.h"
 #include "util.h"
 
 #define HSV_WHEEL_SIZE 128
+
+using namespace std;
 
 namespace movit {
 
@@ -188,12 +193,15 @@ void make_hsv_wheel_texture()
 
 void init_hsv_resources()
 {
+	vector<string> frag_shader_outputs;
 	textured_program_num = resource_pool.compile_glsl_program(
 		read_version_dependent_file("vs", "vert"),
-		read_version_dependent_file("texture1d", "frag"));
+		read_version_dependent_file("texture1d", "frag"),
+		frag_shader_outputs);
 	colored_program_num = resource_pool.compile_glsl_program(
 		read_version_dependent_file("vs-color", "vert"),
-		read_version_dependent_file("color", "frag"));
+		read_version_dependent_file("color", "frag"),
+		frag_shader_outputs);
 	make_hsv_wheel_texture();
 }
 

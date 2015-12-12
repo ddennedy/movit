@@ -376,16 +376,23 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
 
 	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
+	vector<string> frag_shader_outputs;  // In order.
 	if (phase->output_node->outgoing_links.empty() && output_color_ycbcr) {
 		switch (output_ycbcr_splitting) {
 		case YCBCR_OUTPUT_INTERLEAVED:
 			// No #defines set.
+			frag_shader_outputs.push_back("FragColor");
 			break;
 		case YCBCR_OUTPUT_SPLIT_Y_AND_CBCR:
 			frag_shader += "#define YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 1\n";
+			frag_shader_outputs.push_back("Y");
+			frag_shader_outputs.push_back("Chroma");
 			break;
 		case YCBCR_OUTPUT_PLANAR:
 			frag_shader += "#define YCBCR_OUTPUT_PLANAR 1\n";
+			frag_shader_outputs.push_back("Y");
+			frag_shader_outputs.push_back("Cb");
+			frag_shader_outputs.push_back("Cr");
 			break;
 		default:
 			assert(false);
@@ -396,6 +403,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			// output needs to see it (YCbCrConversionEffect and DitherEffect
 			// do, too).
 			frag_shader_header += "#define YCBCR_ALSO_OUTPUT_RGBA 1\n";
+			frag_shader_outputs.push_back("RGBA");
 		}
 	}
 	frag_shader.append(read_file("footer.frag"));
@@ -439,7 +447,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		vert_shader[pos + needle.size() - 1] = '1';
 	}
 
-	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader);
+	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader, frag_shader_outputs);
 
 	// Collect the resulting location numbers for each uniform.
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_sampler2d);

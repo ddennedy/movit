@@ -100,11 +100,23 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 	program_shaders.erase(shader_it);
 }
 
-GLuint ResourcePool::compile_glsl_program(const string& vertex_shader, const string& fragment_shader)
+GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
+                                          const string& fragment_shader,
+                                          const vector<string>& fragment_shader_outputs)
 {
 	GLuint glsl_program_num;
 	pthread_mutex_lock(&lock);
-	const pair<string, string> key(vertex_shader, fragment_shader);
+
+	// Augment the fragment shader program text with the outputs, so that they become
+	// part of the key. Also potentially useful for debugging.
+	string fragment_shader_processed = fragment_shader;
+	for (unsigned output_index = 0; output_index < fragment_shader_outputs.size(); ++output_index) {
+		char buf[256];
+		snprintf(buf, sizeof(buf), "// Bound output: %s\n", fragment_shader_outputs[output_index].c_str());
+		fragment_shader_processed += buf;
+	}
+
+	const pair<string, string> key(vertex_shader, fragment_shader_processed);
 	if (programs.count(key)) {
 		// Already in the cache. Increment the refcount, or take it off the freelist
 		// if it's zero.
@@ -125,12 +137,21 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader, const str
 		check_error();
 		GLuint vs_obj = compile_shader(vertex_shader, GL_VERTEX_SHADER);
 		check_error();
-		GLuint fs_obj = compile_shader(fragment_shader, GL_FRAGMENT_SHADER);
+		GLuint fs_obj = compile_shader(fragment_shader_processed, GL_FRAGMENT_SHADER);
 		check_error();
 		glAttachShader(glsl_program_num, vs_obj);
 		check_error();
 		glAttachShader(glsl_program_num, fs_obj);
 		check_error();
+
+		// Bind the outputs, if we have multiple ones.
+		if (fragment_shader_outputs.size() > 1) {
+			for (unsigned output_index = 0; output_index < fragment_shader_outputs.size(); ++output_index) {
+				glBindFragDataLocation(glsl_program_num, output_index,
+				                       fragment_shader_outputs[output_index].c_str());
+			}
+		}
+
 		glLinkProgram(glsl_program_num);
 		check_error();
 
@@ -153,7 +174,7 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader, const str
 				perror(filename);
 				exit(1);
 			}
-			fprintf(fp, "%s\n", fragment_shader.c_str());
+			fprintf(fp, "%s\n", fragment_shader_processed.c_str());
 			fclose(fp);
 		}
 
