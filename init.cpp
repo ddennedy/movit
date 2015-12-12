@@ -433,7 +433,14 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 		if (get_glsl_version() < 1.30f) {
 			fprintf(stderr, "Movit system requirements: Needs at least GLSL version 1.30 (has version %.1f)\n",
 				get_glsl_version());
-			return false;
+			if (get_glsl_version() >= 1.10f) {
+				fprintf(stderr, "Attempting to continue nevertheless; expect shader compilation issues.\n");
+				fprintf(stderr, "Try switching to a core OpenGL context, as especially OS X drivers\n");
+				fprintf(stderr, "support newer GLSL versions there.\n");
+				movit_shader_model = MOVIT_GLSL_130_AS_110;
+			} else {
+				return false;
+			}
 		}
 		if (get_glsl_version() < 1.50f) {
 			movit_shader_model = MOVIT_GLSL_130;

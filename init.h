@@ -73,7 +73,7 @@ extern bool movit_timer_queries_supported;
 // What shader model we are compiling for. This only affects the choice
 // of a few files (like header.frag); most of the shaders are the same.
 enum MovitShaderModel {
-	MOVIT_GLSL_110,  // No longer in use, but kept until next ABI break in order not to change the enums.
+	MOVIT_GLSL_130_AS_110,  // Use 1.30 features freely, but use #version 110.
 	MOVIT_GLSL_130,
 	MOVIT_ESSL_300,
 	MOVIT_GLSL_150,

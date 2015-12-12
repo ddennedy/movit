@@ -127,7 +127,12 @@ string read_file(const string &filename)
 
 string read_version_dependent_file(const string &base, const string &extension)
 {
-	if (movit_shader_model == MOVIT_GLSL_130) {
+	if (movit_shader_model == MOVIT_GLSL_130_AS_110) {
+		string contents = read_file(base + ".130." + extension);
+		assert(contents.find("#version 130") == 0);
+		contents[10] = '1';  // Change from 130 to 110.
+		return contents;
+	} else if (movit_shader_model == MOVIT_GLSL_130) {
 		return read_file(base + ".130." + extension);
 	} else if (movit_shader_model == MOVIT_GLSL_150) {
 		return read_file(base + ".150." + extension);
