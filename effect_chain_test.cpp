@@ -951,7 +951,7 @@ TEST(EffectChainTest, SameInputsGiveSameOutputs) {
 		0.0f, 0.0f,
 		0.0f, 0.0f,
 	};
-	float out_data[2 * 2];
+	float out_data[4 * 3];
 	
 	EffectChainTester tester(NULL, 4, 3);  // Note non-square aspect.
 

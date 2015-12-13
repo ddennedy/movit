@@ -26,7 +26,7 @@ TEST(GammaCompressionEffectTest, sRGB_KeyValues) {
 		0.040f, 0.041f,
 		0.0f, 1.0f,
 	};
-	float out_data[4];
+	float out_data[6];
 	EffectChainTester tester(data, 2, 3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
