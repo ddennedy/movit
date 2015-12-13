@@ -407,7 +407,7 @@ TEST(ResampleEffectTest, Precision) {
 
 	// Deliberately put the data of interest very close to the right,
 	// where texture coordinates are farther from 0 and thus less precise.
-	float data[size] = {0};
+	float data[size * 2] = {0};
 	data[size - offset] = 1.0f;
 	float expected_data[size * 2] = {0};
 	for (int x = 0; x < size * 2; ++x) {
