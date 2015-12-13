@@ -1,5 +1,5 @@
-// Note: This file does not have its own unit test; it is tested mainly
-// through YCbCrInput's unit tests.
+// Note: These functions are tested in ycbcr_input_test.cpp; both through some
+// direct matrix tests, but most of all through YCbCrInput's unit tests.
 
 #include <Eigen/Core>
 #include <Eigen/LU>
@@ -116,12 +116,12 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 	rgb_to_ycbcr(0,1) = coeff[1];
 	rgb_to_ycbcr(0,2) = coeff[2];
 
-	float cb_fac = (224.0 / 219.0) / (coeff[0] + coeff[1] + 1.0f - coeff[2]);
+	float cb_fac = 1.0 / (coeff[0] + coeff[1] + 1.0f - coeff[2]);
 	rgb_to_ycbcr(1,0) = -coeff[0] * cb_fac;
 	rgb_to_ycbcr(1,1) = -coeff[1] * cb_fac;
 	rgb_to_ycbcr(1,2) = (1.0f - coeff[2]) * cb_fac;
 
-	float cr_fac = (224.0 / 219.0) / (1.0f - coeff[0] + coeff[1] + coeff[2]);
+	float cr_fac = 1.0 / (1.0f - coeff[0] + coeff[1] + coeff[2]);
 	rgb_to_ycbcr(2,0) = (1.0f - coeff[0]) * cr_fac;
 	rgb_to_ycbcr(2,1) = -coeff[1] * cr_fac;
 	rgb_to_ycbcr(2,2) = -coeff[2] * cr_fac;

@@ -1,7 +1,10 @@
-// Unit tests for YCbCrInput.
+// Unit tests for YCbCrInput. Also tests the matrix functions in ycbcr.cpp directly.
 
 #include <epoxy/gl.h>
 #include <stddef.h>
+
+#include <Eigen/Core>
+#include <Eigen/LU>
 
 #include "effect_chain.h"
 #include "gtest/gtest.h"
@@ -352,7 +355,7 @@ TEST(YCbCrInputTest, Subsampling420WithNonCenteredSamples) {
 
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
 	// so we need some leeway.
-	expect_equal(expected_data, out_data, width, height, 0.01, 0.001);
+	expect_equal(expected_data, out_data, width, height, 0.01, 0.0012);
 }
 
 // Yes, some 4:2:2 formats actually have this craziness.
@@ -610,6 +613,79 @@ TEST(YCbCrInputTest, ExternalTexture) {
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
 	// so we need some leeway.
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
+TEST(YCbCrTest, WikipediaRec601ForwardMatrix) {
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+
+	float offset[3];
+	Eigen::Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+
+	Eigen::Matrix3d rgb_to_ycbcr = ycbcr_to_rgb.inverse() * 255.0;
+
+	// Values from https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion.
+	EXPECT_NEAR(  65.481, rgb_to_ycbcr(0,0), 1e-3);
+	EXPECT_NEAR( 128.553, rgb_to_ycbcr(0,1), 1e-3);
+	EXPECT_NEAR(  24.966, rgb_to_ycbcr(0,2), 1e-3);
+
+	EXPECT_NEAR( -37.797, rgb_to_ycbcr(1,0), 1e-3);
+	EXPECT_NEAR( -74.203, rgb_to_ycbcr(1,1), 1e-3);
+	EXPECT_NEAR( 112.000, rgb_to_ycbcr(1,2), 1e-3);
+
+	EXPECT_NEAR( 112.000, rgb_to_ycbcr(2,0), 1e-3);
+	EXPECT_NEAR( -93.786, rgb_to_ycbcr(2,1), 1e-3);
+	EXPECT_NEAR( -18.214, rgb_to_ycbcr(2,2), 1e-3);
+
+	EXPECT_NEAR( 16.0, offset[0] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[1] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[2] * 255.0, 1e-3);
+}
+
+TEST(YCbCrTest, WikipediaJPEGMatrices) {
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = true;
+	ycbcr_format.num_levels = 256;
+
+	float offset[3];
+	Eigen::Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+
+	// Values from https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion.
+	EXPECT_NEAR( 1.00000, ycbcr_to_rgb(0,0), 1e-5);
+	EXPECT_NEAR( 0.00000, ycbcr_to_rgb(0,1), 1e-5);
+	EXPECT_NEAR( 1.40200, ycbcr_to_rgb(0,2), 1e-5);
+
+	EXPECT_NEAR( 1.00000, ycbcr_to_rgb(1,0), 1e-5);
+	EXPECT_NEAR(-0.34414, ycbcr_to_rgb(1,1), 1e-5);
+	EXPECT_NEAR(-0.71414, ycbcr_to_rgb(1,2), 1e-5);
+
+	EXPECT_NEAR( 1.00000, ycbcr_to_rgb(2,0), 1e-5);
+	EXPECT_NEAR( 1.77200, ycbcr_to_rgb(2,1), 1e-5);
+	EXPECT_NEAR( 0.00000, ycbcr_to_rgb(2,2), 1e-5);
+
+	Eigen::Matrix3d rgb_to_ycbcr = ycbcr_to_rgb.inverse();
+
+	// Same.
+	EXPECT_NEAR( 0.299000, rgb_to_ycbcr(0,0), 1e-6);
+	EXPECT_NEAR( 0.587000, rgb_to_ycbcr(0,1), 1e-6);
+	EXPECT_NEAR( 0.114000, rgb_to_ycbcr(0,2), 1e-6);
+
+	EXPECT_NEAR(-0.168736, rgb_to_ycbcr(1,0), 1e-6);
+	EXPECT_NEAR(-0.331264, rgb_to_ycbcr(1,1), 1e-6);
+	EXPECT_NEAR( 0.500000, rgb_to_ycbcr(1,2), 1e-6);
+
+	EXPECT_NEAR( 0.500000, rgb_to_ycbcr(2,0), 1e-6);
+	EXPECT_NEAR(-0.418688, rgb_to_ycbcr(2,1), 1e-6);
+	EXPECT_NEAR(-0.081312, rgb_to_ycbcr(2,2), 1e-6);
+
+	EXPECT_NEAR(  0.0, offset[0] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[1] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[2] * 255.0, 1e-3);
 }
 
 }  // namespace movit
