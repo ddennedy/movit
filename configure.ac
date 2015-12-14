@@ -26,7 +26,7 @@ if test $with_SDL2 = "yes"; then
 else
   PKG_CHECK_MODULES([SDL_image], [SDL_image], [], [with_demo_app=no; AC_MSG_WARN([SDL_image not found, demo program will not be built])])
 fi
-PKG_CHECK_MODULES([libpng], [libpng12], [], [with_demo_app=no; AC_MSG_WARN([libpng12 not found, demo program will not be built])])
+PKG_CHECK_MODULES([libpng], [libpng], [], [with_demo_app=no; AC_MSG_WARN([libpng not found, demo program will not be built])])
 
 AC_SUBST([with_demo_app])
 AC_SUBST([with_SDL2])
