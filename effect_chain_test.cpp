@@ -1248,7 +1248,12 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 	// the test will always succeed. Note that the OpenGL driver might call
 	// setlocale() behind-the-scenes, and that might corrupt the returned
 	// pointer, so we need to take our own copy of it here.
-	char *saved_locale = strdup(setlocale(LC_ALL, "nb_NO.UTF_8"));
+	char *saved_locale = setlocale(LC_ALL, "nb_NO.UTF_8");
+	if (saved_locale == NULL) {
+		// The locale wasn't available.
+		return;
+	}
+	saved_locale = strdup(saved_locale);
 	float data[] = {
 		0.0f, 0.0f, 0.0f, 0.0f,
 	};
