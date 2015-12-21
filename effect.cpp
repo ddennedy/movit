@@ -61,6 +61,7 @@ void Effect::register_int(const string &key, int *value)
 {
 	assert(params_int.count(key) == 0);
 	params_int[key] = value;
+	register_uniform_int(key, value);
 }
 
 void Effect::register_float(const string &key, float *value)

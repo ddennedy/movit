@@ -316,11 +316,8 @@ protected:
 	//
 	// Neither of these take ownership of the pointer.
 
-	// int is special since GLSL pre-1.30 doesn't have integer uniforms.
-	// Thus, ints that you register will _not_ be converted to GLSL uniforms.
+	// These correspond directly to int/float/vec2/vec3/vec4 in GLSL.
 	void register_int(const std::string &key, int *value);
-
-	// These correspond directly to float/vec2/vec3/vec4 in GLSL.
 	void register_float(const std::string &key, float *value);
 	void register_vec2(const std::string &key, float *values);
 	void register_vec3(const std::string &key, float *values);
