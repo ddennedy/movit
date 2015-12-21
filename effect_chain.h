@@ -220,6 +220,23 @@ public:
 		inputs.push_back(input3);
 		return add_effect(effect, inputs);
 	}
+	Effect *add_effect(Effect *effect, Effect *input1, Effect *input2, Effect *input3, Effect *input4) {
+		std::vector<Effect *> inputs;
+		inputs.push_back(input1);
+		inputs.push_back(input2);
+		inputs.push_back(input3);
+		inputs.push_back(input4);
+		return add_effect(effect, inputs);
+	}
+	Effect *add_effect(Effect *effect, Effect *input1, Effect *input2, Effect *input3, Effect *input4, Effect *input5) {
+		std::vector<Effect *> inputs;
+		inputs.push_back(input1);
+		inputs.push_back(input2);
+		inputs.push_back(input3);
+		inputs.push_back(input4);
+		inputs.push_back(input5);
+		return add_effect(effect, inputs);
+	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
 	// Adds an RGBA output. Note that you can have at most one RGBA output and one
