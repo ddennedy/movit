@@ -12,7 +12,7 @@ LumaMixEffect::LumaMixEffect()
 	register_float("transition_width", &transition_width);
 	register_float("progress", &progress);
 	register_int("inverse", &inverse);
-	register_uniform_bool("inverse", &uniform_inverse);
+	register_uniform_bool("bool_inverse", &uniform_inverse);
 	register_uniform_float("progress_mul_w_plus_one", &uniform_progress_mul_w_plus_one);
 }
 

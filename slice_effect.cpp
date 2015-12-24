@@ -22,7 +22,7 @@ SliceEffect::SliceEffect()
 	register_uniform_float("output_coord_to_slice_num", &uniform_output_coord_to_slice_num);
 	register_uniform_float("slice_num_to_input_coord", &uniform_slice_num_to_input_coord);
 	register_uniform_float("slice_offset_to_input_coord", &uniform_slice_offset_to_input_coord);
-	register_uniform_float("offset", &uniform_offset);
+	register_uniform_float("normalized_offset", &uniform_offset);
 }
 
 string SliceEffect::output_fragment_shader()
