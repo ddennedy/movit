@@ -589,9 +589,17 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	// and create a GLSL program for it.
 	assert(!phase->effects.empty());
 
-	// Deduplicate the inputs.
-	sort(phase->inputs.begin(), phase->inputs.end());
-	phase->inputs.erase(unique(phase->inputs.begin(), phase->inputs.end()), phase->inputs.end());
+	// Deduplicate the inputs, but don't change the ordering e.g. by sorting;
+	// that would be nondeterministic and thus reduce cacheability.
+	// TODO: Make this even more deterministic.
+	vector<Phase *> dedup_inputs;
+	set<Phase *> seen_inputs;
+	for (size_t i = 0; i < phase->inputs.size(); ++i) {
+		if (seen_inputs.insert(phase->inputs[i]).second) {
+			dedup_inputs.push_back(phase->inputs[i]);
+		}
+	}
+	swap(phase->inputs, dedup_inputs);
 
 	// Allocate samplers for each input.
 	phase->input_samplers.resize(phase->inputs.size());
