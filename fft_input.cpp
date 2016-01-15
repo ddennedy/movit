@@ -67,8 +67,8 @@ void FFTInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsig
 		// Convert to fp16.
 		fp16_int_t *kernel = new fp16_int_t[fft_width * fft_height * 2];
 		for (int i = 0; i < fft_width * fft_height; ++i) {
-			kernel[i * 2 + 0] = fp64_to_fp16(out[i][0]);
-			kernel[i * 2 + 1] = fp64_to_fp16(out[i][1]);
+			kernel[i * 2 + 0] = fp32_to_fp16(out[i][0]);
+			kernel[i * 2 + 1] = fp32_to_fp16(out[i][1]);
 		}
 
 		// (Re-)upload the texture.

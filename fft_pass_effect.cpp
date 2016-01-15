@@ -167,10 +167,10 @@ void FFTPassEffect::generate_support_texture()
 			support_texture_index = subfft_size - support_texture_index - 1;
 			sign = -1.0;
 		}
-		tmp[support_texture_index * 4 + 0] = fp64_to_fp16(sign * (src1 - i * stride) / double(input_size));
-		tmp[support_texture_index * 4 + 1] = fp64_to_fp16(sign * (src2 - i * stride) / double(input_size));
-		tmp[support_texture_index * 4 + 2] = fp64_to_fp16(twiddle_real);
-		tmp[support_texture_index * 4 + 3] = fp64_to_fp16(twiddle_imag);
+		tmp[support_texture_index * 4 + 0] = fp32_to_fp16(sign * (src1 - i * stride) / double(input_size));
+		tmp[support_texture_index * 4 + 1] = fp32_to_fp16(sign * (src2 - i * stride) / double(input_size));
+		tmp[support_texture_index * 4 + 2] = fp32_to_fp16(twiddle_real);
+		tmp[support_texture_index * 4 + 3] = fp32_to_fp16(twiddle_imag);
 	}
 
 	// Supposedly FFTs are very sensitive to inaccuracies in the twiddle factors,

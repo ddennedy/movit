@@ -192,13 +192,13 @@ template<class T>
 void normalize_sum(Tap<T>* vals, unsigned num)
 {
 	for (int normalize_pass = 0; normalize_pass < 2; ++normalize_pass) {
-		double sum = 0.0;
+		float sum = 0.0;
 		for (unsigned i = 0; i < num; ++i) {
-			sum += to_fp64(vals[i].weight);
+			sum += to_fp32(vals[i].weight);
 		}
-		double inv_sum = 1.0 / sum;
+		float inv_sum = 1.0 / sum;
 		for (unsigned i = 0; i < num; ++i) {
-			vals[i].weight = from_fp64<T>(to_fp64(vals[i].weight) * inv_sum);
+			vals[i].weight = from_fp32<T>(to_fp32(vals[i].weight) * inv_sum);
 		}
 	}
 }
@@ -255,8 +255,8 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 	// Find the effective range of the bilinear-optimized kernel.
 	// Due to rounding of the positions, this is not necessarily the same
 	// as the intended range (ie., the range of the original weights).
-	int lower_pos = int(floor(to_fp64(bilinear_weights[0].pos) * size - 0.5));
-	int upper_pos = int(ceil(to_fp64(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5)) + 2;
+	int lower_pos = int(floor(to_fp32(bilinear_weights[0].pos) * size - 0.5));
+	int upper_pos = int(ceil(to_fp32(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5)) + 2;
 	lower_pos = min<int>(lower_pos, lrintf(weights[0].pos * size - 0.5));
 	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5) + 1);
 
@@ -267,7 +267,7 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 
 	// Now find the effective weights that result from this sampling.
 	for (unsigned i = 0; i < num_bilinear_weights; ++i) {
-		const float pixel_pos = to_fp64(bilinear_weights[i].pos) * size - 0.5f;
+		const float pixel_pos = to_fp32(bilinear_weights[i].pos) * size - 0.5f;
 		const int x0 = int(floor(pixel_pos)) - lower_pos;
 		const int x1 = x0 + 1;
 		const float f = lrintf((pixel_pos - (x0 + lower_pos)) / movit_texel_subpixel_precision) * movit_texel_subpixel_precision;
@@ -277,8 +277,8 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 		assert(x0 < upper_pos - lower_pos);
 		assert(x1 < upper_pos - lower_pos);
 
-		effective_weights[x0] += to_fp64(bilinear_weights[i].weight) * (1.0 - f);
-		effective_weights[x1] += to_fp64(bilinear_weights[i].weight) * f;
+		effective_weights[x0] += to_fp32(bilinear_weights[i].weight) * (1.0 - f);
+		effective_weights[x1] += to_fp32(bilinear_weights[i].weight) * f;
 	}
 
 	// Subtract the desired weights to get the error.

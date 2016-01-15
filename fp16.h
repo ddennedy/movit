@@ -26,15 +26,13 @@ struct fp16_int_t {
 
 // Use the f16c instructions from Haswell if available (and we know that they
 // are at compile time).
-static inline double fp16_to_fp64(fp16_int_t x)
+static inline float fp16_to_fp32(fp16_int_t x)
 {
 	return _cvtsh_ss(x.val);
 }
 
-static inline fp16_int_t fp64_to_fp16(double x)
+static inline fp16_int_t fp32_to_fp16(float x)
 {
-	// NOTE: Strictly speaking, there are some select values where this isn't correct,
-	// since we first round to fp32 and then to fp16.
 	fp16_int_t ret;
 	ret.val = _cvtss_sh(x, 0);
 	return ret;
@@ -42,29 +40,23 @@ static inline fp16_int_t fp64_to_fp16(double x)
 
 #else
 
-double fp16_to_fp64(fp16_int_t x);
-fp16_int_t fp64_to_fp16(double x);
+float fp16_to_fp32(fp16_int_t x);
+fp16_int_t fp32_to_fp16(float x);
 
 #endif
 
-// These are not very useful by themselves, but are implemented using the same
-// code as the fp16 ones (just with different constants), so they are useful
-// for verifying against the FPU in unit tests.
-double fp32_to_fp64(fp32_int_t x);
-fp32_int_t fp64_to_fp32(double x);
-
 // Overloads for use in templates.
-static inline double to_fp64(double x) { return x; }
-static inline double to_fp64(float x) { return x; }
-static inline double to_fp64(fp16_int_t x) { return fp16_to_fp64(x); }
+static inline float to_fp32(double x) { return x; }
+static inline float to_fp32(float x) { return x; }
+static inline float to_fp32(fp16_int_t x) { return fp16_to_fp32(x); }
 
-template<class T> inline T from_fp64(double x);
-template<> inline double from_fp64<double>(double x) { return x; }
-template<> inline float from_fp64<float>(double x) { return x; }
-template<> inline fp16_int_t from_fp64<fp16_int_t>(double x) { return fp64_to_fp16(x); }
+template<class T> inline T from_fp32(float x);
+template<> inline double from_fp32<double>(float x) { return x; }
+template<> inline float from_fp32<float>(float x) { return x; }
+template<> inline fp16_int_t from_fp32<fp16_int_t>(float x) { return fp32_to_fp16(x); }
 
 template<class From, class To>
-inline To convert_float(From x) { return from_fp64<To>(to_fp64(x)); }
+inline To convert_float(From x) { return from_fp32<To>(to_fp32(x)); }
 
 template<class Same>
 inline Same convert_float(Same x) { return x; }
