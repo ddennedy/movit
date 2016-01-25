@@ -10,7 +10,11 @@
 // handling of NaNs and infinities). This is needed because some OpenGL
 // drivers don't properly round off when asked to convert data themselves.
 //
-// These routines are not particularly fast.
+// These routines are originally written by Fabian Giesen, and released by
+// him into the public domain;
+// see https://fgiesen.wordpress.com/2012/03/28/half-to-float-done-quic/.
+// They are quite fast, and can be vectorized if need be; of course, using
+// the f16c instructions (see below) will be faster still.
 
 namespace movit {
 
