@@ -13,7 +13,15 @@
 // C_o without the division by alpha_o).
 
 vec4 FUNCNAME(vec2 tc) {
+// SWAP_INPUTS will be #defined to 1 if we want to swap the two inputs,
+#if SWAP_INPUTS
+	vec4 bottom = INPUT2(tc);
+	vec4 top = INPUT1(tc);
+#else
 	vec4 bottom = INPUT1(tc);
 	vec4 top = INPUT2(tc);
+#endif
 	return top + (1.0 - top.a) * bottom;
 }
+
+#undef SWAP_INPUTS

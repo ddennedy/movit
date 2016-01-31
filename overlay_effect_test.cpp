@@ -8,27 +8,36 @@
 #include "input.h"
 #include "overlay_effect.h"
 #include "test_util.h"
+#include "util.h"
 
 namespace movit {
 
 TEST(OverlayEffectTest, TopDominatesBottomWhenNoAlpha) {
-	float data_a[] = {
-		0.0f, 0.25f,
-		0.75f, 1.0f,
-	};
-	float data_b[] = {
-		1.0f, 0.5f,
-		0.75f, 0.6f,
-	};
-	float out_data[4];
-	EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
-	Effect *input1 = tester.get_chain()->last_added_effect();
-	Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	for (int swap_inputs = 0; swap_inputs < 2; ++swap_inputs) {  // false, true.
+		float data_a[] = {
+			0.0f, 0.25f,
+			0.75f, 1.0f,
+		};
+		float data_b[] = {
+			1.0f, 0.5f,
+			0.75f, 0.6f,
+		};
+		float out_data[4];
+		EffectChainTester tester(data_a, 2, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+		Effect *input1 = tester.get_chain()->last_added_effect();
+		Effect *input2 = tester.add_input(data_b, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	tester.get_chain()->add_effect(new OverlayEffect(), input1, input2);
-	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+		OverlayEffect *effect = new OverlayEffect();
+		CHECK(effect->set_int("swap_inputs", swap_inputs));
+		tester.get_chain()->add_effect(effect, input1, input2);
+		tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	expect_equal(data_b, out_data, 2, 2);
+		if (swap_inputs) {
+			expect_equal(data_a, out_data, 2, 2);
+		} else {
+			expect_equal(data_b, out_data, 2, 2);
+		}
+	}
 }
 
 TEST(OverlayEffectTest, BottomDominatesTopWhenTopIsTransparent) {

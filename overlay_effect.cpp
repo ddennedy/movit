@@ -5,11 +5,17 @@ using namespace std;
 
 namespace movit {
 
-OverlayEffect::OverlayEffect() {}
+OverlayEffect::OverlayEffect()
+	: swap_inputs(false)
+{
+	register_int("swap_inputs", (int *)&swap_inputs);
+}
 
 string OverlayEffect::output_fragment_shader()
 {
-	return read_file("overlay_effect.frag");
+	char buf[256];
+	snprintf(buf, sizeof(buf), "#define SWAP_INPUTS %d\n", swap_inputs);
+	return buf + read_file("overlay_effect.frag");
 }
 
 }  // namespace movit

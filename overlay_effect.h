@@ -32,6 +32,11 @@ public:
 	// However, understanding that would require changes
 	// to EffectChain, so postpone that optimization for later.
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+
+private:
+	// If true, overlays input1 on top of input2 instead of vice versa.
+	// Must be set before finalize.
+	bool swap_inputs;
 };
 
 }  // namespace movit
