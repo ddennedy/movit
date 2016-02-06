@@ -1699,23 +1699,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glDepthMask(GL_FALSE);
 	check_error();
 
-	// Generate a VAO. All the phases should have exactly the same vertex attributes,
-	// so it's safe to reuse this.
-	float vertices[] = {
-		0.0f, 2.0f,
-		0.0f, 0.0f,
-		2.0f, 0.0f
-	};
-
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	check_error();
-	glBindVertexArray(vao);
-	check_error();
-
-	GLuint position_vbo = fill_vertex_attribute(phases[0]->glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
-	GLuint texcoord_vbo = fill_vertex_attribute(phases[0]->glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
-
 	set<Phase *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
@@ -1755,12 +1738,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
 	glUseProgram(0);
-	check_error();
-
-	cleanup_vertex_attribute(phases[0]->glsl_program_num, "position", position_vbo);
-	cleanup_vertex_attribute(phases[0]->glsl_program_num, "texcoord", texcoord_vbo);
-
-	glDeleteVertexArrays(1, &vao);
 	check_error();
 
 	if (do_phase_timing) {
@@ -1876,9 +1853,28 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 	// from there.
 	setup_uniforms(phase);
 
+	// Now draw!
+	float vertices[] = {
+		0.0f, 2.0f,
+		0.0f, 0.0f,
+		2.0f, 0.0f
+	};
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	check_error();
+	glBindVertexArray(vao);
+	check_error();
+
+	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
+	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
+
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	check_error();
 
+	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
+	cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
+	
 	glUseProgram(0);
 	check_error();
 
@@ -1890,6 +1886,9 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 	if (!last_phase) {
 		resource_pool->release_fbo(fbo);
 	}
+
+	glDeleteVertexArrays(1, &vao);
+	check_error();
 }
 
 void EffectChain::setup_uniforms(Phase *phase)

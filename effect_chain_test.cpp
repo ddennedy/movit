@@ -1022,6 +1022,38 @@ TEST(EffectChainTest, AspectRatioConversion) {
 	EXPECT_EQ(7, input_store->input_height);
 }
 
+// Tests that putting a BlueInput (constant color) into its own pass,
+// which creates a phase that doesn't need texture coordinates,
+// doesn't mess up a second phase that actually does.
+TEST(EffectChainTest, FirstPhaseWithNoTextureCoordinates) {
+	const int size = 2;
+	float data[] = {
+		1.0f,
+		0.0f,
+	};
+	float expected_data[] = {
+		1.0f, 1.0f, 2.0f, 2.0f,
+		0.0f, 0.0f, 1.0f, 2.0f,
+	};
+	float out_data[size * 4];
+	// First say that we have sRGB, linear input.
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 1, size);
+
+	input->set_pixel_data(data);
+	EffectChainTester tester(NULL, 1, size);
+	tester.get_chain()->add_input(new BlueInput());
+	Effect *phase1_end = tester.get_chain()->add_effect(new BouncingIdentityEffect());
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(new AddEffect(), phase1_end, input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
+
+	expect_equal(expected_data, out_data, 4, size);
+}
+
 // An effect that does nothing except changing its output sizes.
 class VirtualResizeEffect : public Effect {
 public:
