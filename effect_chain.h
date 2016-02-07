@@ -147,6 +147,11 @@ struct Phase {
 	Node *output_node;
 
 	GLuint glsl_program_num;  // Owned by the resource_pool.
+
+	// Position and texcoord attribute indexes, although it doesn't matter
+	// which is which, because they contain the same data.
+	std::set<GLint> attribute_indexes;
+
 	bool input_needs_mipmaps;
 
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
@@ -360,7 +365,10 @@ private:
 	Phase *construct_phase(Node *output, std::map<Node *, Phase *> *completed_effects);
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
-	void execute_phase(Phase *phase, bool last_phase, std::map<Phase *, GLuint> *output_textures, std::set<Phase *> *generated_mipmaps);
+	void execute_phase(Phase *phase, bool last_phase,
+	                   std::set<GLint> *bound__attribute_indices,
+	                   std::map<Phase *, GLuint> *output_textures,
+	                   std::set<Phase *> *generated_mipmaps);
 
 	// Set up uniforms for one phase. The program must already be bound.
 	void setup_uniforms(Phase *phase);
@@ -431,6 +439,7 @@ private:
 	unsigned num_dither_bits;
 	OutputOrigin output_origin;
 	bool finalized;
+	GLuint vbo;  // Contains vertex and texture coordinate data.
 
 	ResourcePool *resource_pool;
 	bool owns_resource_pool;

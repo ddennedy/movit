@@ -51,6 +51,14 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	} else {
 		owns_resource_pool = false;
 	}
+
+	// Generate a VBO with some data in (shared position and texture coordinate data).
+	float vertices[] = {
+		0.0f, 2.0f,
+		0.0f, 0.0f,
+		2.0f, 0.0f
+	};
+	vbo = generate_vbo(2, GL_FLOAT, sizeof(vertices), vertices);
 }
 
 EffectChain::~EffectChain()
@@ -66,6 +74,8 @@ EffectChain::~EffectChain()
 	if (owns_resource_pool) {
 		delete resource_pool;
 	}
+	glDeleteBuffers(1, &vbo);
+	check_error();
 }
 
 Input *EffectChain::add_input(Input *input)
@@ -448,6 +458,14 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	}
 
 	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader, frag_shader_outputs);
+	GLint position_attribute_index = glGetAttribLocation(phase->glsl_program_num, "position");
+	GLint texcoord_attribute_index = glGetAttribLocation(phase->glsl_program_num, "texcoord");
+	if (position_attribute_index != -1) {
+		phase->attribute_indexes.insert(position_attribute_index);
+	}
+	if (texcoord_attribute_index != -1) {
+		phase->attribute_indexes.insert(texcoord_attribute_index);
+	}
 
 	// Collect the resulting location numbers for each uniform.
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_sampler2d);
@@ -1699,6 +1717,17 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glDepthMask(GL_FALSE);
 	check_error();
 
+	// Generate a VAO that will be used during the entire execution,
+	// and bind the VBO, since it contains all the data.
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	check_error();
+	glBindVertexArray(vao);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	check_error();
+	set<GLint> bound_attribute_indices;
+
 	set<Phase *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
@@ -1723,10 +1752,17 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		}
-		execute_phase(phase, phase_num == phases.size() - 1, &output_textures, &generated_mipmaps);
+		execute_phase(phase, phase_num == phases.size() - 1, &bound_attribute_indices, &output_textures, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}
+	}
+
+	for (set<GLint>::iterator attr_it = bound_attribute_indices.begin();
+	     attr_it != bound_attribute_indices.end();
+	     ++attr_it) {
+		glDisableVertexAttribArray(*attr_it);
+		check_error();
 	}
 
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
@@ -1738,6 +1774,13 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	check_error();
 	glUseProgram(0);
+	check_error();
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	check_error();
+	glBindVertexArray(0);
+	check_error();
+	glDeleteVertexArrays(1, &vao);
 	check_error();
 
 	if (do_phase_timing) {
@@ -1792,7 +1835,10 @@ void EffectChain::print_phase_timing()
 	printf("Total:   %5.1f ms\n", total_time_ms);
 }
 
-void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLuint> *output_textures, set<Phase *> *generated_mipmaps)
+void EffectChain::execute_phase(Phase *phase, bool last_phase,
+                                set<GLint> *bound_attribute_indices,
+                                map<Phase *, GLuint> *output_textures,
+                                set<Phase *> *generated_mipmaps)
 {
 	GLuint fbo = 0;
 
@@ -1853,27 +1899,33 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 	// from there.
 	setup_uniforms(phase);
 
-	// Now draw!
-	float vertices[] = {
-		0.0f, 2.0f,
-		0.0f, 0.0f,
-		2.0f, 0.0f
-	};
+	// Clean up old attributes if they are no longer needed.
+	for (set<GLint>::iterator attr_it = bound_attribute_indices->begin();
+	     attr_it != bound_attribute_indices->end(); ) {
+		if (phase->attribute_indexes.count(*attr_it) == 0) {
+			glDisableVertexAttribArray(*attr_it);
+			check_error();
+			bound_attribute_indices->erase(attr_it++);
+		} else {
+			++attr_it;
+		}
+	}
 
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	check_error();
-	glBindVertexArray(vao);
-	check_error();
-
-	GLuint position_vbo = fill_vertex_attribute(glsl_program_num, "position", 2, GL_FLOAT, sizeof(vertices), vertices);
-	GLuint texcoord_vbo = fill_vertex_attribute(glsl_program_num, "texcoord", 2, GL_FLOAT, sizeof(vertices), vertices);  // Same as vertices.
+	// Set up the new attributes, if needed.
+	for (set<GLint>::iterator attr_it = phase->attribute_indexes.begin();
+	     attr_it != phase->attribute_indexes.end();
+	     ++attr_it) {
+		if (bound_attribute_indices->count(*attr_it) == 0) {
+			glEnableVertexAttribArray(*attr_it);
+			check_error();
+			glVertexAttribPointer(*attr_it, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+			check_error();
+			bound_attribute_indices->insert(*attr_it);
+		}
+	}
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	check_error();
-
-	cleanup_vertex_attribute(glsl_program_num, "position", position_vbo);
-	cleanup_vertex_attribute(glsl_program_num, "texcoord", texcoord_vbo);
 	
 	glUseProgram(0);
 	check_error();
@@ -1886,9 +1938,6 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase, map<Phase *, GLui
 	if (!last_phase) {
 		resource_pool->release_fbo(fbo);
 	}
-
-	glDeleteVertexArrays(1, &vao);
-	check_error();
 }
 
 void EffectChain::setup_uniforms(Phase *phase)

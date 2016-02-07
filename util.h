@@ -74,6 +74,9 @@ template<class DestFloat>
 void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                          DestFloat *offset, DestFloat *total_weight, float *sum_sq_error);
 
+// Create a VBO with the given data. Returns the VBO number.
+GLuint generate_vbo(GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data);
+
 // Create a VBO with the given data, and bind it to the vertex attribute
 // with name <attribute_name>. Returns the VBO number.
 GLuint fill_vertex_attribute(GLuint glsl_program_num, const std::string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data);

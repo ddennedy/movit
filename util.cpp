@@ -272,6 +272,21 @@ template
 void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
                                      fp16_int_t *offset, fp16_int_t *total_weight, float *sum_sq_error);
 
+GLuint generate_vbo(GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
+{
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	check_error();
+	glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	check_error();
+
+	return vbo;
+}
+
 GLuint fill_vertex_attribute(GLuint glsl_program_num, const string &attribute_name, GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
 {
 	int attrib = glGetAttribLocation(glsl_program_num, attribute_name.c_str());
@@ -279,12 +294,9 @@ GLuint fill_vertex_attribute(GLuint glsl_program_num, const string &attribute_na
 		return -1;
 	}
 
-	GLuint vbo;
-	glGenBuffers(1, &vbo);
-	check_error();
+	GLuint vbo = generate_vbo(size, type, data_size, data);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	check_error();
-	glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
 	check_error();
 	glEnableVertexAttribArray(attrib);
 	check_error();
