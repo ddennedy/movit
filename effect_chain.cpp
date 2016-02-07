@@ -1,5 +1,3 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include <epoxy/gl.h>
 #include <assert.h>
 #include <math.h>

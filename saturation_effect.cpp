@@ -1,5 +1,3 @@
-#define GL_GLEXT_PROTOTYPES 1
-
 #include "saturation_effect.h"
 #include "util.h"
 

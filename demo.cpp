@@ -1,4 +1,3 @@
-#define GL_GLEXT_PROTOTYPES 1
 #define NO_SDL_GLEXT 1
 
 #define WIDTH 1280
