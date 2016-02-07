@@ -1758,13 +1758,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		}
 	}
 
-	for (set<GLint>::iterator attr_it = bound_attribute_indices.begin();
-	     attr_it != bound_attribute_indices.end();
-	     ++attr_it) {
-		glDisableVertexAttribArray(*attr_it);
-		check_error();
-	}
-
 	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
 	     texture_it != output_textures.end();
 	     ++texture_it) {
