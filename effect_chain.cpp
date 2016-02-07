@@ -1851,9 +1851,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		output_textures->insert(make_pair(phase, tex_num));
 	}
 
-	const GLuint glsl_program_num = phase->glsl_program_num;
-	check_error();
-	glUseProgram(glsl_program_num);
+	glUseProgram(phase->glsl_program_num);
 	check_error();
 
 	// Set up RTT inputs for this phase.
@@ -1884,7 +1882,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		unsigned old_sampler_num = sampler_num;
-		node->effect->set_gl_state(glsl_program_num, phase->effect_ids[node], &sampler_num);
+		node->effect->set_gl_state(phase->glsl_program_num, phase->effect_ids[node], &sampler_num);
 		check_error();
 
 		if (node->effect->is_single_texture()) {
@@ -1927,9 +1925,6 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	check_error();
 	
-	glUseProgram(0);
-	check_error();
-
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		node->effect->clear_gl_state();
