@@ -213,11 +213,7 @@ int main(int argc, char **argv)
 	printf("Wrongly rounded x+0.48 or x+0.52 values: %d/510\n",
 		movit_num_wrongly_rounded);
 	if (movit_num_wrongly_rounded > 0) {
-		if (movit_shader_rounding_supported) {
-			printf("Rounding off in the shader to compensate.\n");
-		} else {
-			printf("No shader roundoff available; cannot compensate.\n");
-		}
+		printf("Rounding off in the shader to compensate.\n");
 	}
 	
 	unsigned img_w, img_h;
