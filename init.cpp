@@ -379,7 +379,10 @@ double get_glsl_version()
 	// Now we have something on the form X.YY. We convert it to a float, and hope
 	// that if it's inexact (e.g. 1.30), atof() will round the same way the
 	// compiler will.
-	float glsl_version = atof(glsl_version_str);
+	std::istringstream locale_convert(glsl_version_str);
+	locale_convert.imbue(std::locale("C"));
+	double glsl_version;
+	locale_convert >> glsl_version;
 	free(glsl_version_str);
 
 	return glsl_version;
