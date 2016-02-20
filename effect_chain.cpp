@@ -32,12 +32,13 @@ using namespace std;
 
 namespace movit {
 
-EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
+EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool, GLenum intermediate_format)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
 	  output_color_rgba(false),
 	  output_color_ycbcr(false),
 	  dither_effect(NULL),
+	  intermediate_format(intermediate_format),
 	  num_dither_bits(0),
 	  output_origin(OUTPUT_ORIGIN_BOTTOM_LEFT),
 	  finalized(false),
@@ -1692,6 +1693,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	check_error();
 	glDisable(GL_DITHER);
 	check_error();
+	glEnable(GL_FRAMEBUFFER_SRGB);
+	check_error();
 
 	// Save original viewport.
 	GLuint x = 0, y = 0;
@@ -1853,7 +1856,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	if (!last_phase) {
 		find_output_size(phase);
 
-		GLuint tex_num = resource_pool->create_2d_texture(GL_RGBA16F, phase->output_width, phase->output_height);
+		GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
 		output_textures->insert(make_pair(phase, tex_num));
 	}
 

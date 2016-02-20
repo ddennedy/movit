@@ -194,7 +194,7 @@ public:
 	// will create its own that is not shared with anything else. Does not take
 	// ownership of the passed-in ResourcePool, but will naturally take ownership
 	// of its own internal one if created.
-	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL);
+	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL, GLenum intermediate_format = GL_RGBA16F);
 	~EffectChain();
 
 	// User API:
@@ -438,6 +438,7 @@ private:
 	std::vector<Input *> inputs;  // Also contained in nodes.
 	std::vector<Phase *> phases;
 
+	GLenum intermediate_format;
 	unsigned num_dither_bits;
 	OutputOrigin output_origin;
 	bool finalized;

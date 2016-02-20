@@ -56,7 +56,12 @@ extern float movit_texel_subpixel_precision;
 // of errors are stored here.
 //
 // If this value is above 0, we will round off explicitly at the very end
-// of the shader.
+// of the shader. Note the following limitations:
+//
+//   - The measurement is done on linear 8-bit, not any sRGB format,
+//     10-bit output, or the likes.
+//   - This only covers the final pass; intermediates are not covered
+//     (only relevant if you use e.g. GL_SRGB8 intermediates).
 extern int movit_num_wrongly_rounded;
 
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
