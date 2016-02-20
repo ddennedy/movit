@@ -13,11 +13,7 @@ GammaCompressionEffect::GammaCompressionEffect()
 {
 	register_int("destination_curve", (int *)&destination_curve);
 	register_uniform_float("linear_scale", &uniform_linear_scale);
-	register_uniform_float("c0", &uniform_c0);
-	register_uniform_float("c1", &uniform_c1);
-	register_uniform_float("c2", &uniform_c2);
-	register_uniform_float("c3", &uniform_c3);
-	register_uniform_float("c4", &uniform_c4);
+	register_uniform_float_array("c", uniform_c, 5);
 	register_uniform_float("beta", &uniform_beta);
 }
 
@@ -81,11 +77,11 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		// maxerror      = 0.000785 = 0.200 * 255
 		// error at 1.0  = 0.000078 = 0.020 * 255
 		uniform_linear_scale = 12.92;
-		uniform_c0 = -0.03679675939;
-		uniform_c1 = 1.443803073;
-		uniform_c2 = -0.9239780987;
-		uniform_c3 = 0.8060491596;
-		uniform_c4 = -0.2891558568;
+		uniform_c[0] = -0.03679675939;
+		uniform_c[1] = 1.443803073;
+		uniform_c[2] = -0.9239780987;
+		uniform_c[3] = 0.8060491596;
+		uniform_c[4] = -0.2891558568;
 		uniform_beta = 0.0031308;
 	}
 	if (destination_curve == GAMMA_REC_709) {  // Also includes Rec. 601, and 10-bit Rec. 2020.
@@ -93,11 +89,11 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		// maxerror      = 0.000131 = 0.033 * 255 = 0.134 * 1023
 		// error at 1.0  = 0.000013 = 0.003 * 255 = 0.013 * 1023
 		uniform_linear_scale = 4.5;
-		uniform_c0 = -0.08541688528;
-		uniform_c1 = 1.292793370;
-		uniform_c2 = -0.4070417645;
-		uniform_c3 = 0.2923891828;
-		uniform_c4 = -0.09273699351;
+		uniform_c[0] = -0.08541688528;
+		uniform_c[1] = 1.292793370;
+		uniform_c[2] = -0.4070417645;
+		uniform_c[3] = 0.2923891828;
+		uniform_c[4] = -0.09273699351;
 		uniform_beta = 0.018;
 	}
 	if (destination_curve == GAMMA_REC_2020_12_BIT) {
@@ -111,11 +107,11 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		// from 0.553 to 0.501; adding a fifth order can get it down to
 		// 0.167, although this assumes working in fp64 and not fp32.)
 		uniform_linear_scale = 4.5;
-		uniform_c0 = -0.08569685663;
-		uniform_c1 = 1.293000900;
-		uniform_c2 = -0.4067291321;
-		uniform_c3 = 0.2919741179;
-		uniform_c4 = -0.09256205770;
+		uniform_c[0] = -0.08569685663;
+		uniform_c[1] = 1.293000900;
+		uniform_c[2] = -0.4067291321;
+		uniform_c[3] = 0.2919741179;
+		uniform_c[4] = -0.09256205770;
 		uniform_beta = 0.0181;
 	}
 }

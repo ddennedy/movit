@@ -13,11 +13,7 @@ GammaExpansionEffect::GammaExpansionEffect()
 {
 	register_int("source_curve", (int *)&source_curve);
 	register_uniform_float("linear_scale", &uniform_linear_scale);
-	register_uniform_float("c0", &uniform_c0);
-	register_uniform_float("c1", &uniform_c1);
-	register_uniform_float("c2", &uniform_c2);
-	register_uniform_float("c3", &uniform_c3);
-	register_uniform_float("c4", &uniform_c4);
+	register_uniform_float_array("c", uniform_c, 5);
 	register_uniform_float("beta", &uniform_beta);
 }
 
@@ -88,11 +84,11 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		// Note that the worst _relative_ error by far is just at the beginning
 		// of the exponential curve, ie., just around β.
 		uniform_linear_scale = 1.0 / 12.92;
-		uniform_c0 = 0.001324469581;
-		uniform_c1 = 0.02227416690;
-		uniform_c2 = 0.5917615253;
-		uniform_c3 = 0.4733532353;
-		uniform_c4 = -0.08880738120;
+		uniform_c[0] = 0.001324469581;
+		uniform_c[1] = 0.02227416690;
+		uniform_c[2] = 0.5917615253;
+		uniform_c[3] = 0.4733532353;
+		uniform_c[4] = -0.08880738120;
 		uniform_beta = 0.04045;
 	}
 	if (source_curve == GAMMA_REC_709) {  // Also includes Rec. 601, and 10-bit Rec. 2020.
@@ -105,11 +101,11 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		// our beta and gamma are different from the numbers mentioned
 		// (we've inverted the formula).
 		uniform_linear_scale = 1.0 / 4.5;
-		uniform_c0 = 0.005137028744;
-		uniform_c1 = 0.09802596889;
-		uniform_c2 = 0.7255768864;
-		uniform_c3 = 0.2135067966;
-		uniform_c4 = -0.04225094667;
+		uniform_c[0] = 0.005137028744;
+		uniform_c[1] = 0.09802596889;
+		uniform_c[2] = 0.7255768864;
+		uniform_c[3] = 0.2135067966;
+		uniform_c[4] = -0.04225094667;
 		uniform_beta = 0.018 * 4.5;
 	}
 	if (source_curve == GAMMA_REC_2020_12_BIT) {
@@ -122,11 +118,11 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		// our beta and gamma are different from the numbers mentioned
 		// (we've inverted the formula).
 		uniform_linear_scale = 1.0 / 4.5;
-		uniform_c0 = 0.005167545928;
-		uniform_c1 = 0.09835585809;
-		uniform_c2 = 0.7254820139;
-		uniform_c3 = 0.2131291155;
-		uniform_c4 = -0.04213877222;
+		uniform_c[0] = 0.005167545928;
+		uniform_c[1] = 0.09835585809;
+		uniform_c[2] = 0.7254820139;
+		uniform_c[3] = 0.2131291155;
+		uniform_c[4] = -0.04213877222;
 		uniform_beta = 0.0181 * 4.5;
 	}
 }
