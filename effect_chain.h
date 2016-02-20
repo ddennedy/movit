@@ -23,6 +23,7 @@
 
 #include <epoxy/gl.h>
 #include <stdio.h>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
@@ -179,7 +180,8 @@ struct Phase {
 	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
 
 	// For measurement of GPU time used.
-	GLuint timer_query_object;
+	std::list<GLuint> timer_query_objects_running;
+	std::list<GLuint> timer_query_objects_free;
 	uint64_t time_elapsed_ns;
 	uint64_t num_measured_iterations;
 };

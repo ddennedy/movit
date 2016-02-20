@@ -650,9 +650,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	// Actually make the shader for this phase.
 	compile_glsl_program(phase);
 
-	// Initialize timer objects.
+	// Initialize timers.
 	if (movit_timer_queries_supported) {
-		glGenQueries(1, &phase->timer_query_object);
 		phase->time_elapsed_ns = 0;
 		phase->num_measured_iterations = 0;
 	}
@@ -1736,7 +1735,15 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		Phase *phase = phases[phase_num];
 
 		if (do_phase_timing) {
-			glBeginQuery(GL_TIME_ELAPSED, phase->timer_query_object);
+			GLuint timer_query_object;
+			if (phase->timer_query_objects_free.empty()) {
+				glGenQueries(1, &timer_query_object);
+			} else {
+				timer_query_object = phase->timer_query_objects_free.front();
+				phase->timer_query_objects_free.pop_front();
+			}
+			glBeginQuery(GL_TIME_ELAPSED, timer_query_object);
+			phase->timer_query_objects_running.push_back(timer_query_object);
 		}
 		if (phase_num == phases.size() - 1) {
 			// Last phase goes to the output the user specified.
@@ -1778,14 +1785,22 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		// Get back the timer queries.
 		for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
 			Phase *phase = phases[phase_num];
-			GLint available = 0;
-			while (!available) {
-				glGetQueryObjectiv(phase->timer_query_object, GL_QUERY_RESULT_AVAILABLE, &available);
+			for (std::list<GLuint>::iterator timer_it = phase->timer_query_objects_running.begin();
+			     timer_it != phase->timer_query_objects_running.end(); ) {
+				GLint timer_query_object = *timer_it;
+				GLint available;
+				glGetQueryObjectiv(timer_query_object, GL_QUERY_RESULT_AVAILABLE, &available);
+				if (available) {
+					GLuint64 time_elapsed;
+					glGetQueryObjectui64v(timer_query_object, GL_QUERY_RESULT, &time_elapsed);
+					phase->time_elapsed_ns += time_elapsed;
+					++phase->num_measured_iterations;
+					phase->timer_query_objects_free.push_back(timer_query_object);
+					phase->timer_query_objects_running.erase(timer_it++);
+				} else {
+					++timer_it;
+				}
 			}
-			GLuint64 time_elapsed;
-			glGetQueryObjectui64v(phase->timer_query_object, GL_QUERY_RESULT, &time_elapsed);
-			phase->time_elapsed_ns += time_elapsed;
-			++phase->num_measured_iterations;
 		}
 	}
 }
