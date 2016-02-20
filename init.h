@@ -58,7 +58,6 @@ extern float movit_texel_subpixel_precision;
 // If this value is above 0, we will round off explicitly at the very end
 // of the shader.
 extern int movit_num_wrongly_rounded;
-extern bool movit_shader_rounding_supported;
 
 // Whether the GPU in use supports GL_EXT_texture_sRGB.
 extern bool movit_srgb_textures_supported;
