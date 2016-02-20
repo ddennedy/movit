@@ -50,17 +50,13 @@ extern float movit_texel_subpixel_precision;
 
 // Some GPUs use very inaccurate fixed-function circuits for rounding
 // floating-point values to 8-bit outputs, leading to absurdities like
-// the roundoff point between 128 and 129 being 128.62 instead of 128.6.
+// the roundoff point between 128 and 129 being 128.62 instead of 128.5.
 // We test, for every integer, x+0.48 and x+0.52 and check that they
 // round the right way (giving some leeway, but not a lot); the number
 // of errors are stored here.
 //
-// If this value is above 0, the extension GL_EXT_gpu_shader4 is available
-// (giving round()) and you have enabled dithering, we will round off
-// explicitly at the very end of the shader.
-//
-// Note: I don't know of any cards that round off wrong (well, outside
-// our tolerance) and do not have this extension.
+// If this value is above 0, we will round off explicitly at the very end
+// of the shader.
 extern int movit_num_wrongly_rounded;
 extern bool movit_shader_rounding_supported;
 
