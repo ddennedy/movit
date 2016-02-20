@@ -15,7 +15,6 @@ namespace movit {
 bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
-bool movit_srgb_textures_supported;
 bool movit_timer_queries_supported;
 int movit_num_wrongly_rounded;
 MovitShaderModel movit_shader_model;
@@ -282,33 +281,6 @@ void measure_roundoff_problems()
 	check_error();
 }
 
-struct RequiredExtension {
-	int min_equivalent_gl_version;
-	const char extension_name[64];
-};
-const RequiredExtension required_extensions[] = {
-	// We fundamentally need FBOs and floating-point textures.
-	// FBOs are covered by OpenGL 1.5, and are not an extension there.
-	// Floating-point textures are part of OpenGL 3.0 and newer.
-	{ 15, "GL_ARB_framebuffer_object" },
-	{ 30, "GL_ARB_texture_float" },
-
-	// We assume that we can use non-power-of-two textures without restrictions.
-	{ 20, "GL_ARB_texture_non_power_of_two" },
-
-	// We also need GLSL fragment shaders.
-	{ 20, "GL_ARB_fragment_shader" },
-	{ 20, "GL_ARB_shading_language_100" },
-
-	// FlatInput and YCbCrInput uses PBOs. (They could in theory do without,
-	// but no modern card would really not provide it.)
-	{ 21, "GL_ARB_pixel_buffer_object" },
-
-	// ResampleEffect uses RG textures to encode a two-component LUT.
-	// We also need GL_R several places, for single-channel input.
-	{ 30, "GL_ARB_texture_rg" },
-};
-
 bool check_extensions()
 {
 	// GLES generally doesn't use extensions as actively as desktop OpenGL.
@@ -316,7 +288,6 @@ bool check_extensions()
 	// we need.
 	if (!epoxy_is_desktop_gl()) {
 		if (epoxy_gl_version() >= 30) {
-			movit_srgb_textures_supported = true;
 			return true;
 		} else {
 			fprintf(stderr, "Movit system requirements: GLES version %.1f is too old (GLES 3.0 needed).\n",
@@ -326,30 +297,12 @@ bool check_extensions()
 		}
 	}
 
-	// Check all extensions, and output errors for the ones that we are missing.
-	bool all_ok = true;
-	int gl_version = epoxy_gl_version();
-
-	for (unsigned i = 0; i < sizeof(required_extensions) / sizeof(required_extensions[0]); ++i) {
-		if (gl_version < required_extensions[i].min_equivalent_gl_version &&
-		    !epoxy_has_gl_extension(required_extensions[i].extension_name)) {
-			fprintf(stderr, "Movit system requirements: Needs extension '%s' or at least OpenGL version %.1f (has version %.1f)\n",
-				required_extensions[i].extension_name,
-				0.1f * required_extensions[i].min_equivalent_gl_version,
-				0.1f * gl_version);
-			all_ok = false;
-		}
-	}
-
-	if (!all_ok) {
+	if (epoxy_gl_version() < 30) {
+		fprintf(stderr, "Movit system requirements: OpenGL version %.1f is too old (OpenGL 3.0 needed).\n",
+			0.1f * epoxy_gl_version());
 		fprintf(stderr, "Movit initialization failed.\n");
 		return false;
 	}
-
-	// sRGB texture decode would be nice, but are not mandatory
-	// (GammaExpansionEffect can do the same thing if needed).
-	movit_srgb_textures_supported =
-		(epoxy_gl_version() >= 21 || epoxy_has_gl_extension("GL_EXT_texture_sRGB"));
 
 	// The user can specify that they want a timing report for each
 	// phase in an effect chain. However, that depends on this extension;

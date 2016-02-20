@@ -64,9 +64,6 @@ extern float movit_texel_subpixel_precision;
 //     (only relevant if you use e.g. GL_SRGB8 intermediates).
 extern int movit_num_wrongly_rounded;
 
-// Whether the GPU in use supports GL_EXT_texture_sRGB.
-extern bool movit_srgb_textures_supported;
-
 // Whether the OpenGL driver (or GPU) in use supports GL_ARB_timer_query.
 extern bool movit_timer_queries_supported;
 

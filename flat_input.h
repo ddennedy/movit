@@ -9,7 +9,6 @@
 #include "effect_chain.h"
 #include "fp16.h"
 #include "image_format.h"
-#include "init.h"
 #include "input.h"
 
 namespace movit {
@@ -30,8 +29,7 @@ public:
 		// support for single-channel sRGB decoding, but it's not supported
 		// on GLES, and we're already actively rewriting single-channel inputs
 		// to GL_RED (even on desktop), so we stick to 3- and 4-channel inputs.
-		return (movit_srgb_textures_supported &&
-		        type == GL_UNSIGNED_BYTE &&
+		return (type == GL_UNSIGNED_BYTE &&
 			(pixel_format == FORMAT_RGB ||
 			 pixel_format == FORMAT_RGBA_POSTMULTIPLIED_ALPHA) &&
 		        (image_format.gamma_curve == GAMMA_LINEAR ||
