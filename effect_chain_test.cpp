@@ -1305,10 +1305,7 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 
 TEST(EffectChainTest, sRGBIntermediate) {
 	float data[] = {
-		0.0f, 0.25f, 0.0f, 1.0f,
-	};
-	float expected_data[] = {
-		0.0f, 0.25048828125f, 0.0f, 1.0f,
+		0.0f, 0.5f, 0.0f, 1.0f,
 	};
 	float out_data[4];
 	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA16F_ARB, GL_SRGB8);
@@ -1316,7 +1313,8 @@ TEST(EffectChainTest, sRGBIntermediate) {
 	tester.get_chain()->add_effect(new BouncingIdentityEffect());
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	expect_equal(expected_data, out_data, 4, 1, 1e-4);
+	EXPECT_GE(fabs(out_data[1] - data[1]), 1e-3)
+	    << "Expected sRGB not to be able to represent 0.5 exactly (got " << out_data[1] << ")";
 }
 
 }  // namespace movit
