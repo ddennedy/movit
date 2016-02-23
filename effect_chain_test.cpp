@@ -1315,6 +1315,8 @@ TEST(EffectChainTest, sRGBIntermediate) {
 
 	EXPECT_GE(fabs(out_data[1] - data[1]), 1e-3)
 	    << "Expected sRGB not to be able to represent 0.5 exactly (got " << out_data[1] << ")";
+	EXPECT_LT(fabs(out_data[1] - data[1]), 0.1f)
+	    << "Expected sRGB to be able to represent 0.5 approximately (got " << out_data[1] << ")";
 }
 
 }  // namespace movit
