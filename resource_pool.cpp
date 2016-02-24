@@ -241,9 +241,11 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 		break;
 	case GL_RGB32F:
 	case GL_RGB16F:
+	case GL_R11F_G11F_B10F:
 	case GL_RGB8:
 	case GL_SRGB8:
 	case GL_RGB565:
+	case GL_RGB9_E5:
 		format = GL_RGB;
 		break;
 	case GL_RG32F:
@@ -268,6 +270,8 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	case GL_RGBA16F_ARB:
 	case GL_RGB32F:
 	case GL_RGB16F:
+	case GL_R11F_G11F_B10F:
+	case GL_RGB9_E5:
 	case GL_RG32F:
 	case GL_RG16F:
 	case GL_R32F:
@@ -500,6 +504,12 @@ size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
 		break;
 	case GL_RGB16F_ARB:
 		bytes_per_pixel = 6;
+		break;
+	case GL_R11F_G11F_B10F:
+		bytes_per_pixel = 4;
+		break;
+	case GL_RGB9_E5:
+		bytes_per_pixel = 4;
 		break;
 	case GL_RGBA8:
 	case GL_SRGB8_ALPHA8:
