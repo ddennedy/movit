@@ -62,7 +62,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
 		check_error();
 
-		if (texture_num[channel] == 0) {
+		if (texture_num[channel] == 0 && (pbos[channel] != 0 || pixel_data[channel] != NULL)) {
 			GLenum format, internal_format;
 			if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
 				format = GL_RG;

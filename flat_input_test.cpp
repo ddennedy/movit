@@ -320,4 +320,24 @@ TEST(FlatInput, ExternalTexture) {
 	expect_equal(expected_data, out_data, 4, size);
 }
 
+TEST(FlatInput, NoData) {
+	const int width = 2;
+	const int height = 4;
+
+	float out_data[width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	// Don't care what the output was, just that it does not crash.
+}
+
 }  // namespace movit

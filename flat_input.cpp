@@ -66,7 +66,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
 
-	if (texture_num == 0) {
+	if (texture_num == 0 && (pbo != 0 || pixel_data != NULL)) {
 		// Translate the input format to OpenGL's enums.
 		GLint internal_format;
 		GLenum format;
