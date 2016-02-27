@@ -351,4 +351,24 @@ void test_accuracy(const float *expected, const float *result, unsigned num_valu
 	EXPECT_LT(rms, rms_limit);
 }
 
+double srgb_to_linear(double x)
+{
+	// From the Wikipedia article on sRGB.
+	if (x < 0.04045) {
+		return x / 12.92;
+	} else {
+		return pow((x + 0.055) / 1.055, 2.4);
+	}
+}
+
+double linear_to_srgb(double x)
+{
+	// From the Wikipedia article on sRGB.
+	if (x < 0.0031308) {
+		return 12.92 * x;
+	} else {
+		return 1.055 * pow(x, 1.0 / 2.4) - 0.055;
+	}
+}
+
 }  // namespace movit

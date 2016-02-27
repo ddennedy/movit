@@ -48,6 +48,14 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 void expect_equal(const unsigned char *ref, const unsigned char *result, unsigned width, unsigned height, unsigned largest_difference_limit = 1, float rms_limit = 0.2);
 void test_accuracy(const float *expected, const float *result, unsigned num_values, double absolute_error_limit, double relative_error_limit, double local_relative_error_limit, double rms_limit);
 
+// Convert an sRGB encoded value (0.0 to 1.0, inclusive) to linear light.
+// Undefined for values outside 0.0..1.0.
+double srgb_to_linear(double x);
+
+// Convert a value in linear light (0.0 to 1.0, inclusive) to sRGB.
+// Undefined for values outside 0.0..1.0.
+double linear_to_srgb(double x);
+
 }  // namespace movit
 
 #endif  // !defined(_MOVIT_TEST_UTIL_H)

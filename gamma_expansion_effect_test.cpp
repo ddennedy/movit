@@ -62,13 +62,7 @@ TEST(GammaExpansionEffectTest, sRGB_Accuracy) {
 		double x = i / 255.0;
 
 		data[i] = x;
-
-		// From the Wikipedia article on sRGB.
-		if (x < 0.04045) {
-			expected_data[i] = x / 12.92;
-		} else {
-			expected_data[i] = pow((x + 0.055) / 1.055, 2.4);
-		}
+		expected_data[i] = srgb_to_linear(x);
 	}
 
 	EffectChainTester tester(data, 256, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB, GL_RGBA32F);
