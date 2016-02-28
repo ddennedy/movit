@@ -138,7 +138,7 @@ public:
 		// Keeps the type of alpha (premultiplied, postmultiplied, blank)
 		// unchanged from input to output. Usually appropriate if you
 		// process all color channels in a linear fashion, do not change
-		// alpha, and do not produce any new pixels thare have alpha != 1.0.
+		// alpha, and do not produce any new pixels that have alpha != 1.0.
 		//
 		// Does not make sense for inputs.
 		DONT_CARE_ALPHA_TYPE,
