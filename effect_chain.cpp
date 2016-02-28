@@ -32,13 +32,14 @@ using namespace std;
 
 namespace movit {
 
-EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool, GLenum intermediate_format)
+EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
 	  output_color_rgba(false),
 	  output_color_ycbcr(false),
 	  dither_effect(NULL),
-	  intermediate_format(intermediate_format),
+	  intermediate_format(GL_RGBA16F),
+	  intermediate_transformation(NO_FRAMEBUFFER_TRANSFORMATION),
 	  num_dither_bits(0),
 	  output_origin(OUTPUT_ORIGIN_BOTTOM_LEFT),
 	  finalized(false),
@@ -332,7 +333,14 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	
 		frag_shader += string("uniform sampler2D tex_") + effect_id + ";\n";
 		frag_shader += string("vec4 ") + effect_id + "(vec2 tc) {\n";
-		frag_shader += "\treturn tex2D(tex_" + string(effect_id) + ", tc);\n";
+		frag_shader += "\tvec4 tmp = tex2D(tex_" + string(effect_id) + ", tc);\n";
+
+		if (intermediate_transformation == SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION &&
+		    phase->inputs[i]->output_node->output_gamma_curve == GAMMA_LINEAR) {
+			frag_shader += "\ttmp.rgb *= tmp.rgb;\n";
+		}
+
+		frag_shader += "\treturn tmp;\n";
 		frag_shader += "}\n";
 		frag_shader += "\n";
 
@@ -415,6 +423,15 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			frag_shader_outputs.push_back("RGBA");
 		}
 	}
+
+	// If we're bouncing to a temporary texture, signal transformation if desired.
+	if (!phase->output_node->outgoing_links.empty()) {
+		if (intermediate_transformation == SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION &&
+		    phase->output_node->output_gamma_curve == GAMMA_LINEAR) {
+			frag_shader += "#define SQUARE_ROOT_TRANSFORMATION 1\n";
+		}
+	}
+
 	frag_shader.append(read_file("footer.frag"));
 
 	// Collect uniforms from all effects and output them. Note that this needs

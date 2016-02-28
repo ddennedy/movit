@@ -13,6 +13,10 @@
 #define YCBCR_ALSO_OUTPUT_RGBA 0
 #endif
 
+#ifndef SQUARE_ROOT_TRANSFORMATION
+#define SQUARE_ROOT_TRANSFORMATION 0
+#endif
+
 #if YCBCR_OUTPUT_PLANAR
 out vec4 Y;
 out vec4 Cb;
@@ -36,6 +40,11 @@ void main()
 	vec4 color1 = color[1];
 #else
 	vec4 color0 = INPUT(tc);
+#endif
+
+#if SQUARE_ROOT_TRANSFORMATION
+	// Make sure we don't give negative values to sqrt.
+	color0.rgb = sqrt(max(color0.rgb, 0.0));
 #endif
 
 #if YCBCR_OUTPUT_PLANAR

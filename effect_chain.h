@@ -99,6 +99,19 @@ enum OutputOrigin {
 	OUTPUT_ORIGIN_TOP_LEFT,
 };
 
+// Transformation to apply (if any) to pixel data in temporary buffers.
+// See set_intermediate_format() below for more information.
+enum FramebufferTransformation {
+	// The default; just store the value. This is what you usually want.
+	NO_FRAMEBUFFER_TRANSFORMATION,
+
+	// If the values are in linear light, store sqrt(x) to the framebuffer
+	// instead of x itself, of course undoing it with x² on read. Useful as
+	// a rough approximation to the sRGB curve. (If the values are not in
+	// linear light, just store them as-is.)
+	SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION,
+};
+
 // A node in the graph; basically an effect and some associated information.
 class Node {
 public:
@@ -194,7 +207,7 @@ public:
 	// will create its own that is not shared with anything else. Does not take
 	// ownership of the passed-in ResourcePool, but will naturally take ownership
 	// of its own internal one if created.
-	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL, GLenum intermediate_format = GL_RGBA16F);
+	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL);
 	~EffectChain();
 
 	// User API:
@@ -275,6 +288,43 @@ public:
 	void set_output_origin(OutputOrigin output_origin)
 	{
 		this->output_origin = output_origin;
+	}
+
+	// Set intermediate format for framebuffers used when we need to bounce
+	// to a temporary texture. The default, GL_RGBA16F, is good for most uses;
+	// it is precise, has good range, and is relatively efficient. However,
+	// if you need even more speed and your chain can do with some loss of
+	// accuracy, you can change the format here (before calling finalize).
+	// Calculations between bounce buffers are still in 32-bit floating-point
+	// no matter what you specify.
+	//
+	// Of special interest is GL_SRGB8_ALPHA8, which stores sRGB-encoded RGB
+	// and linear alpha; this is half the memory bandwidth og GL_RGBA16F,
+	// while retaining reasonable precision for typical image data. It will,
+	// however, cause some gamut clipping if your colorspace is far from sRGB,
+	// as it cannot represent values outside [0,1]. NOTE: If you construct
+	// a chain where you end up bouncing pixels in non-linear light this
+	// will not do the wrong thing. However, it's hard to see how this
+	// could happen in a non-contrived chain; few effects ever need texture
+	// bounce or resizing without also combining multiple pixels, which
+	// really needs linear light and thus triggers a conversion before the
+	// bounce.
+	//
+	// If you don't need alpha (or can do with very little of it), GL_RGB10_A2
+	// is even better, as it has two more bits for each color component. There
+	// is no GL_SRGB10, unfortunately, so on its own, it is somewhat worse than
+	// GL_SRGB8, but you can set <transformation> to SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION,
+	// and sqrt(x) will be stored instead of x. This is a rough approximation to
+	// the sRGB curve, and reduces maximum error (in sRGB distance) by almost an
+	// order of magnitude, well below what you can get from 8-bit true sRGB.
+	// (Note that this strategy avoids the problem with bounced non-linear data
+	// above, since the square root is turned off in that case.)
+	void set_intermediate_format(
+		GLenum intermediate_format,
+		FramebufferTransformation transformation = NO_FRAMEBUFFER_TRANSFORMATION)
+	{
+		this->intermediate_format = intermediate_format;
+		this->intermediate_transformation = transformation;
 	}
 
 	void finalize();
@@ -439,6 +489,7 @@ private:
 	std::vector<Phase *> phases;
 
 	GLenum intermediate_format;
+	FramebufferTransformation intermediate_transformation;
 	unsigned num_dither_bits;
 	OutputOrigin output_origin;
 	bool finalized;

@@ -46,9 +46,8 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
                                      MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve,
-                                     GLenum framebuffer_format,
-                                     GLenum intermediate_format)
-	: chain(width, height, get_static_pool(), intermediate_format),
+                                     GLenum framebuffer_format)
+	: chain(width, height, get_static_pool()),
 	  width(width),
 	  height(height),
 	  framebuffer_format(framebuffer_format),

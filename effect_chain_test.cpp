@@ -1308,7 +1308,8 @@ TEST(EffectChainTest, sRGBIntermediate) {
 		0.0f, 0.5f, 0.0f, 1.0f,
 	};
 	float out_data[4];
-	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA16F_ARB, GL_SRGB8);
+	EffectChainTester tester(data, 1, 1, FORMAT_RGBA_PREMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->set_intermediate_format(GL_SRGB8);
 	tester.get_chain()->add_effect(new IdentityEffect());
 	tester.get_chain()->add_effect(new BouncingIdentityEffect());
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -1317,6 +1318,102 @@ TEST(EffectChainTest, sRGBIntermediate) {
 	    << "Expected sRGB not to be able to represent 0.5 exactly (got " << out_data[1] << ")";
 	EXPECT_LT(fabs(out_data[1] - data[1]), 0.1f)
 	    << "Expected sRGB to be able to represent 0.5 approximately (got " << out_data[1] << ")";
+}
+
+// An effect that is like IdentityEffect, but also does not require linear light.
+class PassThroughEffect : public IdentityEffect {
+public:
+	PassThroughEffect() {}
+	virtual string effect_type_id() const { return "PassThroughEffect"; }
+	virtual bool needs_linear_light() const { return false; }
+	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+};
+
+// Same, just also bouncing.
+class BouncingPassThroughEffect : public BouncingIdentityEffect {
+public:
+	BouncingPassThroughEffect() {}
+	virtual string effect_type_id() const { return "BouncingPassThroughEffect"; }
+	virtual bool needs_linear_light() const { return false; }
+	bool needs_texture_bounce() const { return true; }
+	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+};
+
+TEST(EffectChainTest, Linear10bitIntermediateAccuracy) {
+	// Note that we do the comparison in sRGB space, which is what we
+	// typically would want; however, we do the sRGB conversion ourself
+	// to avoid compounding errors from shader conversions into the
+	// analysis.
+	const int size = 4096;  // 12-bit.
+	float linear_data[size], data[size], out_data[size];
+
+	for (int i = 0; i < size; ++i) {
+		linear_data[i] = i / double(size - 1);
+		data[i] = srgb_to_linear(linear_data[i]);
+	}
+
+	EffectChainTester tester(data, size, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
+	tester.get_chain()->set_intermediate_format(GL_RGB10_A2);
+	tester.get_chain()->add_effect(new IdentityEffect());
+	tester.get_chain()->add_effect(new BouncingIdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	for (int i = 0; i < size; ++i) {
+		out_data[i] = linear_to_srgb(out_data[i]);
+	}
+
+	// This maximum error is pretty bad; about 6.5 levels of a 10-bit sRGB
+	// framebuffer.
+	expect_equal(linear_data, out_data, size, 1, 7e-3, 2e-5);
+}
+
+TEST(EffectChainTest, SquareRoot10bitIntermediateAccuracy) {
+	// Note that we do the comparison in sRGB space, which is what we
+	// typically would want; however, we do the sRGB conversion ourself
+	// to avoid compounding errors from shader conversions into the
+	// analysis.
+	const int size = 4096;  // 12-bit.
+	float linear_data[size], data[size], out_data[size];
+
+	for (int i = 0; i < size; ++i) {
+		linear_data[i] = i / double(size - 1);
+		data[i] = srgb_to_linear(linear_data[i]);
+	}
+
+	EffectChainTester tester(data, size, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
+	tester.get_chain()->set_intermediate_format(GL_RGB10_A2, SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION);
+	tester.get_chain()->add_effect(new IdentityEffect());
+	tester.get_chain()->add_effect(new BouncingIdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	for (int i = 0; i < size; ++i) {
+		out_data[i] = linear_to_srgb(out_data[i]);
+	}
+
+	// This maximum error is much better; about 0.7 levels of a 10-bit sRGB
+	// framebuffer (ideal would be 0.5). That is an order of magnitude better
+	// than in the linear test above. The RMS error is much better, too.
+	expect_equal(linear_data, out_data, size, 1, 7e-4, 5e-6);
+}
+
+TEST(EffectChainTest, SquareRootIntermediateIsTurnedOffForNonLinearData) {
+	const int size = 256;  // 8-bit.
+	float data[size], out_data[size];
+
+	for (int i = 0; i < size; ++i) {
+		data[i] = i / double(size - 1);
+	}
+
+	EffectChainTester tester(data, size, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_REC_601, GL_RGBA32F);
+	tester.get_chain()->set_intermediate_format(GL_RGB8, SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION);
+	tester.get_chain()->add_effect(new PassThroughEffect());
+	tester.get_chain()->add_effect(new BouncingPassThroughEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_REC_601);
+
+	// The data should be passed through nearly exactly, since there is no effect
+	// on the path that requires linear light. (Actually, it _is_ exact modulo
+	// fp32 errors, but the error bounds is strictly _less than_, not zero.)
+	expect_equal(data, out_data, size, 1, 1e-6, 1e-6);
 }
 
 }  // namespace movit

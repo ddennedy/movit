@@ -15,8 +15,7 @@ public:
 	                  MovitPixelFormat pixel_format = FORMAT_GRAYSCALE,
 	                  Colorspace color_space = COLORSPACE_sRGB,
 	                  GammaCurve gamma_curve = GAMMA_LINEAR,
-	                  GLenum framebuffer_format = GL_RGBA16F_ARB,
-	                  GLenum intermediate_format = GL_RGBA16F_ARB);
+	                  GLenum framebuffer_format = GL_RGBA16F_ARB);
 	~EffectChainTester();
 	
 	EffectChain *get_chain() { return &chain; }
