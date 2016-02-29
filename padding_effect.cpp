@@ -101,23 +101,16 @@ bool PaddingEffect::needs_srgb_primaries() const
 
 Effect::AlphaHandling PaddingEffect::alpha_handling() const
 {
-	// If the border color is black, it doesn't matter if we're pre- or postmultiplied.
-	// Note that for non-solid black (i.e. alpha < 1.0), we're equally fine with
-	// pre- and postmultiplied, but later effects might change this status
-	// (consider e.g. blur), so setting DONT_CARE_ALPHA_TYPE is inappropriate,
-	// as it propagate blank alpha through this effect.
-	if (border_color.r == 0.0 && border_color.g == 0.0 && border_color.b == 0.0 && border_color.a == 1.0) {
-		return DONT_CARE_ALPHA_TYPE;
-	}
-
-	// If the border color is solid, we preserve blank alpha, as we never output any
-	// new non-solid pixels.
+	// If the border color is solid, it doesn't matter if we're pre- or postmultiplied.
 	if (border_color.a == 1.0) {
-		return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK;
+		return DONT_CARE_ALPHA_TYPE;
 	}
 
 	// Otherwise, we're going to output our border color in premultiplied alpha,
 	// so the other pixels better be premultiplied as well.
+	// Note that for non-solid black (i.e. alpha < 1.0), we're equally fine with
+	// pre- and postmultiplied, but we are _not_ fine with blank being passed through,
+	// and we don't have a way to specify that.
 	return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA;
 }
 	
