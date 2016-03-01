@@ -1194,11 +1194,10 @@ void EffectChain::propagate_alpha()
 		if (alpha_handling == Effect::INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA ||
 		    alpha_handling == Effect::INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK) {
 			// This combination (requiring premultiplied alpha, but _not_ requiring
-			// linear light) is illegal, // since the combination
-			// of premultiplied alpha and nonlinear inputs is
-			// meaningless.
+			// linear light) is illegal, since the combination of premultiplied alpha
+			// and nonlinear inputs is meaningless.
 			assert(node->effect->needs_linear_light());
-			
+
 			// If the effect has asked for premultiplied alpha, check that it has got it.
 			if (any_postmultiplied) {
 				node->output_alpha_type = ALPHA_INVALID;
