@@ -341,7 +341,6 @@ public:
 	void reset_phase_timing();
 	void print_phase_timing();
 
-	//void render(unsigned char *src, unsigned char *dst);
 	void render_to_screen()
 	{
 		render_to_fbo(0, 0, 0);
