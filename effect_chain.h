@@ -303,12 +303,12 @@ public:
 	// while retaining reasonable precision for typical image data. It will,
 	// however, cause some gamut clipping if your colorspace is far from sRGB,
 	// as it cannot represent values outside [0,1]. NOTE: If you construct
-	// a chain where you end up bouncing pixels in non-linear light this
-	// will not do the wrong thing. However, it's hard to see how this
-	// could happen in a non-contrived chain; few effects ever need texture
-	// bounce or resizing without also combining multiple pixels, which
-	// really needs linear light and thus triggers a conversion before the
-	// bounce.
+	// a chain where you end up bouncing pixels in non-linear light
+	// (gamma different from GAMMA_LINEAR), this will be the wrong thing.
+	// However, it's hard to see how this could happen in a non-contrived
+	// chain; few effects ever need texture bounce or resizing without also
+	// combining multiple pixels, which really needs linear light and thus
+	// triggers a conversion before the bounce.
 	//
 	// If you don't need alpha (or can do with very little of it), GL_RGB10_A2
 	// is even better, as it has two more bits for each color component. There
@@ -318,7 +318,10 @@ public:
 	// the sRGB curve, and reduces maximum error (in sRGB distance) by almost an
 	// order of magnitude, well below what you can get from 8-bit true sRGB.
 	// (Note that this strategy avoids the problem with bounced non-linear data
-	// above, since the square root is turned off in that case.)
+	// above, since the square root is turned off in that case.) However, texture
+	// filtering will happen on the transformed values, so if you have heavy
+	// downscaling or the likes (e.g. mipmaps), you could get subtly bad results.
+	// You'll need to see which of the two that works the best for you in practice.
 	void set_intermediate_format(
 		GLenum intermediate_format,
 		FramebufferTransformation transformation = NO_FRAMEBUFFER_TRANSFORMATION)
