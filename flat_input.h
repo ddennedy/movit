@@ -109,17 +109,20 @@ public:
 	// you will need to re-set it after this call.
 	void set_width(unsigned width)
 	{
+		assert(width != 0);
 		this->pitch = this->width = width;
 		invalidate_pixel_data();
 	}
 
 	void set_height(unsigned height)
 	{
+		assert(height != 0);
 		this->height = height;
 		invalidate_pixel_data();
 	}
 
 	void set_pitch(unsigned pitch) {
+		assert(pitch != 0);
 		this->pitch = pitch;
 		invalidate_pixel_data();
 	}

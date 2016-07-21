@@ -83,6 +83,7 @@ public:
 	// you will need to re-set it after this call.
 	void set_width(unsigned width)
 	{
+		assert(width != 0);
 		this->width = width;
 
 		assert(width % ycbcr_format.chroma_subsampling_x == 0);
@@ -94,6 +95,7 @@ public:
 
 	void set_height(unsigned height)
 	{
+		assert(height != 0);
 		this->height = height;
 
 		assert(height % ycbcr_format.chroma_subsampling_y == 0);
@@ -105,6 +107,7 @@ public:
 
 	void set_pitch(unsigned channel, unsigned pitch)
 	{
+		assert(pitch != 0);
 		assert(channel >= 0 && channel < num_channels);
 		this->pitch[channel] = pitch;
 		invalidate_pixel_data();
