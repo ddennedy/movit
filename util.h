@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <Eigen/Core>
 #include <string>
+#include "defs.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -93,12 +94,15 @@ unsigned next_power_of_two(unsigned v);
 // back into anything you intend to pass into OpenGL.
 void *get_gl_context_identifier();
 
+// Used in the check_error() macro, below.
+void abort_gl_error(GLenum err, const char *filename, int line) DOES_NOT_RETURN;
+
 }  // namespace movit
 
 #ifdef NDEBUG
 #define check_error()
 #else
-#define check_error() { int err = glGetError(); if (err != GL_NO_ERROR) { printf("GL error 0x%x at %s:%d\n", err, __FILE__, __LINE__); abort(); } }
+#define check_error() { GLenum err = glGetError(); if (err != GL_NO_ERROR) { movit::abort_gl_error(err, __FILE__, __LINE__); } }
 #endif
 
 // CHECK() is like assert(), but retains any side effects no matter the compilation mode.

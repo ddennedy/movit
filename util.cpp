@@ -354,4 +354,39 @@ void *get_gl_context_identifier()
 #endif
 }
 
+void abort_gl_error(GLenum err, const char *filename, int line)
+{
+	const char *err_text = "unknown";
+
+	// All errors listed in the glGetError(3G) man page.
+	switch (err) {
+	case GL_NO_ERROR:
+		err_text = "GL_NO_ERROR";  // Should not happen.
+		break;
+	case GL_INVALID_ENUM:
+		err_text = "GL_INVALID_ENUM";
+		break;
+	case GL_INVALID_VALUE:
+		err_text = "GL_INVALID_VALUE";
+		break;
+	case GL_INVALID_OPERATION:
+		err_text = "GL_INVALID_OPERATION";
+		break;
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		err_text = "GL_INVALID_FRAMEBUFFER_OPERATION";
+		break;
+	case GL_OUT_OF_MEMORY:
+		err_text = "GL_OUT_OF_MEMORY";
+		break;
+	case GL_STACK_UNDERFLOW:
+		err_text = "GL_STACK_UNDERFLOW";
+		break;
+	case GL_STACK_OVERFLOW:
+		err_text = "GL_STACK_OVERFLOW";
+		break;
+	}
+	fprintf(stderr, "GL error 0x%x (%s) at %s:%d\n", err, err_text, filename, line);
+	abort();
+}
+
 }  // namespace movit
