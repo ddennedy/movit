@@ -299,7 +299,7 @@ public:
 	// no matter what you specify.
 	//
 	// Of special interest is GL_SRGB8_ALPHA8, which stores sRGB-encoded RGB
-	// and linear alpha; this is half the memory bandwidth og GL_RGBA16F,
+	// and linear alpha; this is half the memory bandwidth of GL_RGBA16F,
 	// while retaining reasonable precision for typical image data. It will,
 	// however, cause some gamut clipping if your colorspace is far from sRGB,
 	// as it cannot represent values outside [0,1]. NOTE: If you construct
