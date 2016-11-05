@@ -18,6 +18,7 @@
 #include "mirror_effect.h"
 #include "multiply_effect.h"
 #include "resize_effect.h"
+#include "resource_pool.h"
 #include "test_util.h"
 #include "util.h"
 
@@ -1414,6 +1415,53 @@ TEST(EffectChainTest, SquareRootIntermediateIsTurnedOffForNonLinearData) {
 	// on the path that requires linear light. (Actually, it _is_ exact modulo
 	// fp32 errors, but the error bounds is strictly _less than_, not zero.)
 	expect_equal(data, out_data, size, 1, 1e-6, 1e-6);
+}
+
+// An effect that stores which program number was last run under.
+class RecordingIdentityEffect : public Effect {
+public:
+	RecordingIdentityEffect() {}
+	virtual string effect_type_id() const { return "RecordingIdentityEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
+
+	GLuint last_glsl_program_num;
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+	{
+		last_glsl_program_num = glsl_program_num;
+	}
+};
+
+TEST(EffectChainTest, ProgramsAreClonedForMultipleThreads) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f,
+		0.75f, 1.0f, 1.0f,
+	};
+	float out_data[6];
+	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	RecordingIdentityEffect *effect = new RecordingIdentityEffect();
+	tester.get_chain()->add_effect(effect);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, 3, 2);
+
+	ASSERT_NE(0, effect->last_glsl_program_num);
+
+	// Now pretend some other effect is using this program number;
+	// ResourcePool will then need to clone it.
+	ResourcePool *resource_pool = tester.get_chain()->get_resource_pool();
+	GLuint master_program_num = resource_pool->use_glsl_program(effect->last_glsl_program_num);
+	EXPECT_EQ(effect->last_glsl_program_num, master_program_num);
+
+	// Re-run should still give the correct data, but it should have run
+	// with a different program.
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(data, out_data, 3, 2);
+	EXPECT_NE(effect->last_glsl_program_num, master_program_num);
+
+	// Release the program, and check one final time.
+	resource_pool->unuse_glsl_program(master_program_num);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(data, out_data, 3, 2);
 }
 
 }  // namespace movit

@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <list>
 #include <map>
+#include <stack>
 #include <string>
 #include <utility>
 #include <vector>
@@ -66,6 +67,18 @@ public:
 	                            const std::string& fragment_shader,
 	                            const std::vector<std::string>& frag_shader_outputs);
 	void release_glsl_program(GLuint glsl_program_num);
+
+	// Since uniforms belong to the program and not to the context,
+	// a given GLSL program number can't be used by more than one thread
+	// at a time. Thus, if two threads want to use the same program
+	// (usually because two EffectChains share them via caching),
+	// we will need to make a clone. use_glsl_program() makes such
+	// a clone if needed, calls glUseProgram(), and returns the real
+	// program number that was used; this must be given to
+	// unuse_glsl_program() to release it. unuse_glsl_program() does not
+	// actually change any OpenGL state, though.
+	GLuint use_glsl_program(GLuint glsl_program_num);
+	void unuse_glsl_program(GLuint instance_program_num);
 
 	// Allocate a 2D texture of the given internal format and dimensions,
 	// or fetch a previous used if possible. Unbinds GL_TEXTURE_2D afterwards.
@@ -110,6 +123,12 @@ private:
 	// is no more than <max_length> elements long.
 	void shrink_fbo_freelist(void *context, size_t max_length);
 
+	// Link the given vertex and fragment shaders into a full GLSL program.
+	// See compile_glsl_program() for explanation of <fragment_shader_outputs>.
+	static GLuint link_program(GLuint vs_obj,
+	                           GLuint fs_obj,
+	                           const std::vector<std::string>& fragment_shader_outputs);
+
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
 
@@ -124,7 +143,22 @@ private:
 	std::map<GLuint, int> program_refcount;
 
 	// A mapping from program number to vertex and fragment shaders.
-	std::map<GLuint, std::pair<GLuint, GLuint> > program_shaders;
+	// Contains everything needed to re-link the program.
+	struct ShaderSpec {
+		GLuint vs_obj, fs_obj;
+		std::vector<std::string> fragment_shader_outputs;
+	};
+	std::map<GLuint, ShaderSpec> program_shaders;
+
+	// For each program, a list of other programs that are exactly like it.
+	// By default, will only contain the program itself, but due to cloning
+	// (see use_glsl_program()), may grow. Programs are taken off this list
+	// while they are in use (by use_glsl_program()).
+	std::map<GLuint, std::stack<GLuint> > program_instances;
+
+	// For each program, the master program that created it
+	// (inverse of program_instances).
+	std::map<GLuint, GLuint> program_masters;
 
 	// A list of programs that are no longer in use, most recently freed first.
 	// Once this reaches <program_freelist_max_length>, the last element

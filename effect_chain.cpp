@@ -1882,9 +1882,6 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		output_textures->insert(make_pair(phase, tex_num));
 	}
 
-	glUseProgram(phase->glsl_program_num);
-	check_error();
-
 	// Set up RTT inputs for this phase.
 	for (unsigned sampler = 0; sampler < phase->inputs.size(); ++sampler) {
 		glActiveTexture(GL_TEXTURE0 + sampler);
@@ -1908,12 +1905,15 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		glViewport(0, 0, phase->output_width, phase->output_height);
 	}
 
+	GLuint instance_program_num = resource_pool->use_glsl_program(phase->glsl_program_num);
+	check_error();
+
 	// Give the required parameters to all the effects.
 	unsigned sampler_num = phase->inputs.size();
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		unsigned old_sampler_num = sampler_num;
-		node->effect->set_gl_state(phase->glsl_program_num, phase->effect_ids[node], &sampler_num);
+		node->effect->set_gl_state(instance_program_num, phase->effect_ids[node], &sampler_num);
 		check_error();
 
 		if (node->effect->is_single_texture()) {
@@ -1960,6 +1960,8 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		Node *node = phase->effects[i];
 		node->effect->clear_gl_state();
 	}
+
+	resource_pool->unuse_glsl_program(instance_program_num);
 
 	if (!last_phase) {
 		resource_pool->release_fbo(fbo);

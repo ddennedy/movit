@@ -5,6 +5,6 @@
 // changes, even within git versions. There is no specific version
 // documentation outside the regular changelogs, though.
 
-#define MOVIT_VERSION 22
+#define MOVIT_VERSION 23
 
 #endif // !defined(_MOVIT_VERSION_H)

@@ -89,14 +89,24 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 		}
 	}
 	assert(found_program);
-	glDeleteProgram(glsl_program_num);
 
-	map<GLuint, pair<GLuint, GLuint> >::iterator shader_it =
+	map<GLuint, stack<GLuint> >::iterator instance_list_it = program_instances.find(glsl_program_num);
+	assert(instance_list_it != program_instances.end());
+
+	while (!instance_list_it->second.empty()) {
+		GLuint instance_program_num = instance_list_it->second.top();
+		instance_list_it->second.pop();
+		glDeleteProgram(instance_program_num);
+		program_masters.erase(instance_program_num);
+	}
+	program_instances.erase(instance_list_it);
+
+	map<GLuint, ShaderSpec>::iterator shader_it =
 		program_shaders.find(glsl_program_num);
 	assert(shader_it != program_shaders.end());
 
-	glDeleteShader(shader_it->second.first);
-	glDeleteShader(shader_it->second.second);
+	glDeleteShader(shader_it->second.vs_obj);
+	glDeleteShader(shader_it->second.fs_obj);
 	program_shaders.erase(shader_it);
 }
 
@@ -133,36 +143,11 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
 		}
 	} else {
 		// Not in the cache. Compile the shaders.
-		glsl_program_num = glCreateProgram();
-		check_error();
 		GLuint vs_obj = compile_shader(vertex_shader, GL_VERTEX_SHADER);
 		check_error();
 		GLuint fs_obj = compile_shader(fragment_shader_processed, GL_FRAGMENT_SHADER);
 		check_error();
-		glAttachShader(glsl_program_num, vs_obj);
-		check_error();
-		glAttachShader(glsl_program_num, fs_obj);
-		check_error();
-
-		// Bind the outputs, if we have multiple ones.
-		if (fragment_shader_outputs.size() > 1) {
-			for (unsigned output_index = 0; output_index < fragment_shader_outputs.size(); ++output_index) {
-				glBindFragDataLocation(glsl_program_num, output_index,
-				                       fragment_shader_outputs[output_index].c_str());
-			}
-		}
-
-		glLinkProgram(glsl_program_num);
-		check_error();
-
-		GLint success;
-		glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
-		if (success == GL_FALSE) {
-			GLchar error_log[1024] = {0};
-			glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
-			fprintf(stderr, "Error linking program: %s\n", error_log);
-			exit(1);
-		}
+		glsl_program_num = link_program(vs_obj, fs_obj, fragment_shader_outputs);
 
 		if (movit_debug_level == MOVIT_DEBUG_ON) {
 			// Output shader to a temporary file, for easier debugging.
@@ -180,9 +165,51 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
 
 		programs.insert(make_pair(key, glsl_program_num));
 		program_refcount.insert(make_pair(glsl_program_num, 1));
-		program_shaders.insert(make_pair(glsl_program_num, make_pair(vs_obj, fs_obj)));
+		ShaderSpec spec;
+		spec.vs_obj = vs_obj;
+		spec.fs_obj = fs_obj;
+		spec.fragment_shader_outputs = fragment_shader_outputs;
+		program_shaders.insert(make_pair(glsl_program_num, spec));
+		stack<GLuint> instances;
+		instances.push(glsl_program_num);
+		program_instances.insert(make_pair(glsl_program_num, instances));
+		program_masters.insert(make_pair(glsl_program_num, glsl_program_num));
 	}
 	pthread_mutex_unlock(&lock);
+	return glsl_program_num;
+}
+
+GLuint ResourcePool::link_program(GLuint vs_obj,
+                                  GLuint fs_obj,
+                                  const vector<string>& fragment_shader_outputs)
+{
+	GLuint glsl_program_num = glCreateProgram();
+	check_error();
+	glAttachShader(glsl_program_num, vs_obj);
+	check_error();
+	glAttachShader(glsl_program_num, fs_obj);
+	check_error();
+
+	// Bind the outputs, if we have multiple ones.
+	if (fragment_shader_outputs.size() > 1) {
+		for (unsigned output_index = 0; output_index < fragment_shader_outputs.size(); ++output_index) {
+			glBindFragDataLocation(glsl_program_num, output_index,
+					       fragment_shader_outputs[output_index].c_str());
+		}
+	}
+
+	glLinkProgram(glsl_program_num);
+	check_error();
+
+	GLint success;
+	glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
+	if (success == GL_FALSE) {
+		GLchar error_log[1024] = {0};
+		glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
+		fprintf(stderr, "Error linking program: %s\n", error_log);
+		exit(1);
+	}
+
 	return glsl_program_num;
 }
 
@@ -202,6 +229,51 @@ void ResourcePool::release_glsl_program(GLuint glsl_program_num)
 			program_freelist.pop_back();
 		}
 	}
+
+	pthread_mutex_unlock(&lock);
+}
+
+GLuint ResourcePool::use_glsl_program(GLuint glsl_program_num)
+{
+	pthread_mutex_lock(&lock);
+	assert(program_instances.count(glsl_program_num));
+	stack<GLuint> &instances = program_instances[glsl_program_num];
+
+	GLuint instance_program_num;
+	if (!instances.empty()) {
+		// There's an unused instance of this program; just return it.
+		instance_program_num = instances.top();
+		instances.pop();
+	} else {
+		// We need to clone this program. (unuse_glsl_program()
+		// will later put it onto the list.)
+		map<GLuint, ShaderSpec>::iterator shader_it =
+			program_shaders.find(glsl_program_num);
+		assert(shader_it != program_shaders.end());
+
+		instance_program_num = link_program(
+			shader_it->second.vs_obj,
+			shader_it->second.fs_obj,
+			shader_it->second.fragment_shader_outputs);
+		program_masters.insert(make_pair(instance_program_num, glsl_program_num));
+	}
+	pthread_mutex_unlock(&lock);
+
+	glUseProgram(instance_program_num);
+	return instance_program_num;
+}
+
+void ResourcePool::unuse_glsl_program(GLuint instance_program_num)
+{
+	pthread_mutex_lock(&lock);
+
+	map<GLuint, GLuint>::const_iterator master_it = program_masters.find(instance_program_num);
+	assert(master_it != program_masters.end());
+
+	assert(program_instances.count(master_it->second));
+	stack<GLuint> &instances = program_instances[master_it->second];
+
+	instances.push(instance_program_num);
 
 	pthread_mutex_unlock(&lock);
 }
