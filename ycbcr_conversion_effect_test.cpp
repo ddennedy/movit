@@ -381,4 +381,60 @@ TEST(YCbCrConversionEffectTest, OutputChunkyAndRGBA) {
 	expect_equal(expected_rgba, out_rgba, 4 * width, height, 7, 255 * 0.002);
 }
 
+// Very similar to PlanarOutput.
+TEST(YCbCrConversionEffectTest, ChangeOutputFormat) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 601
+	// section 2.5.4.
+	unsigned char y[width * height] = {
+		16, 235, 81, 145, 41,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 90, 54, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 34, 110,
+	};
+
+	unsigned char out_y[width * height], out_cb[width * height], out_cr[width * height];
+
+	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;  // Deliberately wrong at first.
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format, YCBCR_OUTPUT_PLANAR);
+
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Now change the output format to match what we gave the input, and re-run.
+	tester.get_chain()->change_ycbcr_output_format(ycbcr_format);
+	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	expect_equal(y, out_y, width, height);
+	expect_equal(cb, out_cb, width, height);
+	expect_equal(cr, out_cr, width, height);
+}
+
 }  // namespace movit

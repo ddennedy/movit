@@ -110,6 +110,29 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
 	assert(ycbcr_format.chroma_subsampling_y == 1);
 }
 
+void EffectChain::change_ycbcr_output_format(const YCbCrFormat &ycbcr_format)
+{
+	assert(output_color_ycbcr);
+	assert(output_ycbcr_format.chroma_subsampling_x == ycbcr_format.chroma_subsampling_x);
+	assert(output_ycbcr_format.chroma_subsampling_y == ycbcr_format.chroma_subsampling_y);
+	assert(fabs(output_ycbcr_format.cb_x_position - ycbcr_format.cb_x_position) < 1e-3);
+	assert(fabs(output_ycbcr_format.cb_y_position - ycbcr_format.cb_y_position) < 1e-3);
+	assert(fabs(output_ycbcr_format.cr_x_position - ycbcr_format.cr_x_position) < 1e-3);
+	assert(fabs(output_ycbcr_format.cr_y_position - ycbcr_format.cr_y_position) < 1e-3);
+
+	output_ycbcr_format = ycbcr_format;
+	if (finalized) {
+		// Find the YCbCrConversionEffect node. We don't store it to avoid
+		// an unneeded ABI break (this can be fixed on next break).
+		for (Node *node : nodes) {
+			if (node->effect->effect_type_id() == "YCbCrConversionEffect") {
+				YCbCrConversionEffect *effect = (YCbCrConversionEffect *)(node->effect);
+				effect->change_output_format(ycbcr_format);
+			}
+		}
+	}
+}
+
 Node *EffectChain::add_node(Effect *effect)
 {
 	for (unsigned i = 0; i < nodes.size(); ++i) {

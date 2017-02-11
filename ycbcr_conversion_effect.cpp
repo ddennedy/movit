@@ -18,30 +18,44 @@ namespace movit {
 YCbCrConversionEffect::YCbCrConversionEffect(const YCbCrFormat &ycbcr_format)
 	: ycbcr_format(ycbcr_format)
 {
+	register_uniform_mat3("ycbcr_matrix", &uniform_ycbcr_matrix);
+	register_uniform_vec3("offset", uniform_offset);
+	register_uniform_bool("clamp_range", &uniform_clamp_range);
+
+	// Only used when clamp_range is true.
+	register_uniform_vec3("ycbcr_min", uniform_ycbcr_min);
+	register_uniform_vec3("ycbcr_max", uniform_ycbcr_max);
 }
 
 string YCbCrConversionEffect::output_fragment_shader()
 {
-	float offset[3];
-	Matrix3d ycbcr_to_rgb;
-	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+	return read_file("ycbcr_conversion_effect.frag");
+}
 
-        string frag_shader = output_glsl_mat3("PREFIX(ycbcr_matrix)", ycbcr_to_rgb.inverse());
-        frag_shader += output_glsl_vec3("PREFIX(offset)", offset[0], offset[1], offset[2]);
+void YCbCrConversionEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)
+{
+	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
+
+	Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, uniform_offset, &ycbcr_to_rgb);
+
+	uniform_ycbcr_matrix = ycbcr_to_rgb.inverse();
 
 	if (ycbcr_format.full_range) {
 		// The card will clamp for us later.
-		frag_shader += "#define YCBCR_CLAMP_RANGE 0\n";
+		uniform_clamp_range = false;
 	} else {
-		frag_shader += "#define YCBCR_CLAMP_RANGE 1\n";
+		uniform_clamp_range = true;
 
 		// These limits come from BT.601 page 8, or BT.701, page 5.
 		// TODO: Use num_levels. Currently we support 8-bit levels only.
-		frag_shader += output_glsl_vec3("PREFIX(ycbcr_min)", 16.0 / 255.0, 16.0 / 255.0, 16.0 / 255.0);
-		frag_shader += output_glsl_vec3("PREFIX(ycbcr_max)", 235.0 / 255.0, 240.0 / 255.0, 240.0 / 255.0);
+		uniform_ycbcr_min[0] = 16.0 / 255.0;
+		uniform_ycbcr_min[1] = 16.0 / 255.0;
+		uniform_ycbcr_min[2] = 16.0 / 255.0;
+		uniform_ycbcr_max[0] = 235.0 / 255.0;
+		uniform_ycbcr_max[1] = 240.0 / 255.0;
+		uniform_ycbcr_max[2] = 240.0 / 255.0;
 	}
-
-	return frag_shader + read_file("ycbcr_conversion_effect.frag");
 }
 
 }  // namespace movit

@@ -6,6 +6,7 @@
 // and/or convert to planar somehow else.
 
 #include <epoxy/gl.h>
+#include <Eigen/Core>
 #include <string>
 
 #include "effect.h"
@@ -23,11 +24,23 @@ private:
 public:
 	virtual std::string effect_type_id() const { return "YCbCrConversionEffect"; }
 	std::string output_fragment_shader();
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
 	virtual bool one_to_one_sampling() const { return true; }
 
+	// Should not be called by end users; call
+	// EffectChain::change_ycbcr_output_format() instead.
+	void change_output_format(const YCbCrFormat &ycbcr_format) {
+		this->ycbcr_format = ycbcr_format;
+	}
+
 private:
 	YCbCrFormat ycbcr_format;
+
+	Eigen::Matrix3d uniform_ycbcr_matrix;
+	float uniform_offset[3];
+	bool uniform_clamp_range;
+	float uniform_ycbcr_min[3], uniform_ycbcr_max[3];
 };
 
 }  // namespace movit

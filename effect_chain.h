@@ -274,6 +274,12 @@ public:
 	                      const YCbCrFormat &ycbcr_format,
 			      YCbCrOutputSplitting output_splitting = YCBCR_OUTPUT_INTERLEAVED);
 
+	// Change Y'CbCr output format. (This can be done also after finalize()).
+	// Note that you are not allowed to change subsampling parameters;
+	// however, you can change the color space parameters, ie.,
+	// luma_coefficients, full_range and num_levels.
+	void change_ycbcr_output_format(const YCbCrFormat &ycbcr_format);
+
 	// Set number of output bits, to scale the dither.
 	// 8 is the right value for most outputs.
 	// The default, 0, is a special value that means no dither.

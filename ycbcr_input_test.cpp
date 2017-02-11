@@ -688,6 +688,36 @@ TEST(YCbCrTest, WikipediaJPEGMatrices) {
 	EXPECT_NEAR(128.0, offset[2] * 255.0, 1e-3);
 }
 
+TEST(YCbCrTest, BlackmagicForwardMatrix) {
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+
+	float offset[3];
+	Eigen::Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+
+	Eigen::Matrix3d rgb_to_ycbcr = ycbcr_to_rgb.inverse();
+
+	// Values from DeckLink SDK documentation.
+	EXPECT_NEAR( 0.183, rgb_to_ycbcr(0,0), 1e-3);
+	EXPECT_NEAR( 0.614, rgb_to_ycbcr(0,1), 1e-3);
+	EXPECT_NEAR( 0.062, rgb_to_ycbcr(0,2), 1e-3);
+
+	EXPECT_NEAR(-0.101, rgb_to_ycbcr(1,0), 1e-3);
+	EXPECT_NEAR(-0.338, rgb_to_ycbcr(1,1), 1e-3);
+	EXPECT_NEAR( 0.439, rgb_to_ycbcr(1,2), 1e-3);
+
+	EXPECT_NEAR( 0.439, rgb_to_ycbcr(2,0), 1e-3);
+	EXPECT_NEAR(-0.399, rgb_to_ycbcr(2,1), 1e-3);
+	EXPECT_NEAR(-0.040, rgb_to_ycbcr(2,2), 1e-3);
+
+	EXPECT_NEAR( 16.0, offset[0] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[1] * 255.0, 1e-3);
+	EXPECT_NEAR(128.0, offset[2] * 255.0, 1e-3);
+}
+
 TEST(YCbCrInputTest, NoData) {
 	const int width = 1;
 	const int height = 5;
