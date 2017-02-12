@@ -437,4 +437,60 @@ TEST(YCbCrConversionEffectTest, ChangeOutputFormat) {
 	expect_equal(cr, out_cr, width, height);
 }
 
+TEST(YCbCrConversionEffectTest, TenBitOutput) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs.
+	float data[width * height * 4] = {
+		0.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	uint32_t out_data[width * height];
+	int expanded_out_data[width * height * 4];
+	int expected_data[width * height * 4] = {
+		// Expected results, calculated using formulas 3.2, 3.3 and 3.4
+		// from Rec. 709. (Except the first two, which are obvious
+		// given the 64–940 range of luminance.)
+		 64, 512, 512, 3,
+		940, 512, 512, 3,
+		250, 409, 960, 3,
+		691, 167, 105, 3,
+		127, 960, 471, 3,
+	};
+
+	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGB10_A2);
+	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 1024;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format);
+	tester.run_10_10_10_2(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Unpack 10:10:10:2 to 32:32:32:32.
+	for (unsigned i = 0; i < width * height; ++i) {
+		expanded_out_data[i * 4 + 0] = out_data[i] & 0x3ff;
+		expanded_out_data[i * 4 + 1] = (out_data[i] >> 10) & 0x3ff;
+		expanded_out_data[i * 4 + 2] = (out_data[i] >> 20) & 0x3ff;
+		expanded_out_data[i * 4 + 3] = (out_data[i] >> 30);
+	}
+	expect_equal(expected_data, expanded_out_data, 4 * width, height);
+}
+
 }  // namespace movit

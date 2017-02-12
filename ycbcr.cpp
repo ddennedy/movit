@@ -89,25 +89,26 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 		assert(false);
 	}
 
+	const int num_levels = ycbcr_format.num_levels;
 	if (ycbcr_format.full_range) {
-		// TODO: Use num_levels.
-		offset[0] = 0.0 / 255.0;
-		offset[1] = 128.0 / 255.0;
-		offset[2] = 128.0 / 255.0;
+		offset[0] = 0.0 / (num_levels - 1);
+		offset[1] = double(num_levels / 2) / (num_levels - 1);  // E.g. 128/255.
+		offset[2] = double(num_levels / 2) / (num_levels - 1);
 
 		scale[0] = 1.0;
 		scale[1] = 1.0;
 		scale[2] = 1.0;
 	} else {
-		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 4.
-		// TODO: Use num_levels.
-		offset[0] = 16.0 / 255.0;
-		offset[1] = 128.0 / 255.0;
-		offset[2] = 128.0 / 255.0;
+		// Rec. 601, page 4; Rec. 709, page 19; Rec. 2020, page 5.
+		// Rec. 2020 contains the most generic formulas, which we use here.
+		const double s = num_levels / 256.0;  // 2^(n-8) in Rec. 2020 parlance.
+		offset[0] = (s * 16.0) / (num_levels - 1);
+		offset[1] = (s * 128.0) / (num_levels - 1);
+		offset[2] = (s * 128.0) / (num_levels - 1);
 
-		scale[0] = 255.0 / 219.0;
-		scale[1] = 255.0 / 224.0;
-		scale[2] = 255.0 / 224.0;
+		scale[0] = double(num_levels - 1) / (s * 219.0);
+		scale[1] = double(num_levels - 1) / (s * 224.0);
+		scale[2] = double(num_levels - 1) / (s * 224.0);
 	}
 
 	// Matrix to convert RGB to YCbCr. See e.g. Rec. 601.

@@ -47,14 +47,33 @@ void YCbCrConversionEffect::set_gl_state(GLuint glsl_program_num, const string &
 	} else {
 		uniform_clamp_range = true;
 
-		// These limits come from BT.601 page 8, or BT.701, page 5.
-		// TODO: Use num_levels. Currently we support 8-bit levels only.
-		uniform_ycbcr_min[0] = 16.0 / 255.0;
-		uniform_ycbcr_min[1] = 16.0 / 255.0;
-		uniform_ycbcr_min[2] = 16.0 / 255.0;
-		uniform_ycbcr_max[0] = 235.0 / 255.0;
-		uniform_ycbcr_max[1] = 240.0 / 255.0;
-		uniform_ycbcr_max[2] = 240.0 / 255.0;
+		if (ycbcr_format.num_levels == 256) {  // 8-bit.
+			// These limits come from BT.601 page 8, or BT.709, page 5.
+			uniform_ycbcr_min[0] = 16.0 / 255.0;
+			uniform_ycbcr_min[1] = 16.0 / 255.0;
+			uniform_ycbcr_min[2] = 16.0 / 255.0;
+			uniform_ycbcr_max[0] = 235.0 / 255.0;
+			uniform_ycbcr_max[1] = 240.0 / 255.0;
+			uniform_ycbcr_max[2] = 240.0 / 255.0;
+		} else if (ycbcr_format.num_levels == 1024) {  // 10-bit.
+			// BT.709, page 5, or BT.2020, page 6.
+			uniform_ycbcr_min[0] = 64.0 / 1023.0;
+			uniform_ycbcr_min[1] = 64.0 / 1023.0;
+			uniform_ycbcr_min[2] = 64.0 / 1023.0;
+			uniform_ycbcr_max[0] = 940.0 / 1023.0;
+			uniform_ycbcr_max[1] = 960.0 / 1023.0;
+			uniform_ycbcr_max[2] = 960.0 / 1023.0;
+		} else if (ycbcr_format.num_levels == 4096) {  // 12-bit.
+			// BT.2020, page 6.
+			uniform_ycbcr_min[0] = 256.0 / 4095.0;
+			uniform_ycbcr_min[1] = 256.0 / 4095.0;
+			uniform_ycbcr_min[2] = 256.0 / 4095.0;
+			uniform_ycbcr_max[0] = 3760.0 / 4095.0;
+			uniform_ycbcr_max[1] = 3840.0 / 4095.0;
+			uniform_ycbcr_max[2] = 3840.0 / 4095.0;
+		} else {
+			assert(false);
+		}
 	}
 }
 

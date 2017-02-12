@@ -29,9 +29,10 @@
 // range, 10-bit goes out of range (white gets to 942), while if you select
 // 10-bit range, 8-bit gets only to 234, making true white impossible.
 //
-// We currently support the 8-bit ranges only, since all of our Y'CbCr
-// handling effects happen to support only 8-bit at the moment. We will need
-// to fix this eventually, though, with an added field to YCbCrFormat.
+// Thus, you will need to specify the actual precision of the Y'CbCr source
+// (or destination); the num_levels field is the right place. Most people
+// will want to simply set this to 256, as 8-bit Y'CbCr is the most common,
+// but the right value will naturally depend on your input.
 
 #include "image_format.h"
 
@@ -48,8 +49,8 @@ struct YCbCrFormat {
 	// JPEG uses the Rec. 601 luma coefficients, but full range.
 	bool full_range;
 
-	// Currently unused, but should be set to 256 for future expansion,
-	// indicating 8-bit interpretation (see file-level comment).
+	// Set to 2^n for n-bit Y'CbCr (e.g. 256 for 8-bit Y'CbCr).
+	// See file-level comment.
 	int num_levels;
 
 	// Sampling factors for chroma components. For no subsampling (4:4:4),
