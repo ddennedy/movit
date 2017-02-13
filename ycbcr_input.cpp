@@ -38,7 +38,11 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 
 	register_uniform_sampler2d("tex_y", &uniform_tex_y);
 
-	if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+	if (ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
+		num_channels = 1;
+		assert(ycbcr_format.chroma_subsampling_x == 1);
+		assert(ycbcr_format.chroma_subsampling_y == 1);
+	} else if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
 		num_channels = 2;
 		register_uniform_sampler2d("tex_cbcr", &uniform_tex_cb);
 	} else {
@@ -64,7 +68,10 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 		if (texture_num[channel] == 0 && (pbos[channel] != 0 || pixel_data[channel] != NULL)) {
 			GLenum format, internal_format;
-			if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+			if (channel == 0 && ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
+				format = GL_RGB;
+				internal_format = GL_RGB8;
+			} else if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
 				format = GL_RG;
 				internal_format = GL_RG8;
 			} else {
@@ -135,13 +142,15 @@ string YCbCrInput::output_fragment_shader()
 		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
 	frag_shader += output_glsl_vec2("PREFIX(cr_offset)", cr_offset_x, cr_offset_y);
 
-	if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+	if (ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
+		frag_shader += "#define Y_CB_CR_SAME_TEXTURE 1\n";
+	} else if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
 		char buf[256];
-		snprintf(buf, sizeof(buf), "#define CB_CR_SAME_TEXTURE 1\n#define CB_CR_OFFSETS_EQUAL %d\n",
+		snprintf(buf, sizeof(buf), "#define Y_CB_CR_SAME_TEXTURE 0\n#define CB_CR_SAME_TEXTURE 1\n#define CB_CR_OFFSETS_EQUAL %d\n",
 			(fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6));
 		frag_shader += buf;
 	} else {
-		frag_shader += "#define CB_CR_SAME_TEXTURE 0\n";
+		frag_shader += "#define Y_CB_CR_SAME_TEXTURE 0\n#define CB_CR_SAME_TEXTURE 0\n";
 	}
 
 	frag_shader += read_file("ycbcr_input.frag");

@@ -11,17 +11,21 @@ vec4 FUNCNAME(vec2 tc) {
 	tc.y = 1.0 - tc.y;
 
 	vec3 ycbcr;
-	ycbcr.x = tex2D(PREFIX(tex_y), tc).x;
-#if CB_CR_SAME_TEXTURE
-#if CB_CR_OFFSETS_EQUAL
-	ycbcr.yz = tex2D(PREFIX(tex_cbcr), tc + PREFIX(cb_offset)).xy;
+#if Y_CB_CR_SAME_TEXTURE
+	ycbcr = tex2D(PREFIX(tex_y), tc).xyz;
 #else
+	ycbcr.x = tex2D(PREFIX(tex_y), tc).x;
+  #if CB_CR_SAME_TEXTURE
+    #if CB_CR_OFFSETS_EQUAL
+	ycbcr.yz = tex2D(PREFIX(tex_cbcr), tc + PREFIX(cb_offset)).xy;
+    #else
 	ycbcr.y = tex2D(PREFIX(tex_cbcr), tc + PREFIX(cb_offset)).x;
 	ycbcr.z = tex2D(PREFIX(tex_cbcr), tc + PREFIX(cr_offset)).x;
-#endif
-#else
+    #endif
+  #else
 	ycbcr.y = tex2D(PREFIX(tex_cb), tc + PREFIX(cb_offset)).x;
 	ycbcr.z = tex2D(PREFIX(tex_cr), tc + PREFIX(cr_offset)).x;
+  #endif
 #endif
 
 	ycbcr -= PREFIX(offset);

@@ -1,9 +1,10 @@
 #ifndef _MOVIT_YCBCR_INPUT_H
 #define _MOVIT_YCBCR_INPUT_H 1
 
-// YCbCrInput is for handling planar 8-bit Y'CbCr (also sometimes, usually rather
-// imprecisely, called “YUV”), which is typically what you get from a video decoder.
-// It upsamples planes as needed, using the default linear upsampling OpenGL gives you.
+// YCbCrInput is for handling planar or 4:4:4 interleaved 8-bit Y'CbCr
+// (also sometimes, usually rather imprecisely, called “YUV”), which is typically
+// what you get from a video decoder. It upsamples planes as needed, using the
+// default linear upsampling OpenGL gives you.
 
 #include <epoxy/gl.h>
 #include <assert.h>
@@ -19,10 +20,8 @@ namespace movit {
 
 class ResourcePool;
 
-// Whether the data is fully planar (Y', Cb and Cr in one texture each)
-// or not. Note that this input does currently not support fully interleaved
-// data (Y', Cb and Cr next to each other), as 4:4:4 interleaved Y'CbCr seems
-// to be rare; however, YCbCr422InterleavedInput supports the important special
+// Whether the data is planar (Y', Cb and Cr in one texture each)
+// or not. Note that YCbCr422InterleavedInput supports the important special
 // case of 4:2:2 interleaved.
 enum YCbCrInputSplitting {
 	// The standard, default case; Y', Cb and Cr in one texture each.
@@ -33,6 +32,11 @@ enum YCbCrInputSplitting {
 	// If you specify this mode, the “Cr” pointer texture will be unused
 	// (the ”Cb” texture contains both).
 	YCBCR_INPUT_SPLIT_Y_AND_CBCR,
+
+	// Y', Cb and Cr interleaved in the same texture (the “Y” texture;
+	// “Cb” and “Cr” are unused). This means you cannot have any subsampling;
+	// 4:4:4 only.
+	YCBCR_INPUT_INTERLEAVED,
 };
 
 class YCbCrInput : public Input {

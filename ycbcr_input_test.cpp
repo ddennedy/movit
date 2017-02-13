@@ -69,6 +69,55 @@ TEST(YCbCrInputTest, Simple444) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
+TEST(YCbCrInputTest, Interleaved444) {
+	const int width = 1;
+	const int height = 5;
+
+	// Same data as Simple444, just rearranged.
+	unsigned char data[width * height * 3] = {
+		 16, 128, 128,
+		235, 128, 128,
+		 81,  90, 240,
+		145,  54,  34,
+		 41, 240, 110,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_INTERLEAVED);
+	input->set_pixel_data(0, data);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
 TEST(YCbCrInputTest, FullRangeRec601) {
 	const int width = 1;
 	const int height = 5;
