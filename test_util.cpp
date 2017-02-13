@@ -227,7 +227,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, GL
 			check_error();
 		}
 
-		if (format == GL_RGBA && sizeof(*ptr) == 1) {
+		if (format == GL_RGBA && (type == GL_UNSIGNED_BYTE || type == GL_FLOAT)) {
 			vertical_flip(ptr, width * 4, height);
 		} else {
 			vertical_flip(ptr, width, height);
