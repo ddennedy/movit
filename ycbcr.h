@@ -21,7 +21,7 @@
 // framebuffer, ie., the range [0.0,1.0] maps to [0,255] for 8-bit
 // and to [0,1023] (or [0_d,255.75_d] in BT.601 parlance) for 10-bit.
 //
-// BT.701 (page 5) seems to agree with BT.601; it specifies range 16–235 for
+// BT.709 (page 5) seems to agree with BT.601; it specifies range 16–235 for
 // 8-bit luma, and 64–940 for 10-bit luma. This would indicate, for a GPU,
 // that that for 8-bit mode, the range would be 16/255 to 235/255
 // (0.06275 to 0.92157), while for 10-bit, it should be 64/1023 to 940/1023
@@ -33,6 +33,9 @@
 // (or destination); the num_levels field is the right place. Most people
 // will want to simply set this to 256, as 8-bit Y'CbCr is the most common,
 // but the right value will naturally depend on your input.
+//
+// We could use unsigned formats (e.g. GL_R8UI), which in a sense would
+// solve all of this, but then we'd lose filtering.
 
 #include "image_format.h"
 
