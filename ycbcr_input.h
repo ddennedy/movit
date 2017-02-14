@@ -1,10 +1,20 @@
 #ifndef _MOVIT_YCBCR_INPUT_H
 #define _MOVIT_YCBCR_INPUT_H 1
 
-// YCbCrInput is for handling planar or 4:4:4 interleaved 8-bit Y'CbCr
-// (also sometimes, usually rather imprecisely, called “YUV”), which is typically
-// what you get from a video decoder. It upsamples planes as needed, using the
-// default linear upsampling OpenGL gives you.
+// YCbCrInput is for handling Y'CbCr (also sometimes, usually rather
+// imprecisely, called “YUV”), which is typically what you get from a video
+// decoder. It supports these formats:
+//
+//   * 8-bit planar Y'CbCr, possibly subsampled (e.g. 4:2:0).
+//   * 8-bit semiplanar Y'CbCr (Y' in one plane, CbCr in another),
+//     possibly subsampled.
+//   * 8-bit interleaved (chunked) Y'CbCr, no subsampling (4:4:4 only).
+//   * 10-bit interleaved (chunked) Y'CbCr packed into 32-bit words
+//     (10:10:10:2), no subsampling (4:4:4 only).
+//
+// For the former case, it upsamples planes as needed, using the default linear
+// upsampling OpenGL gives you. Note that YCbCr422InterleavedInput supports the
+// important special case of 8-bit 4:2:2 interleaved.
 
 #include <epoxy/gl.h>
 #include <assert.h>
@@ -20,9 +30,7 @@ namespace movit {
 
 class ResourcePool;
 
-// Whether the data is planar (Y', Cb and Cr in one texture each)
-// or not. Note that YCbCr422InterleavedInput supports the important special
-// case of 4:2:2 interleaved.
+// Whether the data is planar (Y', Cb and Cr in one texture each) or not.
 enum YCbCrInputSplitting {
 	// The standard, default case; Y', Cb and Cr in one texture each.
 	YCBCR_INPUT_PLANAR,
@@ -41,10 +49,13 @@ enum YCbCrInputSplitting {
 
 class YCbCrInput : public Input {
 public:
+	// Type can be GL_UNSIGNED_BYTE for 8-bit, or GL_UNSIGNED_INT_2_10_10_10_REV
+	// for 10-bit (YCBCR_INPUT_INTERLEAVED only).
 	YCbCrInput(const ImageFormat &image_format,
 	           const YCbCrFormat &ycbcr_format,
 	           unsigned width, unsigned height,
-	           YCbCrInputSplitting ycbcr_input_splitting = YCBCR_INPUT_PLANAR);
+	           YCbCrInputSplitting ycbcr_input_splitting = YCBCR_INPUT_PLANAR,
+	           GLenum type = GL_UNSIGNED_BYTE);
 	~YCbCrInput();
 
 	virtual std::string effect_type_id() const { return "YCbCrInput"; }
@@ -75,8 +86,18 @@ public:
 	// the pointer (and PBO, if set) has to be valid at the time of the render call.
 	void set_pixel_data(unsigned channel, const unsigned char *pixel_data, GLuint pbo = 0)
 	{
+		assert(type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_2_10_10_10_REV);
 		assert(channel >= 0 && channel < num_channels);
 		this->pixel_data[channel] = pixel_data;
+		this->pbos[channel] = pbo;
+		invalidate_pixel_data();
+	}
+
+	void set_pixel_data(unsigned channel, const uint32_t *pixel_data, GLuint pbo = 0)
+	{
+		assert(type == GL_UNSIGNED_INT_2_10_10_10_REV);
+		assert(channel == 0);
+		this->pixel_data[channel] = reinterpret_cast<const unsigned char *>(pixel_data);
 		this->pbos[channel] = pbo;
 		invalidate_pixel_data();
 	}
@@ -142,6 +163,7 @@ private:
 	YCbCrFormat ycbcr_format;
 	GLuint num_channels;
 	YCbCrInputSplitting ycbcr_input_splitting;
+	GLenum type;
 	GLuint pbos[3], texture_num[3];
 	GLint uniform_tex_y, uniform_tex_cb, uniform_tex_cr;
 

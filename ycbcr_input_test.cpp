@@ -798,4 +798,64 @@ TEST(YCbCrInputTest, NoData) {
 	// Don't care what the output was, just that it does not crash.
 }
 
+TEST(YCbCrInputTest, TenBitInterleaved) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color inputs, calculated using formulas 3.2, 3.3 and 3.4 from
+	// Rec. 709. (Except the first two, which are obvious given the 64–940
+	// range of luminance.)
+	unsigned expanded_data[width * height * 3] = {
+                 64, 512, 512,
+                940, 512, 512,
+                250, 409, 960,
+                691, 167, 105,
+                127, 960, 471,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	// Pack 32:32:32 to 10:10:10:2.
+	uint32_t data[width * height];
+	for (unsigned i = 0; i < width * height; ++i) {
+		data[i] =
+			 expanded_data[i * 3 + 0]        |
+			(expanded_data[i * 3 + 1] << 10) |
+			(expanded_data[i * 3 + 2] << 20);
+	}
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 1024;  // 10-bit.
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_INTERLEAVED, GL_UNSIGNED_INT_2_10_10_10_REV);
+	input->set_pixel_data(0, data);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// We can set much tighter limits on this than 8-bit Y'CbCr;
+	// even tighter than the default limits.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.002, 0.0003);
+}
+
 }  // namespace movit

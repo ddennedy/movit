@@ -19,10 +19,12 @@ namespace movit {
 YCbCrInput::YCbCrInput(const ImageFormat &image_format,
                        const YCbCrFormat &ycbcr_format,
                        unsigned width, unsigned height,
-                       YCbCrInputSplitting ycbcr_input_splitting)
+                       YCbCrInputSplitting ycbcr_input_splitting,
+                       GLenum type)
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
 	  ycbcr_input_splitting(ycbcr_input_splitting),
+	  type(type),
 	  width(width),
 	  height(height),
 	  resource_pool(NULL)
@@ -69,12 +71,20 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 		if (texture_num[channel] == 0 && (pbos[channel] != 0 || pixel_data[channel] != NULL)) {
 			GLenum format, internal_format;
 			if (channel == 0 && ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
-				format = GL_RGB;
-				internal_format = GL_RGB8;
+				if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+					format = GL_RGBA;
+					internal_format = GL_RGB10_A2;
+				} else {
+					assert(type == GL_UNSIGNED_BYTE);
+					format = GL_RGB;
+					internal_format = GL_RGB8;
+				}
 			} else if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+				assert(type == GL_UNSIGNED_BYTE);
 				format = GL_RG;
 				internal_format = GL_RG8;
 			} else {
+				assert(type == GL_UNSIGNED_BYTE);
 				format = GL_RED;
 				internal_format = GL_R8;
 			}
@@ -91,7 +101,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch[channel]);
 			check_error();
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], format, GL_UNSIGNED_BYTE, pixel_data[channel]);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, widths[channel], heights[channel], format, type, pixel_data[channel]);
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			check_error();
