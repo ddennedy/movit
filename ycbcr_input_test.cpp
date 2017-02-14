@@ -858,4 +858,69 @@ TEST(YCbCrInputTest, TenBitInterleaved) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.002, 0.0003);
 }
 
+TEST(YCbCrInputTest, TenBitPlanar) {
+	const int width = 1;
+	const int height = 5;
+
+	// The same data as TenBitInterleaved, but split.
+	uint16_t y[width * height] = {
+                 64,
+                940,
+                250,
+                691,
+                127,
+	};
+	uint16_t cb[width * height] = {
+                512,
+                512,
+                409,
+                167,
+                960,
+	};
+	uint16_t cr[width * height] = {
+                512,
+                512,
+                960,
+                105,
+                471,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 1024;  // 10-bit.
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_PLANAR, GL_UNSIGNED_SHORT);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// We can set much tighter limits on this than 8-bit Y'CbCr;
+	// even tighter than the default limits.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.002, 0.0003);
+}
+
 }  // namespace movit

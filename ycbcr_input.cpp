@@ -74,19 +74,30 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 				if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {
 					format = GL_RGBA;
 					internal_format = GL_RGB10_A2;
+				} else if (type == GL_UNSIGNED_SHORT) {
+					format = GL_RGB;
+					internal_format = GL_RGB16;
 				} else {
 					assert(type == GL_UNSIGNED_BYTE);
 					format = GL_RGB;
 					internal_format = GL_RGB8;
 				}
 			} else if (channel == 1 && ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
-				assert(type == GL_UNSIGNED_BYTE);
 				format = GL_RG;
-				internal_format = GL_RG8;
+				if (type == GL_UNSIGNED_SHORT) {
+					internal_format = GL_RG16;
+				} else {
+					assert(type == GL_UNSIGNED_BYTE);
+					internal_format = GL_RG8;
+				}
 			} else {
-				assert(type == GL_UNSIGNED_BYTE);
 				format = GL_RED;
-				internal_format = GL_R8;
+				if (type == GL_UNSIGNED_SHORT) {
+					internal_format = GL_R16;
+				} else {
+					assert(type == GL_UNSIGNED_BYTE);
+					internal_format = GL_R8;
+				}
 			}
 
 			// (Re-)upload the texture.
@@ -134,6 +145,19 @@ string YCbCrInput::output_fragment_shader()
 	float offset[3];
 	Matrix3d ycbcr_to_rgb;
 	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+
+	if (type == GL_UNSIGNED_SHORT) {
+		// For 10-bit or 12-bit packed into 16-bit, we need to scale the values
+		// so that the max value goes from 1023 (or 4095) to 65535. We do this
+		// by folding the scaling into the conversion matrix, so it comes essentially
+		// for free. However, the offset is before the scaling (and thus assumes
+		// correctly scaled values), so we need to adjust that the other way.
+		double scale = 65535.0 / (ycbcr_format.num_levels - 1);
+		offset[0] /= scale;
+		offset[1] /= scale;
+		offset[2] /= scale;
+		ycbcr_to_rgb *= scale;
+	}
 
 	string frag_shader;
 

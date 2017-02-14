@@ -9,12 +9,14 @@
 //   * 8-bit semiplanar Y'CbCr (Y' in one plane, CbCr in another),
 //     possibly subsampled.
 //   * 8-bit interleaved (chunked) Y'CbCr, no subsampling (4:4:4 only).
+//   * All of the above in 10- and 12-bit versions, where each sample is
+//     stored in a 16-bit int (so the 6 or 4 top bits are wasted).
 //   * 10-bit interleaved (chunked) Y'CbCr packed into 32-bit words
 //     (10:10:10:2), no subsampling (4:4:4 only).
 //
-// For the former case, it upsamples planes as needed, using the default linear
-// upsampling OpenGL gives you. Note that YCbCr422InterleavedInput supports the
-// important special case of 8-bit 4:2:2 interleaved.
+// For the planar and semiplanar cases, it upsamples planes as needed, using
+// the default linear upsampling OpenGL gives you. Note that YCbCr422InterleavedInput
+// supports the important special case of 8-bit 4:2:2 interleaved.
 
 #include <epoxy/gl.h>
 #include <assert.h>
@@ -49,7 +51,8 @@ enum YCbCrInputSplitting {
 
 class YCbCrInput : public Input {
 public:
-	// Type can be GL_UNSIGNED_BYTE for 8-bit, or GL_UNSIGNED_INT_2_10_10_10_REV
+	// Type can be GL_UNSIGNED_BYTE for 8-bit, GL_UNSIGNED_SHORT for 10- or 12-bit
+	// (or 8-bit, although that's a bit useless), or GL_UNSIGNED_INT_2_10_10_10_REV
 	// for 10-bit (YCBCR_INPUT_INTERLEAVED only).
 	YCbCrInput(const ImageFormat &image_format,
 	           const YCbCrFormat &ycbcr_format,
@@ -89,6 +92,15 @@ public:
 		assert(type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_2_10_10_10_REV);
 		assert(channel >= 0 && channel < num_channels);
 		this->pixel_data[channel] = pixel_data;
+		this->pbos[channel] = pbo;
+		invalidate_pixel_data();
+	}
+
+	void set_pixel_data(unsigned channel, const uint16_t *pixel_data, GLuint pbo = 0)
+	{
+		assert(type == GL_UNSIGNED_SHORT);
+		assert(channel >= 0 && channel < num_channels);
+		this->pixel_data[channel] = reinterpret_cast<const unsigned char *>(pixel_data);
 		this->pbos[channel] = pbo;
 		invalidate_pixel_data();
 	}
