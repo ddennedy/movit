@@ -89,7 +89,11 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 		assert(false);
 	}
 
-	const int num_levels = ycbcr_format.num_levels;
+	int num_levels = ycbcr_format.num_levels;
+	if (num_levels == 0) {
+		// For the benefit of clients using old APIs, but still zeroing out the structure.
+		num_levels = 256;
+	}
 	if (ycbcr_format.full_range) {
 		offset[0] = 0.0 / (num_levels - 1);
 		offset[1] = double(num_levels / 2) / (num_levels - 1);  // E.g. 128/255.
