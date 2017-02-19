@@ -1044,7 +1044,7 @@ TEST(EffectChainTest, MipmapGenerationWorks) {
 	format.color_space = COLORSPACE_sRGB;
 	format.gamma_curve = GAMMA_sRGB;
 
-	float out_data[width * height];
+	float out_data[width * height * 4];
 	EffectChainTester tester(NULL, width, height);
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_INTERLEAVED);
 	input->set_pixel_data(0, ycbcr_data);
