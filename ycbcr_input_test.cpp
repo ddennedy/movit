@@ -13,6 +13,8 @@
 #include "resource_pool.h"
 #include "ycbcr_input.h"
 
+using namespace std;
+
 namespace movit {
 
 TEST(YCbCrInputTest, Simple444) {
@@ -921,6 +923,137 @@ TEST(YCbCrInputTest, TenBitPlanar) {
 	// We can set much tighter limits on this than 8-bit Y'CbCr;
 	// even tighter than the default limits.
 	expect_equal(expected_data, out_data, 4 * width, height, 0.002, 0.0003);
+}
+
+// Effectively scales down its input linearly by 4x (and repeating it),
+// which is not attainable without mipmaps.
+class MipmapNeedingEffect : public Effect {
+public:
+	MipmapNeedingEffect() {}
+	virtual bool needs_mipmaps() const { return true; }
+
+	// To be allowed to mess with the sampler state.
+	virtual bool needs_texture_bounce() const { return true; }
+
+	virtual string effect_type_id() const { return "MipmapNeedingEffect"; }
+	string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
+	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+
+	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
+	{
+		Node *self = chain->find_node_for_effect(this);
+		glActiveTexture(chain->get_input_sampler(self, 0));
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		check_error();
+	}
+
+private:
+	EffectChain *chain;
+};
+
+// Basically the same test as EffectChainTest_MipmapGenerationWorks,
+// just with the data converted to Y'CbCr (as red only).
+TEST(EffectChainTest, MipmapGenerationWorks) {
+	unsigned width = 4;
+	unsigned height = 16;
+	float red_data[width * height] = {  // In 4x4 blocks.
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float expected_data[width * height] = {  // Repeated four times each way.
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+
+		0.125f,   0.125f,   0.125f,   0.125f,
+		0.09375f, 0.09375f, 0.09375f, 0.09375f,
+		1.0f,     1.0f,     1.0f,     1.0f,
+		0.25f,    0.25f,    0.25f,    0.25f,
+	};
+	float expected_data_rgba[width * height * 4];
+	unsigned char ycbcr_data[width * height * 3];
+
+	// Convert to Y'CbCr.
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	float offset[3];
+	Eigen::Matrix3d ycbcr_to_rgb;
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
+
+	Eigen::Matrix3d rgb_to_ycbcr = ycbcr_to_rgb.inverse();
+	for (unsigned i = 0; i < 64; ++i) {
+		Eigen::Vector3d rgb(red_data[i], 0.0, 0.0);
+		Eigen::Vector3d ycbcr = rgb_to_ycbcr * rgb;
+		ycbcr(0) += offset[0];
+		ycbcr(1) += offset[1];
+		ycbcr(2) += offset[2];
+		ycbcr_data[i * 3 + 0] = lrintf(ycbcr(0) * 255.0);
+		ycbcr_data[i * 3 + 1] = lrintf(ycbcr(1) * 255.0);
+		ycbcr_data[i * 3 + 2] = lrintf(ycbcr(2) * 255.0);
+	}
+
+	// Expand expected_data to RGBA.
+	for (unsigned i = 0; i < 64; ++i) {
+		expected_data_rgba[i * 4 + 0] = expected_data[i];
+		expected_data_rgba[i * 4 + 1] = 0.0f;
+		expected_data_rgba[i * 4 + 2] = 0.0f;
+		expected_data_rgba[i * 4 + 3] = 1.0f;
+	}
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	float out_data[width * height];
+	EffectChainTester tester(NULL, width, height);
+	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_INTERLEAVED);
+	input->set_pixel_data(0, ycbcr_data);
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(new MipmapNeedingEffect());
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	// The usual pretty loose limits.
+	expect_equal(expected_data_rgba, out_data, width * 4, height, 0.025, 0.002);
 }
 
 }  // namespace movit

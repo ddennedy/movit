@@ -24,6 +24,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	: image_format(image_format),
 	  ycbcr_format(ycbcr_format),
 	  ycbcr_input_splitting(ycbcr_input_splitting),
+	  needs_mipmaps(false),
 	  type(type),
 	  width(width),
 	  height(height),
@@ -53,6 +54,8 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 		register_uniform_sampler2d("tex_cb", &uniform_tex_cb);
 		register_uniform_sampler2d("tex_cr", &uniform_tex_cr);
 	}
+
+	register_int("needs_mipmaps", &needs_mipmaps);
 }
 
 YCbCrInput::~YCbCrInput()
@@ -104,7 +107,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			texture_num[channel] = resource_pool->create_2d_texture(internal_format, widths[channel], heights[channel]);
 			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			check_error();
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, pbos[channel]);
 			check_error();
@@ -116,6 +119,10 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 			check_error();
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			check_error();
+			if (needs_mipmaps) {
+				glGenerateMipmap(GL_TEXTURE_2D);
+				check_error();
+			}
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			check_error();
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -201,8 +208,10 @@ void YCbCrInput::invalidate_pixel_data()
 bool YCbCrInput::set_int(const std::string& key, int value)
 {
 	if (key == "needs_mipmaps") {
-		// We currently do not support this.
-		return (value == 0);
+		if (ycbcr_input_splitting != YCBCR_INPUT_INTERLEAVED && value != 0) {
+			// We do not currently support this.
+			return false;
+		}
 	}
 	return Effect::set_int(key, value);
 }

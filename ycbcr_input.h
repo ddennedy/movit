@@ -176,6 +176,7 @@ private:
 	YCbCrFormat ycbcr_format;
 	GLuint num_channels;
 	YCbCrInputSplitting ycbcr_input_splitting;
+	int needs_mipmaps;  // Only allowed if ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED.
 	GLenum type;
 	GLuint pbos[3], texture_num[3];
 	GLint uniform_tex_y, uniform_tex_cb, uniform_tex_cr;
