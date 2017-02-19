@@ -139,7 +139,9 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 	// Bind samplers.
 	uniform_tex_y = *sampler_num + 0;
-	uniform_tex_cb = *sampler_num + 1;
+	if (ycbcr_input_splitting != YCBCR_INPUT_INTERLEAVED) {
+		uniform_tex_cb = *sampler_num + 1;
+	}
 	if (ycbcr_input_splitting == YCBCR_INPUT_PLANAR) {
 		uniform_tex_cr = *sampler_num + 2;
 	}
