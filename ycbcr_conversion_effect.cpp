@@ -47,7 +47,7 @@ void YCbCrConversionEffect::set_gl_state(GLuint glsl_program_num, const string &
 	} else {
 		uniform_clamp_range = true;
 
-		if (ycbcr_format.num_levels == 0 && ycbcr_format.num_levels == 256) {  // 8-bit.
+		if (ycbcr_format.num_levels == 0 || ycbcr_format.num_levels == 256) {  // 8-bit.
 			// These limits come from BT.601 page 8, or BT.709, page 5.
 			uniform_ycbcr_min[0] = 16.0 / 255.0;
 			uniform_ycbcr_min[1] = 16.0 / 255.0;
