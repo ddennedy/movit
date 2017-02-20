@@ -38,6 +38,7 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	  output_color_rgba(false),
 	  output_color_ycbcr(false),
 	  dither_effect(NULL),
+	  ycbcr_conversion_effect_node(NULL),
 	  intermediate_format(GL_RGBA16F),
 	  intermediate_transformation(NO_FRAMEBUFFER_TRANSFORMATION),
 	  num_dither_bits(0),
@@ -122,14 +123,8 @@ void EffectChain::change_ycbcr_output_format(const YCbCrFormat &ycbcr_format)
 
 	output_ycbcr_format = ycbcr_format;
 	if (finalized) {
-		// Find the YCbCrConversionEffect node. We don't store it to avoid
-		// an unneeded ABI break (this can be fixed on next break).
-		for (Node *node : nodes) {
-			if (node->effect->effect_type_id() == "YCbCrConversionEffect") {
-				YCbCrConversionEffect *effect = (YCbCrConversionEffect *)(node->effect);
-				effect->change_output_format(ycbcr_format);
-			}
-		}
+		YCbCrConversionEffect *effect = (YCbCrConversionEffect *)(ycbcr_conversion_effect_node->effect);
+		effect->change_output_format(ycbcr_format);
 	}
 }
 
@@ -1622,8 +1617,8 @@ void EffectChain::add_ycbcr_conversion_if_needed()
 		return;
 	}
 	Node *output = find_output_node();
-	Node *ycbcr = add_node(new YCbCrConversionEffect(output_ycbcr_format));
-	connect_nodes(output, ycbcr);
+	ycbcr_conversion_effect_node = add_node(new YCbCrConversionEffect(output_ycbcr_format));
+	connect_nodes(output, ycbcr_conversion_effect_node);
 }
 	
 // If the user has requested dither, add a DitherEffect right at the end

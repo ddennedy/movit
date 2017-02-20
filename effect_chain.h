@@ -492,6 +492,7 @@ private:
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;
 	Effect *dither_effect;
+	Node *ycbcr_conversion_effect_node;
 
 	std::vector<Input *> inputs;  // Also contained in nodes.
 	std::vector<Phase *> phases;
