@@ -1367,8 +1367,8 @@ TEST(EffectChainTest, Linear10bitIntermediateAccuracy) {
 	}
 
 	// This maximum error is pretty bad; about 6.5 levels of a 10-bit sRGB
-	// framebuffer.
-	expect_equal(linear_data, out_data, size, 1, 7e-3, 2e-5);
+	// framebuffer. (Slightly more on NVIDIA cards.)
+	expect_equal(linear_data, out_data, size, 1, 7.5e-3, 2e-5);
 }
 
 TEST(EffectChainTest, SquareRoot10bitIntermediateAccuracy) {
@@ -1397,7 +1397,7 @@ TEST(EffectChainTest, SquareRoot10bitIntermediateAccuracy) {
 	// This maximum error is much better; about 0.7 levels of a 10-bit sRGB
 	// framebuffer (ideal would be 0.5). That is an order of magnitude better
 	// than in the linear test above. The RMS error is much better, too.
-	expect_equal(linear_data, out_data, size, 1, 7e-4, 5e-6);
+	expect_equal(linear_data, out_data, size, 1, 7.5e-4, 5e-6);
 }
 
 TEST(EffectChainTest, SquareRootIntermediateIsTurnedOffForNonLinearData) {
