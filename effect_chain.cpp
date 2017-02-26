@@ -1733,8 +1733,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	check_error();
 	glDisable(GL_DITHER);
 	check_error();
-	glEnable(GL_FRAMEBUFFER_SRGB);
+
+	const bool final_srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
 	check_error();
+	bool current_srgb = final_srgb;
 
 	// Save original viewport.
 	GLuint x = 0, y = 0;
@@ -1800,7 +1802,22 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		}
-		execute_phase(phase, phase_num == phases.size() - 1, &bound_attribute_indices, &output_textures, &generated_mipmaps);
+		bool last_phase = (phase_num == phases.size() - 1);
+
+		// Enable sRGB rendering for intermediates in case we are
+		// rendering to an sRGB format.
+		bool needs_srgb = last_phase ? final_srgb : true;
+		if (needs_srgb && !current_srgb) {
+			glEnable(GL_FRAMEBUFFER_SRGB);
+			check_error();
+			current_srgb = true;
+		} else if (!needs_srgb && current_srgb) {
+			glDisable(GL_FRAMEBUFFER_SRGB);
+			check_error();
+			current_srgb = true;
+		}
+
+		execute_phase(phase, last_phase, &bound_attribute_indices, &output_textures, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}

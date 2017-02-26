@@ -1319,6 +1319,9 @@ TEST(EffectChainTest, sRGBIntermediate) {
 	    << "Expected sRGB not to be able to represent 0.5 exactly (got " << out_data[1] << ")";
 	EXPECT_LT(fabs(out_data[1] - data[1]), 0.1f)
 	    << "Expected sRGB to be able to represent 0.5 approximately (got " << out_data[1] << ")";
+
+	// This state should have been preserved.
+	EXPECT_FALSE(glIsEnabled(GL_FRAMEBUFFER_SRGB));
 }
 
 // An effect that is like IdentityEffect, but also does not require linear light.
