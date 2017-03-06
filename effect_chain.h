@@ -264,8 +264,8 @@ public:
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
 	// Adds an YCbCr output. Note that you can only have one output.
-	// Currently, only chunked packed output is supported, and only 4:4:4
-	// (so chroma_subsampling_x and chroma_subsampling_y must both be 1).
+	// Currently, only 4:4:4 output is supported, so chroma_subsampling_x
+	// and chroma_subsampling_y must both be 1.
 	//
 	// If you have both RGBA and Y'CbCr output, the RGBA output will come
 	// in the last draw buffer. Also, <format> and <alpha_format> must be
