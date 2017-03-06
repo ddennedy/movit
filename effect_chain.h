@@ -259,15 +259,21 @@ public:
 	}
 	Effect *add_effect(Effect *effect, const std::vector<Effect *> &inputs);
 
-	// Adds an RGBA output. Note that you can have at most one RGBA output and one
-	// Y'CbCr output (see below for details).
+	// Adds an RGBA output. Note that you can have at most one RGBA output and two
+	// Y'CbCr outputs (see below for details).
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
-	// Adds an YCbCr output. Note that you can only have one Y'CbCr output.
-	// Currently, only 4:4:4 output is supported, so chroma_subsampling_x
-	// and chroma_subsampling_y must both be 1.
+	// Adds an YCbCr output. Note that you can only have at most two Y'CbCr
+	// outputs, and they must have the same <ycbcr_format>.
+	// (This limitation may be lifted in the future, to allow e.g. simultaneous
+	// 8- and 10-bit output. Currently, multiple Y'CbCr outputs are only
+	// useful in some very limited circumstances, like if one texture goes
+	// to some place you cannot easily read from later.)
 	//
-	// If you have both RGBA and Y'CbCr output, the RGBA output will come
+	// Only 4:4:4 output is supported due to fragment shader limitations,
+	// so chroma_subsampling_x and chroma_subsampling_y must both be 1.
+	//
+	// If you have both RGBA and Y'CbCr output(s), the RGBA output will come
 	// in the last draw buffer. Also, <format> and <alpha_format> must be
 	// identical between the two.
 	void add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
@@ -485,9 +491,10 @@ private:
 	ImageFormat output_format;
 	OutputAlphaFormat output_alpha_format;
 
-	bool output_color_rgba, output_color_ycbcr;
-	YCbCrFormat output_ycbcr_format;              // If output_color_ycbcr is true.
-	YCbCrOutputSplitting output_ycbcr_splitting;  // If output_color_ycbcr is true.
+	bool output_color_rgba;
+	int num_output_color_ycbcr;                      // Max 2.
+	YCbCrFormat output_ycbcr_format;                 // If num_output_color_ycbcr is > 0.
+	YCbCrOutputSplitting output_ycbcr_splitting[2];  // If num_output_color_ycbcr is > N.
 
 	std::vector<Node *> nodes;
 	std::map<Effect *, Node *> node_map;

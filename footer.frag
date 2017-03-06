@@ -9,6 +9,18 @@
 #define YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 0
 #endif
 
+#ifndef SECOND_YCBCR_OUTPUT_PLANAR
+#define SECOND_YCBCR_OUTPUT_PLANAR 0
+#endif
+
+#ifndef SECOND_YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
+#define SECOND_YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 0
+#endif
+
+#ifndef SECOND_YCBCR_OUTPUT_INTERLEAVED
+#define SECOND_YCBCR_OUTPUT_INTERLEAVED 0
+#endif
+
 #ifndef YCBCR_ALSO_OUTPUT_RGBA
 #define YCBCR_ALSO_OUTPUT_RGBA 0
 #endif
@@ -18,14 +30,19 @@
 #endif
 
 #if YCBCR_OUTPUT_PLANAR
-out vec4 Y;
-out vec4 Cb;
-out vec4 Cr;
+out vec4 Y, Cb, Cr;
 #elif YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
-out vec4 Y;
-out vec4 Chroma;
+out vec4 Y, Chroma;
 #else
-out vec4 FragColor;
+out vec4 FragColor;  // Y'CbCr or RGBA.
+#endif
+
+#if SECOND_YCBCR_OUTPUT_PLANAR
+out vec4 Y2, Cb2, Cr2;
+#elif SECOND_YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
+out vec4 Y2, Chroma2;
+#elif SECOND_YCBCR_OUTPUT_INTERLEAVED
+out vec4 YCbCr2;
 #endif
 
 #if YCBCR_ALSO_OUTPUT_RGBA
@@ -56,6 +73,19 @@ void main()
 	Chroma = color0.gbba;
 #else
 	FragColor = color0;
+#endif
+
+	// Exactly the same, just with other outputs.
+	// (GLSL does not allow arrays of outputs.)
+#if SECOND_YCBCR_OUTPUT_PLANAR
+	Y2 = color0.rrra;
+	Cb2 = color0.ggga;
+	Cr2 = color0.bbba;
+#elif SECOND_YCBCR_OUTPUT_SPLIT_Y_AND_CBCR
+	Y2 = color0.rrra;
+	Chroma2 = color0.gbba;
+#elif SECOND_YCBCR_OUTPUT_INTERLEAVED
+	YCbCr2 = color0;
 #endif
 
 #if YCBCR_ALSO_OUTPUT_RGBA

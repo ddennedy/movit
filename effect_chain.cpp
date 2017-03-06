@@ -36,7 +36,7 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
 	  output_color_rgba(false),
-	  output_color_ycbcr(false),
+	  num_output_color_ycbcr(0),
 	  dither_effect(NULL),
 	  ycbcr_conversion_effect_node(NULL),
 	  intermediate_format(GL_RGBA16F),
@@ -100,12 +100,25 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
                                    const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
 {
 	assert(!finalized);
-	assert(!output_color_ycbcr);
+	assert(num_output_color_ycbcr < 2);
 	output_format = format;
 	output_alpha_format = alpha_format;
-	output_color_ycbcr = true;
-	output_ycbcr_format = ycbcr_format;
-	output_ycbcr_splitting = output_splitting;
+
+	if (num_output_color_ycbcr == 1) {
+		// Check that the format is the same.
+		assert(output_ycbcr_format.luma_coefficients == ycbcr_format.luma_coefficients);
+		assert(output_ycbcr_format.full_range == ycbcr_format.full_range);
+		assert(output_ycbcr_format.num_levels == ycbcr_format.num_levels);
+		assert(output_ycbcr_format.chroma_subsampling_x == ycbcr_format.chroma_subsampling_x);
+		assert(output_ycbcr_format.chroma_subsampling_y == ycbcr_format.chroma_subsampling_y);
+		assert(fabs(output_ycbcr_format.cb_x_position - ycbcr_format.cb_x_position) < 1e-3);
+		assert(fabs(output_ycbcr_format.cb_y_position - ycbcr_format.cb_y_position) < 1e-3);
+		assert(fabs(output_ycbcr_format.cr_x_position - ycbcr_format.cr_x_position) < 1e-3);
+		assert(fabs(output_ycbcr_format.cr_y_position - ycbcr_format.cr_y_position) < 1e-3);
+	} else {
+		output_ycbcr_format = ycbcr_format;
+	}
+	output_ycbcr_splitting[num_output_color_ycbcr++] = output_splitting;
 
 	assert(ycbcr_format.chroma_subsampling_x == 1);
 	assert(ycbcr_format.chroma_subsampling_y == 1);
@@ -113,7 +126,7 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
 
 void EffectChain::change_ycbcr_output_format(const YCbCrFormat &ycbcr_format)
 {
-	assert(output_color_ycbcr);
+	assert(num_output_color_ycbcr > 0);
 	assert(output_ycbcr_format.chroma_subsampling_x == ycbcr_format.chroma_subsampling_x);
 	assert(output_ycbcr_format.chroma_subsampling_y == ycbcr_format.chroma_subsampling_y);
 	assert(fabs(output_ycbcr_format.cb_x_position - ycbcr_format.cb_x_position) < 1e-3);
@@ -412,8 +425,8 @@ void EffectChain::compile_glsl_program(Phase *phase)
 
 	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
 	vector<string> frag_shader_outputs;  // In order.
-	if (phase->output_node->outgoing_links.empty() && output_color_ycbcr) {
-		switch (output_ycbcr_splitting) {
+	if (phase->output_node->outgoing_links.empty() && num_output_color_ycbcr > 0) {
+		switch (output_ycbcr_splitting[0]) {
 		case YCBCR_OUTPUT_INTERLEAVED:
 			// No #defines set.
 			frag_shader_outputs.push_back("FragColor");
@@ -431,6 +444,28 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			break;
 		default:
 			assert(false);
+		}
+
+		if (num_output_color_ycbcr > 1) {
+			switch (output_ycbcr_splitting[1]) {
+			case YCBCR_OUTPUT_INTERLEAVED:
+				frag_shader += "#define SECOND_YCBCR_OUTPUT_INTERLEAVED 1\n";
+				frag_shader_outputs.push_back("YCbCr2");
+				break;
+			case YCBCR_OUTPUT_SPLIT_Y_AND_CBCR:
+				frag_shader += "#define SECOND_YCBCR_OUTPUT_SPLIT_Y_AND_CBCR 1\n";
+				frag_shader_outputs.push_back("Y2");
+				frag_shader_outputs.push_back("Chroma2");
+				break;
+			case YCBCR_OUTPUT_PLANAR:
+				frag_shader += "#define SECOND_YCBCR_OUTPUT_PLANAR 1\n";
+				frag_shader_outputs.push_back("Y2");
+				frag_shader_outputs.push_back("Cb2");
+				frag_shader_outputs.push_back("Cr2");
+				break;
+			default:
+				assert(false);
+			}
 		}
 
 		if (output_color_rgba) {
@@ -1612,8 +1647,8 @@ void EffectChain::fix_output_gamma()
 // gamma-encoded data.
 void EffectChain::add_ycbcr_conversion_if_needed()
 {
-	assert(output_color_rgba || output_color_ycbcr);
-	if (!output_color_ycbcr) {
+	assert(output_color_rgba || num_output_color_ycbcr > 0);
+	if (num_output_color_ycbcr == 0) {
 		return;
 	}
 	Node *output = find_output_node();
