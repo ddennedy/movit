@@ -263,7 +263,7 @@ public:
 	// Y'CbCr output (see below for details).
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
-	// Adds an YCbCr output. Note that you can only have one output.
+	// Adds an YCbCr output. Note that you can only have one Y'CbCr output.
 	// Currently, only 4:4:4 output is supported, so chroma_subsampling_x
 	// and chroma_subsampling_y must both be 1.
 	//
