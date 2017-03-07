@@ -109,12 +109,8 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
 		assert(output_ycbcr_format.luma_coefficients == ycbcr_format.luma_coefficients);
 		assert(output_ycbcr_format.full_range == ycbcr_format.full_range);
 		assert(output_ycbcr_format.num_levels == ycbcr_format.num_levels);
-		assert(output_ycbcr_format.chroma_subsampling_x == ycbcr_format.chroma_subsampling_x);
-		assert(output_ycbcr_format.chroma_subsampling_y == ycbcr_format.chroma_subsampling_y);
-		assert(fabs(output_ycbcr_format.cb_x_position - ycbcr_format.cb_x_position) < 1e-3);
-		assert(fabs(output_ycbcr_format.cb_y_position - ycbcr_format.cb_y_position) < 1e-3);
-		assert(fabs(output_ycbcr_format.cr_x_position - ycbcr_format.cr_x_position) < 1e-3);
-		assert(fabs(output_ycbcr_format.cr_y_position - ycbcr_format.cr_y_position) < 1e-3);
+		assert(output_ycbcr_format.chroma_subsampling_x == 1);
+		assert(output_ycbcr_format.chroma_subsampling_y == 1);
 	} else {
 		output_ycbcr_format = ycbcr_format;
 	}
@@ -127,12 +123,8 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
 void EffectChain::change_ycbcr_output_format(const YCbCrFormat &ycbcr_format)
 {
 	assert(num_output_color_ycbcr > 0);
-	assert(output_ycbcr_format.chroma_subsampling_x == ycbcr_format.chroma_subsampling_x);
-	assert(output_ycbcr_format.chroma_subsampling_y == ycbcr_format.chroma_subsampling_y);
-	assert(fabs(output_ycbcr_format.cb_x_position - ycbcr_format.cb_x_position) < 1e-3);
-	assert(fabs(output_ycbcr_format.cb_y_position - ycbcr_format.cb_y_position) < 1e-3);
-	assert(fabs(output_ycbcr_format.cr_x_position - ycbcr_format.cr_x_position) < 1e-3);
-	assert(fabs(output_ycbcr_format.cr_y_position - ycbcr_format.cr_y_position) < 1e-3);
+	assert(output_ycbcr_format.chroma_subsampling_x == 1);
+	assert(output_ycbcr_format.chroma_subsampling_y == 1);
 
 	output_ycbcr_format = ycbcr_format;
 	if (finalized) {
