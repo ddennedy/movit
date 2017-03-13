@@ -294,6 +294,11 @@ public:
 
 	// Set number of output bits, to scale the dither.
 	// 8 is the right value for most outputs.
+	//
+	// Special note for 10- and 12-bit Y'CbCr packed into GL_UNSIGNED_SHORT:
+	// This is relative to the actual output, not the logical one, so you should
+	// specify 16 here, not 10 or 12.
+	//
 	// The default, 0, is a special value that means no dither.
 	void set_dither_bits(unsigned num_bits)
 	{
