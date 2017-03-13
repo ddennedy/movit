@@ -97,7 +97,8 @@ void EffectChain::add_output(const ImageFormat &format, OutputAlphaFormat alpha_
 }
 
 void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
-                                   const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
+                                   const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting,
+                                   GLenum output_type)
 {
 	assert(!finalized);
 	assert(num_output_color_ycbcr < 2);
@@ -111,8 +112,10 @@ void EffectChain::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat 
 		assert(output_ycbcr_format.num_levels == ycbcr_format.num_levels);
 		assert(output_ycbcr_format.chroma_subsampling_x == 1);
 		assert(output_ycbcr_format.chroma_subsampling_y == 1);
+		assert(output_ycbcr_type == output_type);
 	} else {
 		output_ycbcr_format = ycbcr_format;
+		output_ycbcr_type = output_type;
 	}
 	output_ycbcr_splitting[num_output_color_ycbcr++] = output_splitting;
 
@@ -1644,7 +1647,7 @@ void EffectChain::add_ycbcr_conversion_if_needed()
 		return;
 	}
 	Node *output = find_output_node();
-	ycbcr_conversion_effect_node = add_node(new YCbCrConversionEffect(output_ycbcr_format));
+	ycbcr_conversion_effect_node = add_node(new YCbCrConversionEffect(output_ycbcr_format, output_ycbcr_type));
 	connect_nodes(output, ycbcr_conversion_effect_node);
 }
 	

@@ -15,8 +15,8 @@ using namespace Eigen;
 
 namespace movit {
 
-YCbCrConversionEffect::YCbCrConversionEffect(const YCbCrFormat &ycbcr_format)
-	: ycbcr_format(ycbcr_format)
+YCbCrConversionEffect::YCbCrConversionEffect(const YCbCrFormat &ycbcr_format, GLenum type)
+	: ycbcr_format(ycbcr_format), type(type)
 {
 	register_uniform_mat3("ycbcr_matrix", &uniform_ycbcr_matrix);
 	register_uniform_vec3("offset", uniform_offset);
@@ -37,7 +37,8 @@ void YCbCrConversionEffect::set_gl_state(GLuint glsl_program_num, const string &
 	Effect::set_gl_state(glsl_program_num, prefix, sampler_num);
 
 	Matrix3d ycbcr_to_rgb;
-	compute_ycbcr_matrix(ycbcr_format, uniform_offset, &ycbcr_to_rgb);
+	double scale_factor;
+	compute_ycbcr_matrix(ycbcr_format, uniform_offset, &ycbcr_to_rgb, type, &scale_factor);
 
 	uniform_ycbcr_matrix = ycbcr_to_rgb.inverse();
 
@@ -74,6 +75,9 @@ void YCbCrConversionEffect::set_gl_state(GLuint glsl_program_num, const string &
 		} else {
 			assert(false);
 		}
+		uniform_ycbcr_min[0] /= scale_factor;
+		uniform_ycbcr_min[1] /= scale_factor;
+		uniform_ycbcr_min[2] /= scale_factor;
 	}
 }
 

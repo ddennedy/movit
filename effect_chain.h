@@ -264,7 +264,7 @@ public:
 	void add_output(const ImageFormat &format, OutputAlphaFormat alpha_format);
 
 	// Adds an YCbCr output. Note that you can only have at most two Y'CbCr
-	// outputs, and they must have the same <ycbcr_format>.
+	// outputs, and they must have the same <ycbcr_format> and <type>.
 	// (This limitation may be lifted in the future, to allow e.g. simultaneous
 	// 8- and 10-bit output. Currently, multiple Y'CbCr outputs are only
 	// useful in some very limited circumstances, like if one texture goes
@@ -272,13 +272,19 @@ public:
 	//
 	// Only 4:4:4 output is supported due to fragment shader limitations,
 	// so chroma_subsampling_x and chroma_subsampling_y must both be 1.
+	// <type> should match the data type of the FBO you are rendering to,
+	// so that if you use 16-bit output (GL_UNSIGNED_SHORT), you will get
+	// 8-, 10- or 12-bit output correctly as determined by <ycbcr_format.num_levels>.
+	// Using e.g. ycbcr_format.num_levels == 1024 with GL_UNSIGNED_BYTE is
+	// nonsensical and invokes undefined behavior.
 	//
 	// If you have both RGBA and Y'CbCr output(s), the RGBA output will come
 	// in the last draw buffer. Also, <format> and <alpha_format> must be
 	// identical between the two.
 	void add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format,
 	                      const YCbCrFormat &ycbcr_format,
-			      YCbCrOutputSplitting output_splitting = YCBCR_OUTPUT_INTERLEAVED);
+			      YCbCrOutputSplitting output_splitting = YCBCR_OUTPUT_INTERLEAVED,
+	                      GLenum output_type = GL_UNSIGNED_BYTE);
 
 	// Change Y'CbCr output format. (This can be done also after finalize()).
 	// Note that you are not allowed to change subsampling parameters;
@@ -494,6 +500,7 @@ private:
 	bool output_color_rgba;
 	int num_output_color_ycbcr;                      // Max 2.
 	YCbCrFormat output_ycbcr_format;                 // If num_output_color_ycbcr is > 0.
+	GLenum output_ycbcr_type;                        // If num_output_color_ycbcr is > 0.
 	YCbCrOutputSplitting output_ycbcr_splitting[2];  // If num_output_color_ycbcr is > N.
 
 	std::vector<Node *> nodes;

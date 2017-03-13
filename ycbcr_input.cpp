@@ -153,20 +153,7 @@ string YCbCrInput::output_fragment_shader()
 {
 	float offset[3];
 	Matrix3d ycbcr_to_rgb;
-	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb);
-
-	if (type == GL_UNSIGNED_SHORT) {
-		// For 10-bit or 12-bit packed into 16-bit, we need to scale the values
-		// so that the max value goes from 1023 (or 4095) to 65535. We do this
-		// by folding the scaling into the conversion matrix, so it comes essentially
-		// for free. However, the offset is before the scaling (and thus assumes
-		// correctly scaled values), so we need to adjust that the other way.
-		double scale = 65535.0 / (ycbcr_format.num_levels - 1);
-		offset[0] /= scale;
-		offset[1] /= scale;
-		offset[2] /= scale;
-		ycbcr_to_rgb *= scale;
-	}
+	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb, type);
 
 	string frag_shader;
 

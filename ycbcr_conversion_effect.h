@@ -18,7 +18,7 @@ class YCbCrConversionEffect : public Effect {
 private:
 	// Should not be instantiated by end users;
 	// call EffectChain::add_ycbcr_output() instead.
-	YCbCrConversionEffect(const YCbCrFormat &ycbcr_format);
+	YCbCrConversionEffect(const YCbCrFormat &ycbcr_format, GLenum type);
 	friend class EffectChain;
 
 public:
@@ -36,6 +36,7 @@ public:
 
 private:
 	YCbCrFormat ycbcr_format;
+	GLenum type;
 
 	Eigen::Matrix3d uniform_ycbcr_matrix;
 	float uniform_offset[3];

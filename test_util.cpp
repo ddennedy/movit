@@ -143,6 +143,11 @@ void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, u
 	internal_run(out_data, out_data2, out_data3, out_data4, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
 }
 
+void EffectChainTester::run(uint16_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run<uint16_t>(out_data, NULL, NULL, NULL, GL_UNSIGNED_SHORT, format, color_space, gamma_curve, alpha_format);
+}
+
 void EffectChainTester::run_10_10_10_2(uint32_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
 	internal_run<uint32_t>(out_data, NULL, NULL, NULL, GL_UNSIGNED_INT_2_10_10_10_REV, format, color_space, gamma_curve, alpha_format);
@@ -158,6 +163,8 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 	GLuint type;
 	if (framebuffer_format == GL_RGBA8) {
 		type = GL_UNSIGNED_BYTE;
+	} else if (framebuffer_format == GL_RGBA16) {
+		type = GL_UNSIGNED_SHORT;
 	} else if (framebuffer_format == GL_RGBA16F || framebuffer_format == GL_RGBA32F) {
 		type = GL_FLOAT;
 	} else if (framebuffer_format == GL_RGB10_A2) {
@@ -239,7 +246,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 			check_error();
 		}
 
-		if (format == GL_RGBA && (type == GL_UNSIGNED_BYTE || type == GL_FLOAT)) {
+		if (format == GL_RGBA && (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_SHORT || type == GL_FLOAT)) {
 			vertical_flip(ptr, width * 4, height);
 		} else {
 			vertical_flip(ptr, width, height);
@@ -258,9 +265,9 @@ void EffectChainTester::add_output(const ImageFormat &format, OutputAlphaFormat 
 	output_added = true;
 }
 
-void EffectChainTester::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format, const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
+void EffectChainTester::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format, const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting, GLenum type)
 {
-	chain.add_ycbcr_output(format, alpha_format, ycbcr_format, output_splitting);
+	chain.add_ycbcr_output(format, alpha_format, ycbcr_format, output_splitting, type);
 	output_added = true;
 }
 
@@ -326,6 +333,27 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 }
 
 void expect_equal(const unsigned char *ref, const unsigned char *result, unsigned width, unsigned height, unsigned largest_difference_limit, float rms_limit)
+{
+	assert(width > 0);
+	assert(height > 0);
+
+	float *ref_float = new float[width * height];
+	float *result_float = new float[width * height];
+
+	for (unsigned y = 0; y < height; ++y) {
+		for (unsigned x = 0; x < width; ++x) {
+			ref_float[y * width + x] = ref[y * width + x];
+			result_float[y * width + x] = result[y * width + x];
+		}
+	}
+
+	expect_equal(ref_float, result_float, width, height, largest_difference_limit, rms_limit);
+
+	delete[] ref_float;
+	delete[] result_float;
+}
+
+void expect_equal(const uint16_t *ref, const uint16_t *result, unsigned width, unsigned height, unsigned largest_difference_limit, float rms_limit)
 {
 	assert(width > 0);
 	assert(height > 0);

@@ -576,4 +576,50 @@ TEST(YCbCrConversionEffectTest, TenBitOutput) {
 	expect_equal(expected_data, expanded_out_data, 4 * width, height);
 }
 
+TEST(YCbCrConversionEffectTest, TenBitOutputInSixteen) {
+	const int width = 1;
+	const int height = 5;
+
+	// Same test inputs and outputs as TenBitOutput, except that alpha
+	// is 16 bits instead of two.
+	float data[width * height * 4] = {
+		0.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	uint16_t out_data[width * height * 4];
+	uint16_t expected_data[width * height * 4] = {
+		 64, 512, 512, 65535,
+		940, 512, 512, 65535,
+		250, 409, 960, 65535,
+		691, 167, 105, 65535,
+		127, 960, 471, 65535,
+	};
+
+	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA16);
+	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 1024;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format, YCBCR_OUTPUT_INTERLEAVED, GL_UNSIGNED_SHORT);
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	expect_equal(expected_data, out_data, 4 * width, height);
+}
+
 }  // namespace movit

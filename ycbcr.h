@@ -39,6 +39,7 @@
 
 #include "image_format.h"
 
+#include <epoxy/gl.h>
 #include <Eigen/Core>
 
 namespace movit {
@@ -75,7 +76,13 @@ float compute_chroma_offset(float pos, unsigned subsampling_factor, unsigned res
 // Given <ycbcr_format>, compute the values needed to turn Y'CbCr into R'G'B';
 // first subtract the returned offset, then left-multiply the returned matrix
 // (the scaling is already folded into it).
-void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float *offset, Eigen::Matrix3d *ycbcr_to_rgb);
+//
+// <type> is the data type you're rendering from; normally, it would should match
+// <ycbcr_format.num_levels>, but for the special case of 10- and 12-bit Y'CbCr,
+// we support storing it in 16-bit formats, which incurs extra scaling factors.
+// You can get that scaling factor in <scale> if you want.
+void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float *offset, Eigen::Matrix3d *ycbcr_to_rgb,
+                          GLenum type = GL_UNSIGNED_BYTE, double *scale_factor = NULL);
 
 }  // namespace movit
 
