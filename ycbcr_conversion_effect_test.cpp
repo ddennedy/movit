@@ -619,7 +619,9 @@ TEST(YCbCrConversionEffectTest, TenBitOutputInSixteen) {
 	tester.add_ycbcr_output(format, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED, ycbcr_format, YCBCR_OUTPUT_INTERLEAVED, GL_UNSIGNED_SHORT);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 
-	expect_equal(expected_data, out_data, 4 * width, height);
+	// Add some slight leeway for the benefit of cards that don't
+	// round correctly (would be fixed by DitherEffect if we had dither).
+	expect_equal(expected_data, out_data, 4 * width, height, 2);
 }
 
 }  // namespace movit
