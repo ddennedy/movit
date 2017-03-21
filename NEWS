@@ -1,3 +1,24 @@
+Movit 1.5.0, March 21st, 2017
+
+  - Support interleaved Y'CbCr input (4:4:4 in a single texture).
+
+  - Support 10-bit and 12-bit Y'CbCr, both for input and output. For planar,
+    these are supported packed in 16-bit ints; for interleaved, 10:10:10:2 is
+    supported. (Efficient conversion to and from v210, ie. 10-bit 4:2:2,
+    is possible using compute shaders, but Movit does not include support
+    for them at the current point.) Note that this now means the num_levels
+    flag in YCbCrFormat actually matters, although 0 will be interpreted
+    as 256 (8-bit) for the benefit of older applications.
+
+  - Limited support for having multiple Y'CbCr outputs from a chain.
+
+  - Allow changing the Y'CbCr output coefficients runtime, ie., after finalize.
+
+  - Fix an issue where the last pass would have been rendered with the sRGB
+    flag set, which confused Qt applications running in certain NVIDIA
+    configurations.
+
+
 Movit 1.4.0, November 5th, 2016
 
   - Allow setting the intermediate format for chains, instead of hardcoding

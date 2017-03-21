@@ -89,9 +89,9 @@ OK, I can read a bit. What do you mean by “modern”?
 Backwards compatibility is fine and all, but sometimes we can do better
 by observing that the world has moved on. In particular:
 
-* It's 2016, so people want to edit HD video.
-* It's 2016, so everybody has a GPU.
-* It's 2016, so everybody has a working C++ compiler.
+* It's 2017, so people want to edit HD video.
+* It's 2017, so everybody has a GPU.
+* It's 2017, so everybody has a working C++ compiler.
   (Even Microsoft fixed theirs around 2003!)
 
 While from a programming standpoint I'd love to say that it's 2016
