@@ -138,6 +138,10 @@ public:
 	// NOTE: The input does not take ownership of this texture; you are responsible
 	// for releasing it yourself. In particular, if you call invalidate_pixel_data()
 	// or anything calling it, the texture will silently be removed from the input.
+	//
+	// NOTE: Doing this in a situation where can_output_linear_gamma() is true
+	// can yield unexpected results, as the downstream effect can expect the texture
+	// to be uploaded with the sRGB flag on.
 	void set_texture_num(GLuint texture_num)
 	{
 		possibly_release_texture();
