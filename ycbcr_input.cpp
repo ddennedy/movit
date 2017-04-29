@@ -175,9 +175,12 @@ string YCbCrInput::output_fragment_shader()
 	if (ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
 		frag_shader += "#define Y_CB_CR_SAME_TEXTURE 1\n";
 	} else if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
+		bool cb_cr_offsets_equal =
+			(fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6) &&
+			(fabs(ycbcr_format.cb_y_position - ycbcr_format.cr_y_position) < 1e-6);
 		char buf[256];
 		snprintf(buf, sizeof(buf), "#define Y_CB_CR_SAME_TEXTURE 0\n#define CB_CR_SAME_TEXTURE 1\n#define CB_CR_OFFSETS_EQUAL %d\n",
-			(fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6));
+			cb_cr_offsets_equal);
 		frag_shader += buf;
 	} else {
 		frag_shader += "#define Y_CB_CR_SAME_TEXTURE 0\n#define CB_CR_SAME_TEXTURE 0\n";
