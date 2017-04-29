@@ -3,6 +3,10 @@
 // uniform sampler2D PREFIX(tex_cbcr);  // If CB_CR_SAME_TEXTURE.
 // uniform sampler2D PREFIX(tex_cb);    // If not CB_CR_SAME_TEXTURE.
 // uniform sampler2D PREFIX(tex_cr);    // If not CB_CR_SAME_TEXTURE.
+// uniform mat3 PREFIX(ycbcr_matrix);
+// uniform vec3 PREFIX(offset);
+// uniform vec2 PREFIX(cb_offset);
+// uniform vec2 PREFIX(cr_offset);
 
 vec4 FUNCNAME(vec2 tc) {
 	// OpenGL's origin is bottom-left, but most graphics software assumes

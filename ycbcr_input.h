@@ -161,6 +161,16 @@ public:
 		this->owns_texture[channel] = false;
 	}
 
+	// You can change the Y'CbCr format freely, also after finalize,
+	// although with one limitation: If Cb and Cr come from the same
+	// texture and their offsets offsets are the same (ie., within 1e-6)
+	// when finalizing, they most continue to be so forever, as this
+	// optimization is compiled into the shader.
+	//
+	// If you change subsampling parameters, you'll need to call
+	// set_width() / set_height() again after this.
+	void change_ycbcr_format(const YCbCrFormat &ycbcr_format);
+
 	virtual void inform_added(EffectChain *chain)
 	{
 		resource_pool = chain->get_resource_pool();
@@ -180,6 +190,10 @@ private:
 	GLenum type;
 	GLuint pbos[3], texture_num[3];
 	GLint uniform_tex_y, uniform_tex_cb, uniform_tex_cr;
+	Eigen::Matrix3d uniform_ycbcr_matrix;
+	float uniform_offset[3];
+	Point2D uniform_cb_offset, uniform_cr_offset;
+	bool cb_cr_offsets_equal;
 
 	unsigned width, height, widths[3], heights[3];
 	const unsigned char *pixel_data[3];

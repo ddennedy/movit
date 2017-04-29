@@ -285,6 +285,80 @@ TEST(YCbCrInputTest, Rec2020) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
+// Very similar to Rec709.
+TEST(YCbCrInputTest, ChangeFormat) {
+	const int width = 1;
+	const int height = 5;
+
+	// Pure-color test inputs, calculated with the formulas in Rec. 709
+	// page 19, items 3.4 and 3.5.
+	unsigned char y[width * height] = {
+		16, 235, 63, 173, 32,
+	};
+	unsigned char cb[width * height] = {
+		128, 128, 102, 42, 240,
+	};
+	unsigned char cr[width * height] = {
+		128, 128, 240, 26, 118,
+	};
+	float expected_data[4 * width * height] = {
+		0.0, 0.0, 0.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+	};
+	float out_data[4 * width * height];
+
+	EffectChainTester tester(NULL, width, height);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_sRGB;
+
+	// Basically all of these values will be changed after finalize.
+	YCbCrFormat initial_ycbcr_format;
+	initial_ycbcr_format.luma_coefficients = YCBCR_REC_601;
+	initial_ycbcr_format.full_range = true;
+	initial_ycbcr_format.num_levels = 1024;
+	initial_ycbcr_format.chroma_subsampling_x = 1;
+	initial_ycbcr_format.chroma_subsampling_y = 5;
+	initial_ycbcr_format.cb_x_position = 0.0f;
+	initial_ycbcr_format.cb_y_position = 0.5f;
+	initial_ycbcr_format.cr_x_position = 0.0f;
+	initial_ycbcr_format.cr_y_position = 0.5f;
+
+	YCbCrInput *input = new YCbCrInput(format, initial_ycbcr_format, width, height);
+	input->set_pixel_data(0, y);
+	input->set_pixel_data(1, cb);
+	input->set_pixel_data(2, cr);
+	tester.get_chain()->add_input(input);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Rerun with the right format.
+	YCbCrFormat ycbcr_format;
+	ycbcr_format.luma_coefficients = YCBCR_REC_709;
+	ycbcr_format.full_range = false;
+	ycbcr_format.num_levels = 256;
+	ycbcr_format.chroma_subsampling_x = 1;
+	ycbcr_format.chroma_subsampling_y = 1;
+	ycbcr_format.cb_x_position = 0.5f;
+	ycbcr_format.cb_y_position = 0.5f;
+	ycbcr_format.cr_x_position = 0.5f;
+	ycbcr_format.cr_y_position = 0.5f;
+
+	input->change_ycbcr_format(ycbcr_format);
+	input->set_width(width);
+	input->set_height(height);
+
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// Y'CbCr isn't 100% accurate (the input values are rounded),
+	// so we need some leeway.
+	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
+}
+
 TEST(YCbCrInputTest, Subsampling420) {
 	const int width = 4;
 	const int height = 4;

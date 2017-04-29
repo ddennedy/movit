@@ -56,6 +56,10 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	}
 
 	register_int("needs_mipmaps", &needs_mipmaps);
+	register_uniform_mat3("inv_ycbcr_matrix", &uniform_ycbcr_matrix);
+	register_uniform_vec3("offset", uniform_offset);
+	register_uniform_vec2("cb_offset", (float *)&uniform_cb_offset);
+	register_uniform_vec2("cr_offset", (float *)&uniform_cr_offset);
 }
 
 YCbCrInput::~YCbCrInput()
@@ -67,6 +71,18 @@ YCbCrInput::~YCbCrInput()
 
 void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
 {
+	compute_ycbcr_matrix(ycbcr_format, uniform_offset, &uniform_ycbcr_matrix, type);
+
+	uniform_cb_offset.x = compute_chroma_offset(
+		ycbcr_format.cb_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
+	uniform_cb_offset.y = compute_chroma_offset(
+		ycbcr_format.cb_y_position, ycbcr_format.chroma_subsampling_y, heights[1]);
+
+	uniform_cr_offset.x = compute_chroma_offset(
+		ycbcr_format.cr_x_position, ycbcr_format.chroma_subsampling_x, widths[2]);
+	uniform_cr_offset.y = compute_chroma_offset(
+		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
+
 	for (unsigned channel = 0; channel < num_channels; ++channel) {
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
 		check_error();
@@ -151,31 +167,12 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 
 string YCbCrInput::output_fragment_shader()
 {
-	float offset[3];
-	Matrix3d ycbcr_to_rgb;
-	compute_ycbcr_matrix(ycbcr_format, offset, &ycbcr_to_rgb, type);
-
 	string frag_shader;
-
-	frag_shader = output_glsl_mat3("PREFIX(inv_ycbcr_matrix)", ycbcr_to_rgb);
-	frag_shader += output_glsl_vec3("PREFIX(offset)", offset[0], offset[1], offset[2]);
-
-	float cb_offset_x = compute_chroma_offset(
-		ycbcr_format.cb_x_position, ycbcr_format.chroma_subsampling_x, widths[1]);
-	float cb_offset_y = compute_chroma_offset(
-		ycbcr_format.cb_y_position, ycbcr_format.chroma_subsampling_y, heights[1]);
-	frag_shader += output_glsl_vec2("PREFIX(cb_offset)", cb_offset_x, cb_offset_y);
-
-	float cr_offset_x = compute_chroma_offset(
-		ycbcr_format.cr_x_position, ycbcr_format.chroma_subsampling_x, widths[2]);
-	float cr_offset_y = compute_chroma_offset(
-		ycbcr_format.cr_y_position, ycbcr_format.chroma_subsampling_y, heights[2]);
-	frag_shader += output_glsl_vec2("PREFIX(cr_offset)", cr_offset_x, cr_offset_y);
 
 	if (ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
 		frag_shader += "#define Y_CB_CR_SAME_TEXTURE 1\n";
 	} else if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR) {
-		bool cb_cr_offsets_equal =
+		cb_cr_offsets_equal =
 			(fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6) &&
 			(fabs(ycbcr_format.cb_y_position - ycbcr_format.cr_y_position) < 1e-6);
 		char buf[256];
@@ -188,6 +185,19 @@ string YCbCrInput::output_fragment_shader()
 
 	frag_shader += read_file("ycbcr_input.frag");
 	return frag_shader;
+}
+
+void YCbCrInput::change_ycbcr_format(const YCbCrFormat &ycbcr_format)
+{
+	if (cb_cr_offsets_equal) {
+		assert((fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6) &&
+		       (fabs(ycbcr_format.cb_y_position - ycbcr_format.cr_y_position) < 1e-6));
+	}
+	if (ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
+		assert(ycbcr_format.chroma_subsampling_x == 1);
+		assert(ycbcr_format.chroma_subsampling_y == 1);
+	}
+	this->ycbcr_format = ycbcr_format;
 }
 
 void YCbCrInput::invalidate_pixel_data()
