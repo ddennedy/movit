@@ -184,6 +184,7 @@ string YCbCrInput::output_fragment_shader()
 	}
 
 	frag_shader += read_file("ycbcr_input.frag");
+	frag_shader += "#undef CB_CR_SAME_TEXTURE\n#undef Y_CB_CR_SAME_TEXTURE\n";
 	return frag_shader;
 }
 
