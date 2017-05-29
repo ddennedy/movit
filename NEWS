@@ -1,3 +1,10 @@
+Movit 1.5.1, May 29th, 2017
+
+  - Allow YCbCrInput to change input format after finalize.
+
+  - Some minor YCbCrInput bugfixes.
+
+
 Movit 1.5.0, March 21st, 2017
 
   - Support interleaved Y'CbCr input (4:4:4 in a single texture).
