@@ -27,12 +27,6 @@ namespace movit {
 
 namespace {
 
-template<class T>
-struct Tap {
-	T weight;
-	T pos;
-};
-
 float sinc(float x)
 {
 	if (fabs(x) < 1e-6) {
@@ -212,7 +206,7 @@ void normalize_sum(Tap<T>* vals, unsigned num)
 //
 // The greedy strategy for combining samples is optimal.
 template<class DestFloat>
-unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, Tap<DestFloat> **bilinear_weights)
+unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, unique_ptr<Tap<DestFloat>[]> *bilinear_weights)
 {
 	float num_subtexels = src_size / movit_texel_subpixel_precision;
 	float inv_num_subtexels = movit_texel_subpixel_precision / src_size;
@@ -225,9 +219,9 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 
 	// Now that we know the right width, actually combine the samples.
 	unsigned src_bilinear_samples = src_samples - max_samples_saved;
-	*bilinear_weights = new Tap<DestFloat>[dst_samples * src_bilinear_samples];
+	bilinear_weights->reset(new Tap<DestFloat>[dst_samples * src_bilinear_samples]);
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		Tap<DestFloat> *bilinear_weights_ptr = *bilinear_weights + y * src_bilinear_samples;
+		Tap<DestFloat> *bilinear_weights_ptr = bilinear_weights->get() + y * src_bilinear_samples;
 		unsigned num_samples_saved = combine_samples(
 			weights + y * src_samples,
 			bilinear_weights_ptr,
@@ -506,12 +500,68 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		assert(false);
 	}
 
+	ScalingWeights weights = calculate_scaling_weights(src_size, dst_size, zoom, offset);
+	src_bilinear_samples = weights.src_bilinear_samples;
+	num_loops = weights.num_loops;
+	slice_height = 1.0f / weights.num_loops;
+
+	// Encode as a two-component texture. Note the GL_REPEAT.
+	glActiveTexture(GL_TEXTURE0 + *sampler_num);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	if (last_texture_width == -1) {
+		// Need to set this state the first time.
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		check_error();
+	}
+
+	GLenum type, internal_format;
+	void *pixels;
+	assert((weights.bilinear_weights_fp16 == nullptr) != (weights.bilinear_weights_fp32 == nullptr));
+	if (weights.bilinear_weights_fp32 != nullptr) {
+		type = GL_FLOAT;
+		internal_format = GL_RG32F;
+		pixels = weights.bilinear_weights_fp32.get();
+	} else {
+		type = GL_HALF_FLOAT;
+		internal_format = GL_RG16F;
+		pixels = weights.bilinear_weights_fp16.get();
+	}
+
+	if (int(weights.src_bilinear_samples) == last_texture_width &&
+	    int(weights.dst_samples) == last_texture_height &&
+	    internal_format == last_texture_internal_format) {
+		// Texture dimensions and type are unchanged; it is more efficient
+		// to just update it rather than making an entirely new texture.
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, weights.src_bilinear_samples, weights.dst_samples, GL_RG, type, pixels);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, weights.src_bilinear_samples, weights.dst_samples, 0, GL_RG, type, pixels);
+		last_texture_width = weights.src_bilinear_samples;
+		last_texture_height = weights.dst_samples;
+		last_texture_internal_format = internal_format;
+	}
+	check_error();
+}
+
+ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
+{
+	if (!lanczos_table_init_done) {
+		// Only needed if run from outside ResampleEffect.
+		init_lanczos_table();
+	}
+
 	// For many resamplings (e.g. 640 -> 1280), we will end up with the same
 	// set of samples over and over again in a loop. Thus, we can compute only
 	// the first such loop, and then ask the card to repeat the texture for us.
 	// This is both easier on the texture cache and lowers our CPU cost for
 	// generating the kernel somewhat.
 	float scaling_factor;
+	int num_loops;
 	if (fabs(zoom - 1.0f) < 1e-6) {
 		num_loops = gcd(src_size, dst_size);
 		scaling_factor = float(dst_size) / float(src_size);
@@ -524,7 +574,6 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		num_loops = 1;
 		scaling_factor = zoom * float(dst_size) / float(src_size);
 	}
-	slice_height = 1.0f / num_loops;
 	unsigned dst_samples = dst_size / num_loops;
 
 	// Sample the kernel in the right place. A diagram with a triangular kernel
@@ -579,7 +628,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	float radius_scaling_factor = min(scaling_factor, 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
-	Tap<float> *weights = new Tap<float>[dst_samples * src_samples];
+	unique_ptr<Tap<float>[]> weights(new Tap<float>[dst_samples * src_samples]);
 	float subpixel_offset = offset - lrintf(offset);  // The part not covered by whole_pixel_offset.
 	assert(subpixel_offset >= -0.5f && subpixel_offset <= 0.5f);
 	for (unsigned y = 0; y < dst_samples; ++y) {
@@ -602,15 +651,14 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// Our tolerance level for total error is a bit higher than the one for invididual
 	// samples, since one would assume overall errors in the shape don't matter as much.
 	const float max_error = 2.0f / (255.0f * 255.0f);
-	Tap<fp16_int_t> *bilinear_weights_fp16;
-	src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp16);
-	Tap<float> *bilinear_weights_fp32 = NULL;
-	bool fallback_to_fp32 = false;
+	unique_ptr<Tap<fp16_int_t>[]> bilinear_weights_fp16;
+	int src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp16);
+	unique_ptr<Tap<float>[]> bilinear_weights_fp32 = NULL;
 	double max_sum_sq_error_fp16 = 0.0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		double sum_sq_error_fp16 = compute_sum_sq_error(
-			weights + y * src_samples, src_samples,
-			bilinear_weights_fp16 + y * src_bilinear_samples, src_bilinear_samples,
+			weights.get() + y * src_samples, src_samples,
+			bilinear_weights_fp16.get() + y * src_bilinear_samples, src_bilinear_samples,
 			src_size);
 		max_sum_sq_error_fp16 = std::max(max_sum_sq_error_fp16, sum_sq_error_fp16);
 		if (max_sum_sq_error_fp16 > max_error) {
@@ -619,54 +667,17 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	}
 
 	if (max_sum_sq_error_fp16 > max_error) {
-		fallback_to_fp32 = true;
-		src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp32);
+		bilinear_weights_fp16.reset();
+		src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp32);
 	}
 
-	// Encode as a two-component texture. Note the GL_REPEAT.
-	glActiveTexture(GL_TEXTURE0 + *sampler_num);
-	check_error();
-	glBindTexture(GL_TEXTURE_2D, texnum);
-	check_error();
-	if (last_texture_width == -1) {
-		// Need to set this state the first time.
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		check_error();
-	}
-
-	GLenum type, internal_format;
-	void *pixels;
-	if (fallback_to_fp32) {
-		type = GL_FLOAT;
-		internal_format = GL_RG32F;
-		pixels = bilinear_weights_fp32;
-	} else {
-		type = GL_HALF_FLOAT;
-		internal_format = GL_RG16F;
-		pixels = bilinear_weights_fp16;
-	}
-
-	if (int(src_bilinear_samples) == last_texture_width &&
-	    int(dst_samples) == last_texture_height &&
-	    internal_format == last_texture_internal_format) {
-		// Texture dimensions and type are unchanged; it is more efficient
-		// to just update it rather than making an entirely new texture.
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, src_bilinear_samples, dst_samples, GL_RG, type, pixels);
-	} else {
-		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, src_bilinear_samples, dst_samples, 0, GL_RG, type, pixels);
-		last_texture_width = src_bilinear_samples;
-		last_texture_height = dst_samples;
-		last_texture_internal_format = internal_format;
-	}
-	check_error();
-
-	delete[] weights;
-	delete[] bilinear_weights_fp16;
-	delete[] bilinear_weights_fp32;
+	ScalingWeights ret;
+	ret.src_bilinear_samples = src_bilinear_samples;
+	ret.dst_samples = dst_samples;
+	ret.num_loops = num_loops;
+	ret.bilinear_weights_fp16 = move(bilinear_weights_fp16);
+	ret.bilinear_weights_fp32 = move(bilinear_weights_fp32);
+	return ret;
 }
 
 void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const string &prefix, unsigned *sampler_num)

@@ -18,15 +18,33 @@
 #include <epoxy/gl.h>
 #include <assert.h>
 #include <stddef.h>
+#include <memory>
 #include <string>
 
 #include "effect.h"
+#include "fp16.h"
 
 namespace movit {
 
 class EffectChain;
 class Node;
 class SingleResamplePassEffect;
+
+// Public so that it can be benchmarked externally.
+template<class T>
+struct Tap {
+	T weight;
+	T pos;
+};
+struct ScalingWeights {
+	unsigned src_bilinear_samples;
+	unsigned dst_samples, num_loops;
+
+	// Exactly one of these is set.
+	std::unique_ptr<Tap<fp16_int_t>[]> bilinear_weights_fp16;
+	std::unique_ptr<Tap<float>[]> bilinear_weights_fp32;
+};
+ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset);
 
 class ResampleEffect : public Effect {
 public:
