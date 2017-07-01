@@ -1,7 +1,7 @@
 // Three-lobed Lanczos, the most common choice.
 // Note that if you change this, the accuracy for LANCZOS_TABLE_SIZE
 // needs to be recomputed.
-#define LANCZOS_RADIUS 3.0
+#define LANCZOS_RADIUS 3.0f
 
 #include <epoxy/gl.h>
 #include <assert.h>
@@ -90,7 +90,7 @@ float lanczos_weight_cached(float x)
 		return 0.0f;
 	}
 	float table_pos = x * (LANCZOS_TABLE_SIZE / LANCZOS_RADIUS);
-	int table_pos_int = int(table_pos);  // Truncate towards zero.
+	unsigned table_pos_int = int(table_pos);  // Truncate towards zero.
 	float table_pos_frac = table_pos - table_pos_int;
 	assert(table_pos < LANCZOS_TABLE_SIZE + 2);
 	return lanczos_table[table_pos_int] +
@@ -249,10 +249,10 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 	// Find the effective range of the bilinear-optimized kernel.
 	// Due to rounding of the positions, this is not necessarily the same
 	// as the intended range (ie., the range of the original weights).
-	int lower_pos = int(floor(to_fp32(bilinear_weights[0].pos) * size - 0.5));
-	int upper_pos = int(ceil(to_fp32(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5)) + 2;
-	lower_pos = min<int>(lower_pos, lrintf(weights[0].pos * size - 0.5));
-	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5) + 1);
+	int lower_pos = int(floor(to_fp32(bilinear_weights[0].pos) * size - 0.5f));
+	int upper_pos = int(ceil(to_fp32(bilinear_weights[num_bilinear_weights - 1].pos) * size - 0.5f)) + 2;
+	lower_pos = min<int>(lower_pos, lrintf(weights[0].pos * size - 0.5f));
+	upper_pos = max<int>(upper_pos, lrintf(weights[num_weights - 1].pos * size - 0.5f) + 1);
 
 	float* effective_weights = new float[upper_pos - lower_pos];
 	for (int i = 0; i < upper_pos - lower_pos; ++i) {
@@ -271,7 +271,7 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 		assert(x0 < upper_pos - lower_pos);
 		assert(x1 < upper_pos - lower_pos);
 
-		effective_weights[x0] += to_fp32(bilinear_weights[i].weight) * (1.0 - f);
+		effective_weights[x0] += to_fp32(bilinear_weights[i].weight) * (1.0f - f);
 		effective_weights[x1] += to_fp32(bilinear_weights[i].weight) * f;
 	}
 
@@ -638,11 +638,12 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
+		float inv_src_size = 1.0 / float(src_size);
 		for (int i = 0; i < src_samples; ++i) {
 			int src_y = base_src_y + i - int_radius;
 			float weight = lanczos_weight_cached(radius_scaling_factor * (src_y - center_src_y - subpixel_offset));
 			weights[y * src_samples + i].weight = weight * radius_scaling_factor;
-			weights[y * src_samples + i].pos = (src_y + 0.5) / float(src_size);
+			weights[y * src_samples + i].pos = (src_y + 0.5f) * inv_src_size;
 		}
 	}
 
