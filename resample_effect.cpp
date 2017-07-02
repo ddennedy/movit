@@ -109,7 +109,7 @@ unsigned gcd(unsigned a, unsigned b)
 }
 
 template<class DestFloat>
-unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_subtexels, float inv_num_subtexels, unsigned num_src_samples, unsigned max_samples_saved)
+unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_subtexels, float inv_num_subtexels, unsigned num_src_samples, unsigned max_samples_saved, float pos1_pos2_diff, float inv_pos1_pos2_diff)
 {
 	// Cut off near-zero values at both sides.
 	unsigned num_samples_saved = 0;
@@ -157,7 +157,7 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_s
 
 		DestFloat pos, total_weight;
 		float sum_sq_error;
-		combine_two_samples(w1, w2, pos1, pos2, num_subtexels, inv_num_subtexels, &pos, &total_weight, &sum_sq_error);
+		combine_two_samples(w1, w2, pos1, pos1_pos2_diff, inv_pos1_pos2_diff, num_subtexels, inv_num_subtexels, &pos, &total_weight, &sum_sq_error);
 
 		// If the interpolation error is larger than that of about sqrt(2) of
 		// a level at 8-bit precision, don't combine. (You'd think 1.0 was enough,
@@ -210,10 +210,12 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 {
 	float num_subtexels = src_size / movit_texel_subpixel_precision;
 	float inv_num_subtexels = movit_texel_subpixel_precision / src_size;
+	float pos1_pos2_diff = 1.0f / src_size;
+	float inv_pos1_pos2_diff = src_size;
 
 	unsigned max_samples_saved = UINT_MAX;
 	for (unsigned y = 0; y < dst_samples && max_samples_saved > 0; ++y) {
-		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, max_samples_saved);
+		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, max_samples_saved, pos1_pos2_diff, inv_pos1_pos2_diff);
 		max_samples_saved = min(max_samples_saved, num_samples_saved);
 	}
 
@@ -228,7 +230,9 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 			num_subtexels,
 			inv_num_subtexels,
 			src_samples,
-			max_samples_saved);
+			max_samples_saved,
+			pos1_pos2_diff,
+			inv_pos1_pos2_diff);
 		assert(num_samples_saved == max_samples_saved);
 		normalize_sum(bilinear_weights_ptr, src_bilinear_samples);
 	}

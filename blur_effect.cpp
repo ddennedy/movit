@@ -208,9 +208,8 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		float w2 = weight[base_pos + 1];
 
 		float pos1 = base_pos / (float)size;
-		float pos2 = (base_pos + 1) / (float)size;
 		float pos, total_weight;
-		combine_two_samples(w1, w2, pos1, pos2, num_subtexels, inv_num_subtexels, &pos, &total_weight, NULL);
+		combine_two_samples(w1, w2, pos1, 1.0 / (float)size, size, num_subtexels, inv_num_subtexels, &pos, &total_weight, NULL);
 
 		uniform_samples[2 * i + 0] = pos;
 		uniform_samples[2 * i + 1] = total_weight;

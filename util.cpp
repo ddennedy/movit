@@ -220,7 +220,7 @@ string output_glsl_vec3(const string &name, float x, float y, float z)
 }
 
 template<class DestFloat>
-void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
+void combine_two_samples(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
                          DestFloat *offset, DestFloat *total_weight, float *sum_sq_error)
 {
 	assert(movit_initialized);
@@ -233,8 +233,8 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_s
 	}
 
 	// Round to the desired precision. Note that this might take z outside the 0..1 range.
-	*offset = from_fp32<DestFloat>(pos1 + z * (pos2 - pos1));
-	z = (to_fp32(*offset) - pos1) / (pos2 - pos1);
+	*offset = from_fp32<DestFloat>(pos1 + z * pos1_pos2_diff);
+	z = (to_fp32(*offset) - pos1) * inv_pos1_pos2_diff;
 
 	// Round to the minimum number of bits we have measured earlier.
 	// The card will do this for us anyway, but if we know what the real z
@@ -265,11 +265,11 @@ void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_s
 
 // Explicit instantiations.
 template
-void combine_two_samples<float>(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
+void combine_two_samples<float>(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
                                 float *offset, float *total_weight, float *sum_sq_error);
 
 template
-void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
+void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
                                      fp16_int_t *offset, fp16_int_t *total_weight, float *sum_sq_error);
 
 GLuint generate_vbo(GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)

@@ -59,7 +59,8 @@ enum CombineRoundingBehavior {
 // number of distinct accessible subtexels in the given mipmap level,
 // calculated by num_texels / movit_texel_subpixel_precision. It is a float
 // for performance reasons, even though it is expected to be a whole number.
-// <inv_num_subtexels> is simply its inverse (1/x).
+// <inv_num_subtexels> is simply its inverse (1/x). <pos1_pos2_diff> is
+// (pos2-pos1) and <inv_pos1_pos2_diff> is 1/(pos2-pos1).
 //
 // Note that since the GPU might have limited precision in its linear
 // interpolation, the effective weights might be different from the ones you
@@ -72,7 +73,7 @@ enum CombineRoundingBehavior {
 // rounded fp16 value. This enables more precise calculation of total_weight
 // and sum_sq_error.
 template<class DestFloat>
-void combine_two_samples(float w1, float w2, float pos1, float pos2, float num_subtexels, float inv_num_subtexels,
+void combine_two_samples(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
                          DestFloat *offset, DestFloat *total_weight, float *sum_sq_error);
 
 // Create a VBO with the given data. Returns the VBO number.
