@@ -219,59 +219,6 @@ string output_glsl_vec3(const string &name, float x, float y, float z)
 	return ss.str();
 }
 
-template<class DestFloat>
-void combine_two_samples(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
-                         DestFloat *offset, DestFloat *total_weight, float *sum_sq_error)
-{
-	assert(movit_initialized);
-	assert(w1 * w2 >= 0.0f);  // Should not have differing signs.
-	float z;  // Normalized 0..1 between pos1 and pos2.
-	if (fabs(w1 + w2) < 1e-6) {
-		z = 0.5f;
-	} else {
-		z = w2 / (w1 + w2);
-	}
-
-	// Round to the desired precision. Note that this might take z outside the 0..1 range.
-	*offset = from_fp32<DestFloat>(pos1 + z * pos1_pos2_diff);
-	z = (to_fp32(*offset) - pos1) * inv_pos1_pos2_diff;
-
-	// Round to the minimum number of bits we have measured earlier.
-	// The card will do this for us anyway, but if we know what the real z
-	// is, we can pick a better total_weight below.
-	z = lrintf(z * num_subtexels) * inv_num_subtexels;
-	
-	// Choose total weight w so that we minimize total squared error
-	// for the effective weights:
-	//
-	//   e = (w(1-z) - a)² + (wz - b)²
-	//
-	// Differentiating by w and setting equal to zero:
-	//
-	//   2(w(1-z) - a)(1-z) + 2(wz - b)z = 0
-	//   w(1-z)² - a(1-z) + wz² - bz = 0
-	//   w((1-z)² + z²) = a(1-z) + bz
-	//   w = (a(1-z) + bz) / ((1-z)² + z²)
-	//
-	// If z had infinite precision, this would simply reduce to w = w1 + w2.
-	*total_weight = from_fp32<DestFloat>((w1 + z * (w2 - w1)) / (z * z + (1 - z) * (1 - z)));
-
-	if (sum_sq_error != NULL) {
-		float err1 = to_fp32(*total_weight) * (1 - z) - w1;
-		float err2 = to_fp32(*total_weight) * z - w2;
-		*sum_sq_error = err1 * err1 + err2 * err2;
-	}
-}
-
-// Explicit instantiations.
-template
-void combine_two_samples<float>(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
-                                float *offset, float *total_weight, float *sum_sq_error);
-
-template
-void combine_two_samples<fp16_int_t>(float w1, float w2, float pos1, float pos1_pos2_diff, float inv_pos1_pos2_diff, float num_subtexels, float inv_num_subtexels,
-                                     fp16_int_t *offset, fp16_int_t *total_weight, float *sum_sq_error);
-
 GLuint generate_vbo(GLint size, GLenum type, GLsizeiptr data_size, const GLvoid *data)
 {
 	GLuint vbo;
