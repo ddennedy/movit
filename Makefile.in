@@ -90,7 +90,7 @@ EFFECTS = $(TESTED_EFFECTS) $(UNTESTED_EFFECTS)
 # Unit tests.
 TESTS=effect_chain_test fp16_test $(TESTED_INPUTS:=_test) $(TESTED_EFFECTS:=_test)
 
-LIB_OBJS=effect_util.o util.o effect.o effect_chain.o init.o resource_pool.o fp16.o ycbcr.o $(INPUTS:=.o) $(EFFECTS:=.o)
+LIB_OBJS=effect_util.o util.o effect.o effect_chain.o init.o resource_pool.o ycbcr.o $(INPUTS:=.o) $(EFFECTS:=.o)
 
 # Default target:
 all: libmovit.la $(TESTS)
