@@ -27,6 +27,7 @@
 #include <stddef.h>
 #include <list>
 #include <map>
+#include <set>
 #include <stack>
 #include <string>
 #include <utility>
@@ -49,7 +50,8 @@ public:
 	// twice this estimate or more.
 	ResourcePool(size_t program_freelist_max_length = 100,
 	             size_t texture_freelist_max_bytes = 100 << 20,  // 100 MB.
-	             size_t fbo_freelist_max_length = 100);  // Per context.
+	             size_t fbo_freelist_max_length = 100,  // Per context.
+	             size_t vao_freelist_max_length = 100);  // Per context.
 	~ResourcePool();
 
 	// All remaining functions are intended for calls from EffectChain only.
@@ -104,6 +106,19 @@ public:
 	                  GLuint texture3_num = 0);
 	void release_fbo(GLuint fbo_num);
 
+	// Create a VAO of a very specific form: All the given attribute indices
+	// are bound to start of the  given VBO and contain two-component floats.
+	// Keeps ownership of the VAO; you must call release_vec2_vao() of deleting
+	// it when you no longer want it. VAOs are not sharable across contexts.
+	//
+	// These are not cached primarily for performance, but rather to work
+	// around an NVIDIA driver bug where glVertexAttribPointer() is thread-hostile
+	// (ie., simultaneous GL work in unrelated contexts can cause the driver
+	// to free() memory that was never malloc()-ed).
+	GLuint create_vec2_vao(const std::set<GLint> &attribute_indices,
+	                       GLuint vbo_num);
+	void release_vec2_vao(const GLuint vao_num);
+
 	// Informs the ResourcePool that the current context is going away soon,
 	// and that any resources held for it in the freelist should be deleted.
 	//
@@ -123,6 +138,9 @@ private:
 	// is no more than <max_length> elements long.
 	void shrink_fbo_freelist(void *context, size_t max_length);
 
+	// Same, for VAOs.
+	void shrink_vao_freelist(void *context, size_t max_length);
+
 	// Link the given vertex and fragment shaders into a full GLSL program.
 	// See compile_glsl_program() for explanation of <fragment_shader_outputs>.
 	static GLuint link_program(GLuint vs_obj,
@@ -132,7 +150,7 @@ private:
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
 
-	size_t program_freelist_max_length, texture_freelist_max_bytes, fbo_freelist_max_length;
+	size_t program_freelist_max_length, texture_freelist_max_bytes, fbo_freelist_max_length, vao_freelist_max_length;
 		
 	// A mapping from vertex/fragment shader source strings to compiled program number.
 	std::map<std::pair<std::string, std::string>, GLuint> programs;
@@ -203,6 +221,16 @@ private:
 	//
 	// We store iterators directly into <fbo_format> for efficiency.
 	std::map<void *, std::list<FBOFormatIterator> > fbo_freelist;
+
+	// Very similar, for VAOs.
+	struct VAO {
+		GLuint vao_num;
+		std::set<GLint> attribute_indices;
+		GLuint vbo_num;
+	};
+	std::map<std::pair<void *, GLuint>, VAO> vao_formats;
+	typedef std::map<std::pair<void *, GLuint>, VAO>::iterator VAOFormatIterator;
+	std::map<void *, std::list<VAOFormatIterator> > vao_freelist;
 
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);

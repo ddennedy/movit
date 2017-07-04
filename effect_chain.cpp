@@ -1789,17 +1789,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glDepthMask(GL_FALSE);
 	check_error();
 
-	// Generate a VAO that will be used during the entire execution,
-	// and bind the VBO, since it contains all the data.
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	check_error();
-	glBindVertexArray(vao);
-	check_error();
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	check_error();
-	set<GLint> bound_attribute_indices;
-
 	set<Phase *> generated_mipmaps;
 
 	// We choose the simplest option of having one texture per output,
@@ -1847,7 +1836,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			current_srgb = true;
 		}
 
-		execute_phase(phase, last_phase, &bound_attribute_indices, &output_textures, &generated_mipmaps);
+		execute_phase(phase, last_phase, &output_textures, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}
@@ -1867,8 +1856,6 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	check_error();
 	glBindVertexArray(0);
-	check_error();
-	glDeleteVertexArrays(1, &vao);
 	check_error();
 
 	if (do_phase_timing) {
@@ -1932,7 +1919,6 @@ void EffectChain::print_phase_timing()
 }
 
 void EffectChain::execute_phase(Phase *phase, bool last_phase,
-                                set<GLint> *bound_attribute_indices,
                                 map<Phase *, GLuint> *output_textures,
                                 set<Phase *> *generated_mipmaps)
 {
@@ -1993,30 +1979,9 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	// from there.
 	setup_uniforms(phase);
 
-	// Clean up old attributes if they are no longer needed.
-	for (set<GLint>::iterator attr_it = bound_attribute_indices->begin();
-	     attr_it != bound_attribute_indices->end(); ) {
-		if (phase->attribute_indexes.count(*attr_it) == 0) {
-			glDisableVertexAttribArray(*attr_it);
-			check_error();
-			bound_attribute_indices->erase(attr_it++);
-		} else {
-			++attr_it;
-		}
-	}
-
-	// Set up the new attributes, if needed.
-	for (set<GLint>::iterator attr_it = phase->attribute_indexes.begin();
-	     attr_it != phase->attribute_indexes.end();
-	     ++attr_it) {
-		if (bound_attribute_indices->count(*attr_it) == 0) {
-			glEnableVertexAttribArray(*attr_it);
-			check_error();
-			glVertexAttribPointer(*attr_it, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-			check_error();
-			bound_attribute_indices->insert(*attr_it);
-		}
-	}
+	// Bind the vertex data.
+	GLuint vao = resource_pool->create_vec2_vao(phase->attribute_indexes, vbo);
+	glBindVertexArray(vao);
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	check_error();
@@ -2027,6 +1992,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	}
 
 	resource_pool->unuse_glsl_program(instance_program_num);
+	resource_pool->release_vec2_vao(vao);
 
 	if (!last_phase) {
 		resource_pool->release_fbo(fbo);

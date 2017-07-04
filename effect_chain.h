@@ -443,7 +443,6 @@ private:
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
 	void execute_phase(Phase *phase, bool last_phase,
-	                   std::set<GLint> *bound__attribute_indices,
 	                   std::map<Phase *, GLuint> *output_textures,
 	                   std::set<Phase *> *generated_mipmaps);
 

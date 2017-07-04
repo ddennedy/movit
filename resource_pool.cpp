@@ -18,10 +18,12 @@ namespace movit {
 
 ResourcePool::ResourcePool(size_t program_freelist_max_length,
                            size_t texture_freelist_max_bytes,
-                           size_t fbo_freelist_max_length)
+                           size_t fbo_freelist_max_length,
+                           size_t vao_freelist_max_length)
 	: program_freelist_max_length(program_freelist_max_length),
 	  texture_freelist_max_bytes(texture_freelist_max_bytes),
 	  fbo_freelist_max_length(fbo_freelist_max_length),
+	  vao_freelist_max_length(vao_freelist_max_length),
 	  texture_freelist_bytes(0)
 {
 	pthread_mutex_init(&lock, NULL);
@@ -527,14 +529,83 @@ void ResourcePool::release_fbo(GLuint fbo_num)
 	pthread_mutex_unlock(&lock);
 }
 
+GLuint ResourcePool::create_vec2_vao(const set<GLint> &attribute_indices, GLuint vbo_num)
+{
+	void *context = get_gl_context_identifier();
+
+	pthread_mutex_lock(&lock);
+	if (vao_freelist.count(context) != 0) {
+		// See if there's a VAO the freelist we can use.
+		list<VAOFormatIterator>::iterator end = vao_freelist[context].end();
+		for (list<VAOFormatIterator>::iterator freelist_it = vao_freelist[context].begin();
+		     freelist_it != end; ++freelist_it) {
+			VAOFormatIterator vao_it = *freelist_it;
+			if (vao_it->second.vbo_num == vbo_num &&
+			    vao_it->second.attribute_indices == attribute_indices) {
+				vao_freelist[context].erase(freelist_it);
+				pthread_mutex_unlock(&lock);
+				return vao_it->second.vao_num;
+			}
+		}
+	}
+	pthread_mutex_unlock(&lock);
+
+	// Create a new one.
+	VAO vao_format;
+	vao_format.attribute_indices = attribute_indices;
+	vao_format.vbo_num = vbo_num;
+
+	glGenVertexArrays(1, &vao_format.vao_num);
+	check_error();
+	glBindVertexArray(vao_format.vao_num);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_num);
+	check_error();
+
+	for (set<GLint>::const_iterator attr_it = attribute_indices.begin(); attr_it != attribute_indices.end(); ++attr_it) {
+		glEnableVertexAttribArray(*attr_it);
+		check_error();
+		glVertexAttribPointer(*attr_it, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		check_error();
+	}
+
+	glBindVertexArray(0);
+	check_error();
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	check_error();
+
+	pair<void *, GLuint> key(context, vao_format.vao_num);
+	assert(vao_formats.count(key) == 0);
+	vao_formats.insert(make_pair(key, vao_format));
+
+	pthread_mutex_unlock(&lock);
+	return vao_format.vao_num;
+}
+
+void ResourcePool::release_vec2_vao(GLuint vao_num)
+{
+	void *context = get_gl_context_identifier();
+
+	pthread_mutex_lock(&lock);
+	VAOFormatIterator vao_it = vao_formats.find(make_pair(context, vao_num));
+	assert(vao_it != vao_formats.end());
+	vao_freelist[context].push_front(vao_it);
+
+	shrink_vao_freelist(context, vao_freelist_max_length);
+	pthread_mutex_unlock(&lock);
+}
+
 void ResourcePool::clean_context()
 {
 	void *context = get_gl_context_identifier();
 
-	// Currently, we only need to worry about FBOs, as they are the only
-	// non-shareable resource we hold.
+	// Currently, we only need to worry about FBOs and VAOs, as they are the only
+	// non-shareable resources we hold.
 	shrink_fbo_freelist(context, 0);
 	fbo_freelist.erase(context);
+
+	shrink_vao_freelist(context, 0);
+	vao_freelist.erase(context);
 }
 
 void ResourcePool::cleanup_unlinked_fbos(void *context)
@@ -570,6 +641,18 @@ void ResourcePool::shrink_fbo_freelist(void *context, size_t max_length)
 		glDeleteFramebuffers(1, &free_fbo_it->second.fbo_num);
 		check_error();
 		fbo_formats.erase(free_fbo_it);
+		freelist.pop_back();
+	}
+}
+
+void ResourcePool::shrink_vao_freelist(void *context, size_t max_length)
+{
+	list<VAOFormatIterator> &freelist = vao_freelist[context];
+	while (freelist.size() > max_length) {
+		VAOFormatIterator free_vao_it = freelist.back();
+		glDeleteVertexArrays(1, &free_vao_it->second.vao_num);
+		check_error();
+		vao_formats.erase(free_vao_it);
 		freelist.pop_back();
 	}
 }
