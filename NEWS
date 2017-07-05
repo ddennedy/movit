@@ -1,3 +1,11 @@
+Movit 1.5.2, July 5th, 2017
+
+  - The texture generation for ResampleEffect (when the size is changed)
+    now uses less CPU.
+
+  - Work around an NVIDIA driver threading bug by aggressively caching VAOs.
+
+
 Movit 1.5.1, May 29th, 2017
 
   - Allow YCbCrInput to change input format after finalize.
