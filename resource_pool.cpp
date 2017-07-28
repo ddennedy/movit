@@ -548,7 +548,6 @@ GLuint ResourcePool::create_vec2_vao(const set<GLint> &attribute_indices, GLuint
 			}
 		}
 	}
-	pthread_mutex_unlock(&lock);
 
 	// Create a new one.
 	VAO vao_format;
