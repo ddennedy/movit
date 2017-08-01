@@ -206,7 +206,7 @@ void normalize_sum(Tap<T>* vals, unsigned num)
 //
 // The greedy strategy for combining samples is optimal.
 template<class DestFloat>
-unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, unique_ptr<Tap<DestFloat>[]> *bilinear_weights)
+unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsigned src_samples, unsigned dst_samples, Tap<DestFloat> **bilinear_weights)
 {
 	float num_subtexels = src_size / movit_texel_subpixel_precision;
 	float inv_num_subtexels = movit_texel_subpixel_precision / src_size;
@@ -221,9 +221,10 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 
 	// Now that we know the right width, actually combine the samples.
 	unsigned src_bilinear_samples = src_samples - max_samples_saved;
-	bilinear_weights->reset(new Tap<DestFloat>[dst_samples * src_bilinear_samples]);
+	if (*bilinear_weights != NULL) delete[] *bilinear_weights;
+	*bilinear_weights = new Tap<DestFloat>[dst_samples * src_bilinear_samples];
 	for (unsigned y = 0; y < dst_samples; ++y) {
-		Tap<DestFloat> *bilinear_weights_ptr = bilinear_weights->get() + y * src_bilinear_samples;
+		Tap<DestFloat> *bilinear_weights_ptr = *bilinear_weights + y * src_bilinear_samples;
 		unsigned num_samples_saved = combine_samples(
 			weights + y * src_samples,
 			bilinear_weights_ptr,
@@ -526,15 +527,15 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 	GLenum type, internal_format;
 	void *pixels;
-	assert((weights.bilinear_weights_fp16 == nullptr) != (weights.bilinear_weights_fp32 == nullptr));
-	if (weights.bilinear_weights_fp32 != nullptr) {
+	assert((weights.bilinear_weights_fp16 == NULL) != (weights.bilinear_weights_fp32 == NULL));
+	if (weights.bilinear_weights_fp32 != NULL) {
 		type = GL_FLOAT;
 		internal_format = GL_RG32F;
-		pixels = weights.bilinear_weights_fp32.get();
+		pixels = weights.bilinear_weights_fp32;
 	} else {
 		type = GL_HALF_FLOAT;
 		internal_format = GL_RG16F;
-		pixels = weights.bilinear_weights_fp16.get();
+		pixels = weights.bilinear_weights_fp16;
 	}
 
 	if (int(weights.src_bilinear_samples) == last_texture_width &&
@@ -550,6 +551,9 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		last_texture_internal_format = internal_format;
 	}
 	check_error();
+
+	delete[] weights.bilinear_weights_fp16;
+	delete[] weights.bilinear_weights_fp32;
 }
 
 ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
@@ -632,7 +636,7 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 	float radius_scaling_factor = min(scaling_factor, 1.0f);
 	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
 	int src_samples = int_radius * 2 + 1;
-	unique_ptr<Tap<float>[]> weights(new Tap<float>[dst_samples * src_samples]);
+	Tap<float> *weights = new Tap<float>[dst_samples * src_samples];
 	float subpixel_offset = offset - lrintf(offset);  // The part not covered by whole_pixel_offset.
 	assert(subpixel_offset >= -0.5f && subpixel_offset <= 0.5f);
 	for (unsigned y = 0; y < dst_samples; ++y) {
@@ -656,14 +660,14 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 	// Our tolerance level for total error is a bit higher than the one for invididual
 	// samples, since one would assume overall errors in the shape don't matter as much.
 	const float max_error = 2.0f / (255.0f * 255.0f);
-	unique_ptr<Tap<fp16_int_t>[]> bilinear_weights_fp16;
-	int src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp16);
-	unique_ptr<Tap<float>[]> bilinear_weights_fp32 = NULL;
+	Tap<fp16_int_t> *bilinear_weights_fp16 = NULL;
+	int src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp16);
+	Tap<float> *bilinear_weights_fp32 = NULL;
 	double max_sum_sq_error_fp16 = 0.0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		double sum_sq_error_fp16 = compute_sum_sq_error(
-			weights.get() + y * src_samples, src_samples,
-			bilinear_weights_fp16.get() + y * src_bilinear_samples, src_bilinear_samples,
+			weights + y * src_samples, src_samples,
+			bilinear_weights_fp16 + y * src_bilinear_samples, src_bilinear_samples,
 			src_size);
 		max_sum_sq_error_fp16 = std::max(max_sum_sq_error_fp16, sum_sq_error_fp16);
 		if (max_sum_sq_error_fp16 > max_error) {
@@ -672,16 +676,19 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 	}
 
 	if (max_sum_sq_error_fp16 > max_error) {
-		bilinear_weights_fp16.reset();
-		src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp32);
+		delete[] bilinear_weights_fp16;
+		bilinear_weights_fp16 = NULL;
+		src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp32);
 	}
+
+	delete[] weights;
 
 	ScalingWeights ret;
 	ret.src_bilinear_samples = src_bilinear_samples;
 	ret.dst_samples = dst_samples;
 	ret.num_loops = num_loops;
-	ret.bilinear_weights_fp16 = move(bilinear_weights_fp16);
-	ret.bilinear_weights_fp32 = move(bilinear_weights_fp32);
+	ret.bilinear_weights_fp16 = bilinear_weights_fp16;
+	ret.bilinear_weights_fp32 = bilinear_weights_fp32;
 	return ret;
 }
 
