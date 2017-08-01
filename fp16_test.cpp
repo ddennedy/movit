@@ -45,6 +45,10 @@ union fp64 {
 	double f;
 	unsigned long long ll;
 };
+union fp32 {
+	float f;
+	unsigned int u;
+};
 
 TEST(FP16Test, NaN) {
 	// Ignore the sign bit.
