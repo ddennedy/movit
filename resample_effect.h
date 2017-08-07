@@ -48,6 +48,7 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 class ResampleEffect : public Effect {
 public:
 	ResampleEffect();
+	~ResampleEffect();
 
 	virtual std::string effect_type_id() const { return "ResampleEffect"; }
 
@@ -72,6 +73,9 @@ private:
 	void update_size();
 	void update_offset_and_zoom();
 	
+	// Both of these are owned by us if owns_effects is true (before finalize()),
+	// and otherwise owned by the EffectChain.
+	bool owns_effects;
 	SingleResamplePassEffect *hpass, *vpass;
 	int input_width, input_height, output_width, output_height;
 

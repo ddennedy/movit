@@ -301,7 +301,8 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 }  // namespace
 
 ResampleEffect::ResampleEffect()
-	: input_width(1280),
+	: owns_effects(true),
+	  input_width(1280),
 	  input_height(720),
 	  offset_x(0.0f), offset_y(0.0f),
 	  zoom_x(1.0f), zoom_y(1.0f),
@@ -319,6 +320,14 @@ ResampleEffect::ResampleEffect()
 	update_size();
 }
 
+ResampleEffect::~ResampleEffect()
+{
+	if (owns_effects) {
+		delete hpass;
+		delete vpass;
+	}
+}
+
 void ResampleEffect::rewrite_graph(EffectChain *graph, Node *self)
 {
 	Node *hpass_node = graph->add_node(hpass);
@@ -327,6 +336,7 @@ void ResampleEffect::rewrite_graph(EffectChain *graph, Node *self)
 	graph->replace_receiver(self, hpass_node);
 	graph->replace_sender(self, vpass_node);
 	self->disabled = true;
+	owns_effects = false;
 } 
 
 // We get this information forwarded from the first blur pass,
