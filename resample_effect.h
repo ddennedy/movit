@@ -31,6 +31,7 @@ class SingleResamplePassEffect;
 class ResampleEffect : public Effect {
 public:
 	ResampleEffect();
+	virtual ~ResampleEffect();
 
 	virtual std::string effect_type_id() const { return "ResampleEffect"; }
 
@@ -61,6 +62,7 @@ private:
 	float offset_x, offset_y;
 	float zoom_x, zoom_y;
 	float zoom_center_x, zoom_center_y;
+	bool is_used;
 };
 
 class SingleResamplePassEffect : public Effect {

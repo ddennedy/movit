@@ -247,6 +247,7 @@ ResampleEffect::ResampleEffect()
 	  offset_x(0.0f), offset_y(0.0f),
 	  zoom_x(1.0f), zoom_y(1.0f),
 	  zoom_center_x(0.5f), zoom_center_y(0.5f)
+	  , is_used(false)
 {
 	register_int("width", &output_width);
 	register_int("height", &output_height);
@@ -260,6 +261,14 @@ ResampleEffect::ResampleEffect()
 	update_size();
 }
 
+ResampleEffect::~ResampleEffect()
+{
+	if (!is_used) {
+		delete hpass;
+		delete vpass;
+	}
+}
+
 void ResampleEffect::rewrite_graph(EffectChain *graph, Node *self)
 {
 	Node *hpass_node = graph->add_node(hpass);
@@ -268,6 +277,7 @@ void ResampleEffect::rewrite_graph(EffectChain *graph, Node *self)
 	graph->replace_receiver(self, hpass_node);
 	graph->replace_sender(self, vpass_node);
 	self->disabled = true;
+	is_used = true;
 } 
 
 // We get this information forwarded from the first blur pass,
