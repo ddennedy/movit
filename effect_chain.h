@@ -364,6 +364,9 @@ public:
 	void reset_phase_timing();
 	void print_phase_timing();
 
+	// Note: If you already know the width and height of the viewport,
+	// calling render_to_fbo() directly will be slightly more efficient,
+	// as it saves it from getting it from OpenGL.
 	void render_to_screen()
 	{
 		render_to_fbo(0, 0, 0);
