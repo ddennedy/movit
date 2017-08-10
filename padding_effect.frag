@@ -12,8 +12,8 @@ vec4 FUNCNAME(vec2 tc) {
 
 	vec2 tc_texels = tc * PREFIX(normalized_coords_to_texels);
 	vec2 coverage_bottomleft = clamp(tc_texels + PREFIX(offset_bottomleft), 0.0f, 1.0f);
-	vec2 coverare_topright = clamp(PREFIX(offset_topright) - tc_texels, 0.0f, 1.0f);
-	vec2 coverage_both = coverage_bottomleft * coverare_topright;
+	vec2 coverage_topright = clamp(PREFIX(offset_topright) - tc_texels, 0.0f, 1.0f);
+	vec2 coverage_both = coverage_bottomleft * coverage_topright;
 	float coverage = coverage_both.x * coverage_both.y;
 
 	if (coverage <= 0.0f) {
