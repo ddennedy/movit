@@ -14,6 +14,10 @@ vec4 FUNCNAME(vec2 tc) {
 
 	x.rgb = pow(x.rgb, vec3(1.0/2.2));
 	x.rgb += PREFIX(lift) * (vec3(1) - x.rgb);
+
+	// Clip out-of-gamut values again.
+	x.rgb = max(x.rgb, 0.0);
+
 	x.rgb = pow(x.rgb, PREFIX(inv_gamma_22));
 	x.rgb *= PREFIX(gain_pow_inv_gamma);
 	x.rgb *= x.aaa;

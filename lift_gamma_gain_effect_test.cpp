@@ -119,4 +119,31 @@ TEST(LiftGammaGainEffectTest, OutOfGamutColorsAreClipped) {
 	expect_equal(expected_data, out_data, 4, 3);
 }
 
+TEST(LiftGammaGainEffectTest, NegativeLiftIsClamped) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 1.0f,
+		0.5f, 0.5f, 0.5f, 0.3f,
+		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 0.7f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+	float lift[3] = { 0.0f, -0.1f, -0.2f };
+	float expected_data[] = {
+		0.0f, 0.0f , 0.0f, 1.0f,  // Note: Clamped below zero.
+		0.5f, 0.45f, 0.4f, 0.3f,
+		1.0f, 0.0f,  0.0f, 1.0f,  // Unaffected.
+		0.0f, 1.0f,  0.0f, 0.7f,
+		0.0f, 0.0f,  1.0f, 1.0f,
+	};
+
+	float out_data[5 * 4];
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
+	Effect *lgg_effect = tester.get_chain()->add_effect(new LiftGammaGainEffect());
+	ASSERT_TRUE(lgg_effect->set_vec3("lift", lift));
+	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+
+	// sRGB is only approximately gamma-2.2, so loosen up the limits a bit.
+	expect_equal(expected_data, out_data, 4, 5, 0.03, 0.003);
+}
+
 }  // namespace movit
