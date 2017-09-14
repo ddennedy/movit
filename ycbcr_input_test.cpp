@@ -1031,8 +1031,8 @@ private:
 // Basically the same test as EffectChainTest_MipmapGenerationWorks,
 // just with the data converted to Y'CbCr (as red only).
 TEST(EffectChainTest, MipmapGenerationWorks) {
-	unsigned width = 4;
-	unsigned height = 16;
+	const unsigned width = 4;
+	const unsigned height = 16;
 	float red_data[width * height] = {  // In 4x4 blocks.
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 0.0f,
