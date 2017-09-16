@@ -204,4 +204,5 @@ What do you mean by “open-source”?
 ==================================
 
 Movit is licensed under the [GNU GPL](http://www.gnu.org/licenses/gpl.html),
-either version 2 or (at your option) any later version.
+either version 2 or (at your option) any later version. You can find the full
+text of the license in the COPYING file, included with Movit.
