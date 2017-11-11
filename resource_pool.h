@@ -141,6 +141,16 @@ private:
 	// Same, for VAOs.
 	void shrink_vao_freelist(void *context, size_t max_length);
 
+	// Increment the refcount, or take it off the freelist if it's zero.
+	void increment_program_refcount(GLuint program_num);
+
+	// If debugging is on, output shader to a temporary file, for easier debugging.
+	void output_debug_shader(const std::string &shader_src, const std::string &suffix);
+
+	// For a new program that's not a clone of anything, insert it into the right
+	// structures: Give it a refcount, and set up the program_masters / program_instances lists.
+	void add_master_program(GLuint program_num);
+
 	// Link the given vertex and fragment shaders into a full GLSL program.
 	// See compile_glsl_program() for explanation of <fragment_shader_outputs>.
 	static GLuint link_program(GLuint vs_obj,

@@ -130,19 +130,9 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
 
 	const pair<string, string> key(vertex_shader, fragment_shader_processed);
 	if (programs.count(key)) {
-		// Already in the cache. Increment the refcount, or take it off the freelist
-		// if it's zero.
+		// Already in the cache.
 		glsl_program_num = programs[key];
-		map<GLuint, int>::iterator refcount_it = program_refcount.find(glsl_program_num);
-		if (refcount_it != program_refcount.end()) {
-			++refcount_it->second;
-		} else {
-			list<GLuint>::iterator freelist_it =
-				find(program_freelist.begin(), program_freelist.end(), glsl_program_num);
-			assert(freelist_it != program_freelist.end());
-			program_freelist.erase(freelist_it);
-			program_refcount.insert(make_pair(glsl_program_num, 1));
-		}
+		increment_program_refcount(glsl_program_num);
 	} else {
 		// Not in the cache. Compile the shaders.
 		GLuint vs_obj = compile_shader(vertex_shader, GL_VERTEX_SHADER);
@@ -151,31 +141,16 @@ GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
 		check_error();
 		glsl_program_num = link_program(vs_obj, fs_obj, fragment_shader_outputs);
 
-		if (movit_debug_level == MOVIT_DEBUG_ON) {
-			// Output shader to a temporary file, for easier debugging.
-			static int compiled_shader_num = 0;
-			char filename[256];
-			sprintf(filename, "chain-%03d.frag", compiled_shader_num++);
-			FILE *fp = fopen(filename, "w");
-			if (fp == NULL) {
-				perror(filename);
-				exit(1);
-			}
-			fprintf(fp, "%s\n", fragment_shader_processed.c_str());
-			fclose(fp);
-		}
+		output_debug_shader(fragment_shader_processed, "frag");
 
 		programs.insert(make_pair(key, glsl_program_num));
-		program_refcount.insert(make_pair(glsl_program_num, 1));
+		add_master_program(glsl_program_num);
+
 		ShaderSpec spec;
 		spec.vs_obj = vs_obj;
 		spec.fs_obj = fs_obj;
 		spec.fragment_shader_outputs = fragment_shader_outputs;
 		program_shaders.insert(make_pair(glsl_program_num, spec));
-		stack<GLuint> instances;
-		instances.push(glsl_program_num);
-		program_instances.insert(make_pair(glsl_program_num, instances));
-		program_masters.insert(make_pair(glsl_program_num, glsl_program_num));
 	}
 	pthread_mutex_unlock(&lock);
 	return glsl_program_num;
@@ -654,6 +629,46 @@ void ResourcePool::shrink_vao_freelist(void *context, size_t max_length)
 		vao_formats.erase(free_vao_it);
 		freelist.pop_back();
 	}
+}
+
+void ResourcePool::increment_program_refcount(GLuint program_num)
+{
+	map<GLuint, int>::iterator refcount_it = program_refcount.find(program_num);
+	if (refcount_it != program_refcount.end()) {
+		++refcount_it->second;
+	} else {
+		list<GLuint>::iterator freelist_it =
+			find(program_freelist.begin(), program_freelist.end(), program_num);
+		assert(freelist_it != program_freelist.end());
+		program_freelist.erase(freelist_it);
+		program_refcount.insert(make_pair(program_num, 1));
+	}
+}
+
+void ResourcePool::output_debug_shader(const string &shader_src, const string &suffix)
+{
+	if (movit_debug_level == MOVIT_DEBUG_ON) {
+		// Output shader to a temporary file, for easier debugging.
+		static int compiled_shader_num = 0;
+		char filename[256];
+		sprintf(filename, "chain-%03d.%s", compiled_shader_num++, suffix.c_str());
+		FILE *fp = fopen(filename, "w");
+		if (fp == NULL) {
+			perror(filename);
+			exit(1);
+		}
+		fprintf(fp, "%s\n", shader_src.c_str());
+		fclose(fp);
+	}
+}
+
+void ResourcePool::add_master_program(GLuint program_num)
+{
+	program_refcount.insert(make_pair(program_num, 1));
+	stack<GLuint> instances;
+	instances.push(program_num);
+	program_instances.insert(make_pair(program_num, instances));
+	program_masters.insert(make_pair(program_num, program_num));
 }
 
 size_t ResourcePool::estimate_texture_size(const Texture2D &texture_format)
