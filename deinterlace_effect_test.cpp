@@ -74,7 +74,7 @@ TEST(DeinterlaceTest, VerticalInterpolation) {
 	// Set previous and next fields to something so big that all the temporal checks
 	// are effectively turned off.
 	fill(neg_blowout_data, neg_blowout_data + width * height, -100.0f);
-	fill(neg_blowout_data, pos_blowout_data + width * height,  100.0f);
+	fill(pos_blowout_data, pos_blowout_data + width * height,  100.0f);
 
 	EffectChainTester tester(NULL, width, height * 2);
 	Effect *input1 = tester.add_input(neg_blowout_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
