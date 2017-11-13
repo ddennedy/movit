@@ -1,0 +1,7 @@
+// GLSL is pickier than the C++ preprocessor in if-testing for undefined
+// tokens; do some fixups here to keep it happy.
+
+void main()
+{
+	INPUT();
+}

@@ -70,6 +70,11 @@ public:
 	                            const std::vector<std::string>& frag_shader_outputs);
 	void release_glsl_program(GLuint glsl_program_num);
 
+	// Same as the previous, but for compile shaders instead. There is currently
+	// no support for binding multiple outputs.
+	GLuint compile_glsl_compute_program(const std::string& compile_shader);
+	void release_glsl_compute_program(GLuint glsl_program_num);
+
 	// Since uniforms belong to the program and not to the context,
 	// a given GLSL program number can't be used by more than one thread
 	// at a time. Thus, if two threads want to use the same program
@@ -157,6 +162,8 @@ private:
 	                           GLuint fs_obj,
 	                           const std::vector<std::string>& fragment_shader_outputs);
 
+	static GLuint link_compute_program(GLuint cs_obj);
+
 	// Protects all the other elements in the class.
 	pthread_mutex_t lock;
 
@@ -164,6 +171,9 @@ private:
 		
 	// A mapping from vertex/fragment shader source strings to compiled program number.
 	std::map<std::pair<std::string, std::string>, GLuint> programs;
+
+	// A mapping from compute shader source string to compiled program number.
+	std::map<std::string, GLuint> compute_programs;
 
 	// A mapping from compiled program number to number of current users.
 	// Once this reaches zero, the program is taken out of this map and instead
@@ -177,6 +187,11 @@ private:
 		std::vector<std::string> fragment_shader_outputs;
 	};
 	std::map<GLuint, ShaderSpec> program_shaders;
+
+	struct ComputeShaderSpec {
+		GLuint cs_obj;
+	};
+	std::map<GLuint, ComputeShaderSpec> compute_program_shaders;
 
 	// For each program, a list of other programs that are exactly like it.
 	// By default, will only contain the program itself, but due to cloning

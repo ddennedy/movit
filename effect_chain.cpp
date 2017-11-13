@@ -32,6 +32,18 @@ using namespace std;
 
 namespace movit {
 
+namespace {
+
+// An effect that does nothing.
+class IdentityEffect : public Effect {
+public:
+	IdentityEffect() {}
+	virtual string effect_type_id() const { return "IdentityEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
+};
+
+}  // namespace
+
 EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool)
 	: aspect_nom(aspect_nom),
 	  aspect_denom(aspect_denom),
@@ -347,7 +359,12 @@ void collect_uniform_locations(GLuint glsl_program_num, vector<Uniform<T> > *pha
 
 void EffectChain::compile_glsl_program(Phase *phase)
 {
-	string frag_shader_header = read_version_dependent_file("header", "frag");
+	string frag_shader_header;
+	if (phase->is_compute_shader) {
+		frag_shader_header = read_file("header.compute");
+	} else {
+		frag_shader_header = read_version_dependent_file("header", "frag");
+	}
 	string frag_shader = "";
 
 	// Create functions and uniforms for all the texture inputs that we need.
@@ -402,6 +419,9 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	
 		frag_shader += "\n";
 		frag_shader += string("#define FUNCNAME ") + effect_id + "\n";
+		if (node->effect->is_compute_shader()) {
+			frag_shader += string("#define NORMALIZE_TEXTURE_COORDS(tc) ((tc) * ") + effect_id + "_inv_output_size + " + effect_id + "_output_texcoord_adjust)\n";
+		}
 		frag_shader += replace_prefix(node->effect->output_fragment_shader(), effect_id);
 		frag_shader += "#undef FUNCNAME\n";
 		if (node->incoming_links.size() == 1) {
@@ -479,7 +499,13 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		}
 	}
 
-	frag_shader.append(read_file("footer.frag"));
+	if (phase->is_compute_shader) {
+		frag_shader.append(read_file("footer.compute"));
+		phase->output_node->effect->register_uniform_vec2("inv_output_size", (float *)&phase->inv_output_size);
+		phase->output_node->effect->register_uniform_vec2("output_texcoord_adjust", (float *)&phase->output_texcoord_adjust);
+	} else {
+		frag_shader.append(read_file("footer.frag"));
+	}
 
 	// Collect uniforms from all effects and output them. Note that this needs
 	// to happen after output_fragment_shader(), even though the uniforms come
@@ -492,6 +518,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *node = phase->effects[i];
 		Effect *effect = node->effect;
 		const string effect_id = phase->effect_ids[node];
+		extract_uniform_declarations(effect->uniforms_image2d, "image2D", effect_id, &phase->uniforms_image2d, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_sampler2d, "sampler2D", effect_id, &phase->uniforms_sampler2d, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_bool, "bool", effect_id, &phase->uniforms_bool, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_int, "int", effect_id, &phase->uniforms_int, &frag_shader_uniforms);
@@ -520,7 +547,19 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		vert_shader[pos + needle.size() - 1] = '1';
 	}
 
-	phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader, frag_shader_outputs);
+	if (phase->is_compute_shader) {
+		phase->glsl_program_num = resource_pool->compile_glsl_compute_program(frag_shader);
+
+		Uniform<int> uniform;
+		uniform.name = "outbuf";
+		uniform.value = &phase->outbuf_image_unit;
+		uniform.prefix = "tex";
+		uniform.num_values = 1;
+		uniform.location = -1;
+		phase->uniforms_image2d.push_back(uniform);
+	} else {
+		phase->glsl_program_num = resource_pool->compile_glsl_program(vert_shader, frag_shader, frag_shader_outputs);
+	}
 	GLint position_attribute_index = glGetAttribLocation(phase->glsl_program_num, "position");
 	GLint texcoord_attribute_index = glGetAttribLocation(phase->glsl_program_num, "texcoord");
 	if (position_attribute_index != -1) {
@@ -531,6 +570,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	}
 
 	// Collect the resulting location numbers for each uniform.
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_image2d);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_sampler2d);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_bool);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_int);
@@ -557,6 +597,7 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 	Phase *phase = new Phase;
 	phase->output_node = output;
+	phase->is_compute_shader = output->effect->is_compute_shader();
 
 	// If the output effect has one-to-one sampling, we try to trace this
 	// status down through the dependency chain. This is important in case
@@ -600,6 +641,12 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			if (node->effect->needs_texture_bounce() &&
 			    !deps[i]->effect->is_single_texture() &&
 			    !deps[i]->effect->override_disable_bounce()) {
+				start_new_phase = true;
+			}
+
+			// Compute shaders currently always end phases.
+			// (We might loosen this up in some cases in the future.)
+			if (deps[i]->effect->is_compute_shader()) {
 				start_new_phase = true;
 			}
 
@@ -1666,6 +1713,21 @@ void EffectChain::add_dither_if_needed()
 	dither_effect = dither->effect;
 }
 
+// Compute shaders can't output to the framebuffer, so if the last
+// phase ends in a compute shader, add a dummy phase at the end that
+// only blits directly from the temporary texture.
+//
+// TODO: Add an API for rendering directly to textures, for the cases
+// where we're only rendering to an FBO anyway.
+void EffectChain::add_dummy_effect_if_needed()
+{
+	Node *output = find_output_node();
+	if (output->effect->is_compute_shader()) {
+		Node *dummy = add_node(new IdentityEffect());
+		connect_nodes(output, dummy);
+	}
+}
+
 // Find the output node. This is, simply, one that has no outgoing links.
 // If there are multiple ones, the graph is malformed (we do not support
 // multiple outputs right now).
@@ -1737,7 +1799,10 @@ void EffectChain::finalize()
 	output_dot("step18-before-dither.dot");
 	add_dither_if_needed();
 
-	output_dot("step19-final.dot");
+	output_dot("step19-before-dummy-effect.dot");
+	add_dummy_effect_if_needed();
+
+	output_dot("step20-final.dot");
 	
 	// Construct all needed GLSL programs, starting at the output.
 	// We need to keep track of which effects have already been computed,
@@ -1746,7 +1811,7 @@ void EffectChain::finalize()
 	map<Node *, Phase *> completed_effects;
 	construct_phase(find_output_node(), &completed_effects);
 
-	output_dot("step20-split-to-phases.dot");
+	output_dot("step21-split-to-phases.dot");
 
 	assert(phases[0]->inputs.empty());
 	
@@ -1948,15 +2013,28 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		phase->input_samplers[sampler] = sampler;  // Bind the sampler to the right uniform.
 	}
 
-	// And now the output. (Already set up for us if it is the last phase.)
-	if (!last_phase) {
-		fbo = resource_pool->create_fbo((*output_textures)[phase]);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glViewport(0, 0, phase->output_width, phase->output_height);
-	}
-
 	GLuint instance_program_num = resource_pool->use_glsl_program(phase->glsl_program_num);
 	check_error();
+
+	// And now the output.
+	if (phase->is_compute_shader) {
+		// This is currently the only place where we use image units,
+		// so we can always use 0.
+		phase->outbuf_image_unit = 0;
+		glBindImageTexture(phase->outbuf_image_unit, (*output_textures)[phase], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		check_error();
+		phase->inv_output_size.x = 1.0f / phase->output_width;
+		phase->inv_output_size.y = 1.0f / phase->output_height;
+		phase->output_texcoord_adjust.x = 0.5f / phase->output_width;
+		phase->output_texcoord_adjust.y = 0.5f / phase->output_height;
+	} else {
+		// (Already set up for us if it is the last phase.)
+		if (!last_phase) {
+			fbo = resource_pool->create_fbo((*output_textures)[phase]);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glViewport(0, 0, phase->output_width, phase->output_height);
+		}
+	}
 
 	// Give the required parameters to all the effects.
 	unsigned sampler_num = phase->inputs.size();
@@ -1974,16 +2052,29 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		}
 	}
 
-	// Uniforms need to come after set_gl_state(), since they can be updated
-	// from there.
-	setup_uniforms(phase);
 
-	// Bind the vertex data.
-	GLuint vao = resource_pool->create_vec2_vao(phase->attribute_indexes, vbo);
-	glBindVertexArray(vao);
+	if (phase->is_compute_shader) {
+		unsigned x, y, z;
+		phase->output_node->effect->get_compute_dimensions(phase->output_width, phase->output_height, &x, &y, &z);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-	check_error();
+		// Uniforms need to come after set_gl_state() _and_ get_compute_dimensions(),
+		// since they can be updated from there.
+		setup_uniforms(phase);
+		glDispatchCompute(x, y, z);
+	} else {
+		// Uniforms need to come after set_gl_state(), since they can be updated
+		// from there.
+		setup_uniforms(phase);
+
+		// Bind the vertex data.
+		GLuint vao = resource_pool->create_vec2_vao(phase->attribute_indexes, vbo);
+		glBindVertexArray(vao);
+
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		check_error();
+
+		resource_pool->release_vec2_vao(vao);
+	}
 	
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
@@ -1991,9 +2082,8 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 	}
 
 	resource_pool->unuse_glsl_program(instance_program_num);
-	resource_pool->release_vec2_vao(vao);
 
-	if (!last_phase) {
+	if (!last_phase && !phase->is_compute_shader) {
 		resource_pool->release_fbo(fbo);
 	}
 }
@@ -2001,6 +2091,12 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 void EffectChain::setup_uniforms(Phase *phase)
 {
 	// TODO: Use UBO blocks.
+	for (size_t i = 0; i < phase->uniforms_image2d.size(); ++i) {
+		const Uniform<int> &uniform = phase->uniforms_image2d[i];
+		if (uniform.location != -1) {
+			glUniform1iv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
 	for (size_t i = 0; i < phase->uniforms_sampler2d.size(); ++i) {
 		const Uniform<int> &uniform = phase->uniforms_sampler2d[i];
 		if (uniform.location != -1) {

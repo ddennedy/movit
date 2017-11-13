@@ -178,11 +178,24 @@ struct Phase {
 	std::vector<Node *> effects;  // In order.
 	unsigned output_width, output_height, virtual_output_width, virtual_output_height;
 
+	// Whether this phase is compiled as a compute shader, ie., the last effect is
+	// marked as one.
+	bool is_compute_shader;
+
+	// If <is_compute_shader>, which image unit the output buffer is bound to.
+	// This is used as source for a Uniform<int> below.
+	int outbuf_image_unit;
+
+	// These are used in transforming from unnormalized to normalized coordinates
+	// in compute shaders.
+	Point2D inv_output_size, output_texcoord_adjust;
+
 	// Identifier used to create unique variables in GLSL.
 	// Unique per-phase to increase cacheability of compiled shaders.
 	std::map<Node *, std::string> effect_ids;
 
 	// Uniforms for this phase; combined from all the effects.
+	std::vector<Uniform<int> > uniforms_image2d;
 	std::vector<Uniform<int> > uniforms_sampler2d;
 	std::vector<Uniform<bool> > uniforms_bool;
 	std::vector<Uniform<int> > uniforms_int;
@@ -499,6 +512,7 @@ private:
 	void fix_output_gamma();
 	void add_ycbcr_conversion_if_needed();
 	void add_dither_if_needed();
+	void add_dummy_effect_if_needed();
 
 	float aspect_nom, aspect_denom;
 	ImageFormat output_format;

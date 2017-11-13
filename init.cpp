@@ -15,7 +15,7 @@ namespace movit {
 bool movit_initialized = false;
 MovitDebugLevel movit_debug_level = MOVIT_DEBUG_ON;
 float movit_texel_subpixel_precision;
-bool movit_timer_queries_supported;
+bool movit_timer_queries_supported, movit_compute_shaders_supported;
 int movit_num_wrongly_rounded;
 MovitShaderModel movit_shader_model;
 
@@ -309,6 +309,16 @@ bool check_extensions()
 	// without it, we do cannot even create the query objects.
 	movit_timer_queries_supported =
 		(epoxy_gl_version() >= 33 || epoxy_has_gl_extension("GL_ARB_timer_query"));
+
+	// Certain effects have compute shader implementations, which may be
+	// more efficient than the normal fragment shader versions.
+	// GLSL 3.10 supposedly also has compute shaders, but I haven't tested them,
+	// so we require desktop OpenGL.
+	movit_compute_shaders_supported =
+		(epoxy_is_desktop_gl() &&
+		 (epoxy_gl_version() >= 43 ||
+		  (epoxy_has_gl_extension("GL_ARB_compute_shader") &&
+		   epoxy_has_gl_extension("GL_ARB_shader_image_load_store"))));
 
 	return true;
 }

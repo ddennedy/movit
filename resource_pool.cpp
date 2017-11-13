@@ -210,6 +210,56 @@ void ResourcePool::release_glsl_program(GLuint glsl_program_num)
 	pthread_mutex_unlock(&lock);
 }
 
+GLuint ResourcePool::compile_glsl_compute_program(const string& compute_shader)
+{
+	GLuint glsl_program_num;
+	pthread_mutex_lock(&lock);
+
+	const string &key = compute_shader;
+	if (compute_programs.count(key)) {
+		// Already in the cache.
+		glsl_program_num = compute_programs[key];
+		increment_program_refcount(glsl_program_num);
+	} else {
+		// Not in the cache. Compile the shader.
+		GLuint cs_obj = compile_shader(compute_shader, GL_COMPUTE_SHADER);
+		check_error();
+		glsl_program_num = link_compute_program(cs_obj);
+
+		output_debug_shader(compute_shader, "compute");
+
+		compute_programs.insert(make_pair(key, glsl_program_num));
+		add_master_program(glsl_program_num);
+
+		ComputeShaderSpec spec;
+		spec.cs_obj = cs_obj;
+		compute_program_shaders.insert(make_pair(glsl_program_num, spec));
+	}
+	pthread_mutex_unlock(&lock);
+	return glsl_program_num;
+}
+
+GLuint ResourcePool::link_compute_program(GLuint cs_obj)
+{
+	GLuint glsl_program_num = glCreateProgram();
+	check_error();
+	glAttachShader(glsl_program_num, cs_obj);
+	check_error();
+	glLinkProgram(glsl_program_num);
+	check_error();
+
+	GLint success;
+	glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
+	if (success == GL_FALSE) {
+		GLchar error_log[1024] = {0};
+		glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
+		fprintf(stderr, "Error linking program: %s\n", error_log);
+		exit(1);
+	}
+
+	return glsl_program_num;
+}
+
 GLuint ResourcePool::use_glsl_program(GLuint glsl_program_num)
 {
 	pthread_mutex_lock(&lock);
@@ -226,12 +276,19 @@ GLuint ResourcePool::use_glsl_program(GLuint glsl_program_num)
 		// will later put it onto the list.)
 		map<GLuint, ShaderSpec>::iterator shader_it =
 			program_shaders.find(glsl_program_num);
-		assert(shader_it != program_shaders.end());
-
-		instance_program_num = link_program(
-			shader_it->second.vs_obj,
-			shader_it->second.fs_obj,
-			shader_it->second.fragment_shader_outputs);
+		if (shader_it == program_shaders.end()) {
+			// Should be a compute shader.
+			map<GLuint, ComputeShaderSpec>::iterator compute_shader_it =
+				compute_program_shaders.find(glsl_program_num);
+			instance_program_num = link_compute_program(
+				compute_shader_it->second.cs_obj);
+		} else {
+			// A regular fragment shader.
+			instance_program_num = link_program(
+				shader_it->second.vs_obj,
+				shader_it->second.fs_obj,
+				shader_it->second.fragment_shader_outputs);
+		}
 		program_masters.insert(make_pair(instance_program_num, glsl_program_num));
 	}
 	pthread_mutex_unlock(&lock);

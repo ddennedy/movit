@@ -67,6 +67,10 @@ extern int movit_num_wrongly_rounded;
 // Whether the OpenGL driver (or GPU) in use supports GL_ARB_timer_query.
 extern bool movit_timer_queries_supported;
 
+// Whether the OpenGL driver (or GPU) in use supports compute shaders.
+// Note that certain OpenGL implementations might only allow this in core mode.
+extern bool movit_compute_shaders_supported;
+
 // What shader model we are compiling for. This only affects the choice
 // of a few files (like header.frag); most of the shaders are the same.
 enum MovitShaderModel {

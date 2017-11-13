@@ -245,6 +245,45 @@ public:
 		assert(false);
 	}
 
+	// Whether this effect uses a compute shader instead of a regular fragment shader.
+	// Compute shaders are more flexible in that they can have multiple outputs
+	// for each invocation and also communicate between instances (by using shared
+	// memory within each group), but are not universally supported. The typical
+	// pattern would be to check movit_compute_shaders_supported and rewrite the
+	// graph to use a compute shader effect instead of a regular effect if it is
+	// available, in order to get better performance. Since compute shaders can reuse
+	// loads (again typically through shared memory), using needs_texture_bounce()
+	// is usually not needed, although it is allowed; the best candidates for compute
+	// shaders are typically those that sample many times from their input
+	// but can reuse those loads across neighboring instances.
+	//
+	// Compute shaders commonly work with unnormalized texture coordinates
+	// (where coordinates are integers [0..W) and [0..H)), whereas the rest
+	// of Movit, including any inputs you may want to sample from, works
+	// with normalized coordinates ([0..1)). Movit gives you uniforms
+	// PREFIX(inv_output_size) and PREFIX(output_texcoord_adjust) that you
+	// can use to transform unnormalized to normalized, as well as a macro
+	// NORMALIZE_TEXTURE_COORDS(vec2) that does it for you.
+	//
+	// Since compute shaders have flexible output, it is difficult to chain other
+	// effects after them in the same phase, and thus, they will always be last.
+	// (This limitation may be lifted for the special case of one-to-one effects
+	// in the future.) Furthermore, they cannot write to the framebuffer, just to
+	// textures, so Movit may have to insert an extra phase just to do the output
+	// from a texture to the screen in some cases. However, this is transparent
+	// to both the effect and the user.
+	virtual bool is_compute_shader() const { return false; }
+
+	// For a compute shader (see the previous member function), what dimensions
+	// it should be invoked over. Called every frame, before uniforms are set
+	// (so you are allowed to update uniforms based from this call).
+	virtual void get_compute_dimensions(unsigned output_width, unsigned output_height,
+	                                    unsigned *x, unsigned *y, unsigned *z) const {
+		*x = output_width;
+		*y = output_height;
+		*z = 1;
+	}
+
 	// Tells the effect the resolution of each of its input.
 	// This will be called every frame, and always before get_output_size(),
 	// so you can change your output size based on the input if so desired.
@@ -364,6 +403,7 @@ private:
 	std::map<std::string, float *> params_vec4;
 
 	// Picked out by EffectChain during finalization.
+	std::vector<Uniform<int> > uniforms_image2d;
 	std::vector<Uniform<int> > uniforms_sampler2d;
 	std::vector<Uniform<bool> > uniforms_bool;
 	std::vector<Uniform<int> > uniforms_int;

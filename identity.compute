@@ -1,0 +1,9 @@
+// Identity compute shader (sometimes useful to do nothing).
+
+layout(local_size_x = 1) in;
+
+void FUNCNAME()
+{
+	vec4 val = INPUT(NORMALIZE_TEXTURE_COORDS(gl_GlobalInvocationID.xy));
+	OUTPUT(gl_GlobalInvocationID.xy, val);
+}

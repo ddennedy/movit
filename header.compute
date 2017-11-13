@@ -1,0 +1,23 @@
+#version 130
+#extension GL_ARB_compute_shader : enable
+#extension GL_ARB_shader_image_load_store : enable
+
+// FIXME this needs to be auto-output or something
+layout(rgba16f) uniform restrict writeonly image2D outbuf;
+
+vec4 tex2D(sampler2D s, vec2 coord)
+{
+	return texture(s, coord);
+}
+
+void cs_output(uvec2 coord, vec4 val)
+{
+	imageStore(outbuf, ivec2(coord), val);
+}
+
+void cs_output(ivec2 coord, vec4 val)
+{
+	imageStore(outbuf, coord, val);
+}
+
+#define OUTPUT(tc, val) cs_output(tc, val)
