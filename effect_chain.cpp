@@ -403,7 +403,6 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 		frag_shader += string("#define FUNCNAME ") + effect_id + "\n";
 		frag_shader += replace_prefix(node->effect->output_fragment_shader(), effect_id);
-		frag_shader += "#undef PREFIX\n";
 		frag_shader += "#undef FUNCNAME\n";
 		if (node->incoming_links.size() == 1) {
 			frag_shader += "#undef INPUT\n";
