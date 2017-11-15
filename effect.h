@@ -403,19 +403,19 @@ private:
 	std::map<std::string, float *> params_vec4;
 
 	// Picked out by EffectChain during finalization.
-	std::vector<Uniform<int> > uniforms_image2d;
-	std::vector<Uniform<int> > uniforms_sampler2d;
-	std::vector<Uniform<bool> > uniforms_bool;
-	std::vector<Uniform<int> > uniforms_int;
-	std::vector<Uniform<float> > uniforms_float;
-	std::vector<Uniform<float> > uniforms_vec2;
-	std::vector<Uniform<float> > uniforms_vec3;
-	std::vector<Uniform<float> > uniforms_vec4;
-	std::vector<Uniform<float> > uniforms_float_array;
-	std::vector<Uniform<float> > uniforms_vec2_array;
-	std::vector<Uniform<float> > uniforms_vec3_array;
-	std::vector<Uniform<float> > uniforms_vec4_array;
-	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
+	std::vector<Uniform<int>> uniforms_image2d;
+	std::vector<Uniform<int>> uniforms_sampler2d;
+	std::vector<Uniform<bool>> uniforms_bool;
+	std::vector<Uniform<int>> uniforms_int;
+	std::vector<Uniform<float>> uniforms_float;
+	std::vector<Uniform<float>> uniforms_vec2;
+	std::vector<Uniform<float>> uniforms_vec3;
+	std::vector<Uniform<float>> uniforms_vec4;
+	std::vector<Uniform<float>> uniforms_float_array;
+	std::vector<Uniform<float>> uniforms_vec2_array;
+	std::vector<Uniform<float>> uniforms_vec3_array;
+	std::vector<Uniform<float>> uniforms_vec4_array;
+	std::vector<Uniform<Eigen::Matrix3d>> uniforms_mat3;
 	friend class EffectChain;
 };
 

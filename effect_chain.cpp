@@ -311,10 +311,10 @@ string replace_prefix(const string &text, const string &prefix)
 namespace {
 
 template<class T>
-void extract_uniform_declarations(const vector<Uniform<T> > &effect_uniforms,
+void extract_uniform_declarations(const vector<Uniform<T>> &effect_uniforms,
                                   const string &type_specifier,
                                   const string &effect_id,
-                                  vector<Uniform<T> > *phase_uniforms,
+                                  vector<Uniform<T>> *phase_uniforms,
                                   string *glsl_string)
 {
 	for (unsigned i = 0; i < effect_uniforms.size(); ++i) {
@@ -327,10 +327,10 @@ void extract_uniform_declarations(const vector<Uniform<T> > &effect_uniforms,
 }
 
 template<class T>
-void extract_uniform_array_declarations(const vector<Uniform<T> > &effect_uniforms,
+void extract_uniform_array_declarations(const vector<Uniform<T>> &effect_uniforms,
                                         const string &type_specifier,
                                         const string &effect_id,
-                                        vector<Uniform<T> > *phase_uniforms,
+                                        vector<Uniform<T>> *phase_uniforms,
                                         string *glsl_string)
 {
 	for (unsigned i = 0; i < effect_uniforms.size(); ++i) {
@@ -347,7 +347,7 @@ void extract_uniform_array_declarations(const vector<Uniform<T> > &effect_unifor
 }
 
 template<class T>
-void collect_uniform_locations(GLuint glsl_program_num, vector<Uniform<T> > *phase_uniforms)
+void collect_uniform_locations(GLuint glsl_program_num, vector<Uniform<T>> *phase_uniforms)
 {
 	for (unsigned i = 0; i < phase_uniforms->size(); ++i) {
 		Uniform<T> &uniform = (*phase_uniforms)[i];

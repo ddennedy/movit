@@ -197,7 +197,7 @@ private:
 	// By default, will only contain the program itself, but due to cloning
 	// (see use_glsl_program()), may grow. Programs are taken off this list
 	// while they are in use (by use_glsl_program()).
-	std::map<GLuint, std::stack<GLuint> > program_instances;
+	std::map<GLuint, std::stack<GLuint>> program_instances;
 
 	// For each program, the master program that created it
 	// (inverse of program_instances).
@@ -245,7 +245,7 @@ private:
 	// the last element will be deleted.
 	//
 	// We store iterators directly into <fbo_format> for efficiency.
-	std::map<void *, std::list<FBOFormatIterator> > fbo_freelist;
+	std::map<void *, std::list<FBOFormatIterator>> fbo_freelist;
 
 	// Very similar, for VAOs.
 	struct VAO {
@@ -255,7 +255,7 @@ private:
 	};
 	std::map<std::pair<void *, GLuint>, VAO> vao_formats;
 	typedef std::map<std::pair<void *, GLuint>, VAO>::iterator VAOFormatIterator;
-	std::map<void *, std::list<VAOFormatIterator> > vao_freelist;
+	std::map<void *, std::list<VAOFormatIterator>> vao_freelist;
 
 	// See the caveats at the constructor.
 	static size_t estimate_texture_size(const Texture2D &texture_format);

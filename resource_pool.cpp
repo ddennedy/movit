@@ -57,7 +57,7 @@ ResourcePool::~ResourcePool()
 	void *context = get_gl_context_identifier();
 	cleanup_unlinked_fbos(context);
 
-	for (map<void *, std::list<FBOFormatIterator> >::iterator context_it = fbo_freelist.begin();
+	for (map<void *, std::list<FBOFormatIterator>>::iterator context_it = fbo_freelist.begin();
 	     context_it != fbo_freelist.end();
 	     ++context_it) {
 		if (context_it->first != context) {
@@ -92,7 +92,7 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 	}
 	assert(found_program);
 
-	map<GLuint, stack<GLuint> >::iterator instance_list_it = program_instances.find(glsl_program_num);
+	map<GLuint, stack<GLuint>>::iterator instance_list_it = program_instances.find(glsl_program_num);
 	assert(instance_list_it != program_instances.end());
 
 	while (!instance_list_it->second.empty()) {

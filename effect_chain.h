@@ -195,15 +195,15 @@ struct Phase {
 	std::map<Node *, std::string> effect_ids;
 
 	// Uniforms for this phase; combined from all the effects.
-	std::vector<Uniform<int> > uniforms_image2d;
-	std::vector<Uniform<int> > uniforms_sampler2d;
-	std::vector<Uniform<bool> > uniforms_bool;
-	std::vector<Uniform<int> > uniforms_int;
-	std::vector<Uniform<float> > uniforms_float;
-	std::vector<Uniform<float> > uniforms_vec2;
-	std::vector<Uniform<float> > uniforms_vec3;
-	std::vector<Uniform<float> > uniforms_vec4;
-	std::vector<Uniform<Eigen::Matrix3d> > uniforms_mat3;
+	std::vector<Uniform<int>> uniforms_image2d;
+	std::vector<Uniform<int>> uniforms_sampler2d;
+	std::vector<Uniform<bool>> uniforms_bool;
+	std::vector<Uniform<int>> uniforms_int;
+	std::vector<Uniform<float>> uniforms_float;
+	std::vector<Uniform<float>> uniforms_vec2;
+	std::vector<Uniform<float>> uniforms_vec3;
+	std::vector<Uniform<float>> uniforms_vec4;
+	std::vector<Uniform<Eigen::Matrix3d>> uniforms_mat3;
 
 	// For measurement of GPU time used.
 	std::list<GLuint> timer_query_objects_running;
