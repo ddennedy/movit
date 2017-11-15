@@ -9,6 +9,9 @@
 #include <SDL/SDL_error.h>
 #include <SDL/SDL_video.h>
 #endif
+#ifdef HAVE_BENCHMARK
+#include <benchmark/benchmark.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -50,8 +53,22 @@ int main(int argc, char **argv) {
 	SDL_WM_SetCaption("OpenGL window for unit test", NULL);
 #endif
 
-	testing::InitGoogleTest(&argc, argv);
-	int err = RUN_ALL_TESTS();
+	int err;
+	if (argc >= 2 && strcmp(argv[1], "--benchmark") == 0) {
+#ifdef HAVE_BENCHMARK
+		--argc;
+		::benchmark::Initialize(&argc, argv + 1);
+		if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+		::benchmark::RunSpecifiedBenchmarks();
+		err = 0;
+#else
+		fprintf(stderr, "No support for microbenchmarks compiled in.\n");
+		err = 1;
+#endif
+	} else {
+		testing::InitGoogleTest(&argc, argv);
+		err = RUN_ALL_TESTS();
+	}
 	SDL_Quit();
-	exit(err);
+	return err;
 }

@@ -1,5 +1,8 @@
 // Unit tests for DeinterlaceEffect.
 
+#ifdef HAVE_BENCHMARK
+#include <benchmark/benchmark.h>
+#endif
 #include <epoxy/gl.h>
 
 #include <algorithm>
@@ -192,5 +195,48 @@ TEST(DeinterlaceTest, FlickerBox) {
 		expect_equal(striped_data, out_data, width, height * 2);
 	}
 }
+
+#ifdef HAVE_BENCHMARK
+void BM_DeinterlaceEffect_Gray(benchmark::State &state)
+{
+	unsigned width = state.range(0), height = state.range(1);
+	unsigned field_height = height / 2;
+
+	float *field1 = new float[width * field_height];
+	float *field2 = new float[width * field_height];
+	float *field3 = new float[width * field_height];
+	float *field4 = new float[width * field_height];
+	float *field5 = new float[width * field_height];
+	float *out_data = new float[width * height];
+
+	for (unsigned i = 0; i < width * field_height; ++i) {
+		field1[i] = rand();
+		field2[i] = rand();
+		field3[i] = rand();
+		field4[i] = rand();
+		field5[i] = rand();
+	}
+
+	EffectChainTester tester(NULL, width, height);
+	Effect *input1 = tester.add_input(field1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input2 = tester.add_input(field2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input3 = tester.add_input(field3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input4 = tester.add_input(field4, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input5 = tester.add_input(field5, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), input1, input2, input3, input4, input5);
+
+	ASSERT_TRUE(deinterlace_effect->set_int("current_field_position", 0));
+
+	tester.benchmark(state, out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+
+	delete[] field1;
+	delete[] field2;
+	delete[] field3;
+	delete[] field4;
+	delete[] field5;
+	delete[] out_data;
+}
+BENCHMARK(BM_DeinterlaceEffect_Gray)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+#endif
 
 }  // namespace movit

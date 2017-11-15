@@ -3,6 +3,8 @@ AC_INIT(movit, git)
 LT_INIT
 PKG_PROG_PKG_CONFIG
 
+CXXFLAGS="$CXXFLAGS -std=gnu++11"
+
 AC_CONFIG_SRCDIR(effect.cpp)
 AC_CONFIG_AUX_DIR(.)
 
@@ -28,7 +30,11 @@ else
 fi
 PKG_CHECK_MODULES([libpng], [libpng], [], [with_demo_app=no; AC_MSG_WARN([libpng not found, demo program will not be built])])
 
+# This is only needed for microbenchmarks, so optional.
+PKG_CHECK_MODULES([benchmark], [benchmark], [with_benchmark=yes], [with_benchmark=no; AC_MSG_WARN([Google microbenchmark framework not found, microbenchmarks will not be built])])
+
 AC_SUBST([with_demo_app])
+AC_SUBST([with_benchmark])
 AC_SUBST([with_SDL2])
 
 with_coverage=no

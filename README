@@ -17,13 +17,15 @@ TL;DR, please give me download link and system demands
 
 OK, you need
 
-* A C++98 compiler. GCC will do. (I haven't tried Windows, but it
+* A C++11 compiler. GCC will do. (I haven't tried Windows, but it
   works fine on Linux and OS X, and Movit is not very POSIX-bound.)
 * GNU Make.
 * A GPU capable of running OpenGL 3.0 or newer. GLES3 (for mobile devices)
   will also work.
 * The [Eigen 3], [FFTW3] and [Google Test] libraries. (The library itself
   does not depend on the latter, but you probably want to run the unit tests.)
+  If you also have the Google microbenchmark library, you can get some
+  benchmarks as well.
 * The [epoxy] library, for dealing with OpenGL extensions on various
   platforms.
 
