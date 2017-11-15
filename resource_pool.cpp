@@ -90,6 +90,15 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 			break;
 		}
 	}
+	for (map<string, GLuint>::iterator program_it = compute_programs.begin();
+	     program_it != compute_programs.end();
+	     ++program_it) {
+		if (program_it->second == glsl_program_num) {
+			compute_programs.erase(program_it);
+			found_program = true;
+			break;
+		}
+	}
 	assert(found_program);
 
 	map<GLuint, stack<GLuint>>::iterator instance_list_it = program_instances.find(glsl_program_num);
@@ -105,11 +114,19 @@ void ResourcePool::delete_program(GLuint glsl_program_num)
 
 	map<GLuint, ShaderSpec>::iterator shader_it =
 		program_shaders.find(glsl_program_num);
-	assert(shader_it != program_shaders.end());
+	if (shader_it == program_shaders.end()) {
+		// Should be a compute shader.
+		map<GLuint, ComputeShaderSpec>::iterator compute_shader_it =
+			compute_program_shaders.find(glsl_program_num);
+		assert(compute_shader_it != compute_program_shaders.end());
 
-	glDeleteShader(shader_it->second.vs_obj);
-	glDeleteShader(shader_it->second.fs_obj);
-	program_shaders.erase(shader_it);
+		glDeleteShader(compute_shader_it->second.cs_obj);
+		compute_program_shaders.erase(compute_shader_it);
+	} else {
+		glDeleteShader(shader_it->second.vs_obj);
+		glDeleteShader(shader_it->second.fs_obj);
+		program_shaders.erase(shader_it);
+	}
 }
 
 GLuint ResourcePool::compile_glsl_program(const string& vertex_shader,
