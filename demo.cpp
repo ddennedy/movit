@@ -151,7 +151,7 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 void write_png(const char *filename, unsigned char *screenbuf)
 {
 	FILE *fp = fopen(filename, "wb");
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, NULL, NULL);
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	
 	if (setjmp(png_jmpbuf(png_ptr))) {

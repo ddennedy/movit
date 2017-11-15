@@ -105,12 +105,12 @@ Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat 
 
 void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<float>(out_data, nullptr, NULL, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
+	internal_run<float>(out_data, nullptr, nullptr, nullptr, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(float *out_data, float *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<float>(out_data, out_data2, nullptr, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
+	internal_run<float>(out_data, out_data2, nullptr, nullptr, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(float *out_data, float *out_data2, float *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
@@ -125,12 +125,12 @@ void EffectChainTester::run(float *out_data, float *out_data2, float *out_data3,
 
 void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<unsigned char>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
+	internal_run<unsigned char>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<unsigned char>(out_data, out_data2, nullptr, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
+	internal_run<unsigned char>(out_data, out_data2, nullptr, nullptr, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, unsigned char *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
@@ -145,24 +145,24 @@ void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, u
 
 void EffectChainTester::run(uint16_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<uint16_t>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_SHORT, format, color_space, gamma_curve, alpha_format);
+	internal_run<uint16_t>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_SHORT, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run_10_10_10_2(uint32_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<uint32_t>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_INT_2_10_10_10_REV, format, color_space, gamma_curve, alpha_format);
+	internal_run<uint32_t>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_INT_2_10_10_10_REV, format, color_space, gamma_curve, alpha_format);
 }
 
 #ifdef HAVE_BENCHMARK
 
 void EffectChainTester::benchmark(benchmark::State &state, float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<float>(out_data, nullptr, NULL, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<float>(out_data, nullptr, nullptr, nullptr, GL_FLOAT, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 void EffectChainTester::benchmark(benchmark::State &state, float *out_data, float *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<float>(out_data, out_data2, nullptr, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<float>(out_data, out_data2, nullptr, nullptr, GL_FLOAT, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 void EffectChainTester::benchmark(benchmark::State &state, float *out_data, float *out_data2, float *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
@@ -177,12 +177,12 @@ void EffectChainTester::benchmark(benchmark::State &state, float *out_data, floa
 
 void EffectChainTester::benchmark(benchmark::State &state, unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<unsigned char>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<unsigned char>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 void EffectChainTester::benchmark(benchmark::State &state, unsigned char *out_data, unsigned char *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<unsigned char>(out_data, out_data2, nullptr, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<unsigned char>(out_data, out_data2, nullptr, nullptr, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 void EffectChainTester::benchmark(benchmark::State &state, unsigned char *out_data, unsigned char *out_data2, unsigned char *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
@@ -197,12 +197,12 @@ void EffectChainTester::benchmark(benchmark::State &state, unsigned char *out_da
 
 void EffectChainTester::benchmark(benchmark::State &state, uint16_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<uint16_t>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_SHORT, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<uint16_t>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_SHORT, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 void EffectChainTester::benchmark_10_10_10_2(benchmark::State &state, uint32_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<uint32_t>(out_data, nullptr, NULL, NULL, GL_UNSIGNED_INT_2_10_10_10_REV, format, color_space, gamma_curve, alpha_format, &state);
+	internal_run<uint32_t>(out_data, nullptr, nullptr, nullptr, GL_UNSIGNED_INT_2_10_10_10_REV, format, color_space, gamma_curve, alpha_format, &state);
 }
 
 #endif
