@@ -26,7 +26,7 @@ TEST(SliceEffectTest, Identity) {
 	};
 	float out_data[output_size * size];
 
-	EffectChainTester tester(NULL, output_size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, output_size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
@@ -49,7 +49,7 @@ TEST(SliceEffectTest, HorizontalOverlap) {
 	};
 	float out_data[9 * 2];
 
-	EffectChainTester tester(NULL, 9, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 9, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 5, 2);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
@@ -72,7 +72,7 @@ TEST(SliceEffectTest, HorizontalDiscard) {
 	};
 	float out_data[4 * 2];
 
-	EffectChainTester tester(NULL, 4, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 4, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 6, 2);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
@@ -95,7 +95,7 @@ TEST(SliceEffectTest, HorizontalOverlapWithOffset) {
 	};
 	float out_data[9 * 2];
 
-	EffectChainTester tester(NULL, 9, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 9, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 5, 2);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
@@ -126,7 +126,7 @@ TEST(SliceEffectTest, VerticalOverlapSlicesFromTop) {
 	};
 	float out_data[2 * 6];
 
-	EffectChainTester tester(NULL, 2, 6, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 2, 6, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());
@@ -156,7 +156,7 @@ TEST(SliceEffectTest, VerticalOverlapOffsetsFromTop) {
 	};
 	float out_data[2 * 6];
 
-	EffectChainTester tester(NULL, 2, 6, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 2, 6, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
 
 	Effect *slice_effect = tester.get_chain()->add_effect(new SliceEffect());

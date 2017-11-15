@@ -41,7 +41,7 @@ TEST(YCbCrInputTest, Simple444) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -92,7 +92,7 @@ TEST(YCbCrInputTest, Interleaved444) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -145,7 +145,7 @@ TEST(YCbCrInputTest, FullRangeRec601) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -199,7 +199,7 @@ TEST(YCbCrInputTest, Rec709) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -255,7 +255,7 @@ TEST(YCbCrInputTest, Rec2020) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -310,7 +310,7 @@ TEST(YCbCrInputTest, ChangeFormat) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -391,7 +391,7 @@ TEST(YCbCrInputTest, Subsampling420) {
 	};
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -453,7 +453,7 @@ TEST(YCbCrInputTest, Subsampling420WithNonCenteredSamples) {
 	};
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -523,7 +523,7 @@ TEST(YCbCrInputTest, DifferentCbAndCrPositioning) {
 	};
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -581,7 +581,7 @@ TEST(YCbCrInputTest, PBO) {
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * 3, data, GL_STREAM_DRAW);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -638,7 +638,7 @@ TEST(YCbCrInputTest, CombinedCbAndCr) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -691,7 +691,7 @@ TEST(YCbCrInputTest, ExternalTexture) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -849,7 +849,7 @@ TEST(YCbCrInputTest, NoData) {
 
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -906,7 +906,7 @@ TEST(YCbCrInputTest, TenBitInterleaved) {
 			(expanded_data[i * 3 + 2] << 20);
 	}
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -969,7 +969,7 @@ TEST(YCbCrInputTest, TenBitPlanar) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -1119,7 +1119,7 @@ TEST(EffectChainTest, MipmapGenerationWorks) {
 	format.gamma_curve = GAMMA_sRGB;
 
 	float out_data[width * height * 4];
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 	YCbCrInput *input = new YCbCrInput(format, ycbcr_format, width, height, YCBCR_INPUT_INTERLEAVED);
 	input->set_pixel_data(0, ycbcr_data);
 	tester.get_chain()->add_input(input);

@@ -111,13 +111,13 @@ void mouse(int x, int y)
 unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 {
 	SDL_Surface *img = IMG_Load(filename);
-	if (img == NULL) {
+	if (img == nullptr) {
 		fprintf(stderr, "Load of '%s' failed\n", filename);
 		exit(1);
 	}
 
 	SDL_PixelFormat rgba_fmt;
-	rgba_fmt.palette = NULL;
+	rgba_fmt.palette = nullptr;
 	rgba_fmt.BitsPerPixel = 32;
 	rgba_fmt.BytesPerPixel = 8;
 	rgba_fmt.Rloss = rgba_fmt.Gloss = rgba_fmt.Bloss = rgba_fmt.Aloss = 0;
@@ -151,7 +151,7 @@ unsigned char *load_image(const char *filename, unsigned *w, unsigned *h)
 void write_png(const char *filename, unsigned char *screenbuf)
 {
 	FILE *fp = fopen(filename, "wb");
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, NULL, NULL);
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	
 	if (setjmp(png_jmpbuf(png_ptr))) {
@@ -169,7 +169,7 @@ void write_png(const char *filename, unsigned char *screenbuf)
 
 	png_init_io(png_ptr, fp);
 	png_set_rows(png_ptr, info_ptr, row_pointers);
-	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, NULL);
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_BGR, nullptr);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(fp);
 
@@ -200,10 +200,10 @@ int main(int argc, char **argv)
 		WIDTH, HEIGHT,
 		SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
-	assert(context != NULL);
+	assert(context != nullptr);
 #else
 	SDL_SetVideoMode(WIDTH, HEIGHT, 0, SDL_OPENGL);
-	SDL_WM_SetCaption("OpenGL window", NULL);
+	SDL_WM_SetCaption("OpenGL window", nullptr);
 #endif
 
 	CHECK(init_movit(".", MOVIT_DEBUG_ON));
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 	GLuint pbo;
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, pbo);
-	glBufferData(GL_PIXEL_PACK_BUFFER_ARB, WIDTH * HEIGHT * 4, NULL, GL_STREAM_READ);
+	glBufferData(GL_PIXEL_PACK_BUFFER_ARB, WIDTH * HEIGHT * 4, nullptr, GL_STREAM_READ);
 
 	init_hsv_resources();
 	check_error();
@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 	clock_gettime(CLOCK_MONOTONIC, &start);
 #else
 	struct timeval start, now;
-	gettimeofday(&start, NULL);
+	gettimeofday(&start, nullptr);
 #endif
 
 	while (!quit) {
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 		double elapsed = now.tv_sec - start.tv_sec +
 			1e-9 * (now.tv_nsec - start.tv_nsec);
 #else
-		gettimeofday(&now, NULL);
+		gettimeofday(&now, nullptr);
 		double elapsed = now.tv_sec - start.tv_sec +
 			1e-6 * (now.tv_usec - start.tv_usec);
 #endif

@@ -28,7 +28,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	  type(type),
 	  width(width),
 	  height(height),
-	  resource_pool(NULL)
+	  resource_pool(nullptr)
 {
 	pbos[0] = pbos[1] = pbos[2] = 0;
 	texture_num[0] = texture_num[1] = texture_num[2] = 0;
@@ -36,7 +36,7 @@ YCbCrInput::YCbCrInput(const ImageFormat &image_format,
 	set_width(width);
 	set_height(height);
 
-	pixel_data[0] = pixel_data[1] = pixel_data[2] = NULL;
+	pixel_data[0] = pixel_data[1] = pixel_data[2] = nullptr;
 	owns_texture[0] = owns_texture[1] = owns_texture[2] = false;
 
 	register_uniform_sampler2d("tex_y", &uniform_tex_y);
@@ -87,7 +87,7 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 		glActiveTexture(GL_TEXTURE0 + *sampler_num + channel);
 		check_error();
 
-		if (texture_num[channel] == 0 && (pbos[channel] != 0 || pixel_data[channel] != NULL)) {
+		if (texture_num[channel] == 0 && (pbos[channel] != 0 || pixel_data[channel] != nullptr)) {
 			GLenum format, internal_format;
 			if (channel == 0 && ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED) {
 				if (type == GL_UNSIGNED_INT_2_10_10_10_REV) {

@@ -63,7 +63,7 @@ private:
 
 class SingleBlurPassEffect : public Effect {
 public:
-	// If parent is non-NULL, calls to inform_input_size will be forwarded
+	// If parent is non-nullptr, calls to inform_input_size will be forwarded
 	// so that it can make reasonable decisions for both blur passes.
 	SingleBlurPassEffect(BlurEffect *parent);
 	virtual ~SingleBlurPassEffect();
@@ -77,7 +77,7 @@ public:
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
-		if (parent != NULL) {
+		if (parent != nullptr) {
 			parent->inform_input_size(input_num, width, height);
 		}
 	}

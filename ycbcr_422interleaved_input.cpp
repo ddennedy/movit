@@ -21,7 +21,7 @@ YCbCr422InterleavedInput::YCbCr422InterleavedInput(const ImageFormat &image_form
 	  ycbcr_format(ycbcr_format),
 	  width(width),
 	  height(height),
-	  resource_pool(NULL)
+	  resource_pool(nullptr)
 {
 	pbo = 0;
 	texture_num[0] = texture_num[1] = 0;
@@ -35,7 +35,7 @@ YCbCr422InterleavedInput::YCbCr422InterleavedInput(const ImageFormat &image_form
 	pitches[CHANNEL_LUMA] = width;
 	pitches[CHANNEL_CHROMA] = width / ycbcr_format.chroma_subsampling_x;
 
-	pixel_data = NULL;
+	pixel_data = nullptr;
 
 	register_uniform_sampler2d("tex_y", &uniform_tex_y);
 	register_uniform_sampler2d("tex_cbcr", &uniform_tex_cbcr);

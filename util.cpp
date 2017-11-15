@@ -89,7 +89,7 @@ string read_file(const string &filename)
 	const string full_pathname = *movit_data_directory + "/" + filename;
 
 	FILE *fp = fopen(full_pathname.c_str(), "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		perror(full_pathname.c_str());
 		exit(1);
 	}
@@ -294,7 +294,7 @@ void *get_gl_context_identifier()
 	return (void *)wglGetCurrentContext();
 #else
 	void *ret = (void *)eglGetCurrentContext();
-	if (ret != NULL) {
+	if (ret != nullptr) {
 		return ret;
 	}
 	return (void *)glXGetCurrentContext();

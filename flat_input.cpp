@@ -22,7 +22,7 @@ FlatInput::FlatInput(ImageFormat image_format, MovitPixelFormat pixel_format_in,
 	  height(height),
 	  pitch(width),
 	  owns_texture(false),
-	  pixel_data(NULL),
+	  pixel_data(nullptr),
 	  fixup_swap_rb(false),
 	  fixup_red_to_grayscale(false)
 {
@@ -66,7 +66,7 @@ void FlatInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsi
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
 
-	if (texture_num == 0 && (pbo != 0 || pixel_data != NULL)) {
+	if (texture_num == 0 && (pbo != 0 || pixel_data != nullptr)) {
 		// Translate the input format to OpenGL's enums.
 		GLint internal_format;
 		GLenum format;

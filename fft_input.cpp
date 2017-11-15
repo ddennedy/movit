@@ -19,7 +19,7 @@ FFTInput::FFTInput(unsigned width, unsigned height)
 	  fft_height(height),
 	  convolve_width(width),
 	  convolve_height(height),
-	  pixel_data(NULL)
+	  pixel_data(nullptr)
 {
 	register_int("fft_width", &fft_width);
 	register_int("fft_height", &fft_height);
@@ -39,7 +39,7 @@ void FFTInput::set_gl_state(GLuint glsl_program_num, const string& prefix, unsig
 	check_error();
 
 	if (texture_num == 0) {
-		assert(pixel_data != NULL);
+		assert(pixel_data != nullptr);
 
 		// Do the FFT. Our FFTs should typically be small enough and
 		// the data changed often enough that FFTW_ESTIMATE should be

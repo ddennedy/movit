@@ -26,7 +26,7 @@ ResourcePool::ResourcePool(size_t program_freelist_max_length,
 	  vao_freelist_max_length(vao_freelist_max_length),
 	  texture_freelist_bytes(0)
 {
-	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&lock, nullptr);
 }
 
 ResourcePool::~ResourcePool()
@@ -182,7 +182,7 @@ GLuint ResourcePool::link_program(GLuint vs_obj,
 	glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
 	if (success == GL_FALSE) {
 		GLchar error_log[1024] = {0};
-		glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
+		glGetProgramInfoLog(glsl_program_num, 1024, nullptr, error_log);
 		fprintf(stderr, "Error linking program: %s\n", error_log);
 		exit(1);
 	}
@@ -252,7 +252,7 @@ GLuint ResourcePool::link_compute_program(GLuint cs_obj)
 	glGetProgramiv(glsl_program_num, GL_LINK_STATUS, &success);
 	if (success == GL_FALSE) {
 		GLchar error_log[1024] = {0};
-		glGetProgramInfoLog(glsl_program_num, 1024, NULL, error_log);
+		glGetProgramInfoLog(glsl_program_num, 1024, nullptr, error_log);
 		fprintf(stderr, "Error linking program: %s\n", error_log);
 		exit(1);
 	}
@@ -336,7 +336,7 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	}
 
 	// Find any reasonable format given the internal format; OpenGL validates it
-	// even though we give NULL as pointer.
+	// even though we give nullptr as pointer.
 	GLenum format;
 	switch (internal_format) {
 	case GL_RGBA32F_ARB:
@@ -420,7 +420,7 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texture_num);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, nullptr);
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	check_error();
@@ -710,7 +710,7 @@ void ResourcePool::output_debug_shader(const string &shader_src, const string &s
 		char filename[256];
 		sprintf(filename, "chain-%03d.%s", compiled_shader_num++, suffix.c_str());
 		FILE *fp = fopen(filename, "w");
-		if (fp == NULL) {
+		if (fp == nullptr) {
 			perror(filename);
 			exit(1);
 		}

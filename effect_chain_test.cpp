@@ -136,7 +136,7 @@ public:
 template<class T>
 class RewritingEffect : public Effect {
 public:
-	RewritingEffect() : effect(new T()), replaced_node(NULL) {}
+	RewritingEffect() : effect(new T()), replaced_node(nullptr) {}
 	virtual string effect_type_id() const { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
 	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
@@ -188,7 +188,7 @@ TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 		0.0000f, 0.0000f, 0.0000f, 1.0000f
 	};
 	float out_data[4 * 4];
-	EffectChainTester tester(NULL, 1, 4);
+	EffectChainTester tester(nullptr, 1, 4);
 	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	RewritingEffect<InvertEffect> *effect = new RewritingEffect<InvertEffect>();
 	tester.get_chain()->add_effect(effect);
@@ -262,7 +262,7 @@ TEST(EffectChainTest, HandlesInputChangingColorspace) {
 	};
 	float out_data[size];
 
-	EffectChainTester tester(NULL, 4, 1, FORMAT_GRAYSCALE);
+	EffectChainTester tester(nullptr, 4, 1, FORMAT_GRAYSCALE);
 
 	// First say that we have sRGB, linear input.
 	ImageFormat format;
@@ -352,7 +352,7 @@ TEST(EffectChainTest, IdentityThroughGPUsRGBConversions) {
 		expected_data[i] = i / 255.0;
 	};
 	float out_data[256];
-	EffectChainTester tester(NULL, 256, 1);
+	EffectChainTester tester(nullptr, 256, 1);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 	tester.get_chain()->add_effect(new IdentityEffect());
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
@@ -438,7 +438,7 @@ private:
 // which outputs blank alpha.
 class RewritingToBlueInput : public Input {
 public:
-	RewritingToBlueInput() : blue_node(NULL) { register_int("needs_mipmaps", &needs_mipmaps); }
+	RewritingToBlueInput() : blue_node(nullptr) { register_int("needs_mipmaps", &needs_mipmaps); }
 	virtual string effect_type_id() const { return "RewritingToBlueInput"; }
 	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	virtual void rewrite_graph(EffectChain *graph, Node *self) {
@@ -474,7 +474,7 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 		0.0f, 0.0f, 1.0f, 1.0f,
 	};
 	float out_data[4 * size];
-	EffectChainTester tester(NULL, size, 1);
+	EffectChainTester tester(nullptr, size, 1);
 	RewritingToBlueInput *input = new RewritingToBlueInput();
 	tester.get_chain()->add_input(input);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
@@ -503,7 +503,7 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlphaPreservingEffect) {
 		0.0f, 0.0f, 1.0f, 1.0f,
 	};
 	float out_data[4 * size];
-	EffectChainTester tester(NULL, size, 1);
+	EffectChainTester tester(nullptr, size, 1);
 	tester.get_chain()->add_input(new BlueInput());
 	tester.get_chain()->add_effect(new BlankAlphaPreservingEffect());
 	RewritingEffect<MirrorEffect> *effect = new RewritingEffect<MirrorEffect>();
@@ -529,7 +529,7 @@ TEST(EffectChainTest, AlphaConversionsWithNonBlankAlphaPreservingEffect) {
 		0.0f, 0.0f, 1.0f, 1.0f,
 	};
 	float out_data[4 * size];
-	EffectChainTester tester(NULL, size, 1);
+	EffectChainTester tester(nullptr, size, 1);
 	tester.get_chain()->add_input(new BlueInput());
 	tester.get_chain()->add_effect(new IdentityEffect());  // Not BlankAlphaPreservingEffect.
 	RewritingEffect<MirrorEffect> *effect = new RewritingEffect<MirrorEffect>();
@@ -684,7 +684,7 @@ TEST(EffectChainTest, MipmapsWithNonMipmapCapableInput) {
 		0.25f,    0.25f,    0.25f,    0.25f,
 	};
 	float out_data[4 * 16];
-	EffectChainTester tester(NULL, 4, 16, FORMAT_GRAYSCALE);
+	EffectChainTester tester(nullptr, 4, 16, FORMAT_GRAYSCALE);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -796,7 +796,7 @@ TEST(EffectChainTest, DiamondGraph) {
 	MultiplyEffect *mul_two = new MultiplyEffect();
 	ASSERT_TRUE(mul_two->set_vec4("factor", two));
 
-	EffectChainTester tester(NULL, 2, 2);
+	EffectChainTester tester(nullptr, 2, 2);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -847,7 +847,7 @@ TEST(EffectChainTest, DiamondGraphWithOneInputUsedInTwoPhases) {
 	
 	BouncingIdentityEffect *bounce = new BouncingIdentityEffect();
 
-	EffectChainTester tester(NULL, 2, 2);
+	EffectChainTester tester(nullptr, 2, 2);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -877,7 +877,7 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneGammaConversion) {
 	};
 	float out_data[2 * 2];
 	
-	EffectChainTester tester(NULL, 2, 2);
+	EffectChainTester tester(nullptr, 2, 2);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	// MirrorEffect does not get linear light, so the conversions will be
@@ -910,7 +910,7 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneColorspaceConversion) {
 	};
 	float out_data[2 * 2];
 	
-	EffectChainTester tester(NULL, 2, 2);
+	EffectChainTester tester(nullptr, 2, 2);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_REC_601_625, GAMMA_LINEAR);
 
 	// MirrorEffect does not get linear light, so the conversions will be
@@ -954,7 +954,7 @@ TEST(EffectChainTest, SameInputsGiveSameOutputs) {
 	};
 	float out_data[4 * 3];
 	
-	EffectChainTester tester(NULL, 4, 3);  // Note non-square aspect.
+	EffectChainTester tester(nullptr, 4, 3);  // Note non-square aspect.
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -999,7 +999,7 @@ TEST(EffectChainTest, AspectRatioConversion) {
 	// (keep the height, round the width 9.333 to 9). 
 	float out_data[9 * 7];
 	
-	EffectChainTester tester(NULL, 4, 3);
+	EffectChainTester tester(nullptr, 4, 3);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -1044,7 +1044,7 @@ TEST(EffectChainTest, FirstPhaseWithNoTextureCoordinates) {
 	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 1, size);
 
 	input->set_pixel_data(data);
-	EffectChainTester tester(NULL, 1, size);
+	EffectChainTester tester(nullptr, 1, size);
 	tester.get_chain()->add_input(new BlueInput());
 	Effect *phase1_end = tester.get_chain()->add_effect(new BouncingIdentityEffect());
 	tester.get_chain()->add_input(input);
@@ -1224,7 +1224,7 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);
@@ -1282,7 +1282,7 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 	// setlocale() behind-the-scenes, and that might corrupt the returned
 	// pointer, so we need to take our own copy of it here.
 	char *saved_locale = setlocale(LC_ALL, "nb_NO.UTF_8");
-	if (saved_locale == NULL) {
+	if (saved_locale == nullptr) {
 		// The locale wasn't available.
 		return;
 	}

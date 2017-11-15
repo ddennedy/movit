@@ -129,7 +129,7 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_s
 
 	for (unsigned i = 0, j = 0; i < num_src_samples; ++i, ++j) {
 		// Copy the sample directly; it will be overwritten later if we can combine.
-		if (dst != NULL) {
+		if (dst != nullptr) {
 			dst[j].weight = convert_float<float, DestFloat>(src[i].weight);
 			dst[j].pos = convert_float<float, DestFloat>(src[i].pos);
 		}
@@ -169,7 +169,7 @@ unsigned combine_samples(const Tap<float> *src, Tap<DestFloat> *dst, float num_s
 		}
 
 		// OK, we can combine this and the next sample.
-		if (dst != NULL) {
+		if (dst != nullptr) {
 			dst[j].weight = total_weight;
 			dst[j].pos = pos;
 		}
@@ -215,13 +215,13 @@ unsigned combine_many_samples(const Tap<float> *weights, unsigned src_size, unsi
 
 	unsigned max_samples_saved = UINT_MAX;
 	for (unsigned y = 0; y < dst_samples && max_samples_saved > 0; ++y) {
-		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, NULL, num_subtexels, inv_num_subtexels, src_samples, max_samples_saved, pos1_pos2_diff, inv_pos1_pos2_diff);
+		unsigned num_samples_saved = combine_samples<DestFloat>(weights + y * src_samples, nullptr, num_subtexels, inv_num_subtexels, src_samples, max_samples_saved, pos1_pos2_diff, inv_pos1_pos2_diff);
 		max_samples_saved = min(max_samples_saved, num_samples_saved);
 	}
 
 	// Now that we know the right width, actually combine the samples.
 	unsigned src_bilinear_samples = src_samples - max_samples_saved;
-	if (*bilinear_weights != NULL) delete[] *bilinear_weights;
+	if (*bilinear_weights != nullptr) delete[] *bilinear_weights;
 	*bilinear_weights = new Tap<DestFloat>[dst_samples * src_bilinear_samples];
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		Tap<DestFloat> *bilinear_weights_ptr = *bilinear_weights + y * src_bilinear_samples;
@@ -314,7 +314,7 @@ ResampleEffect::ResampleEffect()
 	// The first blur pass will forward resolution information to us.
 	hpass = new SingleResamplePassEffect(this);
 	CHECK(hpass->set_int("direction", SingleResamplePassEffect::HORIZONTAL));
-	vpass = new SingleResamplePassEffect(NULL);
+	vpass = new SingleResamplePassEffect(nullptr);
 	CHECK(vpass->set_int("direction", SingleResamplePassEffect::VERTICAL));
 
 	update_size();
@@ -537,8 +537,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 	GLenum type, internal_format;
 	void *pixels;
-	assert((weights.bilinear_weights_fp16 == NULL) != (weights.bilinear_weights_fp32 == NULL));
-	if (weights.bilinear_weights_fp32 != NULL) {
+	assert((weights.bilinear_weights_fp16 == nullptr) != (weights.bilinear_weights_fp32 == NULL));
+	if (weights.bilinear_weights_fp32 != nullptr) {
 		type = GL_FLOAT;
 		internal_format = GL_RG32F;
 		pixels = weights.bilinear_weights_fp32;
@@ -670,9 +670,9 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 	// Our tolerance level for total error is a bit higher than the one for invididual
 	// samples, since one would assume overall errors in the shape don't matter as much.
 	const float max_error = 2.0f / (255.0f * 255.0f);
-	Tap<fp16_int_t> *bilinear_weights_fp16 = NULL;
+	Tap<fp16_int_t> *bilinear_weights_fp16 = nullptr;
 	int src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp16);
-	Tap<float> *bilinear_weights_fp32 = NULL;
+	Tap<float> *bilinear_weights_fp32 = nullptr;
 	double max_sum_sq_error_fp16 = 0.0;
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		double sum_sq_error_fp16 = compute_sum_sq_error(
@@ -687,7 +687,7 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 
 	if (max_sum_sq_error_fp16 > max_error) {
 		delete[] bilinear_weights_fp16;
-		bilinear_weights_fp16 = NULL;
+		bilinear_weights_fp16 = nullptr;
 		src_bilinear_samples = combine_many_samples(weights, src_size, src_samples, dst_samples, &bilinear_weights_fp32);
 	}
 

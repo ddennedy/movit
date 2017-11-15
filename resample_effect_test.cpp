@@ -70,7 +70,7 @@ TEST(ResampleEffectTest, UpscaleByTwoGetsCorrectPixelCenters) {
 		}
 	}
 
-	EffectChainTester tester(NULL, size * 2, size * 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size * 2, size * 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -112,7 +112,7 @@ TEST(ResampleEffectTest, DownscaleByTwoGetsCorrectPixelCenters) {
 		}
 	}
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -142,7 +142,7 @@ TEST(ResampleEffectTest, UpscaleByThreeGetsCorrectPixelCenters) {
 	};
 	float out_data[size * size * 9];
 
-	EffectChainTester tester(NULL, size * 3, size * 3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size * 3, size * 3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -187,7 +187,7 @@ TEST(ResampleEffectTest, HeavyResampleGetsSumRight) {
 		}
 	}
 
-	EffectChainTester tester(NULL, dwidth, dheight, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
+	EffectChainTester tester(nullptr, dwidth, dheight, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -317,7 +317,7 @@ TEST(ResampleEffectTest, ReadHalfPixelFromLeftAndScale) {
 	};
 	float out_data[dst_width * 1];
 
-	EffectChainTester tester(NULL, dst_width, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, dst_width, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;

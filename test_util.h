@@ -58,7 +58,7 @@ private:
 	template<class T>
 	void internal_run(T *out_data, T *out_data2, T *out_data3, T *out_data4, GLenum internal_format, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format = OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED
 #ifdef HAVE_BENCHMARK
-		, benchmark::State *state = NULL
+		, benchmark::State *state = nullptr
 #endif
 );
 

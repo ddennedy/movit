@@ -22,7 +22,7 @@ BlurEffect::BlurEffect()
 	// The first blur pass will forward resolution information to us.
 	hpass = new SingleBlurPassEffect(this);
 	CHECK(hpass->set_int("direction", SingleBlurPassEffect::HORIZONTAL));
-	vpass = new SingleBlurPassEffect(NULL);
+	vpass = new SingleBlurPassEffect(nullptr);
 	CHECK(vpass->set_int("direction", SingleBlurPassEffect::VERTICAL));
 
 	update_radius();
@@ -111,7 +111,7 @@ SingleBlurPassEffect::SingleBlurPassEffect(BlurEffect *parent)
 	  direction(HORIZONTAL),
 	  width(1280),
 	  height(720),
-	  uniform_samples(NULL)
+	  uniform_samples(nullptr)
 {
 	register_float("radius", &radius);
 	register_int("direction", (int *)&direction);
@@ -209,7 +209,7 @@ void SingleBlurPassEffect::set_gl_state(GLuint glsl_program_num, const string &p
 
 		float pos1 = base_pos / (float)size;
 		float pos, total_weight;
-		combine_two_samples(w1, w2, pos1, 1.0 / (float)size, size, num_subtexels, inv_num_subtexels, &pos, &total_weight, NULL);
+		combine_two_samples(w1, w2, pos1, 1.0 / (float)size, size, num_subtexels, inv_num_subtexels, &pos, &total_weight, nullptr);
 
 		uniform_samples[2 * i + 0] = pos;
 		uniform_samples[2 * i + 1] = total_weight;

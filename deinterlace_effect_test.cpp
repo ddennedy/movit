@@ -33,7 +33,7 @@ TEST(DeinterlaceTest, ConstantColor) {
 		0.3f, 0.3f,
 	};
 	float out_data[12];
-	EffectChainTester tester(NULL, 2, 6);
+	EffectChainTester tester(nullptr, 2, 6);
 	Effect *input1 = tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
 	Effect *input2 = tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
 	Effect *input3 = tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 2, 3);
@@ -79,7 +79,7 @@ TEST(DeinterlaceTest, VerticalInterpolation) {
 	fill(neg_blowout_data, neg_blowout_data + width * height, -100.0f);
 	fill(pos_blowout_data, pos_blowout_data + width * height,  100.0f);
 
-	EffectChainTester tester(NULL, width, height * 2);
+	EffectChainTester tester(nullptr, width, height * 2);
 	Effect *input1 = tester.add_input(neg_blowout_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 	Effect *input2 = tester.add_input(neg_blowout_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 	Effect *input3 = tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
@@ -131,7 +131,7 @@ TEST(DeinterlaceTest, DiagonalInterpolation) {
 	fill(neg_blowout_data, neg_blowout_data + width * height, -100.0f);
 	fill(pos_blowout_data, pos_blowout_data + width * height,  100.0f);
 
-	EffectChainTester tester(NULL, width, height * 2);
+	EffectChainTester tester(nullptr, width, height * 2);
 	Effect *input1 = tester.add_input(neg_blowout_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 	Effect *input2 = tester.add_input(neg_blowout_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 	Effect *input3 = tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
@@ -172,7 +172,7 @@ TEST(DeinterlaceTest, FlickerBox) {
 	float out_data[width * height * 2];
 
 	{
-		EffectChainTester tester(NULL, width, height * 2);
+		EffectChainTester tester(nullptr, width, height * 2);
 		Effect *white_input = tester.add_input(white_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 		Effect *black_input = tester.add_input(black_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 		Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), white_input, black_input, white_input, black_input, white_input);
@@ -184,7 +184,7 @@ TEST(DeinterlaceTest, FlickerBox) {
 	}
 
 	{
-		EffectChainTester tester(NULL, width, height * 2);
+		EffectChainTester tester(nullptr, width, height * 2);
 		Effect *white_input = tester.add_input(white_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 		Effect *black_input = tester.add_input(black_data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, height);
 		Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), white_input, black_input, white_input, black_input, white_input);
@@ -217,7 +217,7 @@ void BM_DeinterlaceEffect_Gray(benchmark::State &state)
 		field5[i] = rand();
 	}
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 	Effect *input1 = tester.add_input(field1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
 	Effect *input2 = tester.add_input(field2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
 	Effect *input3 = tester.add_input(field3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);

@@ -22,7 +22,7 @@ MovitShaderModel movit_shader_model;
 // The rules for objects with nontrivial constructors in static scope
 // are somewhat convoluted, and easy to mess up. We simply have a
 // pointer instead (and never care to clean it up).
-string *movit_data_directory = NULL;
+string *movit_data_directory = nullptr;
 
 namespace {
 
@@ -38,7 +38,7 @@ void measure_texel_subpixel_precision()
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, dst_texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, 1, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, 1, 0, GL_RGBA, GL_FLOAT, nullptr);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);
@@ -166,7 +166,7 @@ void measure_roundoff_problems()
 	check_error();
 	glBindTexture(GL_TEXTURE_2D, dst_texnum);
 	check_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 	check_error();
 
 	glGenFramebuffers(1, &fbo);
@@ -329,7 +329,7 @@ double get_glsl_version()
 
 	// Skip past the first period.
 	char *ptr = strchr(glsl_version_str, '.');
-	assert(ptr != NULL);
+	assert(ptr != nullptr);
 	++ptr;
 
 	// Now cut the string off at the next period or space, whatever comes first
@@ -381,7 +381,7 @@ bool init_movit(const string& data_directory, MovitDebugLevel debug_level)
 	// You can turn this on if you want detailed debug messages from the driver.
 	// You should probably also ask for a debug context (see gtest_sdl_main.cpp),
 	// or you might not get much data back.
-	// glDebugMessageCallbackARB(callback, NULL);
+	// glDebugMessageCallbackARB(callback, nullptr);
 	// glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0, GL_TRUE);
 
 	if (!check_extensions()) {

@@ -40,7 +40,7 @@ TEST(YCbCrConversionEffectTest, BasicInOut) {
 
 	unsigned char out_data[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -96,7 +96,7 @@ TEST(YCbCrConversionEffectTest, ClampToValidRange) {
 
 	unsigned char out_data[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -152,7 +152,7 @@ TEST(YCbCrConversionEffectTest, LimitedRangeToFullRange) {
 
 	unsigned char out_data[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -209,7 +209,7 @@ TEST(YCbCrConversionEffectTest, PlanarOutput) {
 
 	unsigned char out_y[width * height], out_cb[width * height], out_cr[width * height];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -279,7 +279,7 @@ TEST(YCbCrConversionEffectTest, SplitLumaAndChroma) {
 
 	unsigned char out_y[width * height * 4], out_cbcr[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -343,7 +343,7 @@ TEST(YCbCrConversionEffectTest, OutputChunkyAndRGBA) {
 	unsigned char out_ycbcr[width * height * 4];
 	unsigned char out_rgba[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -417,7 +417,7 @@ TEST(YCbCrConversionEffectTest, MultipleOutputsAndRGBA) {
 	unsigned char out_cbcr[width * height * 4];
 	unsigned char out_rgba[width * height * 4];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -483,7 +483,7 @@ TEST(YCbCrConversionEffectTest, ChangeOutputFormat) {
 
 	unsigned char out_y[width * height], out_cb[width * height], out_cr[width * height];
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -545,7 +545,7 @@ TEST(YCbCrConversionEffectTest, TenBitOutput) {
 		127, 960, 471, 3,
 	};
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGB10_A2);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGB10_A2);
 	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	ImageFormat format;
@@ -598,7 +598,7 @@ TEST(YCbCrConversionEffectTest, TenBitOutputInSixteen) {
 		127, 960, 471, 65535,
 	};
 
-	EffectChainTester tester(NULL, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA16);
+	EffectChainTester tester(nullptr, width, height, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA16);
 	tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	ImageFormat format;

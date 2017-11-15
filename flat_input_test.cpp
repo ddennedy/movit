@@ -109,7 +109,7 @@ TEST(FlatInput, AlphaIsNotModifiedBySRGBConversion) {
 	};
 	float out_data[4 * size];
 
-        EffectChainTester tester(NULL, 1, size);
+        EffectChainTester tester(nullptr, 1, size);
         tester.add_input(data, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_sRGB);
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
@@ -185,7 +185,7 @@ TEST(FlatInput, Pitch) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -212,7 +212,7 @@ TEST(FlatInput, UpdatedData) {
 	};
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -252,7 +252,7 @@ TEST(FlatInput, PBO) {
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * sizeof(float), data, GL_STREAM_DRAW);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -287,7 +287,7 @@ TEST(FlatInput, ExternalTexture) {
 	};
 	float out_data[4 * size];
 
-	EffectChainTester tester(NULL, 1, size, FORMAT_RGB, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, 1, size, FORMAT_RGB, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -326,7 +326,7 @@ TEST(FlatInput, NoData) {
 
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;

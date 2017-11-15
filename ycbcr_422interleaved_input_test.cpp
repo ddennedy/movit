@@ -36,7 +36,7 @@ TEST(YCbCr422InterleavedInputTest, Simple422) {
 	};
 	float out_data[4 * width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -82,7 +82,7 @@ TEST(YCbCr422InterleavedInputTest, LumaLinearInterpolation) {
 	};
 	float out_data[out_width * height];
 
-	EffectChainTester tester(NULL, out_width, height);
+	EffectChainTester tester(nullptr, out_width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -143,7 +143,7 @@ TEST(YCbCr422InterleavedInputTest, DifferentCbAndCrPositioning) {
 	};
 	float out_data[width * height];
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -202,7 +202,7 @@ TEST(YCbCr422InterleavedInputTest, PBO) {
 	glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * 2, uyvy, GL_STREAM_DRAW);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
-	EffectChainTester tester(NULL, width, height);
+	EffectChainTester tester(nullptr, width, height);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;

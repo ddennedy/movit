@@ -26,7 +26,7 @@ TEST(PaddingEffectTest, SimpleCenter) {
 	};
 	float out_data[4 * 4];
 
-        EffectChainTester tester(NULL, 4, 4);
+        EffectChainTester tester(nullptr, 4, 4);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -59,7 +59,7 @@ TEST(PaddingEffectTest, WhiteBorderColor) {
 	};
 	float out_data[4 * 4];
 
-        EffectChainTester tester(NULL, 4, 4);
+        EffectChainTester tester(nullptr, 4, 4);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -92,7 +92,7 @@ TEST(PaddingEffectTest, BorderColorIsInLinearGamma) {
 	};
 	float out_data[4 * 2];
 
-        EffectChainTester tester(NULL, 1, 2);
+        EffectChainTester tester(nullptr, 1, 2);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -126,7 +126,7 @@ TEST(PaddingEffectTest, DifferentXAndYOffset) {
 	};
 	float out_data[3 * 3];
 
-        EffectChainTester tester(NULL, 3, 3);
+        EffectChainTester tester(nullptr, 3, 3);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -156,7 +156,7 @@ TEST(PaddingEffectTest, NonIntegerOffset) {
 	};
 	float out_data[5 * 2];
 
-        EffectChainTester tester(NULL, 5, 2);
+        EffectChainTester tester(nullptr, 5, 2);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -186,7 +186,7 @@ TEST(PaddingEffectTest, Crop) {
 	};
 	float out_data[1 * 1];
 
-        EffectChainTester tester(NULL, 1, 1);
+        EffectChainTester tester(nullptr, 1, 1);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -219,7 +219,7 @@ TEST(PaddingEffectTest, AlphaIsCorrectEvenWithNonLinearInputsAndOutputs) {
 	};
 	float out_data[4 * 4];
 
-	EffectChainTester tester(NULL, 1, 4);
+	EffectChainTester tester(nullptr, 1, 4);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_REC_601_625;
@@ -255,7 +255,7 @@ TEST(PaddingEffectTest, RedBorder) {  // Not black nor white, but still a satura
 	};
 	float out_data[4 * 4];
 
-	EffectChainTester tester(NULL, 1, 4);
+	EffectChainTester tester(nullptr, 1, 4);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_REC_601_625;
@@ -291,7 +291,7 @@ TEST(PaddingEffectTest, BorderOffsetTopAndBottom) {
 	};
 	float out_data[4 * 4];
 
-        EffectChainTester tester(NULL, 4, 4);
+        EffectChainTester tester(nullptr, 4, 4);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;
@@ -324,7 +324,7 @@ TEST(PaddingEffectTest, BorderOffsetLeftAndRight) {
 	};
 	float out_data[4 * 2];
 
-        EffectChainTester tester(NULL, 4, 2);
+        EffectChainTester tester(nullptr, 4, 2);
 
 	ImageFormat format;
 	format.color_space = COLORSPACE_sRGB;

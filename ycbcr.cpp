@@ -148,10 +148,10 @@ void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float* offset, Matrix3d* ycb
 		offset[1] /= scale;
 		offset[2] /= scale;
 		*ycbcr_to_rgb *= scale;
-		if (scale_factor != NULL) {
+		if (scale_factor != nullptr) {
 			*scale_factor = scale;
 		}
-	} else if (scale_factor != NULL) {
+	} else if (scale_factor != nullptr) {
 		*scale_factor = 1.0;
 	}
 }

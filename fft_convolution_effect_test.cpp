@@ -29,7 +29,7 @@ TEST(FFTConvolutionEffectTest, Identity) {
 		}
 		kernel[0] = 1.0f;
 
-		EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+		EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 		tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 		FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_size, convolve_size);
@@ -64,7 +64,7 @@ TEST(FFTConvolutionEffectTest, Constant) {
 	}
 	kernel[0] = f;
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_size, convolve_size);
@@ -98,7 +98,7 @@ TEST(FFTConvolutionEffectTest, MoveRight) {
 	};
 	float out_data[size * size];
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_size, convolve_size);
@@ -131,7 +131,7 @@ TEST(FFTConvolutionEffectTest, MoveDown) {
 	};
 	float out_data[size * size];
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_size, convolve_size);
@@ -164,7 +164,7 @@ TEST(FFTConvolutionEffectTest, MergeWithLeft) {
 	};
 	float out_data[size * size];
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_size, convolve_size);
@@ -197,7 +197,7 @@ TEST(FFTConvolutionEffectTest, NegativeCoefficients) {
 	};
 	float out_data[size * size];
 
-	EffectChainTester tester(NULL, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(nullptr, size, size, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, size, size);
 
 	FFTConvolutionEffect *fft_effect = new FFTConvolutionEffect(size, size, convolve_width, convolve_height);

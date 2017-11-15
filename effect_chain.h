@@ -216,11 +216,11 @@ class EffectChain {
 public:
 	// Aspect: e.g. 16.0f, 9.0f for 16:9.
 	// resource_pool is a pointer to a ResourcePool with which to share shaders
-	// and other resources (see resource_pool.h). If NULL (the default),
+	// and other resources (see resource_pool.h). If nullptr (the default),
 	// will create its own that is not shared with anything else. Does not take
 	// ownership of the passed-in ResourcePool, but will naturally take ownership
 	// of its own internal one if created.
-	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = NULL);
+	EffectChain(float aspect_nom, float aspect_denom, ResourcePool *resource_pool = nullptr);
 	~EffectChain();
 
 	// User API:
@@ -391,7 +391,7 @@ public:
 
 	Effect *last_added_effect() {
 		if (nodes.empty()) {
-			return NULL;
+			return nullptr;
 		} else {
 			return nodes.back()->effect;
 		}	

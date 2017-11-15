@@ -47,10 +47,10 @@ int main(int argc, char **argv) {
 		32, 32,
 		SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
-	assert(context != NULL);
+	assert(context != nullptr);
 #else
 	SDL_SetVideoMode(32, 32, 0, SDL_OPENGL);
-	SDL_WM_SetCaption("OpenGL window for unit test", NULL);
+	SDL_WM_SetCaption("OpenGL window for unit test", nullptr);
 #endif
 
 	int err;

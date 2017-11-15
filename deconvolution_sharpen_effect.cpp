@@ -32,7 +32,7 @@ DeconvolutionSharpenEffect::DeconvolutionSharpenEffect()
 	  last_gaussian_radius(-1.0f),
 	  last_correlation(-1.0f),
 	  last_noise(-1.0f),
-	  uniform_samples(NULL)
+	  uniform_samples(nullptr)
 {
 	register_int("matrix_size", &R);
 	register_float("circle_radius", &circle_radius);

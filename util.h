@@ -11,7 +11,7 @@
 #include "defs.h"
 #include "fp16.h"
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+#define BUFFER_OFFSET(i) ((char *)nullptr + (i))
 
 namespace movit {
 
@@ -65,7 +65,7 @@ enum CombineRoundingBehavior {
 //
 // Note that since the GPU might have limited precision in its linear
 // interpolation, the effective weights might be different from the ones you
-// asked for. sum_sq_error, if not NULL, will contain the sum of the
+// asked for. sum_sq_error, if not nullptr, will contain the sum of the
 // (estimated) squared errors of the two weights.
 //
 // The answer, in "offset", comes as a normalized coordinate,
@@ -109,7 +109,7 @@ void combine_two_samples(float w1, float w2, float pos1, float pos1_pos2_diff, f
 	// If z had infinite precision, this would simply reduce to w = w1 + w2.
 	*total_weight = from_fp32<DestFloat>((w1 + z * (w2 - w1)) / (z * z + (1 - z) * (1 - z)));
 
-	if (sum_sq_error != NULL) {
+	if (sum_sq_error != nullptr) {
 		float err1 = to_fp32(*total_weight) * (1 - z) - w1;
 		float err2 = to_fp32(*total_weight) * z - w2;
 		*sum_sq_error = err1 * err1 + err2 * err2;

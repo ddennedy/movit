@@ -87,7 +87,7 @@ private:
 
 class SingleResamplePassEffect : public Effect {
 public:
-	// If parent is non-NULL, calls to inform_input_size will be forwarded,
+	// If parent is non-nullptr, calls to inform_input_size will be forwarded,
 	// so that it can inform both passes about the right input and output
 	// resolutions.
 	SingleResamplePassEffect(ResampleEffect *parent);
@@ -102,7 +102,7 @@ public:
 
 	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
-		if (parent != NULL) {
+		if (parent != nullptr) {
 			parent->inform_input_size(input_num, width, height);
 		}
 	}

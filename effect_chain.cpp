@@ -49,8 +49,8 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	  aspect_denom(aspect_denom),
 	  output_color_rgba(false),
 	  num_output_color_ycbcr(0),
-	  dither_effect(NULL),
-	  ycbcr_conversion_effect_node(NULL),
+	  dither_effect(nullptr),
+	  ycbcr_conversion_effect_node(nullptr),
 	  intermediate_format(GL_RGBA16F),
 	  intermediate_transformation(NO_FRAMEBUFFER_TRANSFORMATION),
 	  num_dither_bits(0),
@@ -58,7 +58,7 @@ EffectChain::EffectChain(float aspect_nom, float aspect_denom, ResourcePool *res
 	  finalized(false),
 	  resource_pool(resource_pool),
 	  do_phase_timing(false) {
-	if (resource_pool == NULL) {
+	if (resource_pool == nullptr) {
 		this->resource_pool = new ResourcePool();
 		owns_resource_pool = true;
 	} else {
@@ -781,7 +781,7 @@ void EffectChain::output_dot(const char *filename)
 	}
 
 	FILE *fp = fopen(filename, "w");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		perror(filename);
 		exit(1);
 	}
@@ -825,7 +825,7 @@ void EffectChain::output_dot(const char *filename)
 
 		if (nodes[i]->outgoing_links.empty() && !nodes[i]->disabled) {
 			// Output node.
-			vector<string> labels = get_labels_for_edge(nodes[i], NULL);
+			vector<string> labels = get_labels_for_edge(nodes[i], nullptr);
 			output_dot_edge(fp, from_node_id, "output", labels);
 		}
 	}
@@ -838,7 +838,7 @@ vector<string> EffectChain::get_labels_for_edge(const Node *from, const Node *to
 {
 	vector<string> labels;
 
-	if (to != NULL && to->effect->needs_texture_bounce()) {
+	if (to != nullptr && to->effect->needs_texture_bounce()) {
 		labels.push_back("needs_bounce");
 	}
 	if (from->effect->changes_output_size()) {
@@ -1880,7 +1880,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 			assert(status == GL_FRAMEBUFFER_COMPLETE);
 			glViewport(x, y, width, height);
-			if (dither_effect != NULL) {
+			if (dither_effect != nullptr) {
 				CHECK(dither_effect->set_int("output_width", width));
 				CHECK(dither_effect->set_int("output_height", height));
 			}

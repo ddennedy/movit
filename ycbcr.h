@@ -82,7 +82,7 @@ float compute_chroma_offset(float pos, unsigned subsampling_factor, unsigned res
 // we support storing it in 16-bit formats, which incurs extra scaling factors.
 // You can get that scaling factor in <scale> if you want.
 void compute_ycbcr_matrix(YCbCrFormat ycbcr_format, float *offset, Eigen::Matrix3d *ycbcr_to_rgb,
-                          GLenum type = GL_UNSIGNED_BYTE, double *scale_factor = NULL);
+                          GLenum type = GL_UNSIGNED_BYTE, double *scale_factor = nullptr);
 
 }  // namespace movit
 
