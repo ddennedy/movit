@@ -19,7 +19,17 @@ using namespace std;
 
 namespace movit {
 
-TEST(DeinterlaceTest, ConstantColor) {
+class DeinterlaceTest : public testing::TestWithParam<string> {
+protected:
+	DeinterlaceTest() : disabler(GetParam() == "fragment") {}
+	bool should_skip() { return disabler.should_skip(); }
+
+private:
+	DisableComputeShadersTemporarily disabler;
+};
+
+TEST_P(DeinterlaceTest, ConstantColor) {
+	if (should_skip()) return;
 	float data[] = {
 		0.3f, 0.3f,
 		0.3f, 0.3f,
@@ -52,7 +62,8 @@ TEST(DeinterlaceTest, ConstantColor) {
 }
 
 // Also tests that top/bottom change works like expected.
-TEST(DeinterlaceTest, VerticalInterpolation) {
+TEST_P(DeinterlaceTest, VerticalInterpolation) {
+	if (should_skip()) return;
 	const int width = 11;
 	const int height = 2;
 	float data[width * height] = {
@@ -97,7 +108,8 @@ TEST(DeinterlaceTest, VerticalInterpolation) {
 	expect_equal(expected_data_bottom, out_data, width, height * 2);
 }
 
-TEST(DeinterlaceTest, DiagonalInterpolation) {
+TEST_P(DeinterlaceTest, DiagonalInterpolation) {
+	if (should_skip()) return;
 	const int width = 11;
 	const int height = 3;
 	float data[width * height] = {
@@ -145,7 +157,8 @@ TEST(DeinterlaceTest, DiagonalInterpolation) {
 	expect_equal(expected_data_top, out_data, width, height * 2);
 }
 
-TEST(DeinterlaceTest, FlickerBox) {
+TEST_P(DeinterlaceTest, FlickerBox) {
+	if (should_skip()) return;
 	const int width = 4;
 	const int height = 4;
 	float white_data[width * height] = {
@@ -197,6 +210,10 @@ TEST(DeinterlaceTest, FlickerBox) {
 	}
 }
 
+INSTANTIATE_TEST_CASE_P(DeinterlaceTest,
+                        DeinterlaceTest,
+                        testing::Values("fragment", "compute"));
+
 #ifdef HAVE_BENCHMARK
 namespace {
 
@@ -210,8 +227,11 @@ TestFormat bgra_format = { FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, 4 };
 
 }  // namespace
 
-void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spatial_interlacing_check)
+void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spatial_interlacing_check, const std::string &shader_type)
 {
+	DisableComputeShadersTemporarily disabler(shader_type == "fragment");
+	if (disabler.should_skip()) return;
+
 	unsigned width = state.range(0), height = state.range(1);
 	unsigned field_height = height / 2;
 
@@ -243,9 +263,12 @@ void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spati
 
 	tester.benchmark(state, out_data.get(), format.output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, gray_format, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, bgra_format, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheck, bgra_format, false)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, gray_format, true, "fragment")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, bgra_format, true, "fragment")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheck, bgra_format, false, "fragment")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, GrayCompute, gray_format, true, "compute")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRACompute, bgra_format, true, "compute")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheckCompute, bgra_format, false, "compute")->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
 #endif
 

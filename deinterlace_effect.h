@@ -52,17 +52,25 @@
 // parity, so all the others are implicit).
 
 #include <epoxy/gl.h>
+#include <memory>
 #include <string>
 
 #include "effect.h"
 
 namespace movit {
 
+class DeinterlaceComputeEffect;
+
 class DeinterlaceEffect : public Effect {
 public:
 	DeinterlaceEffect();
 	virtual std::string effect_type_id() const { return "DeinterlaceEffect"; }
 	std::string output_fragment_shader();
+
+	// Replaces itself with DeinterlaceComputeEffect if compute shaders are supported.
+	// Otherwise, does nothing.
+	void rewrite_graph(EffectChain *graph, Node *self);
+	bool set_int(const std::string &key, int value);
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
 
@@ -85,6 +93,11 @@ public:
 	enum FieldPosition { TOP = 0, BOTTOM = 1 };
 
 private:
+	// If compute shaders are supported, contains the actual effect.
+	// If not, nullptr.
+	std::unique_ptr<DeinterlaceComputeEffect> compute_effect_owner;
+	DeinterlaceComputeEffect *compute_effect = nullptr;
+
 	unsigned widths[5], heights[5];
 
 	// See file-level comment for explanation of this option.
@@ -112,6 +125,50 @@ private:
 	// For evaluating the high-pass filter (in the previous and next fields).
 	// Five taps, but evaluated twice since there are two fields.
 	float other_offset[3];
+};
+
+// A compute shader implementation of DeinterlaceEffect. It saves a bunch of loads
+// since it can share them between neighboring pixels (and also does not need
+// texture bounce), so it has the potential to be faster, although exactly how
+// much depends on your chain and other factors. DeinterlaceEffect will
+// automatically become a proxy to DeinterlaceComputeEffect if your system
+// supports compute shaders.
+class DeinterlaceComputeEffect : public Effect {
+public:
+	DeinterlaceComputeEffect();
+	virtual std::string effect_type_id() const { return "DeinterlaceComputeEffect"; }
+	std::string output_fragment_shader();
+
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+
+	virtual unsigned num_inputs() const { return 5; }
+	virtual bool changes_output_size() const { return true; }
+	virtual bool is_compute_shader() const { return true; }
+	virtual void get_compute_dimensions(unsigned output_width, unsigned output_height,
+	                                    unsigned *x, unsigned *y, unsigned *z) const;
+
+	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+
+	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
+	virtual void get_output_size(unsigned *width, unsigned *height,
+	                             unsigned *virtual_width, unsigned *virtual_height) const;
+
+	enum FieldPosition { TOP = 0, BOTTOM = 1 };
+
+private:
+	unsigned widths[5], heights[5];
+
+	// See file-level comment for explanation of this option.
+	bool enable_spatial_interlacing_check;
+
+	// Which field the current input (the middle one) is.
+	FieldPosition current_field_position;
+
+	// Offset for one pixel in the horizontal and verticla direction (1/width, 1/height).
+	float inv_width, inv_height;
+
+	// For evaluating the low-pass filter (in the current field). Four taps.
+	float current_field_vertical_offset;
 };
 
 }  // namespace movit
