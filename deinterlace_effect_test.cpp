@@ -6,6 +6,7 @@
 #include <epoxy/gl.h>
 
 #include <algorithm>
+#include <memory>
 
 #include "effect_chain.h"
 #include "gtest/gtest.h"
@@ -197,19 +198,19 @@ TEST(DeinterlaceTest, FlickerBox) {
 }
 
 #ifdef HAVE_BENCHMARK
-void BM_DeinterlaceEffect_Gray(benchmark::State &state)
+void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, MovitPixelFormat input_format, GLenum output_format)
 {
 	unsigned width = state.range(0), height = state.range(1);
 	unsigned field_height = height / 2;
 
-	float *field1 = new float[width * field_height];
-	float *field2 = new float[width * field_height];
-	float *field3 = new float[width * field_height];
-	float *field4 = new float[width * field_height];
-	float *field5 = new float[width * field_height];
-	float *out_data = new float[width * height];
+	unique_ptr<float[]> field1(new float[width * field_height * bytes_per_pixel]);
+	unique_ptr<float[]> field2(new float[width * field_height * bytes_per_pixel]);
+	unique_ptr<float[]> field3(new float[width * field_height * bytes_per_pixel]);
+	unique_ptr<float[]> field4(new float[width * field_height * bytes_per_pixel]);
+	unique_ptr<float[]> field5(new float[width * field_height * bytes_per_pixel]);
+	unique_ptr<float[]> out_data(new float[width * height * bytes_per_pixel]);
 
-	for (unsigned i = 0; i < width * field_height; ++i) {
+	for (unsigned i = 0; i < width * field_height * bytes_per_pixel; ++i) {
 		field1[i] = rand();
 		field2[i] = rand();
 		field3[i] = rand();
@@ -218,25 +219,20 @@ void BM_DeinterlaceEffect_Gray(benchmark::State &state)
 	}
 
 	EffectChainTester tester(nullptr, width, height);
-	Effect *input1 = tester.add_input(field1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input2 = tester.add_input(field2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input3 = tester.add_input(field3, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input4 = tester.add_input(field4, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input5 = tester.add_input(field5, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input1 = tester.add_input(field1.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input2 = tester.add_input(field2.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input3 = tester.add_input(field3.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input4 = tester.add_input(field4.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input5 = tester.add_input(field5.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
 	Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), input1, input2, input3, input4, input5);
 
 	ASSERT_TRUE(deinterlace_effect->set_int("current_field_position", 0));
 
-	tester.benchmark(state, out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
-
-	delete[] field1;
-	delete[] field2;
-	delete[] field3;
-	delete[] field4;
-	delete[] field5;
-	delete[] out_data;
+	tester.benchmark(state, out_data.get(), output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
-BENCHMARK(BM_DeinterlaceEffect_Gray)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, 1, FORMAT_GRAYSCALE, GL_RED)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_BGRA)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+
 #endif
 
 }  // namespace movit
