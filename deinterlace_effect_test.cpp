@@ -231,7 +231,7 @@ void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, Movit
 	tester.benchmark(state, out_data.get(), output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
 BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, 1, FORMAT_GRAYSCALE, GL_RED)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, GL_BGRA)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
 #endif
 
