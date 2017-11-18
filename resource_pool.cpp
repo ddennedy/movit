@@ -243,7 +243,7 @@ GLuint ResourcePool::compile_glsl_compute_program(const string& compute_shader)
 		check_error();
 		glsl_program_num = link_compute_program(cs_obj);
 
-		output_debug_shader(compute_shader, "compute");
+		output_debug_shader(compute_shader, "comp");
 
 		compute_programs.insert(make_pair(key, glsl_program_num));
 		add_master_program(glsl_program_num);

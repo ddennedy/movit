@@ -361,7 +361,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 {
 	string frag_shader_header;
 	if (phase->is_compute_shader) {
-		frag_shader_header = read_file("header.compute");
+		frag_shader_header = read_file("header.comp");
 	} else {
 		frag_shader_header = read_version_dependent_file("header", "frag");
 	}
