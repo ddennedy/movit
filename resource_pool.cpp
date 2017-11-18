@@ -33,18 +33,13 @@ ResourcePool::~ResourcePool()
 {
 	assert(program_refcount.empty());
 
-	for (list<GLuint>::const_iterator freelist_it = program_freelist.begin();
-	     freelist_it != program_freelist.end();
-	     ++freelist_it) {
-		delete_program(*freelist_it);
+	for (GLuint program : program_freelist) {
+		delete_program(program);
 	}
 	assert(programs.empty());
 	assert(program_shaders.empty());
 
-	for (list<GLuint>::const_iterator freelist_it = texture_freelist.begin();
-	     freelist_it != texture_freelist.end();
-	     ++freelist_it) {
-		GLuint free_texture_num = *freelist_it;
+	for (GLuint free_texture_num : texture_freelist) {
 		assert(texture_formats.count(free_texture_num) != 0);
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
 		texture_formats.erase(free_texture_num);
@@ -57,18 +52,13 @@ ResourcePool::~ResourcePool()
 	void *context = get_gl_context_identifier();
 	cleanup_unlinked_fbos(context);
 
-	for (map<void *, std::list<FBOFormatIterator>>::iterator context_it = fbo_freelist.begin();
-	     context_it != fbo_freelist.end();
-	     ++context_it) {
-		if (context_it->first != context) {
+	for (const auto &context_and_fbos : fbo_freelist) {
+		if (context_and_fbos.first != context) {
 			// If this does not hold, the client should have called clean_context() earlier.
-			assert(context_it->second.empty());
+			assert(context_and_fbos.second.empty());
 			continue;
 		}
-		for (list<FBOFormatIterator>::const_iterator freelist_it = context_it->second.begin();
-		     freelist_it != context_it->second.end();
-		     ++freelist_it) {
-			FBOFormatIterator fbo_it = *freelist_it;
+		for (FBOFormatIterator fbo_it : context_and_fbos.second) {
 			glDeleteFramebuffers(1, &fbo_it->second.fbo_num);
 			check_error();
 			fbo_formats.erase(fbo_it);
@@ -318,7 +308,7 @@ void ResourcePool::unuse_glsl_program(GLuint instance_program_num)
 {
 	pthread_mutex_lock(&lock);
 
-	map<GLuint, GLuint>::const_iterator master_it = program_masters.find(instance_program_num);
+	auto master_it = program_masters.find(instance_program_num);
 	assert(master_it != program_masters.end());
 
 	assert(program_instances.count(master_it->second));
@@ -336,7 +326,7 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 
 	pthread_mutex_lock(&lock);
 	// See if there's a texture on the freelist we can use.
-	for (list<GLuint>::iterator freelist_it = texture_freelist.begin();
+	for (auto freelist_it = texture_freelist.begin();
 	     freelist_it != texture_freelist.end();
 	     ++freelist_it) {
 		GLuint texture_num = *freelist_it;
@@ -473,12 +463,10 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 		// not be in the right context, so don't delete it right away;
 		// the cleanup in release_fbo() (which calls cleanup_unlinked_fbos())
 		// will take care of actually doing that later.
-		for (map<pair<void *, GLuint>, FBO>::iterator format_it = fbo_formats.begin();
-		     format_it != fbo_formats.end();
-		     ++format_it) {
+		for (auto &key_and_fbo : fbo_formats) {
 			for (unsigned i = 0; i < num_fbo_attachments; ++i) {
-				if (format_it->second.texture_num[i] == free_texture_num) {
-					format_it->second.texture_num[i] = GL_INVALID_INDEX;
+				if (key_and_fbo.second.texture_num[i] == free_texture_num) {
+					key_and_fbo.second.texture_num[i] = GL_INVALID_INDEX;
 				}
 			}
 		}
@@ -502,9 +490,8 @@ GLuint ResourcePool::create_fbo(GLuint texture0_num, GLuint texture1_num, GLuint
 	pthread_mutex_lock(&lock);
 	if (fbo_freelist.count(context) != 0) {
 		// See if there's an FBO on the freelist we can use.
-		list<FBOFormatIterator>::iterator end = fbo_freelist[context].end();
-		for (list<FBOFormatIterator>::iterator freelist_it = fbo_freelist[context].begin();
-		     freelist_it != end; ++freelist_it) {
+		auto end = fbo_freelist[context].end();
+		for (auto freelist_it = fbo_freelist[context].begin(); freelist_it != end; ++freelist_it) {
 			FBOFormatIterator fbo_it = *freelist_it;
 			if (fbo_it->second.texture_num[0] == texture0_num &&
 			    fbo_it->second.texture_num[1] == texture1_num &&
@@ -585,9 +572,8 @@ GLuint ResourcePool::create_vec2_vao(const set<GLint> &attribute_indices, GLuint
 	pthread_mutex_lock(&lock);
 	if (vao_freelist.count(context) != 0) {
 		// See if there's a VAO the freelist we can use.
-		list<VAOFormatIterator>::iterator end = vao_freelist[context].end();
-		for (list<VAOFormatIterator>::iterator freelist_it = vao_freelist[context].begin();
-		     freelist_it != end; ++freelist_it) {
+		auto end = vao_freelist[context].end();
+		for (auto freelist_it = vao_freelist[context].begin(); freelist_it != end; ++freelist_it) {
 			VAOFormatIterator vao_it = *freelist_it;
 			if (vao_it->second.vbo_num == vbo_num &&
 			    vao_it->second.attribute_indices == attribute_indices) {
@@ -610,10 +596,10 @@ GLuint ResourcePool::create_vec2_vao(const set<GLint> &attribute_indices, GLuint
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_num);
 	check_error();
 
-	for (set<GLint>::const_iterator attr_it = attribute_indices.begin(); attr_it != attribute_indices.end(); ++attr_it) {
-		glEnableVertexAttribArray(*attr_it);
+	for (GLint attr : attribute_indices) {
+		glEnableVertexAttribArray(attr);
 		check_error();
-		glVertexAttribPointer(*attr_it, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+		glVertexAttribPointer(attr, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 		check_error();
 	}
 
@@ -658,8 +644,8 @@ void ResourcePool::clean_context()
 
 void ResourcePool::cleanup_unlinked_fbos(void *context)
 {
-	list<FBOFormatIterator>::iterator end = fbo_freelist[context].end();
-	for (list<FBOFormatIterator>::iterator freelist_it = fbo_freelist[context].begin(); freelist_it != end; ) {
+	auto end = fbo_freelist[context].end();
+	for (auto freelist_it = fbo_freelist[context].begin(); freelist_it != end; ) {
 		FBOFormatIterator fbo_it = *freelist_it;
 
 		bool all_unlinked = true;

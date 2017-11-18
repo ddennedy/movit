@@ -1906,10 +1906,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		}
 	}
 
-	for (map<Phase *, GLuint>::const_iterator texture_it = output_textures.begin();
-	     texture_it != output_textures.end();
-	     ++texture_it) {
-		resource_pool->release_2d_texture(texture_it->second);
+	for (const auto &phase_and_texnum : output_textures) {
+		resource_pool->release_2d_texture(phase_and_texnum.second);
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1926,8 +1924,8 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		// Get back the timer queries.
 		for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
 			Phase *phase = phases[phase_num];
-			for (std::list<GLuint>::iterator timer_it = phase->timer_query_objects_running.begin();
-			     timer_it != phase->timer_query_objects_running.end(); ) {
+			for (auto timer_it = phase->timer_query_objects_running.cbegin();
+			     timer_it != phase->timer_query_objects_running.cend(); ) {
 				GLint timer_query_object = *timer_it;
 				GLint available;
 				glGetQueryObjectiv(timer_query_object, GL_QUERY_RESULT_AVAILABLE, &available);
