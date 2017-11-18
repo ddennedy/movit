@@ -198,7 +198,7 @@ TEST(DeinterlaceTest, FlickerBox) {
 }
 
 #ifdef HAVE_BENCHMARK
-void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, MovitPixelFormat input_format, GLenum output_format)
+void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, MovitPixelFormat input_format, GLenum output_format, bool spatial_interlacing_check)
 {
 	unsigned width = state.range(0), height = state.range(1);
 	unsigned field_height = height / 2;
@@ -227,11 +227,13 @@ void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, Movit
 	Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), input1, input2, input3, input4, input5);
 
 	ASSERT_TRUE(deinterlace_effect->set_int("current_field_position", 0));
+	ASSERT_TRUE(deinterlace_effect->set_int("enable_spatial_interlacing_check", spatial_interlacing_check));
 
 	tester.benchmark(state, out_data.get(), output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, 1, FORMAT_GRAYSCALE, GL_RED)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, 1, FORMAT_GRAYSCALE, GL_RED, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheck, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, false)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
 #endif
 
