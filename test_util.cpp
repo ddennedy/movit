@@ -385,7 +385,7 @@ void expect_equal(const float *ref, const float *result, unsigned width, unsigne
 	float rms = sqrt(squared_difference) / (width * height);
 	EXPECT_LT(rms, rms_limit);
 
-	if (largest_difference >= largest_difference_limit || rms >= rms_limit) {
+	if (largest_difference >= largest_difference_limit || isnan(rms) || rms >= rms_limit) {
 		fprintf(stderr, "Dumping matrices for easier debugging, since at least one test failed.\n");
 
 		fprintf(stderr, "Reference:\n");
