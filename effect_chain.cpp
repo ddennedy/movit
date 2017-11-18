@@ -1993,6 +1993,16 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 
 		GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
 		output_textures->insert(make_pair(phase, tex_num));
+
+		// The output texture needs to have valid state to be written to by a compute shader.
+		if (phase->is_compute_shader) {
+			glActiveTexture(GL_TEXTURE0);
+			check_error();
+			glBindTexture(GL_TEXTURE_2D, (*output_textures)[phase]);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			check_error();
+		}
 	}
 
 	// Set up RTT inputs for this phase.
