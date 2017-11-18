@@ -14,20 +14,12 @@ PKG_CHECK_MODULES([Eigen3], [eigen3])
 PKG_CHECK_MODULES([epoxy], [epoxy])
 PKG_CHECK_MODULES([FFTW3], [fftw3])
 
-# Needed for unit tests and the demo app. We prefer SDL2 if possible,
-# but can also use classic SDL.
-with_SDL2=no
+# Needed for unit tests and the demo app.
 with_demo_app=yes
-PKG_CHECK_MODULES([SDL2], [sdl2], [with_SDL2=yes], [
-  PKG_CHECK_MODULES([SDL], [sdl])
-])
+PKG_CHECK_MODULES([SDL2], [sdl2])
 
-# These are only needed for the demo app.
-if test $with_SDL2 = "yes"; then
-  PKG_CHECK_MODULES([SDL2_image], [SDL2_image], [], [with_demo_app=no; AC_MSG_WARN([SDL2_image not found, demo program will not be built])])
-else
-  PKG_CHECK_MODULES([SDL_image], [SDL_image], [], [with_demo_app=no; AC_MSG_WARN([SDL_image not found, demo program will not be built])])
-fi
+# This is only needed for the demo app.
+PKG_CHECK_MODULES([SDL2_image], [SDL2_image], [], [with_demo_app=no; AC_MSG_WARN([SDL2_image not found, demo program will not be built])])
 PKG_CHECK_MODULES([libpng], [libpng], [], [with_demo_app=no; AC_MSG_WARN([libpng not found, demo program will not be built])])
 
 # This is only needed for microbenchmarks, so optional.
@@ -35,7 +27,6 @@ PKG_CHECK_MODULES([benchmark], [benchmark], [with_benchmark=yes], [with_benchmar
 
 AC_SUBST([with_demo_app])
 AC_SUBST([with_benchmark])
-AC_SUBST([with_SDL2])
 
 with_coverage=no
 AC_ARG_ENABLE([coverage], [  --enable-coverage       build with information needed to compute test coverage], [with_coverage=yes])

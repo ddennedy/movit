@@ -1,14 +1,8 @@
 #define GTEST_HAS_EXCEPTIONS 0
 
-#ifdef HAVE_SDL2
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_video.h>
-#else
-#include <SDL/SDL.h>
-#include <SDL/SDL_error.h>
-#include <SDL/SDL_video.h>
-#endif
 #ifdef HAVE_BENCHMARK
 #include <benchmark/benchmark.h>
 #endif
@@ -27,7 +21,6 @@ int main(int argc, char **argv) {
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-#ifdef HAVE_SDL2
 	// You can uncomment this if you want to try a core context.
 	// For Mesa, you can get the same effect by doing
 	//
@@ -48,10 +41,6 @@ int main(int argc, char **argv) {
 		SDL_WINDOW_OPENGL);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 	assert(context != nullptr);
-#else
-	SDL_SetVideoMode(32, 32, 0, SDL_OPENGL);
-	SDL_WM_SetCaption("OpenGL window for unit test", nullptr);
-#endif
 
 	int err;
 	if (argc >= 2 && strcmp(argv[1], "--benchmark") == 0) {
