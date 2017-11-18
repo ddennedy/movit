@@ -21,7 +21,7 @@ public:
 	IdentityComputeEffect() {}
 	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
 	virtual bool is_compute_shader() const { return true; }
-	string output_fragment_shader() { return read_file("identity.compute"); }
+	string output_fragment_shader() { return read_file("identity.comp"); }
 };
 
 TEST(ComputeShaderTest, Identity) {
