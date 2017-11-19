@@ -83,6 +83,30 @@ double srgb_to_linear(double x);
 // Undefined for values outside 0.0..1.0.
 double linear_to_srgb(double x);
 
+// A RAII class to pretend temporarily that we don't support compute shaders
+// even if we do. Useful for testing or benchmarking the fragment shader path
+// also on systems that support compute shaders.
+class DisableComputeShadersTemporarily
+{
+public:
+	// If disable_compute_shaders is false, this class effectively does nothing.
+	// Otherwise, sets movit_compute_shaders_supported unconditionally to false.
+	DisableComputeShadersTemporarily(bool disable_compute_shaders);
+
+	// Restore the old value of movit_compute_shaders_supported.
+	~DisableComputeShadersTemporarily();
+
+	// Whether the current test should be skipped due to lack of compute shaders
+	// (ie., disable_compute_shaders was _false_, but the system does not support
+	// compute shaders). Will also output a message to stderr if so.
+	bool should_skip();
+
+	bool active() const { return disable_compute_shaders; }
+
+private:
+	bool disable_compute_shaders, saved_compute_shaders_supported;
+};
+
 }  // namespace movit
 
 #endif  // !defined(_MOVIT_TEST_UTIL_H)

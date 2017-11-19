@@ -42,6 +42,11 @@ void vertical_flip(T *data, unsigned width, unsigned height)
 	}
 }
 
+void init_movit_for_test()
+{
+       CHECK(init_movit(".", MOVIT_DEBUG_OFF));
+}
+
 }  // namespace
 
 EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned height,
@@ -510,6 +515,34 @@ double linear_to_srgb(double x)
 	} else {
 		return 1.055 * pow(x, 1.0 / 2.4) - 0.055;
 	}
+}
+
+DisableComputeShadersTemporarily::DisableComputeShadersTemporarily(bool disable_compute_shaders)
+	: disable_compute_shaders(disable_compute_shaders)
+{
+	init_movit_for_test();
+	saved_compute_shaders_supported = movit_compute_shaders_supported;
+	if (disable_compute_shaders) {
+		movit_compute_shaders_supported = false;
+	}
+}
+
+DisableComputeShadersTemporarily::~DisableComputeShadersTemporarily()
+{
+	movit_compute_shaders_supported = saved_compute_shaders_supported;
+}
+
+bool DisableComputeShadersTemporarily::should_skip()
+{
+	if (disable_compute_shaders) {
+		return false;
+	}
+
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Compute shaders not supported; skipping.\n");
+		return true;
+	}
+	return false;
 }
 
 }  // namespace movit
