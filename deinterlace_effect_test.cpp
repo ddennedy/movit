@@ -198,19 +198,31 @@ TEST(DeinterlaceTest, FlickerBox) {
 }
 
 #ifdef HAVE_BENCHMARK
-void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, MovitPixelFormat input_format, GLenum output_format, bool spatial_interlacing_check)
+namespace {
+
+struct TestFormat {
+	MovitPixelFormat input_format;
+	GLenum output_format;
+	size_t bytes_per_pixel;
+};
+TestFormat gray_format = { FORMAT_GRAYSCALE, GL_RED, 1 };
+TestFormat bgra_format = { FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, 4 };
+
+}  // namespace
+
+void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spatial_interlacing_check)
 {
 	unsigned width = state.range(0), height = state.range(1);
 	unsigned field_height = height / 2;
 
-	unique_ptr<float[]> field1(new float[width * field_height * bytes_per_pixel]);
-	unique_ptr<float[]> field2(new float[width * field_height * bytes_per_pixel]);
-	unique_ptr<float[]> field3(new float[width * field_height * bytes_per_pixel]);
-	unique_ptr<float[]> field4(new float[width * field_height * bytes_per_pixel]);
-	unique_ptr<float[]> field5(new float[width * field_height * bytes_per_pixel]);
-	unique_ptr<float[]> out_data(new float[width * height * bytes_per_pixel]);
+	unique_ptr<float[]> field1(new float[width * field_height * format.bytes_per_pixel]);
+	unique_ptr<float[]> field2(new float[width * field_height * format.bytes_per_pixel]);
+	unique_ptr<float[]> field3(new float[width * field_height * format.bytes_per_pixel]);
+	unique_ptr<float[]> field4(new float[width * field_height * format.bytes_per_pixel]);
+	unique_ptr<float[]> field5(new float[width * field_height * format.bytes_per_pixel]);
+	unique_ptr<float[]> out_data(new float[width * height * format.bytes_per_pixel]);
 
-	for (unsigned i = 0; i < width * field_height * bytes_per_pixel; ++i) {
+	for (unsigned i = 0; i < width * field_height * format.bytes_per_pixel; ++i) {
 		field1[i] = rand();
 		field2[i] = rand();
 		field3[i] = rand();
@@ -219,21 +231,21 @@ void BM_DeinterlaceEffect(benchmark::State &state, size_t bytes_per_pixel, Movit
 	}
 
 	EffectChainTester tester(nullptr, width, height);
-	Effect *input1 = tester.add_input(field1.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input2 = tester.add_input(field2.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input3 = tester.add_input(field3.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input4 = tester.add_input(field4.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
-	Effect *input5 = tester.add_input(field5.get(), input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input1 = tester.add_input(field1.get(), format.input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input2 = tester.add_input(field2.get(), format.input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input3 = tester.add_input(field3.get(), format.input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input4 = tester.add_input(field4.get(), format.input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
+	Effect *input5 = tester.add_input(field5.get(), format.input_format, COLORSPACE_sRGB, GAMMA_LINEAR, width, field_height);
 	Effect *deinterlace_effect = tester.get_chain()->add_effect(new DeinterlaceEffect(), input1, input2, input3, input4, input5);
 
 	ASSERT_TRUE(deinterlace_effect->set_int("current_field_position", 0));
 	ASSERT_TRUE(deinterlace_effect->set_int("enable_spatial_interlacing_check", spatial_interlacing_check));
 
-	tester.benchmark(state, out_data.get(), output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+	tester.benchmark(state, out_data.get(), format.output_format, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, 1, FORMAT_GRAYSCALE, GL_RED, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheck, 4, FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, false)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, Gray, gray_format, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRA, bgra_format, true)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_DeinterlaceEffect, BGRANoSpatialCheck, bgra_format, false)->Args({720, 576})->Args({1280, 720})->Args({1920, 1080})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
 #endif
 
