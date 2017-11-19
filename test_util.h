@@ -101,6 +101,11 @@ public:
 	// compute shaders). Will also output a message to stderr if so.
 	bool should_skip();
 
+#ifdef HAVE_BENCHMARK
+	// Same, but outputs a message to the benchmark instead of to stderr.	
+	bool should_skip(benchmark::State *benchmark_state);
+#endif
+
 	bool active() const { return disable_compute_shaders; }
 
 private:

@@ -545,4 +545,19 @@ bool DisableComputeShadersTemporarily::should_skip()
 	return false;
 }
 
+#ifdef HAVE_BENCHMARK
+bool DisableComputeShadersTemporarily::should_skip(benchmark::State *benchmark_state)
+{
+	if (disable_compute_shaders) {
+		return false;
+	}
+
+	if (!movit_compute_shaders_supported) {
+		benchmark_state->SkipWithError("Compute shaders not supported");
+		return true;
+	}
+	return false;
+}
+#endif
+
 }  // namespace movit

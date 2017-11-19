@@ -230,7 +230,7 @@ TestFormat bgra_format = { FORMAT_BGRA_PREMULTIPLIED_ALPHA, GL_BGRA, 4 };
 void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spatial_interlacing_check, const std::string &shader_type)
 {
 	DisableComputeShadersTemporarily disabler(shader_type == "fragment");
-	if (disabler.should_skip()) return;
+	if (disabler.should_skip(&state)) return;
 
 	unsigned width = state.range(0), height = state.range(1);
 	unsigned field_height = height / 2;
