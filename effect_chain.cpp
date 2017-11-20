@@ -1993,6 +1993,7 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 		find_output_size(phase);
 
 		GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
+		assert(tex_num != 0);
 		output_textures->insert(make_pair(phase, tex_num));
 
 		// The output texture needs to have valid state to be written to by a compute shader.
@@ -2011,6 +2012,7 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 		glActiveTexture(GL_TEXTURE0 + sampler);
 		Phase *input = phase->inputs[sampler];
 		input->output_node->bound_sampler_num = sampler;
+		assert(output_textures->count(input));
 		glBindTexture(GL_TEXTURE_2D, (*output_textures)[input]);
 		check_error();
 		if (phase->input_needs_mipmaps && generated_mipmaps->count(input) == 0) {
@@ -2030,6 +2032,7 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 		// This is currently the only place where we use image units,
 		// so we can always use 0.
 		phase->outbuf_image_unit = 0;
+		assert(output_textures->count(phase));
 		glBindImageTexture(phase->outbuf_image_unit, (*output_textures)[phase], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		check_error();
 		phase->inv_output_size.x = 1.0f / phase->output_width;
