@@ -296,15 +296,14 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 
 	T *data[4] = { out_data, out_data2, out_data3, out_data4 };
 
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	check_error();
 	for (unsigned i = 0; i < num_outputs; ++i) {
 		T *ptr = data[i];
-		glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+		glBindTexture(GL_TEXTURE_2D, texnum[i]);
+		check_error();
 		if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
 			// GLES will only read GL_RGBA.
 			T *temp = new T[width * height * 4];
-			glReadPixels(0, 0, width, height, GL_RGBA, internal_format, temp);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, type, temp);
 			check_error();
 			if (format == GL_ALPHA) {
 				for (unsigned i = 0; i < width * height; ++i) {
@@ -321,7 +320,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 			}
 			delete[] temp;
 		} else {
-			glReadPixels(0, 0, width, height, format, internal_format, ptr);
+			glGetTexImage(GL_TEXTURE_2D, 0, format, type, ptr);
 			check_error();
 		}
 
