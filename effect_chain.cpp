@@ -1873,6 +1873,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			glBeginQuery(GL_TIME_ELAPSED, timer_query_object);
 			phase->timer_query_objects_running.push_back(timer_query_object);
 		}
+		bool render_to_texture = true;
 		if (phase_num == phases.size() - 1) {
 			// Last phase goes to the output the user specified.
 			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
@@ -1880,16 +1881,16 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 			assert(status == GL_FRAMEBUFFER_COMPLETE);
 			glViewport(x, y, width, height);
+			render_to_texture = false;
 			if (dither_effect != nullptr) {
 				CHECK(dither_effect->set_int("output_width", width));
 				CHECK(dither_effect->set_int("output_height", height));
 			}
 		}
-		bool last_phase = (phase_num == phases.size() - 1);
 
 		// Enable sRGB rendering for intermediates in case we are
 		// rendering to an sRGB format.
-		bool needs_srgb = last_phase ? final_srgb : true;
+		bool needs_srgb = render_to_texture ? true : final_srgb;
 		if (needs_srgb && !current_srgb) {
 			glEnable(GL_FRAMEBUFFER_SRGB);
 			check_error();
@@ -1900,7 +1901,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			current_srgb = true;
 		}
 
-		execute_phase(phase, last_phase, &output_textures, &generated_mipmaps);
+		execute_phase(phase, render_to_texture, &output_textures, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}
@@ -1980,7 +1981,7 @@ void EffectChain::print_phase_timing()
 	printf("Total:   %5.1f ms\n", total_time_ms);
 }
 
-void EffectChain::execute_phase(Phase *phase, bool last_phase,
+void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
                                 map<Phase *, GLuint> *output_textures,
                                 set<Phase *> *generated_mipmaps)
 {
@@ -1988,7 +1989,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 
 	// Find a texture for this phase.
 	inform_input_sizes(phase);
-	if (!last_phase) {
+	if (render_to_texture) {
 		find_output_size(phase);
 
 		GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
@@ -2036,8 +2037,8 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 		phase->output_texcoord_adjust.x = 0.5f / phase->output_width;
 		phase->output_texcoord_adjust.y = 0.5f / phase->output_height;
 	} else {
-		// (Already set up for us if it is the last phase.)
-		if (!last_phase) {
+		// (Already set up for us if we are outputting to the user's FBO.)
+		if (render_to_texture) {
 			fbo = resource_pool->create_fbo((*output_textures)[phase]);
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glViewport(0, 0, phase->output_width, phase->output_height);
@@ -2091,7 +2092,7 @@ void EffectChain::execute_phase(Phase *phase, bool last_phase,
 
 	resource_pool->unuse_glsl_program(instance_program_num);
 
-	if (!last_phase && !phase->is_compute_shader) {
+	if (render_to_texture && !phase->is_compute_shader) {
 		resource_pool->release_fbo(fbo);
 	}
 }

@@ -458,7 +458,7 @@ private:
 	Phase *construct_phase(Node *output, std::map<Node *, Phase *> *completed_effects);
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
-	void execute_phase(Phase *phase, bool last_phase,
+	void execute_phase(Phase *phase, bool render_to_texture,
 	                   std::map<Phase *, GLuint> *output_textures,
 	                   std::set<Phase *> *generated_mipmaps);
 
