@@ -3,8 +3,6 @@ AC_INIT(movit, git)
 LT_INIT
 PKG_PROG_PKG_CONFIG
 
-CXXFLAGS="$CXXFLAGS -std=gnu++11"
-
 AC_CONFIG_SRCDIR(effect.cpp)
 AC_CONFIG_AUX_DIR(.)
 
@@ -13,6 +11,8 @@ AC_PROG_CXX
 PKG_CHECK_MODULES([Eigen3], [eigen3])
 PKG_CHECK_MODULES([epoxy], [epoxy])
 PKG_CHECK_MODULES([FFTW3], [fftw3])
+
+CXXFLAGS="$CXXFLAGS -std=gnu++11"
 
 # Needed for unit tests and the demo app.
 with_demo_app=yes
