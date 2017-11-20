@@ -2073,6 +2073,9 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 		// since they can be updated from there.
 		setup_uniforms(phase);
 		glDispatchCompute(x, y, z);
+		check_error();
+		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+		check_error();
 	} else {
 		// Uniforms need to come after set_gl_state(), since they can be updated
 		// from there.
