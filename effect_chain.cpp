@@ -1725,6 +1725,7 @@ void EffectChain::add_dummy_effect_if_needed()
 	if (output->effect->is_compute_shader()) {
 		Node *dummy = add_node(new IdentityEffect());
 		connect_nodes(output, dummy);
+		has_dummy_effect = true;
 	}
 }
 
@@ -1820,18 +1821,6 @@ void EffectChain::finalize()
 
 void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height)
 {
-	assert(finalized);
-
-	// This needs to be set anew, in case we are coming from a different context
-	// from when we initialized.
-	check_error();
-	glDisable(GL_DITHER);
-	check_error();
-
-	const bool final_srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
-	check_error();
-	bool current_srgb = final_srgb;
-
 	// Save original viewport.
 	GLuint x = 0, y = 0;
 
@@ -1843,6 +1832,44 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		width = viewport[2];
 		height = viewport[3];
 	}
+
+	render(dest_fbo, {}, x, y, width, height);
+}
+
+void EffectChain::render_to_texture(const vector<DestinationTexture> &destinations, unsigned width, unsigned height)
+{
+	assert(finalized);
+	assert(!destinations.empty());
+
+	if (!has_dummy_effect) {
+		// We don't end in a compute shader, so there's nothing specific for us to do.
+		// Create an FBO for this set of textures, and just render to that.
+		GLuint texnums[4] = { 0, 0, 0, 0 };
+		for (unsigned i = 0; i < destinations.size() && i < 4; ++i) {
+			texnums[i] = destinations[i].texnum;
+		}
+		GLuint dest_fbo = resource_pool->create_fbo(texnums[0], texnums[1], texnums[2], texnums[3]);
+		render(dest_fbo, {}, 0, 0, width, height);
+		resource_pool->release_fbo(dest_fbo);
+	} else {
+		render((GLuint)-1, destinations, 0, 0, width, height);
+	}
+}
+
+void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &destinations, unsigned x, unsigned y, unsigned width, unsigned height)
+{
+	assert(finalized);
+	assert(destinations.size() <= 1);
+
+	// This needs to be set anew, in case we are coming from a different context
+	// from when we initialized.
+	check_error();
+	glDisable(GL_DITHER);
+	check_error();
+
+	const bool final_srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+	check_error();
+	bool current_srgb = final_srgb;
 
 	// Basic state.
 	check_error();
@@ -1859,7 +1886,29 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 	// since otherwise this turns into an (albeit simple) register allocation problem.
 	map<Phase *, GLuint> output_textures;
 
-	for (unsigned phase_num = 0; phase_num < phases.size(); ++phase_num) {
+	size_t num_phases = phases.size();
+	if (destinations.empty()) {
+		assert(dest_fbo != (GLuint)-1);
+	} else {
+		assert(has_dummy_effect);
+		assert(x == 0);
+		assert(y == 0);
+		assert(num_phases >= 2);
+		assert(!phases.back()->is_compute_shader);
+		assert(phases.back()->effects.size() == 1);
+		assert(phases.back()->effects[0]->effect->effect_type_id() == "IdentityEffect");
+
+		// We are rendering to a set of textures, so we can run the compute shader
+		// directly and skip the dummy phase.
+		--num_phases;
+
+		// TODO: Support more than one destination.
+		output_textures[phases[num_phases - 1]] = destinations[0].texnum;
+		assert(destinations[0].format == GL_RGBA16F);
+		assert(destinations[0].texnum != 0);
+	}
+
+	for (unsigned phase_num = 0; phase_num < num_phases; ++phase_num) {
 		Phase *phase = phases[phase_num];
 
 		if (do_phase_timing) {
@@ -1874,14 +1923,16 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 			phase->timer_query_objects_running.push_back(timer_query_object);
 		}
 		bool render_to_texture = true;
-		if (phase_num == phases.size() - 1) {
+		if (phase_num == num_phases - 1) {
 			// Last phase goes to the output the user specified.
-			glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
-			check_error();
-			GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-			assert(status == GL_FRAMEBUFFER_COMPLETE);
-			glViewport(x, y, width, height);
-			render_to_texture = false;
+			if (!phase->is_compute_shader) {
+				glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
+				check_error();
+				GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+				assert(status == GL_FRAMEBUFFER_COMPLETE);
+				glViewport(x, y, width, height);
+				render_to_texture = false;
+			}
 			if (dither_effect != nullptr) {
 				CHECK(dither_effect->set_int("output_width", width));
 				CHECK(dither_effect->set_int("output_height", height));
@@ -1890,6 +1941,7 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 
 		// Enable sRGB rendering for intermediates in case we are
 		// rendering to an sRGB format.
+		// TODO: Support this for compute shaders.
 		bool needs_srgb = render_to_texture ? true : final_srgb;
 		if (needs_srgb && !current_srgb) {
 			glEnable(GL_FRAMEBUFFER_SRGB);
@@ -1907,6 +1959,10 @@ void EffectChain::render_to_fbo(GLuint dest_fbo, unsigned width, unsigned height
 		}
 	}
 
+	// Take out the destination textures from the list of temporary textures to be freed.
+	if (has_dummy_effect && !destinations.empty()) {
+		output_textures.erase(phases[num_phases - 1]);
+	}
 	for (const auto &phase_and_texnum : output_textures) {
 		resource_pool->release_2d_texture(phase_and_texnum.second);
 	}

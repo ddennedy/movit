@@ -389,6 +389,22 @@ public:
 	// the current viewport.
 	void render_to_fbo(GLuint fbo, unsigned width, unsigned height);
 
+	// Render the effect chain to the given set of textures. This is equivalent
+	// to render_to_fbo() with a freshly created FBO bound to the given textures,
+	// except that it is more efficient if the last phase contains a compute shader.
+	// Thus, prefer this to render_to_fbo() where possible.
+	//
+	// The format must currently be GL_RGBA16F, and only one destination
+	// texture is supported. Both of these restrictions will be lifted in the future.
+	//
+	// All destination textures must be exactly of size <width> x <height>.
+	// width and height can not be zero.
+	struct DestinationTexture {
+		GLuint texnum;
+		GLenum format;
+	};
+	void render_to_texture(const std::vector<DestinationTexture> &destinations, unsigned width, unsigned height);
+
 	Effect *last_added_effect() {
 		if (nodes.empty()) {
 			return nullptr;
@@ -456,6 +472,13 @@ private:
 	// that depend on it (whenever possible). Returns the phase that has <output>
 	// as the last effect. Also pushes all phases in order onto <phases>.
 	Phase *construct_phase(Node *output, std::map<Node *, Phase *> *completed_effects);
+
+	// Do the actual rendering of the chain. If <dest_fbo> is not (GLuint)-1,
+	// renders to that FBO. If <destinations> is non-empty, render to that set
+	// of textures (last phase, save for the dummy phase, must be a compute shader),
+	// with x/y ignored. Having both set is an error.
+	void render(GLuint dest_fbo, const std::vector<DestinationTexture> &destinations,
+	            unsigned x, unsigned y, unsigned width, unsigned height);
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
 	void execute_phase(Phase *phase, bool render_to_texture,
@@ -538,6 +561,12 @@ private:
 	OutputOrigin output_origin;
 	bool finalized;
 	GLuint vbo;  // Contains vertex and texture coordinate data.
+
+	// Whether the last effect (which will then be in a phase all by itself)
+	// is a dummy effect that is only added because the last phase uses a compute
+	// shader, which cannot output directly to the backbuffer. This means that
+	// the phase can be skipped if we are _not_ rendering to the backbuffer.
+	bool has_dummy_effect = false;
 
 	ResourcePool *resource_pool;
 	bool owns_resource_pool;

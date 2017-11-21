@@ -248,7 +248,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		num_outputs = 1;
 	}
 
-	GLuint fbo, texnum[4];
+	GLuint texnum[4];
 
 	glGenTextures(num_outputs, texnum);
 	check_error();
@@ -259,24 +259,12 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		check_error();
 	}
 
-	glGenFramebuffers(1, &fbo);
-	check_error();
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	check_error();
+	vector<EffectChain::DestinationTexture> textures;
 	for (unsigned i = 0; i < num_outputs; ++i) {
-		glFramebufferTexture2D(
-			GL_FRAMEBUFFER,
-			GL_COLOR_ATTACHMENT0 + i,
-			GL_TEXTURE_2D,
-			texnum[i],
-			0);
-		check_error();
+		textures.push_back(EffectChain::DestinationTexture{texnum[i], framebuffer_format});
 	}
 
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(num_outputs, bufs);
-
-	chain.render_to_fbo(fbo, width, height);
+	chain.render_to_texture(textures, width, height);
 
 #ifdef HAVE_BENCHMARK
 	// If running benchmarks: Now we've warmed up everything, so let's run the
@@ -285,7 +273,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		glFinish();
 	        size_t iters = benchmark_state->max_iterations;
 		for (auto _ : *benchmark_state) {
-			chain.render_to_fbo(fbo, width, height);
+			chain.render_to_texture(textures, width, height);
 			if (--iters == 0) {
 				glFinish();
 			}
@@ -331,8 +319,6 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		}
 	}
 
-	glDeleteFramebuffers(1, &fbo);
-	check_error();
 	glDeleteTextures(num_outputs, texnum);
 	check_error();
 }
