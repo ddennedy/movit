@@ -1882,9 +1882,18 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 
 	set<Phase *> generated_mipmaps;
 
-	// We choose the simplest option of having one texture per output,
-	// since otherwise this turns into an (albeit simple) register allocation problem.
+	// We keep one texture per output, but only for as long as we actually have any
+	// phases that need it as an input. (We don't make any effort to reorder phases
+	// to minimize the number of textures in play, as register allocation can be
+	// complicated and we rarely have much to gain, since our graphs are typically
+	// pretty linear.)
 	map<Phase *, GLuint> output_textures;
+	map<Phase *, int> ref_counts;
+	for (Phase *phase : phases) {
+		for (Phase *input : phase->inputs) {
+			++ref_counts[input];
+		}
+	}
 
 	size_t num_phases = phases.size();
 	if (destinations.empty()) {
@@ -1971,6 +1980,15 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		execute_phase(phase, output_textures, phase_destinations, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
+		}
+
+		// Drop any input textures we don't need anymore.
+		for (Phase *input : phase->inputs) {
+			assert(ref_counts[input] > 0);
+			if (--ref_counts[input] == 0) {
+				resource_pool->release_2d_texture(output_textures[input]);
+				output_textures.erase(input);
+			}
 		}
 	}
 
