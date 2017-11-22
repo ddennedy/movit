@@ -1901,11 +1901,6 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		// We are rendering to a set of textures, so we can run the compute shader
 		// directly and skip the dummy phase.
 		--num_phases;
-
-		// TODO: Support more than one destination.
-		output_textures[phases[num_phases - 1]] = destinations[0].texnum;
-		assert(destinations[0].format == GL_RGBA16F);
-		assert(destinations[0].texnum != 0);
 	}
 
 	for (unsigned phase_num = 0; phase_num < num_phases; ++phase_num) {
@@ -1922,7 +1917,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 			glBeginQuery(GL_TIME_ELAPSED, timer_query_object);
 			phase->timer_query_objects_running.push_back(timer_query_object);
 		}
-		bool render_to_texture = true;
+		bool last_phase = (phase_num == num_phases - 1);
 		if (phase_num == num_phases - 1) {
 			// Last phase goes to the output the user specified.
 			if (!phase->is_compute_shader) {
@@ -1931,7 +1926,6 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 				GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 				assert(status == GL_FRAMEBUFFER_COMPLETE);
 				glViewport(x, y, width, height);
-				render_to_texture = false;
 			}
 			if (dither_effect != nullptr) {
 				CHECK(dither_effect->set_int("output_width", width));
@@ -1942,7 +1936,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		// Enable sRGB rendering for intermediates in case we are
 		// rendering to an sRGB format.
 		// TODO: Support this for compute shaders.
-		bool needs_srgb = render_to_texture ? true : final_srgb;
+		bool needs_srgb = last_phase ? final_srgb : true;
 		if (needs_srgb && !current_srgb) {
 			glEnable(GL_FRAMEBUFFER_SRGB);
 			check_error();
@@ -1953,16 +1947,36 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 			current_srgb = true;
 		}
 
-		execute_phase(phase, render_to_texture, &output_textures, &generated_mipmaps);
+		// Find a texture for this phase.
+		inform_input_sizes(phase);
+		find_output_size(phase);
+		GLuint tex_num = 0;
+		if (!last_phase) {
+			tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
+			assert(tex_num != 0);
+			output_textures.insert(make_pair(phase, tex_num));
+
+			// The output texture needs to have valid state to be written to by a compute shader.
+			glActiveTexture(GL_TEXTURE0);
+			check_error();
+			glBindTexture(GL_TEXTURE_2D, tex_num);
+			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			check_error();
+		} else if (phase->is_compute_shader) {
+			// TODO: Support more than one destination.
+			assert(!destinations.empty());
+			tex_num = destinations[0].texnum;
+			assert(destinations[0].format == GL_RGBA16F);
+			assert(destinations[0].texnum != 0);
+		}
+
+		execute_phase(phase, output_textures, tex_num, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}
 	}
 
-	// Take out the destination textures from the list of temporary textures to be freed.
-	if (has_dummy_effect && !destinations.empty()) {
-		output_textures.erase(phases[num_phases - 1]);
-	}
 	for (const auto &phase_and_texnum : output_textures) {
 		resource_pool->release_2d_texture(phase_and_texnum.second);
 	}
@@ -2037,39 +2051,19 @@ void EffectChain::print_phase_timing()
 	printf("Total:   %5.1f ms\n", total_time_ms);
 }
 
-void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
-                                map<Phase *, GLuint> *output_textures,
+void EffectChain::execute_phase(Phase *phase,
+                                const map<Phase *, GLuint> &output_textures,
+                                GLuint dest_texture,
                                 set<Phase *> *generated_mipmaps)
 {
-	GLuint fbo = 0;
-
-	// Find a texture for this phase.
-	inform_input_sizes(phase);
-	if (render_to_texture) {
-		find_output_size(phase);
-
-		GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
-		assert(tex_num != 0);
-		output_textures->insert(make_pair(phase, tex_num));
-
-		// The output texture needs to have valid state to be written to by a compute shader.
-		if (phase->is_compute_shader) {
-			glActiveTexture(GL_TEXTURE0);
-			check_error();
-			glBindTexture(GL_TEXTURE_2D, (*output_textures)[phase]);
-			check_error();
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			check_error();
-		}
-	}
-
 	// Set up RTT inputs for this phase.
 	for (unsigned sampler = 0; sampler < phase->inputs.size(); ++sampler) {
 		glActiveTexture(GL_TEXTURE0 + sampler);
 		Phase *input = phase->inputs[sampler];
 		input->output_node->bound_sampler_num = sampler;
-		assert(output_textures->count(input));
-		glBindTexture(GL_TEXTURE_2D, (*output_textures)[input]);
+		const auto it = output_textures.find(input);
+		assert(it != output_textures.end());
+		glBindTexture(GL_TEXTURE_2D, it->second);
 		check_error();
 		if (phase->input_needs_mipmaps && generated_mipmaps->count(input) == 0) {
 			glGenerateMipmap(GL_TEXTURE_2D);
@@ -2084,24 +2078,23 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 	check_error();
 
 	// And now the output.
+	GLuint fbo = 0;
 	if (phase->is_compute_shader) {
+		assert(dest_texture != 0);
+
 		// This is currently the only place where we use image units,
 		// so we can always use 0.
 		phase->outbuf_image_unit = 0;
-		assert(output_textures->count(phase));
-		glBindImageTexture(phase->outbuf_image_unit, (*output_textures)[phase], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		glBindImageTexture(phase->outbuf_image_unit, dest_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		check_error();
 		phase->inv_output_size.x = 1.0f / phase->output_width;
 		phase->inv_output_size.y = 1.0f / phase->output_height;
 		phase->output_texcoord_adjust.x = 0.5f / phase->output_width;
 		phase->output_texcoord_adjust.y = 0.5f / phase->output_height;
-	} else {
-		// (Already set up for us if we are outputting to the user's FBO.)
-		if (render_to_texture) {
-			fbo = resource_pool->create_fbo((*output_textures)[phase]);
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			glViewport(0, 0, phase->output_width, phase->output_height);
-		}
+	} else if (dest_texture != 0) {
+		fbo = resource_pool->create_fbo(dest_texture);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glViewport(0, 0, phase->output_width, phase->output_height);
 	}
 
 	// Give the required parameters to all the effects.
@@ -2119,7 +2112,6 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 			node->bound_sampler_num = -1;
 		}
 	}
-
 
 	if (phase->is_compute_shader) {
 		unsigned x, y, z;
@@ -2154,7 +2146,7 @@ void EffectChain::execute_phase(Phase *phase, bool render_to_texture,
 
 	resource_pool->unuse_glsl_program(instance_program_num);
 
-	if (render_to_texture && !phase->is_compute_shader) {
+	if (fbo != 0) {
 		resource_pool->release_fbo(fbo);
 	}
 }

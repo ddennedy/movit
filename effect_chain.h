@@ -481,8 +481,11 @@ private:
 	            unsigned x, unsigned y, unsigned width, unsigned height);
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
-	void execute_phase(Phase *phase, bool render_to_texture,
-	                   std::map<Phase *, GLuint> *output_textures,
+	// If dest_texture is 0, uses whatever output is current (and the phase must not be
+	// a compute shader).
+	void execute_phase(Phase *phase,
+	                   const std::map<Phase *, GLuint> &output_textures,
+	                   GLuint dest_texture,
 	                   std::set<Phase *> *generated_mipmaps);
 
 	// Set up uniforms for one phase. The program must already be bound.
