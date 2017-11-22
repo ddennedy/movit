@@ -1304,6 +1304,21 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 	free(saved_locale);
 }
 
+// An effect that does nothing, but as a compute shader.
+class IdentityComputeEffect : public Effect {
+public:
+	IdentityComputeEffect() {}
+	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
+	virtual bool is_compute_shader() const { return true; }
+	string output_fragment_shader() { return read_file("identity.comp"); }
+};
+
+class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
+};
+INSTANTIATE_TEST_CASE_P(WithAndWithoutComputeShaderTest,
+                        WithAndWithoutComputeShaderTest,
+                        testing::Values("fragment", "compute"));
+
 TEST(EffectChainTest, sRGBIntermediate) {
 	float data[] = {
 		0.0f, 0.5f, 0.0f, 1.0f,
@@ -1371,7 +1386,7 @@ TEST(EffectChainTest, Linear10bitIntermediateAccuracy) {
 	expect_equal(linear_data, out_data, size, 1, 7.5e-3, 2e-5);
 }
 
-TEST(EffectChainTest, SquareRoot10bitIntermediateAccuracy) {
+TEST_P(WithAndWithoutComputeShaderTest, SquareRoot10bitIntermediateAccuracy) {
 	// Note that we do the comparison in sRGB space, which is what we
 	// typically would want; however, we do the sRGB conversion ourself
 	// to avoid compounding errors from shader conversions into the
@@ -1386,7 +1401,11 @@ TEST(EffectChainTest, SquareRoot10bitIntermediateAccuracy) {
 
 	EffectChainTester tester(data, size, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
 	tester.get_chain()->set_intermediate_format(GL_RGB10_A2, SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION);
-	tester.get_chain()->add_effect(new IdentityEffect());
+	if (GetParam() == "compute") {
+		tester.get_chain()->add_effect(new IdentityComputeEffect());
+	} else {
+		tester.get_chain()->add_effect(new IdentityEffect());
+	}
 	tester.get_chain()->add_effect(new BouncingIdentityEffect());
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
@@ -1466,15 +1485,6 @@ TEST(EffectChainTest, ProgramsAreClonedForMultipleThreads) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 	expect_equal(data, out_data, 3, 2);
 }
-
-// An effect that does nothing, but as a compute shader.
-class IdentityComputeEffect : public Effect {
-public:
-	IdentityComputeEffect() {}
-	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
-	virtual bool is_compute_shader() const { return true; }
-	string output_fragment_shader() { return read_file("identity.comp"); }
-};
 
 TEST(ComputeShaderTest, Identity) {
 	float data[] = {
