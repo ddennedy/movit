@@ -1950,11 +1950,11 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		// Find a texture for this phase.
 		inform_input_sizes(phase);
 		find_output_size(phase);
-		GLuint tex_num = 0;
+		vector<DestinationTexture> phase_destinations;
 		if (!last_phase) {
-			tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
-			assert(tex_num != 0);
+			GLuint tex_num = resource_pool->create_2d_texture(intermediate_format, phase->output_width, phase->output_height);
 			output_textures.insert(make_pair(phase, tex_num));
+			phase_destinations.push_back(DestinationTexture{ tex_num, intermediate_format });
 
 			// The output texture needs to have valid state to be written to by a compute shader.
 			glActiveTexture(GL_TEXTURE0);
@@ -1964,14 +1964,11 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			check_error();
 		} else if (phase->is_compute_shader) {
-			// TODO: Support more than one destination.
 			assert(!destinations.empty());
-			tex_num = destinations[0].texnum;
-			assert(destinations[0].format == GL_RGBA16F);
-			assert(destinations[0].texnum != 0);
+			phase_destinations = destinations;
 		}
 
-		execute_phase(phase, output_textures, tex_num, &generated_mipmaps);
+		execute_phase(phase, output_textures, phase_destinations, &generated_mipmaps);
 		if (do_phase_timing) {
 			glEndQuery(GL_TIME_ELAPSED);
 		}
@@ -2053,7 +2050,7 @@ void EffectChain::print_phase_timing()
 
 void EffectChain::execute_phase(Phase *phase,
                                 const map<Phase *, GLuint> &output_textures,
-                                GLuint dest_texture,
+                                const std::vector<DestinationTexture> &destinations,
                                 set<Phase *> *generated_mipmaps)
 {
 	// Set up RTT inputs for this phase.
@@ -2080,19 +2077,20 @@ void EffectChain::execute_phase(Phase *phase,
 	// And now the output.
 	GLuint fbo = 0;
 	if (phase->is_compute_shader) {
-		assert(dest_texture != 0);
+		assert(!destinations.empty());
 
 		// This is currently the only place where we use image units,
-		// so we can always use 0.
+		// so we can always start at 0. TODO: Support multiple destinations.
 		phase->outbuf_image_unit = 0;
-		glBindImageTexture(phase->outbuf_image_unit, dest_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		glBindImageTexture(phase->outbuf_image_unit, destinations[0].texnum, 0, GL_FALSE, 0, GL_WRITE_ONLY, destinations[0].format);
 		check_error();
 		phase->inv_output_size.x = 1.0f / phase->output_width;
 		phase->inv_output_size.y = 1.0f / phase->output_height;
 		phase->output_texcoord_adjust.x = 0.5f / phase->output_width;
 		phase->output_texcoord_adjust.y = 0.5f / phase->output_height;
-	} else if (dest_texture != 0) {
-		fbo = resource_pool->create_fbo(dest_texture);
+	} else if (!destinations.empty()) {
+		assert(destinations.size() == 1);
+		fbo = resource_pool->create_fbo(destinations[0].texnum);
 		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, phase->output_width, phase->output_height);
 	}

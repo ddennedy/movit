@@ -394,8 +394,8 @@ public:
 	// except that it is more efficient if the last phase contains a compute shader.
 	// Thus, prefer this to render_to_fbo() where possible.
 	//
-	// The format must currently be GL_RGBA16F, and only one destination
-	// texture is supported. Both of these restrictions will be lifted in the future.
+	// Only one destination texture is supported. This restriction will be lifted
+	// in the future.
 	//
 	// All destination textures must be exactly of size <width> x <height>.
 	// width and height can not be zero.
@@ -481,11 +481,11 @@ private:
 	            unsigned x, unsigned y, unsigned width, unsigned height);
 
 	// Execute one phase, ie. set up all inputs, effects and outputs, and render the quad.
-	// If dest_texture is 0, uses whatever output is current (and the phase must not be
+	// If <destinations> is empty, uses whatever output is current (and the phase must not be
 	// a compute shader).
 	void execute_phase(Phase *phase,
 	                   const std::map<Phase *, GLuint> &output_textures,
-	                   GLuint dest_texture,
+	                   const std::vector<DestinationTexture> &destinations,
 	                   std::set<Phase *> *generated_mipmaps);
 
 	// Set up uniforms for one phase. The program must already be bound.

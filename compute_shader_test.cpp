@@ -65,4 +65,22 @@ TEST(ComputeShaderTest, LastEffectInChain) {
 	expect_equal(data, out_data, 3, 2);
 }
 
+TEST(ComputeShaderTest, Render8BitTo8Bit) {
+	uint8_t data[] = {
+		14, 200, 80,
+		90, 100, 110,
+	};
+	uint8_t out_data[6];
+	EffectChainTester tester(nullptr, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA8);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 3, 2);
+	tester.get_chain()->add_effect(new IdentityAlphaComputeEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(data, out_data, 3, 2);
+}
+
 }  // namespace movit
