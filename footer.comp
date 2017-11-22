@@ -1,0 +1,19 @@
+void main()
+{
+	INPUT();
+}
+
+vec4 tex2D(sampler2D s, vec2 coord)
+{
+	return texture(s, coord);
+}
+
+void cs_output(uvec2 coord, vec4 val)
+{
+	imageStore(outbuf, ivec2(coord), val);
+}
+
+void cs_output(ivec2 coord, vec4 val)
+{
+	imageStore(outbuf, coord, val);
+}

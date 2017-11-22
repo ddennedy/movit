@@ -500,7 +500,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	}
 
 	if (phase->is_compute_shader) {
-		frag_shader.append(read_file("footer.compute"));
+		frag_shader.append(read_file("footer.comp"));
 		phase->output_node->effect->register_uniform_vec2("inv_output_size", (float *)&phase->inv_output_size);
 		phase->output_node->effect->register_uniform_vec2("output_texcoord_adjust", (float *)&phase->output_texcoord_adjust);
 	} else {
