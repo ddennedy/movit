@@ -248,20 +248,10 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		num_outputs = 1;
 	}
 
-	GLuint texnum[4];
-
-	glGenTextures(num_outputs, texnum);
-	check_error();
-	for (unsigned i = 0; i < num_outputs; ++i) {
-		glBindTexture(GL_TEXTURE_2D, texnum[i]);
-		check_error();
-		glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, nullptr);
-		check_error();
-	}
-
 	vector<EffectChain::DestinationTexture> textures;
 	for (unsigned i = 0; i < num_outputs; ++i) {
-		textures.push_back(EffectChain::DestinationTexture{texnum[i], framebuffer_format});
+		GLuint texnum = chain.get_resource_pool()->create_2d_texture(framebuffer_format, width, height);
+		textures.push_back(EffectChain::DestinationTexture{texnum, framebuffer_format});
 	}
 
 	chain.render_to_texture(textures, width, height);
@@ -286,7 +276,7 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 
 	for (unsigned i = 0; i < num_outputs; ++i) {
 		T *ptr = data[i];
-		glBindTexture(GL_TEXTURE_2D, texnum[i]);
+		glBindTexture(GL_TEXTURE_2D, textures[i].texnum);
 		check_error();
 		if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
 			// GLES will only read GL_RGBA.
@@ -319,8 +309,9 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		}
 	}
 
-	glDeleteTextures(num_outputs, texnum);
-	check_error();
+	for (unsigned i = 0; i < num_outputs; ++i) {
+		chain.get_resource_pool()->release_2d_texture(textures[i].texnum);
+	}
 }
 
 void EffectChainTester::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)

@@ -397,8 +397,10 @@ public:
 	// Only one destination texture is supported. This restriction will be lifted
 	// in the future.
 	//
-	// All destination textures must be exactly of size <width> x <height>.
-	// width and height can not be zero.
+	// All destination textures must be exactly of size <width> x <height>,
+	// and must either come from the same ResourcePool the effect uses, or outlive
+	// the EffectChain (otherwise, we could be allocating FBOs that end up being
+	// stale). width and height can not be zero.
 	struct DestinationTexture {
 		GLuint texnum;
 		GLenum format;
