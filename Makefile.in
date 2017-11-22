@@ -167,11 +167,11 @@ HDRS += $(INPUTS:=.h)
 HDRS += $(EFFECTS:=.h)
 
 SHADERS = vs.vert vs.130.vert vs.150.vert vs.300es.vert
-SHADERS += header.130.frag header.150.frag header.300es.frag
-SHADERS += footer.frag identity.frag
+SHADERS += header.130.frag header.150.frag header.300es.frag header.comp
+SHADERS += footer.frag identity.frag footer.comp
 SHADERS += texture1d.130.frag texture1d.150.frag texture1d.300es.frag
 SHADERS += $(INPUTS:=.frag)
-SHADERS += $(EFFECTS:=.frag)
+SHADERS += $(EFFECTS:=.frag) deinterlace_effect.comp
 SHADERS += highlight_cutoff_effect.frag
 SHADERS += overlay_matte_effect.frag
 
