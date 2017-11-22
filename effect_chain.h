@@ -400,7 +400,10 @@ public:
 	// All destination textures must be exactly of size <width> x <height>,
 	// and must either come from the same ResourcePool the effect uses, or outlive
 	// the EffectChain (otherwise, we could be allocating FBOs that end up being
-	// stale). width and height can not be zero.
+	// stale). Textures must also have valid state; in particular, they must either
+	// be mipmap complete or have a non-mipmapped minification mode.
+	//
+	// width and height can not be zero.
 	struct DestinationTexture {
 		GLuint texnum;
 		GLenum format;

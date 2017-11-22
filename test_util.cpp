@@ -248,10 +248,19 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		num_outputs = 1;
 	}
 
+	glActiveTexture(GL_TEXTURE0);
+	check_error();
+
 	vector<EffectChain::DestinationTexture> textures;
 	for (unsigned i = 0; i < num_outputs; ++i) {
 		GLuint texnum = chain.get_resource_pool()->create_2d_texture(framebuffer_format, width, height);
 		textures.push_back(EffectChain::DestinationTexture{texnum, framebuffer_format});
+
+		// The output texture needs to have valid state to be written to by a compute shader.
+		glBindTexture(GL_TEXTURE_2D, texnum);
+		check_error();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		check_error();
 	}
 
 	chain.render_to_texture(textures, width, height);
