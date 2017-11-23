@@ -3,12 +3,16 @@
 #include <epoxy/gl.h>
 #include <stddef.h>
 
+#include <string>
+
 #include "effect_chain.h"
 #include "gtest/gtest.h"
 #include "test_util.h"
 #include "util.h"
 #include "resize_effect.h"
 #include "ycbcr_422interleaved_input.h"
+
+using namespace std;
 
 namespace movit {
 
@@ -64,6 +68,31 @@ TEST(YCbCr422InterleavedInputTest, Simple422) {
 	expect_equal(expected_data, out_data, 4 * width, height, 0.025, 0.002);
 }
 
+// An effect that does nothing except changing its output sizes.
+class VirtualResizeEffect : public Effect {
+public:
+	VirtualResizeEffect(int width, int height, int virtual_width, int virtual_height)
+		: width(width),
+		  height(height),
+		  virtual_width(virtual_width),
+		  virtual_height(virtual_height) {}
+	virtual string effect_type_id() const { return "VirtualResizeEffect"; }
+	string output_fragment_shader() { return read_file("identity.frag"); }
+
+	virtual bool changes_output_size() const { return true; }
+
+	virtual void get_output_size(unsigned *width, unsigned *height,
+	                             unsigned *virtual_width, unsigned *virtual_height) const {
+		*width = this->width;
+		*height = this->height;
+		*virtual_width = this->virtual_width;
+		*virtual_height = this->virtual_height;
+	}
+
+private:
+	int width, height, virtual_width, virtual_height;
+};
+
 TEST(YCbCr422InterleavedInputTest, LumaLinearInterpolation) {
 	const int width = 4;
 	const int height = 1;
@@ -102,11 +131,7 @@ TEST(YCbCr422InterleavedInputTest, LumaLinearInterpolation) {
 	YCbCr422InterleavedInput *input = new YCbCr422InterleavedInput(format, ycbcr_format, width, height);
 	input->set_pixel_data(uyvy);
 	tester.get_chain()->add_input(input);
-
-	ResizeEffect *upscale = new ResizeEffect();
-	ASSERT_TRUE(upscale->set_int("width", out_width));
-	ASSERT_TRUE(upscale->set_int("height", height));
-	tester.get_chain()->add_effect(upscale);
+	tester.get_chain()->add_effect(new VirtualResizeEffect(out_width, height, out_width, height));
 
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 

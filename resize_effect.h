@@ -19,7 +19,7 @@ public:
 
 	// We want processing done pre-filtering and mipmapped,
 	// in case we need to scale down a lot.
-	virtual bool need_texture_bounce() const { return true; }
+	virtual bool needs_texture_bounce() const { return true; }
 	virtual bool needs_mipmaps() const { return true; }
 	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
