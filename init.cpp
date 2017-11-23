@@ -358,6 +358,18 @@ void APIENTRY debug_callback(GLenum source,
                              GLsizei length,
                              const char *message,
                              const void *userParam)
+#ifdef __GNUC__
+	__attribute__((unused))
+#endif
+;
+
+void APIENTRY debug_callback(GLenum source,
+                             GLenum type,
+                             GLuint id,
+                             GLenum severity,
+                             GLsizei length,
+                             const char *message,
+                             const void *userParam)
 {
 	printf("Debug: %s\n", message);
 }

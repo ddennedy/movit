@@ -106,7 +106,7 @@ static inline fp16_int_t fp32_to_fp16(float x)
 			unsigned int mant_odd = (f.u >> 13) & 1; // resulting mantissa is odd
 
 			// update exponent, rounding bias part 1
-			f.u += ((15 - 127) << 23) + 0xfff;
+			f.u += (unsigned(15 - 127) << 23) + 0xfff;
 			// rounding bias part 2
 			f.u += mant_odd;
 			// take the bits!
