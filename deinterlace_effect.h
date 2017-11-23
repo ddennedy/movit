@@ -64,15 +64,15 @@ class DeinterlaceComputeEffect;
 class DeinterlaceEffect : public Effect {
 public:
 	DeinterlaceEffect();
-	virtual std::string effect_type_id() const { return "DeinterlaceEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "DeinterlaceEffect"; }
+	std::string output_fragment_shader() override;
 
 	// Replaces itself with DeinterlaceComputeEffect if compute shaders are supported.
 	// Otherwise, does nothing.
-	void rewrite_graph(EffectChain *graph, Node *self);
-	bool set_int(const std::string &key, int value);
+	void rewrite_graph(EffectChain *graph, Node *self) override;
+	bool set_int(const std::string &key, int value) override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
 	// First = before previous, second = previous, third = current,
 	// fourth = next, fifth = after next. These are treated symmetrically,
@@ -80,15 +80,15 @@ public:
 	//
 	// Note that if you have interlaced _frames_ and not _fields_, you will
 	// need to pull them apart first, for instance with SliceEffect.
-	virtual unsigned num_inputs() const { return 5; }
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool changes_output_size() const { return true; }
+	unsigned num_inputs() const override { return 5; }
+	bool needs_texture_bounce() const override { return true; }
+	bool changes_output_size() const override { return true; }
 
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const;
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override;
 
 	enum FieldPosition { TOP = 0, BOTTOM = 1 };
 
@@ -136,22 +136,22 @@ private:
 class DeinterlaceComputeEffect : public Effect {
 public:
 	DeinterlaceComputeEffect();
-	virtual std::string effect_type_id() const { return "DeinterlaceComputeEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "DeinterlaceComputeEffect"; }
+	std::string output_fragment_shader() override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
-	virtual unsigned num_inputs() const { return 5; }
-	virtual bool changes_output_size() const { return true; }
-	virtual bool is_compute_shader() const { return true; }
-	virtual void get_compute_dimensions(unsigned output_width, unsigned output_height,
-	                                    unsigned *x, unsigned *y, unsigned *z) const;
+	unsigned num_inputs() const override { return 5; }
+	bool changes_output_size() const override { return true; }
+	bool is_compute_shader() const override { return true; }
+	void get_compute_dimensions(unsigned output_width, unsigned output_height,
+	                            unsigned *x, unsigned *y, unsigned *z) const override;
 
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const;
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override;
 
 	enum FieldPosition { TOP = 0, BOTTOM = 1 };
 

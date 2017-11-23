@@ -38,8 +38,8 @@ namespace {
 class IdentityEffect : public Effect {
 public:
 	IdentityEffect() {}
-	virtual string effect_type_id() const { return "IdentityEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
+	string effect_type_id() const override { return "IdentityEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
 };
 
 }  // namespace

@@ -22,9 +22,9 @@ public:
 	FlatInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height);
 	~FlatInput();
 
-	virtual std::string effect_type_id() const { return "FlatInput"; }
+	std::string effect_type_id() const override { return "FlatInput"; }
 
-	virtual bool can_output_linear_gamma() const {
+	bool can_output_linear_gamma() const override {
 		// On desktop OpenGL, there's also GL_SLUMINANCE8 which could give us
 		// support for single-channel sRGB decoding, but it's not supported
 		// on GLES, and we're already actively rewriting single-channel inputs
@@ -35,7 +35,7 @@ public:
 		        (image_format.gamma_curve == GAMMA_LINEAR ||
 		         image_format.gamma_curve == GAMMA_sRGB));
 	}
-	virtual AlphaHandling alpha_handling() const {
+	AlphaHandling alpha_handling() const override {
 		switch (pixel_format) {
 		case FORMAT_RGBA_PREMULTIPLIED_ALPHA:
 			return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA;
@@ -50,16 +50,16 @@ public:
 		}
 	}
 
-	std::string output_fragment_shader();
+	std::string output_fragment_shader() override;
 
 	// Uploads the texture if it has changed since last time.
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num) override;
 
-	unsigned get_width() const { return width; }
-	unsigned get_height() const { return height; }
-	Colorspace get_color_space() const { return image_format.color_space; }
-	GammaCurve get_gamma_curve() const { return image_format.gamma_curve; }
-	virtual bool is_single_texture() const { return true; }
+	unsigned get_width() const override { return width; }
+	unsigned get_height() const override { return height; }
+	Colorspace get_color_space() const override { return image_format.color_space; }
+	GammaCurve get_gamma_curve() const override { return image_format.gamma_curve; }
+	bool is_single_texture() const override { return true; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer
@@ -149,7 +149,7 @@ public:
 		this->owns_texture = false;
 	}
 
-	virtual void inform_added(EffectChain *chain)
+	void inform_added(EffectChain *chain) override
 	{
 		resource_pool = chain->get_resource_pool();
 	}

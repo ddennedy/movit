@@ -19,19 +19,19 @@ namespace movit {
 class OverlayEffect : public Effect {
 public:
 	OverlayEffect();
-	virtual std::string effect_type_id() const { return "OverlayEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "OverlayEffect"; }
+	std::string output_fragment_shader() override;
 
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual unsigned num_inputs() const { return 2; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_srgb_primaries() const override { return false; }
+	unsigned num_inputs() const override { return 2; }
+	bool one_to_one_sampling() const override { return true; }
 
 	// Actually, if _either_ image has blank alpha, our output will have
 	// blank alpha, too (this only tells the framework that having _both_
 	// images with blank alpha would result in blank alpha).
 	// However, understanding that would require changes
 	// to EffectChain, so postpone that optimization for later.
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 private:
 	// If true, overlays input1 on top of input2 instead of vice versa.

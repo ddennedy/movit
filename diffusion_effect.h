@@ -29,15 +29,15 @@ class DiffusionEffect : public Effect {
 public:
 	DiffusionEffect();
 	~DiffusionEffect();
-	virtual std::string effect_type_id() const { return "DiffusionEffect"; }
+	std::string effect_type_id() const override { return "DiffusionEffect"; }
 
-	virtual void rewrite_graph(EffectChain *graph, Node *self);
-	virtual bool set_float(const std::string &key, float value);
+	void rewrite_graph(EffectChain *graph, Node *self) override;
+	bool set_float(const std::string &key, float value) override;
 	
-	virtual std::string output_fragment_shader() {
+	std::string output_fragment_shader() override {
 		assert(false);
 	}
-	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override {
 		assert(false);
 	}
 
@@ -52,12 +52,12 @@ private:
 class OverlayMatteEffect : public Effect {
 public:
 	OverlayMatteEffect();
-	virtual std::string effect_type_id() const { return "OverlayMatteEffect"; }
-	std::string output_fragment_shader();
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	std::string effect_type_id() const override { return "OverlayMatteEffect"; }
+	std::string output_fragment_shader() override;
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
-	unsigned num_inputs() const { return 2; }
-	virtual bool one_to_one_sampling() const { return true; }
+	unsigned num_inputs() const override { return 2; }
+	bool one_to_one_sampling() const override { return true; }
 
 private:
 	float blurred_mix_amount;

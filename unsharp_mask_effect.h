@@ -26,17 +26,17 @@ class Node;
 class UnsharpMaskEffect : public Effect {
 public:
 	UnsharpMaskEffect();
-	virtual std::string effect_type_id() const { return "UnsharpMaskEffect"; }
+	std::string effect_type_id() const override { return "UnsharpMaskEffect"; }
 
-	virtual bool needs_srgb_primaries() const { return false; }
+	bool needs_srgb_primaries() const override { return false; }
 
-	virtual void rewrite_graph(EffectChain *graph, Node *self);
-	virtual bool set_float(const std::string &key, float value);
+	void rewrite_graph(EffectChain *graph, Node *self) override;
+	bool set_float(const std::string &key, float value) override;
 
-	virtual std::string output_fragment_shader() {
+	std::string output_fragment_shader() override {
 		assert(false);
 	}
-	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override {
 		assert(false);
 	}
 

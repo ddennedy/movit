@@ -18,10 +18,10 @@ namespace movit {
 class SandboxEffect : public Effect {
 public:
 	SandboxEffect();
-	virtual std::string effect_type_id() const { return "SandboxEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "SandboxEffect"; }
+	std::string output_fragment_shader() override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
 private:
 	float parm;

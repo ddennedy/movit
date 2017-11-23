@@ -20,17 +20,17 @@ namespace movit {
 class SliceEffect : public Effect {
 public:
 	SliceEffect();
-	virtual std::string effect_type_id() const { return "SliceEffect"; }
-	std::string output_fragment_shader();
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool changes_output_size() const { return true; }
-	virtual bool sets_virtual_output_size() const { return false; }
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const;
+	std::string effect_type_id() const override { return "SliceEffect"; }
+	std::string output_fragment_shader() override;
+	bool needs_texture_bounce() const override { return true; }
+	bool changes_output_size() const override { return true; }
+	bool sets_virtual_output_size() const override { return false; }
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
-	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
+	void inform_added(EffectChain *chain) override { this->chain = chain; }
 	
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 

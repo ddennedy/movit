@@ -24,17 +24,17 @@ private:
 	friend class EffectChain;
 
 public:
-	virtual std::string effect_type_id() const { return "GammaExpansionEffect"; }
-	std::string output_fragment_shader();
-	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	std::string effect_type_id() const override { return "GammaExpansionEffect"; }
+	std::string output_fragment_shader() override;
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
-	virtual bool needs_linear_light() const { return false; }
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_linear_light() const override { return false; }
+	bool needs_srgb_primaries() const override { return false; }
+	bool one_to_one_sampling() const override { return true; }
 
 	// Actually processes its input in a nonlinear fashion,
 	// but does not touch alpha, and we are a special case anyway.
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 
 private:
 	GammaCurve source_curve;

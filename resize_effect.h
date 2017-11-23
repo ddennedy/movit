@@ -14,18 +14,18 @@ namespace movit {
 class ResizeEffect : public Effect {
 public:
 	ResizeEffect();
-	virtual std::string effect_type_id() const { return "ResizeEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "ResizeEffect"; }
+	std::string output_fragment_shader() override;
 
 	// We want processing done pre-filtering and mipmapped,
 	// in case we need to scale down a lot.
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool needs_mipmaps() const { return true; }
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	bool needs_texture_bounce() const override { return true; }
+	bool needs_mipmaps() const override { return true; }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
-	virtual bool changes_output_size() const { return true; }
-	virtual bool sets_virtual_output_size() const { return false; }
-	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
+	bool changes_output_size() const override { return true; }
+	bool sets_virtual_output_size() const override { return false; }
+	void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const override;
 
 private:
 	int width, height;

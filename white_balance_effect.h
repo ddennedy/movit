@@ -14,12 +14,12 @@ namespace movit {
 class WhiteBalanceEffect : public Effect {
 public:
 	WhiteBalanceEffect();
-	virtual std::string effect_type_id() const { return "WhiteBalanceEffect"; }
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
-	virtual bool one_to_one_sampling() const { return true; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "WhiteBalanceEffect"; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
+	bool one_to_one_sampling() const override { return true; }
+	std::string output_fragment_shader() override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
 private:
 	// The neutral color, in linear sRGB.

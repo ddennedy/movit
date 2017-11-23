@@ -31,26 +31,26 @@ class BlurEffect : public Effect {
 public:
 	BlurEffect();
 
-	virtual std::string effect_type_id() const { return "BlurEffect"; }
+	std::string effect_type_id() const override { return "BlurEffect"; }
 
 	// We want this for the same reason as ResizeEffect; we could end up scaling
 	// down quite a lot.
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool needs_mipmaps() const { return true; }
-	virtual bool needs_srgb_primaries() const { return false; }
+	bool needs_texture_bounce() const override { return true; }
+	bool needs_mipmaps() const override { return true; }
+	bool needs_srgb_primaries() const override { return false; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 
-	virtual std::string output_fragment_shader() {
+	std::string output_fragment_shader() override {
 		assert(false);
 	}
-	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override {
 		assert(false);
 	}
 
-	virtual void rewrite_graph(EffectChain *graph, Node *self);
-	virtual bool set_float(const std::string &key, float value);
-	virtual bool set_int(const std::string &key, int value);
+	void rewrite_graph(EffectChain *graph, Node *self) override;
+	bool set_float(const std::string &key, float value) override;
+	bool set_int(const std::string &key, int value) override;
 	
 private:
 	void update_radius();
@@ -67,33 +67,33 @@ public:
 	// so that it can make reasonable decisions for both blur passes.
 	SingleBlurPassEffect(BlurEffect *parent);
 	virtual ~SingleBlurPassEffect();
-	virtual std::string effect_type_id() const { return "SingleBlurPassEffect"; }
+	std::string effect_type_id() const override { return "SingleBlurPassEffect"; }
 
-	std::string output_fragment_shader();
+	std::string output_fragment_shader() override;
 
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool needs_mipmaps() const { return true; }
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	bool needs_texture_bounce() const override { return true; }
+	bool needs_mipmaps() const override { return true; }
+	bool needs_srgb_primaries() const override { return false; }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override {
 		if (parent != nullptr) {
 			parent->inform_input_size(input_num, width, height);
 		}
 	}
-	virtual bool changes_output_size() const { return true; }
-	virtual bool sets_virtual_output_size() const { return true; }
-	virtual bool one_to_one_sampling() const { return false; }  // Can sample outside the border.
+	bool changes_output_size() const override { return true; }
+	bool sets_virtual_output_size() const override { return true; }
+	bool one_to_one_sampling() const override { return false; }  // Can sample outside the border.
 
-	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const {
+	void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const override {
 		*width = this->width;
 		*height = this->height;
 		*virtual_width = this->virtual_width;
 		*virtual_height = this->virtual_height;
 	}
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
-	void clear_gl_state();
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
+	void clear_gl_state() override;
 	
 	enum Direction { HORIZONTAL = 0, VERTICAL = 1 };
 

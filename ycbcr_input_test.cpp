@@ -1004,16 +1004,16 @@ TEST(YCbCrInputTest, TenBitPlanar) {
 class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
-	virtual bool needs_mipmaps() const { return true; }
+	bool needs_mipmaps() const override { return true; }
 
 	// To be allowed to mess with the sampler state.
-	virtual bool needs_texture_bounce() const { return true; }
+	bool needs_texture_bounce() const override { return true; }
 
-	virtual string effect_type_id() const { return "MipmapNeedingEffect"; }
-	string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
-	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+	string effect_type_id() const override { return "MipmapNeedingEffect"; }
+	string output_fragment_shader() override { return read_file("mipmap_needing_effect.frag"); }
+	void inform_added(EffectChain *chain) override { this->chain = chain; }
 
-	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
+	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num) override
 	{
 		Node *self = chain->find_node_for_effect(this);
 		glActiveTexture(chain->get_input_sampler(self, 0));

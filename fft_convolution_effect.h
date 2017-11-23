@@ -86,9 +86,9 @@ class FFTConvolutionEffect : public Effect {
 public:
 	FFTConvolutionEffect(int input_width, int input_height, int convolve_width, int convolve_height);
 	~FFTConvolutionEffect();
-	virtual std::string effect_type_id() const { return "FFTConvolutionEffect"; }
-	std::string output_fragment_shader() { assert(false); }
-	virtual void rewrite_graph(EffectChain *graph, Node *self);
+	std::string effect_type_id() const override { return "FFTConvolutionEffect"; }
+	std::string output_fragment_shader() override { assert(false); }
+	void rewrite_graph(EffectChain *graph, Node *self) override;
 
 	// See FFTInput::set_pixel_data().
 	void set_convolution_kernel(const float *pixel_data)

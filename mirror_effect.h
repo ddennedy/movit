@@ -12,13 +12,13 @@ namespace movit {
 class MirrorEffect : public Effect {
 public:
 	MirrorEffect();
-	virtual std::string effect_type_id() const { return "MirrorEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "MirrorEffect"; }
+	std::string output_fragment_shader() override;
 
-	virtual bool needs_linear_light() const { return false; }
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_linear_light() const override { return false; }
+	bool needs_srgb_primaries() const override { return false; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
+	bool one_to_one_sampling() const override { return true; }
 };
 
 }  // namespace movit

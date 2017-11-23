@@ -61,21 +61,21 @@ public:
 				 unsigned width, unsigned height);
 	~YCbCr422InterleavedInput();
 
-	virtual std::string effect_type_id() const { return "YCbCr422InterleavedInput"; }
+	std::string effect_type_id() const override { return "YCbCr422InterleavedInput"; }
 
-	virtual bool can_output_linear_gamma() const { return false; }
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
+	bool can_output_linear_gamma() const override { return false; }
+	AlphaHandling alpha_handling() const override { return OUTPUT_BLANK_ALPHA; }
 
-	std::string output_fragment_shader();
+	std::string output_fragment_shader() override;
 
 	// Uploads the texture if it has changed since last time.
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num) override;
 
-	unsigned get_width() const { return width; }
-	unsigned get_height() const { return height; }
-	Colorspace get_color_space() const { return image_format.color_space; }
-	GammaCurve get_gamma_curve() const { return image_format.gamma_curve; }
-	virtual bool can_supply_mipmaps() const { return false; }
+	unsigned get_width() const override { return width; }
+	unsigned get_height() const override { return height; }
+	Colorspace get_color_space() const override { return image_format.color_space; }
+	GammaCurve get_gamma_curve() const override { return image_format.gamma_curve; }
+	bool can_supply_mipmaps() const override { return false; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer
@@ -97,19 +97,20 @@ public:
 
 	void invalidate_pixel_data();
 
-	void set_pitch(unsigned pitch) {
+	void set_pitch(unsigned pitch)
+	{
 		assert(pitch % ycbcr_format.chroma_subsampling_x == 0);
 		pitches[CHANNEL_LUMA] = pitch;
 		pitches[CHANNEL_CHROMA] = pitch / ycbcr_format.chroma_subsampling_x;
 		invalidate_pixel_data();
 	}
 
-	virtual void inform_added(EffectChain *chain)
+	void inform_added(EffectChain *chain) override
 	{
 		resource_pool = chain->get_resource_pool();
 	}
 
-	bool set_int(const std::string& key, int value);
+	bool set_int(const std::string& key, int value) override;
 
 private:
 	ImageFormat image_format;

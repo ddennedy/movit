@@ -32,23 +32,23 @@ public:
 	FFTInput(unsigned width, unsigned height);
 	~FFTInput();
 
-	virtual std::string effect_type_id() const { return "FFTInput"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "FFTInput"; }
+	std::string output_fragment_shader() override;
 
 	// FFTs the data and uploads the texture if it has changed since last time.
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num) override;
 
-	unsigned get_width() const { return fft_width; }
-	unsigned get_height() const { return fft_height; }
+	unsigned get_width() const override { return fft_width; }
+	unsigned get_height() const override { return fft_height; }
 
 	// Strictly speaking, FFT data doesn't have any colorspace or gamma;
 	// these values are the Movit standards for “do nothing”.
-	Colorspace get_color_space() const { return COLORSPACE_sRGB; }
-	GammaCurve get_gamma_curve() const { return GAMMA_LINEAR; }
-	virtual AlphaHandling alpha_handling() const { return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA; }
-	virtual bool is_single_texture() const { return true; }
-	virtual bool can_output_linear_gamma() const { return true; }
-	virtual bool can_supply_mipmaps() const { return false; }
+	Colorspace get_color_space() const override { return COLORSPACE_sRGB; }
+	GammaCurve get_gamma_curve() const override { return GAMMA_LINEAR; }
+	AlphaHandling alpha_handling() const override { return INPUT_AND_OUTPUT_PREMULTIPLIED_ALPHA; }
+	bool is_single_texture() const override { return true; }
+	bool can_output_linear_gamma() const override { return true; }
+	bool can_supply_mipmaps() const override { return false; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer
@@ -62,12 +62,12 @@ public:
 
 	void invalidate_pixel_data();
 
-	virtual void inform_added(EffectChain *chain)
+	void inform_added(EffectChain *chain) override
 	{
 		resource_pool = chain->get_resource_pool();
 	}
 
-	virtual bool set_int(const std::string& key, int value);
+	bool set_int(const std::string& key, int value) override;
 
 private:
 	GLuint texture_num;

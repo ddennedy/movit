@@ -23,12 +23,12 @@ private:
 	friend class EffectChain;
 
 public:
-	virtual std::string effect_type_id() const { return "ColorspaceConversionEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "ColorspaceConversionEffect"; }
+	std::string output_fragment_shader() override;
 
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_srgb_primaries() const override { return false; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
+	bool one_to_one_sampling() const override { return true; }
 
 	// Get a conversion matrix from the given color space to XYZ.
 	static Eigen::Matrix3d get_xyz_matrix(Colorspace space);

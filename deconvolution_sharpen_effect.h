@@ -31,20 +31,20 @@ class DeconvolutionSharpenEffect : public Effect {
 public:
 	DeconvolutionSharpenEffect();
 	virtual ~DeconvolutionSharpenEffect();
-	virtual std::string effect_type_id() const { return "DeconvolutionSharpenEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "DeconvolutionSharpenEffect"; }
+	std::string output_fragment_shader() override;
 
 	// Samples a lot of times from its input.
-	virtual bool needs_texture_bounce() const { return true; }
+	bool needs_texture_bounce() const override { return true; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height)
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override
 	{
 		this->width = width;
 		this->height = height;
 	}
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 private:
 	// Input size.

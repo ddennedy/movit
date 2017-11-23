@@ -76,13 +76,13 @@ public:
 		  height(height),
 		  virtual_width(virtual_width),
 		  virtual_height(virtual_height) {}
-	virtual string effect_type_id() const { return "VirtualResizeEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
+	string effect_type_id() const override { return "VirtualResizeEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
 
-	virtual bool changes_output_size() const { return true; }
+	bool changes_output_size() const override { return true; }
 
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const {
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override {
 		*width = this->width;
 		*height = this->height;
 		*virtual_width = this->virtual_width;

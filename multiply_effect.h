@@ -16,9 +16,9 @@ namespace movit {
 class MultiplyEffect : public Effect {
 public:
 	MultiplyEffect();
-	virtual std::string effect_type_id() const { return "MultiplyEffect"; }
-	std::string output_fragment_shader();
-	virtual bool one_to_one_sampling() const { return true; }
+	std::string effect_type_id() const override { return "MultiplyEffect"; }
+	std::string output_fragment_shader() override;
+	bool one_to_one_sampling() const override { return true; }
 
 private:
 	RGBATuple factor;

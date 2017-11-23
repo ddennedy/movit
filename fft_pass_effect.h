@@ -63,7 +63,7 @@ class FFTPassEffect : public Effect {
 public:
 	FFTPassEffect();
 	~FFTPassEffect();
-	virtual std::string effect_type_id() const {
+	std::string effect_type_id() const override {
 		char buf[256];
 		if (inverse) {
 			snprintf(buf, sizeof(buf), "IFFTPassEffect[%d]", (1 << pass_number));
@@ -72,9 +72,9 @@ public:
 		}
 		return buf;
 	}
-	std::string output_fragment_shader();
+	std::string output_fragment_shader() override;
 
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
 	// We don't actually change the output size, but this flag makes sure
 	// that no other effect is chained after us. This is important since
@@ -83,24 +83,24 @@ public:
 	// mode to GL_NEAREST, which other effects are not ready for; so, the
 	// combination of these two flags guarantee that we're run entirely alone
 	// in our own phase, which is exactly what we want.
-	virtual bool needs_texture_bounce() const { return true; }
-	virtual bool changes_output_size() const { return true; }
-	virtual bool sets_virtual_output_size() const { return false; }
+	bool needs_texture_bounce() const override { return true; }
+	bool changes_output_size() const override { return true; }
+	bool sets_virtual_output_size() const override { return false; }
 
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height)
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override
 	{
 		assert(input_num == 0);
 		input_width = width;
 		input_height = height;
 	}
 	
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const {
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override {
 		*width = *virtual_width = input_width;
 		*height = *virtual_height = input_height;
 	}
 
-	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+	void inform_added(EffectChain *chain) override { this->chain = chain; }
 	
 	enum Direction { INVALID = -1, HORIZONTAL = 0, VERTICAL = 1 };
 

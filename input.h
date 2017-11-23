@@ -17,7 +17,7 @@ namespace movit {
 // including possibly uploading the texture if so required.
 class Input : public Effect {
 public:
-	virtual unsigned num_inputs() const { return 0; }
+	unsigned num_inputs() const override { return 0; }
 
 	// Whether this input can deliver linear gamma directly if it's
 	// asked to. (If so, set the parameter “output_linear_gamma”

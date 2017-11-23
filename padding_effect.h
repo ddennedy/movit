@@ -36,18 +36,18 @@ namespace movit {
 class PaddingEffect : public Effect {
 public:
 	PaddingEffect();
-	virtual std::string effect_type_id() const { return "PaddingEffect"; }
-	std::string output_fragment_shader();
-	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	std::string effect_type_id() const override { return "PaddingEffect"; }
+	std::string output_fragment_shader() override;
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
-	virtual bool needs_linear_light() const;
-	virtual bool needs_srgb_primaries() const;
-	virtual AlphaHandling alpha_handling() const;
+	bool needs_linear_light() const override;
+	bool needs_srgb_primaries() const override;
+	AlphaHandling alpha_handling() const override;
 	
-	virtual bool changes_output_size() const { return true; }
-	virtual bool sets_virtual_output_size() const { return false; }
-	virtual void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const;
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
+	bool changes_output_size() const override { return true; }
+	bool sets_virtual_output_size() const override { return false; }
+	void get_output_size(unsigned *width, unsigned *height, unsigned *virtual_width, unsigned *virtual_height) const override;
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 
 private:
 	RGBATuple border_color;
@@ -64,10 +64,10 @@ private:
 class IntegralPaddingEffect : public PaddingEffect {
 public:
 	IntegralPaddingEffect();
-	virtual std::string effect_type_id() const { return "IntegralPaddingEffect"; }
-	virtual bool one_to_one_sampling() const { return true; }
-	virtual bool set_int(const std::string&, int value);
-	virtual bool set_float(const std::string &key, float value);
+	std::string effect_type_id() const override { return "IntegralPaddingEffect"; }
+	bool one_to_one_sampling() const override { return true; }
+	bool set_int(const std::string&, int value) override;
+	bool set_float(const std::string &key, float value) override;
 };
 
 }  // namespace movit

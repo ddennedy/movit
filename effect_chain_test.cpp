@@ -42,8 +42,8 @@ TEST(EffectChainTest, EmptyChain) {
 class IdentityEffect : public Effect {
 public:
 	IdentityEffect() {}
-	virtual string effect_type_id() const { return "IdentityEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
+	string effect_type_id() const override { return "IdentityEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
 };
 
 TEST(EffectChainTest, Identity) {
@@ -63,10 +63,10 @@ TEST(EffectChainTest, Identity) {
 class BouncingIdentityEffect : public Effect {
 public:
 	BouncingIdentityEffect() {}
-	virtual string effect_type_id() const { return "IdentityEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
-	bool needs_texture_bounce() const { return true; }
-	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	string effect_type_id() const override { return "IdentityEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
+	bool needs_texture_bounce() const override { return true; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 };
 
 TEST(EffectChainTest, TextureBouncePreservesIdentity) {
@@ -122,12 +122,12 @@ TEST(EffectChainTest, TopLeftOrigin) {
 class InvertEffect : public Effect {
 public:
 	InvertEffect() {}
-	virtual string effect_type_id() const { return "InvertEffect"; }
-	string output_fragment_shader() { return read_file("invert_effect.frag"); }
+	string effect_type_id() const override { return "InvertEffect"; }
+	string output_fragment_shader() override { return read_file("invert_effect.frag"); }
 
 	// A real invert would actually care about its alpha,
 	// but in this unit test, it only complicates things.
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 };
 
 // Like IdentityEffect, but rewrites itself out of the loop,
@@ -137,9 +137,9 @@ template<class T>
 class RewritingEffect : public Effect {
 public:
 	RewritingEffect() : effect(new T()), replaced_node(nullptr) {}
-	virtual string effect_type_id() const { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
-	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
-	virtual void rewrite_graph(EffectChain *graph, Node *self) {
+	string effect_type_id() const override { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
+	string output_fragment_shader() override { EXPECT_TRUE(false); return read_file("identity.frag"); }
+	void rewrite_graph(EffectChain *graph, Node *self) override {
 		replaced_node = graph->add_node(effect);
 		graph->replace_receiver(self, replaced_node);
 		graph->replace_sender(self, replaced_node);
@@ -235,7 +235,7 @@ public:
 	    : FlatInput(format, pixel_format, type, width, height),
 	      overridden_color_space(format.color_space),
 	      overridden_gamma_curve(format.gamma_curve) {}
-	virtual string effect_type_id() const { return "UnknownColorspaceInput"; }
+	string effect_type_id() const override { return "UnknownColorspaceInput"; }
 
 	void set_color_space(Colorspace colorspace) {
 		overridden_color_space = colorspace;
@@ -243,8 +243,8 @@ public:
 	void set_gamma_curve(GammaCurve gamma_curve) {
 		overridden_gamma_curve = gamma_curve;
 	}
-	Colorspace get_color_space() const { return overridden_color_space; }
-	GammaCurve get_gamma_curve() const { return overridden_gamma_curve; }
+	Colorspace get_color_space() const override { return overridden_color_space; }
+	GammaCurve get_gamma_curve() const override { return overridden_gamma_curve; }
 
 private:
 	Colorspace overridden_color_space;
@@ -420,15 +420,14 @@ TEST(EffectChainTest, NoAlphaConversionsWhenPremultipliedAlphaNotNeeded) {
 class BlueInput : public Input {
 public:
 	BlueInput() { register_int("needs_mipmaps", &needs_mipmaps); }
-	virtual string effect_type_id() const { return "IdentityEffect"; }
-	string output_fragment_shader() { return read_file("blue.frag"); }
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
-	virtual void finalize() {}
-	virtual bool can_output_linear_gamma() const { return true; }
-	virtual unsigned get_width() const { return 1; }
-	virtual unsigned get_height() const { return 1; }
-	virtual Colorspace get_color_space() const { return COLORSPACE_sRGB; }
-	virtual GammaCurve get_gamma_curve() const { return GAMMA_LINEAR; }
+	string effect_type_id() const override { return "IdentityEffect"; }
+	string output_fragment_shader() override { return read_file("blue.frag"); }
+	AlphaHandling alpha_handling() const override { return OUTPUT_BLANK_ALPHA; }
+	bool can_output_linear_gamma() const override { return true; }
+	unsigned get_width() const override { return 1; }
+	unsigned get_height() const override { return 1; }
+	Colorspace get_color_space() const override { return COLORSPACE_sRGB; }
+	GammaCurve get_gamma_curve() const override { return GAMMA_LINEAR; }
 
 private:
 	int needs_mipmaps;
@@ -439,9 +438,9 @@ private:
 class RewritingToBlueInput : public Input {
 public:
 	RewritingToBlueInput() : blue_node(nullptr) { register_int("needs_mipmaps", &needs_mipmaps); }
-	virtual string effect_type_id() const { return "RewritingToBlueInput"; }
-	string output_fragment_shader() { EXPECT_TRUE(false); return read_file("identity.frag"); }
-	virtual void rewrite_graph(EffectChain *graph, Node *self) {
+	string effect_type_id() const override { return "RewritingToBlueInput"; }
+	string output_fragment_shader() override { EXPECT_TRUE(false); return read_file("identity.frag"); }
+	void rewrite_graph(EffectChain *graph, Node *self) override {
 		Node *blue_node = graph->add_node(new BlueInput());
 		graph->replace_receiver(self, blue_node);
 		graph->replace_sender(self, blue_node);
@@ -452,13 +451,12 @@ public:
 
 	// Dummy values that we need to implement because we inherit from Input.
 	// Same as BlueInput.
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
-	virtual void finalize() {}
-	virtual bool can_output_linear_gamma() const { return true; }
-	virtual unsigned get_width() const { return 1; }
-	virtual unsigned get_height() const { return 1; }
-	virtual Colorspace get_color_space() const { return COLORSPACE_sRGB; }
-	virtual GammaCurve get_gamma_curve() const { return GAMMA_LINEAR; }
+	AlphaHandling alpha_handling() const override { return OUTPUT_BLANK_ALPHA; }
+	bool can_output_linear_gamma() const override { return true; }
+	unsigned get_width() const override { return 1; }
+	unsigned get_height() const override { return 1; }
+	Colorspace get_color_space() const override { return COLORSPACE_sRGB; }
+	GammaCurve get_gamma_curve() const override { return GAMMA_LINEAR; }
 
 	Node *blue_node;
 
@@ -490,9 +488,9 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 class BlankAlphaPreservingEffect : public Effect {
 public:
 	BlankAlphaPreservingEffect() {}
-	virtual string effect_type_id() const { return "BlankAlphaPreservingEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
-	virtual AlphaHandling alpha_handling() const { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+	string effect_type_id() const override { return "BlankAlphaPreservingEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
+	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 };
 
 TEST(EffectChainTest, NoAlphaConversionsWithBlankAlphaPreservingEffect) {
@@ -549,16 +547,16 @@ TEST(EffectChainTest, AlphaConversionsWithNonBlankAlphaPreservingEffect) {
 class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
-	virtual bool needs_mipmaps() const { return true; }
+	bool needs_mipmaps() const override { return true; }
 
 	// To be allowed to mess with the sampler state.
-	virtual bool needs_texture_bounce() const { return true; }
+	bool needs_texture_bounce() const override { return true; }
 
-	virtual string effect_type_id() const { return "MipmapNeedingEffect"; }
-	string output_fragment_shader() { return read_file("mipmap_needing_effect.frag"); }
-	virtual void inform_added(EffectChain *chain) { this->chain = chain; }
+	string effect_type_id() const override { return "MipmapNeedingEffect"; }
+	string output_fragment_shader() override { return read_file("mipmap_needing_effect.frag"); }
+	void inform_added(EffectChain *chain) override { this->chain = chain; }
 
-	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num)
+	void set_gl_state(GLuint glsl_program_num, const string& prefix, unsigned *sampler_num) override
 	{
 		Node *self = chain->find_node_for_effect(this);
 		glActiveTexture(chain->get_input_sampler(self, 0));
@@ -629,8 +627,8 @@ public:
 	NonMipmapCapableInput(ImageFormat format, MovitPixelFormat pixel_format, GLenum type, unsigned width, unsigned height)
 		: FlatInput(format, pixel_format, type, width, height) {}
 
-	virtual bool can_supply_mipmaps() const { return false; }
-	bool set_int(const std::string& key, int value) {
+	bool can_supply_mipmaps() const override { return false; }
+	bool set_int(const std::string& key, int value) override {
 		if (key == "needs_mipmaps") {
 			assert(value == 0);
 		}
@@ -761,10 +759,10 @@ TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 class AddEffect : public Effect {
 public:
 	AddEffect() {}
-	virtual string effect_type_id() const { return "AddEffect"; }
-	string output_fragment_shader() { return read_file("add.frag"); }
-	virtual unsigned num_inputs() const { return 2; }
-	virtual AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	string effect_type_id() const override { return "AddEffect"; }
+	string output_fragment_shader() override { return read_file("add.frag"); }
+	unsigned num_inputs() const override { return 2; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 };
 
 // Constructs the graph
@@ -937,12 +935,12 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneColorspaceConversion) {
 class SizeStoringEffect : public BouncingIdentityEffect {
 public:
 	SizeStoringEffect() : input_width(-1), input_height(-1) {}
-	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height) {
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override {
 		assert(input_num == 0);
 		input_width = width;
 		input_height = height;
 	}
-	virtual string effect_type_id() const { return "SizeStoringEffect"; }
+	string effect_type_id() const override { return "SizeStoringEffect"; }
 
 	int input_width, input_height;
 };
@@ -1063,13 +1061,13 @@ public:
 		  height(height),
 		  virtual_width(virtual_width),
 		  virtual_height(virtual_height) {}
-	virtual string effect_type_id() const { return "VirtualResizeEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
+	string effect_type_id() const override { return "VirtualResizeEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
 
-	virtual bool changes_output_size() const { return true; }
+	bool changes_output_size() const override { return true; }
 
-	virtual void get_output_size(unsigned *width, unsigned *height,
-	                             unsigned *virtual_width, unsigned *virtual_height) const {
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override {
 		*width = this->width;
 		*height = this->height;
 		*virtual_width = this->virtual_width;
@@ -1111,17 +1109,17 @@ class NonVirtualResizeEffect : public VirtualResizeEffect {
 public:
 	NonVirtualResizeEffect(int width, int height)
 		: VirtualResizeEffect(width, height, width, height) {}
-	virtual string effect_type_id() const { return "NonVirtualResizeEffect"; }
-	virtual bool sets_virtual_output_size() const { return false; }
+	string effect_type_id() const override { return "NonVirtualResizeEffect"; }
+	bool sets_virtual_output_size() const override { return false; }
 };
 
 // An effect that promises one-to-one sampling (unlike IdentityEffect).
 class OneToOneEffect : public Effect {
 public:
 	OneToOneEffect() {}
-	virtual string effect_type_id() const { return "OneToOneEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
-	virtual bool one_to_one_sampling() const { return true; }
+	string effect_type_id() const override { return "OneToOneEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
+	bool one_to_one_sampling() const override { return true; }
 };
 
 TEST(EffectChainTest, NoBounceWithOneToOneSampling) {
@@ -1263,8 +1261,8 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 class PrintfingBlueEffect : public Effect {
 public:
 	PrintfingBlueEffect() {}
-	virtual string effect_type_id() const { return "PrintfingBlueEffect"; }
-	string output_fragment_shader() {
+	string effect_type_id() const override { return "PrintfingBlueEffect"; }
+	string output_fragment_shader() override {
 		stringstream ss;
 		ss.imbue(locale("C"));
 		ss.precision(8);
@@ -1308,9 +1306,9 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 class IdentityComputeEffect : public Effect {
 public:
 	IdentityComputeEffect() {}
-	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
-	virtual bool is_compute_shader() const { return true; }
-	string output_fragment_shader() { return read_file("identity.comp"); }
+	string effect_type_id() const override { return "IdentityComputeEffect"; }
+	bool is_compute_shader() const override { return true; }
+	string output_fragment_shader() override { return read_file("identity.comp"); }
 };
 
 class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
@@ -1343,19 +1341,19 @@ TEST(EffectChainTest, sRGBIntermediate) {
 class PassThroughEffect : public IdentityEffect {
 public:
 	PassThroughEffect() {}
-	virtual string effect_type_id() const { return "PassThroughEffect"; }
-	virtual bool needs_linear_light() const { return false; }
-	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	string effect_type_id() const override { return "PassThroughEffect"; }
+	bool needs_linear_light() const override { return false; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 };
 
 // Same, just also bouncing.
 class BouncingPassThroughEffect : public BouncingIdentityEffect {
 public:
 	BouncingPassThroughEffect() {}
-	virtual string effect_type_id() const { return "BouncingPassThroughEffect"; }
-	virtual bool needs_linear_light() const { return false; }
-	bool needs_texture_bounce() const { return true; }
-	AlphaHandling alpha_handling() const { return DONT_CARE_ALPHA_TYPE; }
+	string effect_type_id() const override { return "BouncingPassThroughEffect"; }
+	bool needs_linear_light() const override { return false; }
+	bool needs_texture_bounce() const override { return true; }
+	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
 };
 
 TEST(EffectChainTest, Linear10bitIntermediateAccuracy) {
@@ -1443,11 +1441,11 @@ TEST(EffectChainTest, SquareRootIntermediateIsTurnedOffForNonLinearData) {
 class RecordingIdentityEffect : public Effect {
 public:
 	RecordingIdentityEffect() {}
-	virtual string effect_type_id() const { return "RecordingIdentityEffect"; }
-	string output_fragment_shader() { return read_file("identity.frag"); }
+	string effect_type_id() const override { return "RecordingIdentityEffect"; }
+	string output_fragment_shader() override { return read_file("identity.frag"); }
 
 	GLuint last_glsl_program_num;
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num)
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num) override
 	{
 		last_glsl_program_num = glsl_program_num;
 	}

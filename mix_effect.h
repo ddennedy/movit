@@ -13,12 +13,12 @@ namespace movit {
 class MixEffect : public Effect {
 public:
 	MixEffect();
-	virtual std::string effect_type_id() const { return "MixEffect"; }
-	std::string output_fragment_shader();
+	std::string effect_type_id() const override { return "MixEffect"; }
+	std::string output_fragment_shader() override;
 
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual unsigned num_inputs() const { return 2; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_srgb_primaries() const override { return false; }
+	unsigned num_inputs() const override { return 2; }
+	bool one_to_one_sampling() const override { return true; }
 
 	// TODO: In the common case where a+b=1, it would be useful to be able to set
 	// alpha_handling() to INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK. However, right now

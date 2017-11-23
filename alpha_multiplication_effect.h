@@ -12,9 +12,9 @@ namespace movit {
 class AlphaMultiplicationEffect : public Effect {
 public:
 	AlphaMultiplicationEffect() {}
-	virtual std::string effect_type_id() const { return "AlphaMultiplicationEffect"; }
-	std::string output_fragment_shader();
-	virtual bool one_to_one_sampling() const { return true; }
+	std::string effect_type_id() const override { return "AlphaMultiplicationEffect"; }
+	std::string output_fragment_shader() override;
+	bool one_to_one_sampling() const override { return true; }
 };
 
 }  // namespace movit

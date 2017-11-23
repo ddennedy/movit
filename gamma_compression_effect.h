@@ -24,16 +24,16 @@ private:
 	friend class EffectChain;
 
 public:
-	virtual std::string effect_type_id() const { return "GammaCompressionEffect"; }
-	std::string output_fragment_shader();
-	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num);
+	std::string effect_type_id() const override { return "GammaCompressionEffect"; }
+	std::string output_fragment_shader() override;
+	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
-	virtual bool needs_srgb_primaries() const { return false; }
-	virtual bool one_to_one_sampling() const { return true; }
+	bool needs_srgb_primaries() const override { return false; }
+	bool one_to_one_sampling() const override { return true; }
 
 	// Actually needs postmultiplied input as well as outputting it.
 	// EffectChain will take care of that.
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_POSTMULTIPLIED_ALPHA; }
+	AlphaHandling alpha_handling() const override { return OUTPUT_POSTMULTIPLIED_ALPHA; }
 
 private:
 	GammaCurve destination_curve;

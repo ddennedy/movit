@@ -61,22 +61,22 @@ public:
 	           GLenum type = GL_UNSIGNED_BYTE);
 	~YCbCrInput();
 
-	virtual std::string effect_type_id() const { return "YCbCrInput"; }
+	std::string effect_type_id() const override { return "YCbCrInput"; }
 
-	virtual bool can_output_linear_gamma() const { return false; }
-	virtual AlphaHandling alpha_handling() const { return OUTPUT_BLANK_ALPHA; }
+	bool can_output_linear_gamma() const override { return false; }
+	AlphaHandling alpha_handling() const override { return OUTPUT_BLANK_ALPHA; }
 
-	std::string output_fragment_shader();
+	std::string output_fragment_shader() override;
 
 	// Uploads the texture if it has changed since last time.
-	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num);
+	void set_gl_state(GLuint glsl_program_num, const std::string& prefix, unsigned *sampler_num) override;
 
-	unsigned get_width() const { return width; }
-	unsigned get_height() const { return height; }
-	Colorspace get_color_space() const { return image_format.color_space; }
-	GammaCurve get_gamma_curve() const { return image_format.gamma_curve; }
-	virtual bool can_supply_mipmaps() const { return ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED; }
-	virtual bool is_single_texture() const { return ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED; }
+	unsigned get_width() const override { return width; }
+	unsigned get_height() const override { return height; }
+	Colorspace get_color_space() const override { return image_format.color_space; }
+	GammaCurve get_gamma_curve() const override { return image_format.gamma_curve; }
+	bool can_supply_mipmaps() const override { return ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED; }
+	bool is_single_texture() const override { return ycbcr_input_splitting == YCBCR_INPUT_INTERLEAVED; }
 
 	// Tells the input where to fetch the actual pixel data. Note that if you change
 	// this data, you must either call set_pixel_data() again (using the same pointer
@@ -171,12 +171,12 @@ public:
 	// set_width() / set_height() again after this.
 	void change_ycbcr_format(const YCbCrFormat &ycbcr_format);
 
-	virtual void inform_added(EffectChain *chain)
+	void inform_added(EffectChain *chain) override
 	{
 		resource_pool = chain->get_resource_pool();
 	}
 
-	bool set_int(const std::string& key, int value);
+	bool set_int(const std::string& key, int value) override;
 
 private:
 	// Release the texture in the given channel if we have any, and it is owned by us.
