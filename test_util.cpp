@@ -59,7 +59,7 @@ EffectChainTester::EffectChainTester(const float *data, unsigned width, unsigned
 	  output_added(false),
 	  finalized(false)
 {
-	CHECK(init_movit(".", MOVIT_DEBUG_OFF));
+	init_movit_for_test();
 
 	if (data != nullptr) {
 		add_input(data, pixel_format, color_space, gamma_curve);
