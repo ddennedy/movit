@@ -83,7 +83,6 @@ private:
 	float offset_x, offset_y;
 	float zoom_x, zoom_y;
 	float zoom_center_x, zoom_center_y;
-	float unused;
 };
 
 class SingleResamplePassEffect : public Effect {
@@ -133,7 +132,6 @@ private:
 
 	int input_width, input_height, output_width, output_height;
 	float offset, zoom;
-	float unused;
 	int last_input_width, last_input_height, last_output_width, last_output_height;
 	float last_offset, last_zoom;
 	int src_bilinear_samples, num_loops;
