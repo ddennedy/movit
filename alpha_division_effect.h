@@ -14,7 +14,7 @@ public:
 	AlphaDivisionEffect() {}
 	std::string effect_type_id() const override { return "AlphaDivisionEffect"; }
 	std::string output_fragment_shader() override;
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 };
 
 }  // namespace movit

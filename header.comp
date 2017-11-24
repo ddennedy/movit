@@ -10,4 +10,8 @@ vec4 tex2D(sampler2D s, vec2 coord);
 void cs_output(uvec2 coord, vec4 val);
 void cs_output(ivec2 coord, vec4 val);
 
+// Used if there are any steps used to postprocess compute shader output.
+// Initialized due to https://bugs.freedesktop.org/show_bug.cgi?id=103895.
+vec4 CS_OUTPUT_VAL = vec4(0.0);
+
 #define OUTPUT(tc, val) cs_output(tc, val)

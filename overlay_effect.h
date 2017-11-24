@@ -24,7 +24,7 @@ public:
 
 	bool needs_srgb_primaries() const override { return false; }
 	unsigned num_inputs() const override { return 2; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	// Actually, if _either_ image has blank alpha, our output will have
 	// blank alpha, too (this only tells the framework that having _both_

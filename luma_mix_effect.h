@@ -26,7 +26,7 @@ public:
 
 	bool needs_srgb_primaries() const override { return false; }
 	unsigned num_inputs() const override { return 3; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 private:

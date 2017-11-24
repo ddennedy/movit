@@ -196,7 +196,16 @@ public:
 	// set sets_virtual_output_size(), though.
 	//
 	// Does not make a lot of sense together with needs_texture_bounce().
-	virtual bool one_to_one_sampling() const { return false; }
+	// Cannot be set for compute shaders.
+	virtual bool one_to_one_sampling() const { return strong_one_to_one_sampling(); }
+
+	// Similar in use to one_to_one_sampling(), but even stricter:
+	// The effect must not use texture coordinate in any way beyond
+	// giving it unmodified to its (single) input. This allows it to
+	// also be used after a compute shader, in the same phase.
+	//
+	// An effect that it strong one-to-one must also be one-to-one.
+	virtual bool strong_one_to_one_sampling() const { return false; }
 
 	// Whether this effect wants to output to a different size than
 	// its input(s) (see inform_input_size(), below). See also

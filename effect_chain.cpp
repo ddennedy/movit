@@ -34,12 +34,15 @@ namespace movit {
 
 namespace {
 
-// An effect that does nothing.
-class IdentityEffect : public Effect {
+// An effect whose only purpose is to sit in a phase on its own and take the
+// texture output from a compute shader and display it to the normal backbuffer
+// (or any FBO). That phase can be skipped when rendering using render_to_textures().
+class ComputeShaderOutputDisplayEffect : public Effect {
 public:
-	IdentityEffect() {}
-	string effect_type_id() const override { return "IdentityEffect"; }
+	ComputeShaderOutputDisplayEffect() {}
+	string effect_type_id() const override { return "ComputeShaderOutputDisplayEffect"; }
 	string output_fragment_shader() override { return read_file("identity.frag"); }
+	bool needs_texture_bounce() const override { return true; }
 };
 
 }  // namespace
@@ -162,6 +165,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->output_alpha_type = ALPHA_INVALID;
 	node->needs_mipmaps = false;
 	node->one_to_one_sampling = false;
+	node->strong_one_to_one_sampling = false;
 
 	nodes.push_back(node);
 	node_map[effect] = node;
@@ -408,9 +412,17 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *node = phase->effects[i];
 		const string effect_id = phase->effect_ids[node];
 		if (node->incoming_links.size() == 1) {
-			frag_shader += string("#define INPUT ") + phase->effect_ids[node->incoming_links[0]] + "\n";
+			Node *input = node->incoming_links[0];
+			if (i != 0 && input->effect->is_compute_shader()) {
+				// First effect after the compute shader reads the value
+				// that cs_output() wrote to a global variable.
+				frag_shader += string("#define INPUT(tc) CS_OUTPUT_VAL\n");
+			} else {
+				frag_shader += string("#define INPUT ") + phase->effect_ids[input] + "\n";
+			}
 		} else {
 			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+				assert(!node->incoming_links[j]->effect->is_compute_shader());
 				char buf[256];
 				sprintf(buf, "#define INPUT%d %s\n", j + 1, phase->effect_ids[node->incoming_links[j]].c_str());
 				frag_shader += buf;
@@ -435,7 +447,17 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		}
 		frag_shader += "\n";
 	}
-	frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
+	if (phase->is_compute_shader) {
+		frag_shader += string("#define INPUT ") + phase->effect_ids[phase->compute_shader_node] + "\n";
+		if (phase->compute_shader_node == phase->effects.back()) {
+			// No postprocessing.
+			frag_shader += "#define CS_POSTPROC(tc) CS_OUTPUT_VAL\n";
+		} else {
+			frag_shader += string("#define CS_POSTPROC ") + phase->effect_ids[phase->effects.back()] + "\n";
+		}
+	} else {
+		frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
+	}
 
 	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
 	vector<string> frag_shader_outputs;  // In order.
@@ -501,8 +523,8 @@ void EffectChain::compile_glsl_program(Phase *phase)
 
 	if (phase->is_compute_shader) {
 		frag_shader.append(read_file("footer.comp"));
-		phase->output_node->effect->register_uniform_vec2("inv_output_size", (float *)&phase->inv_output_size);
-		phase->output_node->effect->register_uniform_vec2("output_texcoord_adjust", (float *)&phase->output_texcoord_adjust);
+		phase->compute_shader_node->effect->register_uniform_vec2("inv_output_size", (float *)&phase->inv_output_size);
+		phase->compute_shader_node->effect->register_uniform_vec2("output_texcoord_adjust", (float *)&phase->output_texcoord_adjust);
 	} else {
 		frag_shader.append(read_file("footer.frag"));
 	}
@@ -597,7 +619,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 	Phase *phase = new Phase;
 	phase->output_node = output;
-	phase->is_compute_shader = output->effect->is_compute_shader();
+	phase->is_compute_shader = false;
+	phase->compute_shader_node = nullptr;
 
 	// If the output effect has one-to-one sampling, we try to trace this
 	// status down through the dependency chain. This is important in case
@@ -605,6 +628,7 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	// output size); if we have one-to-one sampling, we don't have to break
 	// the phase.
 	output->one_to_one_sampling = output->effect->one_to_one_sampling();
+	output->strong_one_to_one_sampling = output->effect->strong_one_to_one_sampling();
 
 	// Effects that we have yet to calculate, but that we know should
 	// be in the current phase.
@@ -614,6 +638,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	while (!effects_todo_this_phase.empty()) {
 		Node *node = effects_todo_this_phase.top();
 		effects_todo_this_phase.pop();
+
+		assert(node->effect->one_to_one_sampling() >= node->effect->strong_one_to_one_sampling());
 
 		if (node->effect->needs_mipmaps()) {
 			node->needs_mipmaps = true;
@@ -631,6 +657,10 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 		}
 
 		phase->effects.push_back(node);
+		if (node->effect->is_compute_shader()) {
+			phase->is_compute_shader = true;
+			phase->compute_shader_node = node;
+		}
 
 		// Find all the dependencies of this effect, and add them to the stack.
 		vector<Node *> deps = node->incoming_links;
@@ -641,12 +671,6 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			if (node->effect->needs_texture_bounce() &&
 			    !deps[i]->effect->is_single_texture() &&
 			    !deps[i]->effect->override_disable_bounce()) {
-				start_new_phase = true;
-			}
-
-			// Compute shaders currently always end phases.
-			// (We might loosen this up in some cases in the future.)
-			if (deps[i]->effect->is_compute_shader()) {
 				start_new_phase = true;
 			}
 
@@ -690,7 +714,15 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				}
 			}
 
-			if (deps[i]->effect->sets_virtual_output_size()) {
+			if (deps[i]->effect->is_compute_shader()) {
+				// Only one compute shader per phase; we should have been stopped
+				// already due to the fact that compute shaders are not one-to-one.
+				assert(!phase->is_compute_shader);
+
+				// If all nodes so far are strong one-to-one, we can put them after
+				// the compute shader (ie., process them on the output).
+				start_new_phase = !node->strong_one_to_one_sampling;
+			} else if (deps[i]->effect->sets_virtual_output_size()) {
 				assert(deps[i]->effect->changes_output_size());
 				// If the next effect sets a virtual size to rely on OpenGL's
 				// bilinear sampling, we'll really need to break the phase here.
@@ -709,6 +741,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				// Propagate the one-to-one status down through the dependency.
 				deps[i]->one_to_one_sampling = node->one_to_one_sampling &&
 					deps[i]->effect->one_to_one_sampling();
+				deps[i]->strong_one_to_one_sampling = node->strong_one_to_one_sampling &&
+					deps[i]->effect->strong_one_to_one_sampling();
 			}
 		}
 	}
@@ -1722,8 +1756,15 @@ void EffectChain::add_dither_if_needed()
 void EffectChain::add_dummy_effect_if_needed()
 {
 	Node *output = find_output_node();
-	if (output->effect->is_compute_shader()) {
-		Node *dummy = add_node(new IdentityEffect());
+
+	// See if the last effect that's not strong one-to-one is a compute shader.
+	Node *last_effect = output;
+	while (last_effect->effect->num_inputs() == 1 &&
+	       last_effect->effect->strong_one_to_one_sampling()) {
+		last_effect = last_effect->incoming_links[0];
+	}
+	if (last_effect->effect->is_compute_shader()) {
+		Node *dummy = add_node(new ComputeShaderOutputDisplayEffect());
 		connect_nodes(output, dummy);
 		has_dummy_effect = true;
 	}
@@ -1905,7 +1946,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		assert(num_phases >= 2);
 		assert(!phases.back()->is_compute_shader);
 		assert(phases.back()->effects.size() == 1);
-		assert(phases.back()->effects[0]->effect->effect_type_id() == "IdentityEffect");
+		assert(phases.back()->effects[0]->effect->effect_type_id() == "ComputeShaderOutputDisplayEffect");
 
 		// We are rendering to a set of textures, so we can run the compute shader
 		// directly and skip the dummy phase.

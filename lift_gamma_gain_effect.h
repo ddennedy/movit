@@ -32,7 +32,7 @@ public:
 	LiftGammaGainEffect();
 	std::string effect_type_id() const override { return "LiftGammaGainEffect"; }
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 	std::string output_fragment_shader() override;
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;

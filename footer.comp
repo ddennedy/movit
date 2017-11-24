@@ -22,6 +22,10 @@ void cs_output(uvec2 coord, vec4 val)
 
 void cs_output(ivec2 coord, vec4 val)
 {
+	// Run the value through any preprocessing steps we might have.
+	CS_OUTPUT_VAL = val;
+	val = CS_POSTPROC(vec2(0.0, 0.0));
+
 #if SQUARE_ROOT_TRANSFORMATION
 	// Make sure we don't give negative values to sqrt.
 	val.rgb = sqrt(max(val.rgb, 0.0));

@@ -66,7 +66,7 @@ public:
 	// premultiplied error. However, we need to do dithering in the same
 	// space as quantization, whether that be pre- or postmultiply.
 	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 

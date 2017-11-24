@@ -26,7 +26,7 @@ public:
 	std::string output_fragment_shader() override;
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	// Should not be called by end users; call
 	// EffectChain::change_ycbcr_output_format() instead.

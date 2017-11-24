@@ -29,7 +29,7 @@ public:
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;
 
 	bool needs_srgb_primaries() const override { return false; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	// Actually needs postmultiplied input as well as outputting it.
 	// EffectChain will take care of that.

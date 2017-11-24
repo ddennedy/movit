@@ -57,7 +57,7 @@ public:
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	unsigned num_inputs() const override { return 2; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 private:
 	float blurred_mix_amount;

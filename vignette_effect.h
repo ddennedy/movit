@@ -19,7 +19,7 @@ public:
 
 	bool needs_srgb_primaries() const override { return false; }
 	AlphaHandling alpha_handling() const override { return DONT_CARE_ALPHA_TYPE; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override;

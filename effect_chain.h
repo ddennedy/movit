@@ -153,6 +153,9 @@ private:
 	// (in the same phase) have one_to_one_sampling() set.
 	bool one_to_one_sampling;
 
+	// Same, for strong_one_to_one_sampling().
+	bool strong_one_to_one_sampling;
+
 	friend class EffectChain;
 };
 
@@ -181,6 +184,7 @@ struct Phase {
 	// Whether this phase is compiled as a compute shader, ie., the last effect is
 	// marked as one.
 	bool is_compute_shader;
+	Node *compute_shader_node;
 
 	// If <is_compute_shader>, which image unit the output buffer is bound to.
 	// This is used as source for a Uniform<int> below.

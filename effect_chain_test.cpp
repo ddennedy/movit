@@ -1113,16 +1113,31 @@ public:
 	bool sets_virtual_output_size() const override { return false; }
 };
 
+class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
+};
+INSTANTIATE_TEST_CASE_P(WithAndWithoutComputeShaderTest,
+                        WithAndWithoutComputeShaderTest,
+                        testing::Values("fragment", "compute"));
+
+// An effect that does nothing, but as a compute shader.
+class IdentityComputeEffect : public Effect {
+public:
+	IdentityComputeEffect() {}
+	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
+	virtual bool is_compute_shader() const { return true; }
+	string output_fragment_shader() { return read_file("identity.comp"); }
+};
+
 // An effect that promises one-to-one sampling (unlike IdentityEffect).
 class OneToOneEffect : public Effect {
 public:
 	OneToOneEffect() {}
 	string effect_type_id() const override { return "OneToOneEffect"; }
 	string output_fragment_shader() override { return read_file("identity.frag"); }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 };
 
-TEST(EffectChainTest, NoBounceWithOneToOneSampling) {
+TEST_P(WithAndWithoutComputeShaderTest, NoBounceWithOneToOneSampling) {
 	const int size = 2;
 	float data[size * size] = {
 		1.0f, 0.0f,
@@ -1135,7 +1150,11 @@ TEST(EffectChainTest, NoBounceWithOneToOneSampling) {
 	RewritingEffect<OneToOneEffect> *effect1 = new RewritingEffect<OneToOneEffect>();
 	RewritingEffect<OneToOneEffect> *effect2 = new RewritingEffect<OneToOneEffect>();
 
-	tester.get_chain()->add_effect(new NonVirtualResizeEffect(size, size));
+	if (GetParam() == "compute") {
+		tester.get_chain()->add_effect(new IdentityComputeEffect());
+	} else {
+		tester.get_chain()->add_effect(new NonVirtualResizeEffect(size, size));
+	}
 	tester.get_chain()->add_effect(effect1);
 	tester.get_chain()->add_effect(effect2);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -1301,21 +1320,6 @@ TEST(EffectChainTest, StringStreamLocalesWork) {
 	setlocale(LC_ALL, saved_locale);
 	free(saved_locale);
 }
-
-// An effect that does nothing, but as a compute shader.
-class IdentityComputeEffect : public Effect {
-public:
-	IdentityComputeEffect() {}
-	string effect_type_id() const override { return "IdentityComputeEffect"; }
-	bool is_compute_shader() const override { return true; }
-	string output_fragment_shader() override { return read_file("identity.comp"); }
-};
-
-class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
-};
-INSTANTIATE_TEST_CASE_P(WithAndWithoutComputeShaderTest,
-                        WithAndWithoutComputeShaderTest,
-                        testing::Values("fragment", "compute"));
 
 TEST(EffectChainTest, sRGBIntermediate) {
 	float data[] = {

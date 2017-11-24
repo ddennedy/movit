@@ -52,7 +52,7 @@ public:
 	std::string output_fragment_shader() override;
 	
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 private:
 	float cutoff;

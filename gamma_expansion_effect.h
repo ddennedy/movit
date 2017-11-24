@@ -30,7 +30,7 @@ public:
 
 	bool needs_linear_light() const override { return false; }
 	bool needs_srgb_primaries() const override { return false; }
-	bool one_to_one_sampling() const override { return true; }
+	bool strong_one_to_one_sampling() const override { return true; }
 
 	// Actually processes its input in a nonlinear fashion,
 	// but does not touch alpha, and we are a special case anyway.
