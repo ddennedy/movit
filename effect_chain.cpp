@@ -2172,7 +2172,7 @@ void EffectChain::execute_phase(Phase *phase,
 
 	if (phase->is_compute_shader) {
 		unsigned x, y, z;
-		phase->output_node->effect->get_compute_dimensions(phase->output_width, phase->output_height, &x, &y, &z);
+		phase->compute_shader_node->effect->get_compute_dimensions(phase->output_width, phase->output_height, &x, &y, &z);
 
 		// Uniforms need to come after set_gl_state() _and_ get_compute_dimensions(),
 		// since they can be updated from there.

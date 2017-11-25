@@ -1547,4 +1547,37 @@ TEST(ComputeShaderTest, Render8BitTo8Bit) {
 	expect_equal(data, out_data, 3, 2);
 }
 
+// A compute shader to mirror the inputs, in 2x2 blocks.
+class MirrorComputeEffect : public Effect {
+public:
+	MirrorComputeEffect() {}
+	string effect_type_id() const override { return "MirrorComputeEffect"; }
+	bool is_compute_shader() const override { return true; }
+	string output_fragment_shader() override { return read_file("mirror.comp"); }
+	void get_compute_dimensions(unsigned output_width, unsigned output_height,
+	                            unsigned *x, unsigned *y, unsigned *z) const override {
+		*x = output_width / 2;
+		*y = output_height / 2;
+		*z = 1;
+	}
+};
+
+TEST(ComputeShaderTest, Mirror) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float expected_data[] = {
+		0.8f, 0.3f, 0.25f, 0.0f,
+		0.2f, 1.0f, 1.0f, 0.75f,
+	};
+	float out_data[8];
+	EffectChainTester tester(data, 4, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->add_effect(new MirrorComputeEffect());
+	tester.get_chain()->add_effect(new OneToOneEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 2);
+}
+
 }  // namespace movit

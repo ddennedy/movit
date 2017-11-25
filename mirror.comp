@@ -1,0 +1,14 @@
+// A compute shader to mirror the inputs, in 2x2 blocks. For testing only.
+
+layout(local_size_x = 1) in;
+
+void FUNCNAME()
+{
+	ivec2 tc = ivec2(gl_GlobalInvocationID.xy) * ivec2(2, 2);
+	int offs = int(gl_NumWorkGroups.x) * 2 - 1;
+
+	OUTPUT(ivec2(offs - tc.x,     tc.y),     INPUT(NORMALIZE_TEXTURE_COORDS(vec2(tc.x,     tc.y))));
+	OUTPUT(ivec2(offs - tc.x - 1, tc.y),     INPUT(NORMALIZE_TEXTURE_COORDS(vec2(tc.x + 1, tc.y))));
+	OUTPUT(ivec2(offs - tc.x,     tc.y + 1), INPUT(NORMALIZE_TEXTURE_COORDS(vec2(tc.x,     tc.y + 1))));
+	OUTPUT(ivec2(offs - tc.x - 1, tc.y + 1), INPUT(NORMALIZE_TEXTURE_COORDS(vec2(tc.x + 1, tc.y + 1))));
+}
