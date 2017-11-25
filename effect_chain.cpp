@@ -555,19 +555,30 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		extract_uniform_declarations(effect->uniforms_mat3, "mat3", effect_id, &phase->uniforms_mat3, &frag_shader_uniforms);
 	}
 
-	frag_shader = frag_shader_header + frag_shader_uniforms + frag_shader;
-
 	string vert_shader = read_version_dependent_file("vs", "vert");
 
 	// If we're the last phase and need to flip the picture to compensate for
-	// the origin, tell the vertex shader so.
-	if (phase->output_node->outgoing_links.empty() && output_origin == OUTPUT_ORIGIN_TOP_LEFT) {
-		const string needle = "#define FLIP_ORIGIN 0";
-		size_t pos = vert_shader.find(needle);
-		assert(pos != string::npos);
-
-		vert_shader[pos + needle.size() - 1] = '1';
+	// the origin, tell the vertex or compute shader so.
+	bool is_last_phase;
+	if (has_dummy_effect) {
+		is_last_phase = (phase->output_node->outgoing_links.size() == 1 &&
+			phase->output_node->outgoing_links[0]->effect->effect_type_id() == "ComputeShaderOutputDisplayEffect");
+	} else {
+		is_last_phase = phase->output_node->outgoing_links.empty();
 	}
+	if (is_last_phase && output_origin == OUTPUT_ORIGIN_TOP_LEFT) {
+		if (phase->is_compute_shader) {
+			frag_shader_header += "#define FLIP_ORIGIN 1\n";
+		} else {
+			const string needle = "#define FLIP_ORIGIN 0";
+			size_t pos = vert_shader.find(needle);
+			assert(pos != string::npos);
+
+			vert_shader[pos + needle.size() - 1] = '1';
+		}
+	}
+
+	frag_shader = frag_shader_header + frag_shader_uniforms + frag_shader;
 
 	if (phase->is_compute_shader) {
 		phase->glsl_program_num = resource_pool->compile_glsl_compute_program(frag_shader);

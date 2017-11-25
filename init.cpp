@@ -318,7 +318,8 @@ bool check_extensions()
 		(epoxy_is_desktop_gl() &&
 		 (epoxy_gl_version() >= 43 ||
 		  (epoxy_has_gl_extension("GL_ARB_compute_shader") &&
-		   epoxy_has_gl_extension("GL_ARB_shader_image_load_store"))));
+		   epoxy_has_gl_extension("GL_ARB_shader_image_load_store") &&
+	           epoxy_has_gl_extension("GL_ARB_shader_image_size"))));
 
 	return true;
 }

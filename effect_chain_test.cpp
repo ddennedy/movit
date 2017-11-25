@@ -99,7 +99,22 @@ TEST(MirrorTest, BasicTest) {
 	expect_equal(expected_data, out_data, 3, 2);
 }
 
-TEST(EffectChainTest, TopLeftOrigin) {
+class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
+};
+INSTANTIATE_TEST_CASE_P(WithAndWithoutComputeShaderTest,
+                        WithAndWithoutComputeShaderTest,
+                        testing::Values("fragment", "compute"));
+
+// An effect that does nothing, but as a compute shader.
+class IdentityComputeEffect : public Effect {
+public:
+	IdentityComputeEffect() {}
+	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
+	virtual bool is_compute_shader() const { return true; }
+	string output_fragment_shader() { return read_file("identity.comp"); }
+};
+
+TEST_P(WithAndWithoutComputeShaderTest, TopLeftOrigin) {
 	float data[] = {
 		0.0f, 0.25f, 0.3f,
 		0.75f, 1.0f, 1.0f,
@@ -113,6 +128,9 @@ TEST(EffectChainTest, TopLeftOrigin) {
 	float out_data[6];
 	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->set_output_origin(OUTPUT_ORIGIN_TOP_LEFT);
+	if (GetParam() == "compute") {
+		tester.get_chain()->add_effect(new IdentityComputeEffect());
+	}
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 3, 2);
@@ -1111,21 +1129,6 @@ public:
 		: VirtualResizeEffect(width, height, width, height) {}
 	string effect_type_id() const override { return "NonVirtualResizeEffect"; }
 	bool sets_virtual_output_size() const override { return false; }
-};
-
-class WithAndWithoutComputeShaderTest : public testing::TestWithParam<string> {
-};
-INSTANTIATE_TEST_CASE_P(WithAndWithoutComputeShaderTest,
-                        WithAndWithoutComputeShaderTest,
-                        testing::Values("fragment", "compute"));
-
-// An effect that does nothing, but as a compute shader.
-class IdentityComputeEffect : public Effect {
-public:
-	IdentityComputeEffect() {}
-	virtual string effect_type_id() const { return "IdentityComputeEffect"; }
-	virtual bool is_compute_shader() const { return true; }
-	string output_fragment_shader() { return read_file("identity.comp"); }
 };
 
 // An effect that promises one-to-one sampling (unlike IdentityEffect).
