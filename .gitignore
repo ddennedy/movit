@@ -44,7 +44,7 @@ vignette_effect_test
 ycbcr_conversion_effect_test
 deinterlace_effect_test
 chain-*.frag
-chain-*.compute
+chain-*.comp
 movit.info
 coverage/
 aclocal.m4
