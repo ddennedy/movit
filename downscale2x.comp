@@ -1,0 +1,10 @@
+// Used for testing only.
+
+layout(local_size_x = 1) in;
+
+void FUNCNAME()
+{
+	ivec2 tc = ivec2(gl_GlobalInvocationID.xy);
+	vec2 coord = NORMALIZE_TEXTURE_COORDS(vec2(tc.x, tc.y));
+	OUTPUT(tc, INPUT(vec2(coord.x - 0.125, coord.y + 0.25)));
+}
