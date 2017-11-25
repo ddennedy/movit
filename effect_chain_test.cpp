@@ -184,8 +184,8 @@ TEST(EffectChainTest, RewritingWorksAndGammaConversionsAreInserted) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	ASSERT_EQ(1, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	ASSERT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("GammaExpansionEffect", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("GammaCompressionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
@@ -213,8 +213,8 @@ TEST(EffectChainTest, RewritingWorksAndTexturesAreAskedForsRGB) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	ASSERT_EQ(1, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	ASSERT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("GammaCompressionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
@@ -237,8 +237,8 @@ TEST(EffectChainTest, RewritingWorksAndColorspaceConversionsAreInserted) {
 	tester.run(out_data, GL_RED, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	ASSERT_EQ(1, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	ASSERT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("ColorspaceConversionEffect", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("ColorspaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
@@ -316,8 +316,8 @@ TEST(EffectChainTest, NoGammaConversionsWhenLinearLightNotNeeded) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	EXPECT_EQ(0, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	EXPECT_EQ(0u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 
 	expect_equal(expected_data, out_data, 3, 2);
@@ -339,8 +339,8 @@ TEST(EffectChainTest, NoColorspaceConversionsWhensRGBPrimariesNotNeeded) {
 	tester.run(out_data, GL_RED, COLORSPACE_REC_601_525, GAMMA_LINEAR);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	EXPECT_EQ(0, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	EXPECT_EQ(0u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 
 	expect_equal(expected_data, out_data, 3, 2);
@@ -427,8 +427,8 @@ TEST(EffectChainTest, NoAlphaConversionsWhenPremultipliedAlphaNotNeeded) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	EXPECT_EQ(0, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	EXPECT_EQ(0u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 
 	expect_equal(expected_data, out_data, 4, size);
@@ -496,8 +496,8 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlpha) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 
 	Node *node = input->blue_node;
-	EXPECT_EQ(0, node->incoming_links.size());
-	EXPECT_EQ(0, node->outgoing_links.size());
+	EXPECT_EQ(0u, node->incoming_links.size());
+	EXPECT_EQ(0u, node->outgoing_links.size());
 
 	expect_equal(data, out_data, 4, size);
 }
@@ -527,8 +527,8 @@ TEST(EffectChainTest, NoAlphaConversionsWithBlankAlphaPreservingEffect) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 
 	Node *node = effect->replaced_node;
-	EXPECT_EQ(1, node->incoming_links.size());
-	EXPECT_EQ(0, node->outgoing_links.size());
+	EXPECT_EQ(1u, node->incoming_links.size());
+	EXPECT_EQ(0u, node->outgoing_links.size());
 
 	expect_equal(data, out_data, 4, size);
 }
@@ -553,8 +553,8 @@ TEST(EffectChainTest, AlphaConversionsWithNonBlankAlphaPreservingEffect) {
 	tester.run(out_data, GL_RGBA, COLORSPACE_sRGB, GAMMA_LINEAR, OUTPUT_ALPHA_FORMAT_POSTMULTIPLIED);
 
 	Node *node = effect->replaced_node;
-	EXPECT_EQ(1, node->incoming_links.size());
-	EXPECT_EQ(1, node->outgoing_links.size());
+	EXPECT_EQ(1u, node->incoming_links.size());
+	EXPECT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("AlphaDivisionEffect", node->outgoing_links[0]->effect->effect_type_id());
 
 	expect_equal(data, out_data, 4, size);
@@ -909,8 +909,8 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneGammaConversion) {
 	expect_equal(expected_data, out_data, 2, 2);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	ASSERT_EQ(1, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	ASSERT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("GammaExpansionEffect", node->outgoing_links[0]->effect->effect_type_id());
 }
@@ -942,8 +942,8 @@ TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneColorspaceConversion) {
 	expect_equal(expected_data, out_data, 2, 2);
 
 	Node *node = effect->replaced_node;
-	ASSERT_EQ(1, node->incoming_links.size());
-	ASSERT_EQ(1, node->outgoing_links.size());
+	ASSERT_EQ(1u, node->incoming_links.size());
+	ASSERT_EQ(1u, node->outgoing_links.size());
 	EXPECT_EQ("FlatInput", node->incoming_links[0]->effect->effect_type_id());
 	EXPECT_EQ("ColorspaceConversionEffect", node->outgoing_links[0]->effect->effect_type_id());
 }
@@ -1165,7 +1165,7 @@ TEST_P(WithAndWithoutComputeShaderTest, NoBounceWithOneToOneSampling) {
 	expect_equal(data, out_data, size, size);
 
 	// The first OneToOneEffect should be in the same phase as its input.
-	ASSERT_EQ(1, effect1->replaced_node->incoming_links.size());
+	ASSERT_EQ(1u, effect1->replaced_node->incoming_links.size());
 	EXPECT_EQ(effect1->replaced_node->incoming_links[0]->containing_phase,
 	          effect1->replaced_node->containing_phase);
 
@@ -1202,7 +1202,7 @@ TEST(EffectChainTest, BounceWhenOneToOneIsBroken) {
 	// the IdentityEffect (since the latter is not one-to-one),
 	// ie., the chain should be broken somewhere between them, but exactly
 	// where doesn't matter.
-	ASSERT_EQ(1, effect1->replaced_node->incoming_links.size());
+	ASSERT_EQ(1u, effect1->replaced_node->incoming_links.size());
 	EXPECT_NE(effect1->replaced_node->incoming_links[0]->containing_phase,
 	          effect3->replaced_node->containing_phase);
 
@@ -1472,7 +1472,7 @@ TEST(EffectChainTest, ProgramsAreClonedForMultipleThreads) {
 
 	expect_equal(data, out_data, 3, 2);
 
-	ASSERT_NE(0, effect->last_glsl_program_num);
+	ASSERT_NE(0u, effect->last_glsl_program_num);
 
 	// Now pretend some other effect is using this program number;
 	// ResourcePool will then need to clone it.
@@ -1631,8 +1631,8 @@ TEST(ComputeShaderTest, ResizingComputeThenOneToOne) {
 	expect_equal(expected_data, out_data, 2, 1);
 
 	Phase *phase = downscale_effect->replaced_node->containing_phase;
-	EXPECT_EQ(2, phase->output_width);
-	EXPECT_EQ(1, phase->output_height);
+	EXPECT_EQ(2u, phase->output_width);
+	EXPECT_EQ(1u, phase->output_height);
 }
 
 }  // namespace movit
