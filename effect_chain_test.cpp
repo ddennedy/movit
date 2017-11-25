@@ -1583,4 +1583,55 @@ TEST(ComputeShaderTest, ComputeThenOneToOne) {
 	expect_equal(expected_data, out_data, 4, 2);
 }
 
+// A compute shader that also resizes its input, taking the upper-left pixel
+// of every 2x2 group. (The shader is hard-coded to 4x2 input for simplicity.)
+class Downscale2xComputeEffect : public Effect {
+public:
+	Downscale2xComputeEffect() {}
+	string effect_type_id() const override { return "Downscale2xComputeEffect"; }
+	bool is_compute_shader() const override { return true; }
+	string output_fragment_shader() override { return read_file("downscale2x.comp"); }
+	bool changes_output_size() const override { return true; }
+	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override
+	{
+		this->width = width;
+		this->height = height;
+	}
+	void get_output_size(unsigned *width, unsigned *height,
+	                     unsigned *virtual_width, unsigned *virtual_height) const override {
+                *width = *virtual_width = this->width / 2;
+                *height = *virtual_height = this->height / 2;
+        }
+
+private:
+	unsigned width, height;
+};
+
+// Even if the compute shader is not the last effect, it's the one that should decide
+// the output size of the phase.
+TEST(ComputeShaderTest, ResizingComputeThenOneToOne) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float expected_data[] = {
+		0.0f, 0.3f,
+	};
+	float out_data[2];
+	EffectChainTester tester(nullptr, 2, 1);
+	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 4, 2);
+
+	RewritingEffect<Downscale2xComputeEffect> *downscale_effect = new RewritingEffect<Downscale2xComputeEffect>();
+	tester.get_chain()->add_effect(downscale_effect);
+	tester.get_chain()->add_effect(new OneToOneEffect());
+	tester.get_chain()->add_effect(new BouncingIdentityEffect());
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 2, 1);
+
+	Phase *phase = downscale_effect->replaced_node->containing_phase;
+	EXPECT_EQ(2, phase->output_width);
+	EXPECT_EQ(1, phase->output_height);
+}
+
 }  // namespace movit

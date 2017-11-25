@@ -1050,7 +1050,7 @@ void EffectChain::inform_input_sizes(Phase *phase)
 // desired output size might change based on the inputs.
 void EffectChain::find_output_size(Phase *phase)
 {
-	Node *output_node = phase->effects.back();
+	Node *output_node = phase->is_compute_shader ? phase->compute_shader_node : phase->effects.back();
 
 	// If the last effect explicitly sets an output size, use that.
 	if (output_node->effect->changes_output_size()) {
