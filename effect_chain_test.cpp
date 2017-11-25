@@ -1228,6 +1228,7 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	float out_data[6], temp[6 * 4];
 
 	EffectChain chain(width, height);
+	MovitDebugLevel old_movit_debug_level = movit_debug_level;
 	movit_debug_level = MOVIT_DEBUG_ON;
 
 	ImageFormat format;
@@ -1276,7 +1277,7 @@ TEST(EffectChainTest, IdentityWithOwnPool) {
 	expect_equal(expected_data, out_data, width, height);
 
 	// Reset the debug status again.
-	movit_debug_level = MOVIT_DEBUG_OFF;
+	movit_debug_level = old_movit_debug_level;
 }
 
 // A dummy effect whose only purpose is to test sprintf decimal behavior.
