@@ -4,11 +4,15 @@
 #include <gtest/gtest.h>
 #include <math.h>
 
+#include <memory>
+
 #include "effect_chain.h"
 #include "flat_input.h"
 #include "image_format.h"
 #include "resample_effect.h"
 #include "test_util.h"
+
+using namespace std;
 
 namespace movit {
 
@@ -424,5 +428,49 @@ TEST(ResampleEffectTest, Precision) {
 
 	expect_equal(expected_data, out_data, size, 1);
 }
+
+#ifdef HAVE_BENCHMARK
+template<class T>
+void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum output_format, const std::string &shader_type)
+{
+	DisableComputeShadersTemporarily disabler(shader_type == "fragment");
+	if (disabler.should_skip(&state)) return;
+
+	unsigned in_width = state.range(0), in_height = state.range(1);
+	unsigned out_width = state.range(2), out_height = state.range(3);
+
+	unique_ptr<T[]> data(new T[in_width * in_height * 4]);
+	unique_ptr<T[]> out_data(new T[out_width * out_height * 4]);
+
+	for (unsigned i = 0; i < in_width * in_height * 4; ++i) {
+		data[i] = rand();
+	}
+
+	EffectChainTester tester(nullptr, out_width, out_height, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, gamma_curve, output_format);
+	tester.add_input(data.get(), FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, gamma_curve, in_width, in_height);
+	Effect *resample_effect = tester.get_chain()->add_effect(new ResampleEffect());
+
+	ASSERT_TRUE(resample_effect->set_int("width", out_width));
+	ASSERT_TRUE(resample_effect->set_int("height", out_height));
+
+	tester.benchmark(state, out_data.get(), GL_BGRA, COLORSPACE_sRGB, gamma_curve, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
+}
+
+void BM_ResampleEffectFloat(benchmark::State &state, GammaCurve gamma_curve, const std::string &shader_type)
+{
+	BM_ResampleEffect<float>(state, gamma_curve, GL_RGBA16F, shader_type);
+}
+
+void BM_ResampleEffectInt8(benchmark::State &state, GammaCurve gamma_curve, const std::string &shader_type)
+{
+	BM_ResampleEffect<uint8_t>(state, gamma_curve, GL_RGBA8, shader_type);
+}
+
+BENCHMARK_CAPTURE(BM_ResampleEffectInt8, Int8Upscale, GAMMA_REC_709, "fragment")->Args({640, 360, 1280, 720})->Args({320, 180, 1280, 720})->Args({321, 181, 1280, 720})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_ResampleEffectFloat, Float32Upscale, GAMMA_LINEAR, "fragment")->Args({640, 360, 1280, 720})->Args({320, 180, 1280, 720})->Args({321, 181, 1280, 720})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_ResampleEffectInt8, Int8Downscale, GAMMA_REC_709, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_ResampleEffectFloat, Float32Downscale, GAMMA_LINEAR, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
+
+#endif
 
 }  // namespace movit
