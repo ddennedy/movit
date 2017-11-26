@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
+#include <mutex>
 #include <Eigen/Sparse>
 #include <Eigen/SparseQR>
 #include <Eigen/OrderingMethods>
@@ -72,7 +73,7 @@ float lanczos_weight(float x)
 // You need to call lanczos_table_init_done before the first call to
 // lanczos_weight_cached.
 #define LANCZOS_TABLE_SIZE 2048
-bool lanczos_table_init_done = false;
+static once_flag lanczos_table_init_done;
 float lanczos_table[LANCZOS_TABLE_SIZE + 2];
 
 void init_lanczos_table()
@@ -80,7 +81,6 @@ void init_lanczos_table()
 	for (unsigned i = 0; i < LANCZOS_TABLE_SIZE + 2; ++i) {
 		lanczos_table[i] = lanczos_weight(float(i) * (LANCZOS_RADIUS / LANCZOS_TABLE_SIZE));
 	}
-	lanczos_table_init_done = true;
 }
 
 float lanczos_weight_cached(float x)
@@ -468,11 +468,7 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 
 	glGenTextures(1, &texnum);
 
-	if (!lanczos_table_init_done) {
-		// Could in theory race between two threads if we are unlucky,
-		// but that is harmless, since they'll write the same data.
-		init_lanczos_table();
-	}
+	call_once(lanczos_table_init_done, init_lanczos_table);
 }
 
 SingleResamplePassEffect::~SingleResamplePassEffect()
@@ -564,10 +560,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
 {
-	if (!lanczos_table_init_done) {
-		// Only needed if run from outside ResampleEffect.
-		init_lanczos_table();
-	}
+	// Only needed if run from outside ResampleEffect.
+	call_once(lanczos_table_init_done, init_lanczos_table);
 
 	// For many resamplings (e.g. 640 -> 1280), we will end up with the same
 	// set of samples over and over again in a loop. Thus, we can compute only
