@@ -157,7 +157,19 @@ GLuint compile_shader(const string &shader_src, GLenum type)
 	GLint status;
 	glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
-		fprintf(stderr, "Failed to compile shader: %s\n", shader_src.c_str());
+		// Add some line numbers to easier identify compile errors.
+		string src_with_lines = "/*   1 */ ";
+		size_t lineno = 1;
+		for (char ch : shader_src) {
+			src_with_lines.push_back(ch);
+			if (ch == '\n') {
+				char buf[32];
+				snprintf(buf, sizeof(buf), "/* %3zu */ ", ++lineno);
+				src_with_lines += buf;
+			}
+		}
+
+		fprintf(stderr, "Failed to compile shader:\n%s\n", src_with_lines.c_str());
 		exit(1);
 	}
 
