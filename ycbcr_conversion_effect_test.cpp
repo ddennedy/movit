@@ -234,7 +234,7 @@ TEST(YCbCrConversionEffectTest, PlanarOutput) {
 	input->set_pixel_data(2, cr);
 	tester.get_chain()->add_input(input);
 
-	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run({out_y, out_cb, out_cr}, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 	expect_equal(y, out_y, width, height);
 	expect_equal(cb, out_cb, width, height);
 	expect_equal(cr, out_cr, width, height);
@@ -304,7 +304,7 @@ TEST(YCbCrConversionEffectTest, SplitLumaAndChroma) {
 	input->set_pixel_data(2, cr);
 	tester.get_chain()->add_input(input);
 
-	tester.run(out_y, out_cbcr, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(std::vector<unsigned char *>{out_y, out_cbcr}, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 	expect_equal(expected_y, out_y, width * 4, height);
 	expect_equal(expected_cbcr, out_cbcr, width * 4, height);
 }
@@ -373,7 +373,7 @@ TEST(YCbCrConversionEffectTest, OutputChunkyAndRGBA) {
 	// just that the shader compiles and doesn't mess up badly.
 	tester.get_chain()->set_dither_bits(8);
 
-	tester.run(out_ycbcr, out_rgba, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run(std::vector<unsigned char *>{out_ycbcr, out_rgba}, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 	expect_equal(expected_ycbcr, out_ycbcr, width * 4, height);
 
 	// Y'CbCr isn't 100% accurate (the input values are rounded),
@@ -448,7 +448,7 @@ TEST(YCbCrConversionEffectTest, MultipleOutputsAndRGBA) {
 	// just that the shader compiles and doesn't mess up badly.
 	tester.get_chain()->set_dither_bits(8);
 
-	tester.run(out_ycbcr, out_y, out_cbcr, out_rgba, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run({out_ycbcr, out_y, out_cbcr, out_rgba}, GL_RGBA, COLORSPACE_sRGB, GAMMA_sRGB);
 	expect_equal(expected_ycbcr, out_ycbcr, width * 4, height);
 
 	// Check that the extra Y' and CbCr outputs also are fine.
@@ -509,11 +509,11 @@ TEST(YCbCrConversionEffectTest, ChangeOutputFormat) {
 	input->set_pixel_data(2, cr);
 	tester.get_chain()->add_input(input);
 
-	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run({out_y, out_cb, out_cr}, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	// Now change the output format to match what we gave the input, and re-run.
 	tester.get_chain()->change_ycbcr_output_format(ycbcr_format);
-	tester.run(out_y, out_cb, out_cr, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
+	tester.run({out_y, out_cb, out_cr}, GL_RED, COLORSPACE_sRGB, GAMMA_sRGB);
 
 	expect_equal(y, out_y, width, height);
 	expect_equal(cb, out_cb, width, height);
