@@ -89,6 +89,25 @@ Input *EffectChainTester::add_input(const float *data, MovitPixelFormat pixel_fo
 	return input;
 }
 
+Input *EffectChainTester::add_input(const fp16_int_t *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width, int input_height)
+{
+	ImageFormat format;
+	format.color_space = color_space;
+	format.gamma_curve = gamma_curve;
+
+	if (input_width == -1) {
+		input_width = width;
+	}
+	if (input_height == -1) {
+		input_height = height;
+	}
+
+	FlatInput *input = new FlatInput(format, pixel_format, GL_HALF_FLOAT, input_width, input_height);
+	input->set_pixel_data_fp16(data);
+	chain.add_input(input);
+	return input;
+}
+
 Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat pixel_format, Colorspace color_space, GammaCurve gamma_curve, int input_width, int input_height)
 {
 	ImageFormat format;
@@ -180,6 +199,26 @@ void EffectChainTester::benchmark(benchmark::State &state, float *out_data, floa
 	internal_run(out_data, out_data2, out_data3, out_data4, format, color_space, gamma_curve, alpha_format, &state);
 }
 
+void EffectChainTester::benchmark(benchmark::State &state, fp16_int_t *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run<fp16_int_t>(out_data, nullptr, nullptr, nullptr, format, color_space, gamma_curve, alpha_format, &state);
+}
+
+void EffectChainTester::benchmark(benchmark::State &state, fp16_int_t *out_data, fp16_int_t *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run<fp16_int_t>(out_data, out_data2, nullptr, nullptr, format, color_space, gamma_curve, alpha_format, &state);
+}
+
+void EffectChainTester::benchmark(benchmark::State &state, fp16_int_t *out_data, fp16_int_t *out_data2, fp16_int_t *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run<fp16_int_t>(out_data, out_data2, out_data3, nullptr, format, color_space, gamma_curve, alpha_format, &state);
+}
+
+void EffectChainTester::benchmark(benchmark::State &state, fp16_int_t *out_data, fp16_int_t *out_data2, fp16_int_t *out_data3, fp16_int_t *out_data4, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+{
+	internal_run(out_data, out_data2, out_data3, out_data4, format, color_space, gamma_curve, alpha_format, &state);
+}
+
 void EffectChainTester::benchmark(benchmark::State &state, unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
 	internal_run<unsigned char>(out_data, nullptr, nullptr, nullptr, format, color_space, gamma_curve, alpha_format, &state);
@@ -228,6 +267,8 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, T 
 		type = GL_UNSIGNED_BYTE;
 	} else if (framebuffer_format == GL_RGBA16) {
 		type = GL_UNSIGNED_SHORT;
+	} else if (framebuffer_format == GL_RGBA16F && sizeof(T) == 2) {
+		type = GL_HALF_FLOAT;
 	} else if (framebuffer_format == GL_RGBA16F || framebuffer_format == GL_RGBA32F) {
 		type = GL_FLOAT;
 	} else if (framebuffer_format == GL_RGB10_A2) {

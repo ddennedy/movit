@@ -8,6 +8,7 @@
 
 #include "effect_chain.h"
 #include "flat_input.h"
+#include "fp16.h"
 #include "image_format.h"
 #include "init.h"
 #include "resample_effect.h"
@@ -431,6 +432,8 @@ TEST(ResampleEffectTest, Precision) {
 }
 
 #ifdef HAVE_BENCHMARK
+template<> inline uint8_t from_fp32<uint8_t>(float x) { return x; }
+
 template<class T>
 void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum output_format, const std::string &shader_type)
 {
@@ -444,7 +447,7 @@ void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum o
 	unique_ptr<T[]> out_data(new T[out_width * out_height * 4]);
 
 	for (unsigned i = 0; i < in_width * in_height * 4; ++i) {
-		data[i] = rand();
+		data[i] = from_fp32<T>(float(rand()));
 	}
 
 	EffectChainTester tester(nullptr, out_width, out_height, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, gamma_curve, output_format);
@@ -457,9 +460,9 @@ void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum o
 	tester.benchmark(state, out_data.get(), GL_BGRA, COLORSPACE_sRGB, gamma_curve, OUTPUT_ALPHA_FORMAT_PREMULTIPLIED);
 }
 
-void BM_ResampleEffectFloat(benchmark::State &state, GammaCurve gamma_curve, const std::string &shader_type)
+void BM_ResampleEffectHalf(benchmark::State &state, GammaCurve gamma_curve, const std::string &shader_type)
 {
-	BM_ResampleEffect<float>(state, gamma_curve, GL_RGBA16F, shader_type);
+	BM_ResampleEffect<fp16_int_t>(state, gamma_curve, GL_RGBA16F, shader_type);
 }
 
 void BM_ResampleEffectInt8(benchmark::State &state, GammaCurve gamma_curve, const std::string &shader_type)
@@ -468,9 +471,9 @@ void BM_ResampleEffectInt8(benchmark::State &state, GammaCurve gamma_curve, cons
 }
 
 BENCHMARK_CAPTURE(BM_ResampleEffectInt8, Int8Upscale, GAMMA_REC_709, "fragment")->Args({640, 360, 1280, 720})->Args({320, 180, 1280, 720})->Args({321, 181, 1280, 720})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_ResampleEffectFloat, Float32Upscale, GAMMA_LINEAR, "fragment")->Args({640, 360, 1280, 720})->Args({320, 180, 1280, 720})->Args({321, 181, 1280, 720})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_ResampleEffectHalf, Float16Upscale, GAMMA_LINEAR, "fragment")->Args({640, 360, 1280, 720})->Args({320, 180, 1280, 720})->Args({321, 181, 1280, 720})->UseRealTime()->Unit(benchmark::kMicrosecond);
 BENCHMARK_CAPTURE(BM_ResampleEffectInt8, Int8Downscale, GAMMA_REC_709, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_CAPTURE(BM_ResampleEffectFloat, Float32Downscale, GAMMA_LINEAR, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_CAPTURE(BM_ResampleEffectHalf, Float16Downscale, GAMMA_LINEAR, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
 void BM_ComputeScalingWeights(benchmark::State &state)
 {
