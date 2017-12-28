@@ -36,8 +36,8 @@ void cs_output(ivec2 coord, vec4 val)
 #endif
 
 #if FLIP_ORIGIN
-	coord.y = imageSize(outbuf).y - coord.y - 1;
+	coord.y = imageSize(tex_outbuf).y - coord.y - 1;
 #endif
 
-	imageStore(outbuf, coord, val);
+	imageStore(tex_outbuf, coord, val);
 }
