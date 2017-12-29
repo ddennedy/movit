@@ -164,8 +164,13 @@ TEST(ResampleEffectTest, UpscaleByThreeGetsCorrectPixelCenters) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	// We only bother checking that the middle pixel is still correct,
-	// and that symmetry holds.
-	EXPECT_FLOAT_EQ(1.0, out_data[7 * (size * 3) + 7]);
+	// and that symmetry holds. Note that the middle weight in practice
+	// becomes something like 0.99999 due to the normalization
+	// (some supposedly zero weights become 1e-6 or so), and then after
+	// squaring, the error compounds. Ironically, less texture precision
+	// here will give a more accurate result, since the weight can get
+	// rounded towards 1.0.
+	EXPECT_NEAR(1.0, out_data[7 * (size * 3) + 7], 1e-3);
 	for (unsigned y = 0; y < size * 3; ++y) {
 		for (unsigned x = 0; x < size * 3; ++x) {
 			EXPECT_NEAR(out_data[y * (size * 3) + x], out_data[(size * 3 - y - 1) * (size * 3) + x], 1e-6);
