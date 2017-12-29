@@ -21,6 +21,15 @@ bool Effect::set_int(const string &key, int value)
 	return true;
 }
 
+bool Effect::set_ivec2(const string &key, const int *values)
+{
+	if (params_ivec2.count(key) == 0) {
+		return false;
+	}
+	memcpy(params_ivec2[key], values, sizeof(int) * 2);
+	return true;
+}
+
 bool Effect::set_float(const string &key, float value)
 {
 	if (params_float.count(key) == 0) {
@@ -62,6 +71,13 @@ void Effect::register_int(const string &key, int *value)
 	assert(params_int.count(key) == 0);
 	params_int[key] = value;
 	register_uniform_int(key, value);
+}
+
+void Effect::register_ivec2(const string &key, int *values)
+{
+	assert(params_ivec2.count(key) == 0);
+	params_ivec2[key] = values;
+	register_uniform_ivec2(key, values);
 }
 
 void Effect::register_float(const string &key, float *value)
@@ -124,6 +140,16 @@ void Effect::register_uniform_int(const std::string &key, const int *value)
 	uniform.num_values = 1;
 	uniform.location = -1;
 	uniforms_int.push_back(uniform);
+}
+
+void Effect::register_uniform_ivec2(const std::string &key, const int *values)
+{
+	Uniform<int> uniform;
+	uniform.name = key;
+	uniform.value = values;
+	uniform.num_values = 1;
+	uniform.location = -1;
+	uniforms_ivec2.push_back(uniform);
 }
 
 void Effect::register_uniform_float(const std::string &key, const float *value)

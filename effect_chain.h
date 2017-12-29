@@ -192,6 +192,7 @@ struct Phase {
 
 	// These are used in transforming from unnormalized to normalized coordinates
 	// in compute shaders.
+	int uniform_output_size[2];
 	Point2D inv_output_size, output_texcoord_adjust;
 
 	// Identifier used to create unique variables in GLSL.
@@ -203,6 +204,7 @@ struct Phase {
 	std::vector<Uniform<int>> uniforms_sampler2d;
 	std::vector<Uniform<bool>> uniforms_bool;
 	std::vector<Uniform<int>> uniforms_int;
+	std::vector<Uniform<int>> uniforms_ivec2;
 	std::vector<Uniform<float>> uniforms_float;
 	std::vector<Uniform<float>> uniforms_vec2;
 	std::vector<Uniform<float>> uniforms_vec3;

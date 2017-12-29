@@ -349,7 +349,8 @@ public:
 
 	// Set a parameter; intended to be called from user code.
 	// Neither of these take ownership of the pointer.
-	virtual bool set_int(const std::string&, int value) MUST_CHECK_RESULT;
+	virtual bool set_int(const std::string &key, int value) MUST_CHECK_RESULT;
+	virtual bool set_ivec2(const std::string &key, const int *values) MUST_CHECK_RESULT;
 	virtual bool set_float(const std::string &key, float value) MUST_CHECK_RESULT;
 	virtual bool set_vec2(const std::string &key, const float *values) MUST_CHECK_RESULT;
 	virtual bool set_vec3(const std::string &key, const float *values) MUST_CHECK_RESULT;
@@ -366,6 +367,7 @@ protected:
 
 	// These correspond directly to int/float/vec2/vec3/vec4 in GLSL.
 	void register_int(const std::string &key, int *value);
+	void register_ivec2(const std::string &key, int *values);
 	void register_float(const std::string &key, float *value);
 	void register_vec2(const std::string &key, float *values);
 	void register_vec3(const std::string &key, float *values);
@@ -393,7 +395,8 @@ protected:
 	// except for register_int as noted above.
 	void register_uniform_sampler2d(const std::string &key, const int *value);
 	void register_uniform_bool(const std::string &key, const bool *value);
-	void register_uniform_int(const std::string &key, const int *value);  // Note: Requires GLSL 1.30 or newer.
+	void register_uniform_int(const std::string &key, const int *value);
+	void register_uniform_ivec2(const std::string &key, const int *values);
 	void register_uniform_float(const std::string &key, const float *value);
 	void register_uniform_vec2(const std::string &key, const float *values);
 	void register_uniform_vec3(const std::string &key, const float *values);
@@ -406,6 +409,7 @@ protected:
 
 private:
 	std::map<std::string, int *> params_int;
+	std::map<std::string, int *> params_ivec2;
 	std::map<std::string, float *> params_float;
 	std::map<std::string, float *> params_vec2;
 	std::map<std::string, float *> params_vec3;
@@ -416,6 +420,7 @@ private:
 	std::vector<Uniform<int>> uniforms_sampler2d;
 	std::vector<Uniform<bool>> uniforms_bool;
 	std::vector<Uniform<int>> uniforms_int;
+	std::vector<Uniform<int>> uniforms_ivec2;
 	std::vector<Uniform<float>> uniforms_float;
 	std::vector<Uniform<float>> uniforms_vec2;
 	std::vector<Uniform<float>> uniforms_vec3;

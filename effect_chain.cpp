@@ -523,6 +523,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 
 	if (phase->is_compute_shader) {
 		frag_shader.append(read_file("footer.comp"));
+		phase->compute_shader_node->effect->register_uniform_ivec2("output_size", phase->uniform_output_size);
 		phase->compute_shader_node->effect->register_uniform_vec2("inv_output_size", (float *)&phase->inv_output_size);
 		phase->compute_shader_node->effect->register_uniform_vec2("output_texcoord_adjust", (float *)&phase->output_texcoord_adjust);
 	} else {
@@ -544,6 +545,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		extract_uniform_declarations(effect->uniforms_sampler2d, "sampler2D", effect_id, &phase->uniforms_sampler2d, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_bool, "bool", effect_id, &phase->uniforms_bool, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_int, "int", effect_id, &phase->uniforms_int, &frag_shader_uniforms);
+		extract_uniform_declarations(effect->uniforms_ivec2, "ivec2", effect_id, &phase->uniforms_ivec2, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_float, "float", effect_id, &phase->uniforms_float, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_vec2, "vec2", effect_id, &phase->uniforms_vec2, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_vec3, "vec3", effect_id, &phase->uniforms_vec3, &frag_shader_uniforms);
@@ -607,6 +609,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_sampler2d);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_bool);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_int);
+	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_ivec2);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_float);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_vec2);
 	collect_uniform_locations(phase->glsl_program_num, &phase->uniforms_vec3);
@@ -2154,6 +2157,8 @@ void EffectChain::execute_phase(Phase *phase,
 		phase->outbuf_image_unit = 0;
 		glBindImageTexture(phase->outbuf_image_unit, destinations[0].texnum, 0, GL_FALSE, 0, GL_WRITE_ONLY, destinations[0].format);
 		check_error();
+		phase->uniform_output_size[0] = phase->output_width;
+		phase->uniform_output_size[1] = phase->output_height;
 		phase->inv_output_size.x = 1.0f / phase->output_width;
 		phase->inv_output_size.y = 1.0f / phase->output_height;
 		phase->output_texcoord_adjust.x = 0.5f / phase->output_width;
@@ -2245,6 +2250,12 @@ void EffectChain::setup_uniforms(Phase *phase)
 		const Uniform<int> &uniform = phase->uniforms_int[i];
 		if (uniform.location != -1) {
 			glUniform1iv(uniform.location, uniform.num_values, uniform.value);
+		}
+	}
+	for (size_t i = 0; i < phase->uniforms_ivec2.size(); ++i) {
+		const Uniform<int> &uniform = phase->uniforms_ivec2[i];
+		if (uniform.location != -1) {
+			glUniform2iv(uniform.location, uniform.num_values, uniform.value);
 		}
 	}
 	for (size_t i = 0; i < phase->uniforms_float.size(); ++i) {
