@@ -243,11 +243,11 @@ void BM_DeinterlaceEffect(benchmark::State &state, TestFormat format, bool spati
 	unique_ptr<float[]> out_data(new float[width * height * format.bytes_per_pixel]);
 
 	for (unsigned i = 0; i < width * field_height * format.bytes_per_pixel; ++i) {
-		field1[i] = rand();
-		field2[i] = rand();
-		field3[i] = rand();
-		field4[i] = rand();
-		field5[i] = rand();
+		field1[i] = rand() / (RAND_MAX + 1.0);
+		field2[i] = rand() / (RAND_MAX + 1.0);
+		field3[i] = rand() / (RAND_MAX + 1.0);
+		field4[i] = rand() / (RAND_MAX + 1.0);
+		field5[i] = rand() / (RAND_MAX + 1.0);
 	}
 
 	EffectChainTester tester(nullptr, width, height);

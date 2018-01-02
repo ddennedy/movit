@@ -452,7 +452,7 @@ void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum o
 	unique_ptr<T[]> out_data(new T[out_width * out_height * 4]);
 
 	for (unsigned i = 0; i < in_width * in_height * 4; ++i) {
-		data[i] = from_fp32<T>(float(rand()));
+		data[i] = from_fp32<T>(rand() / (RAND_MAX + 1.0));
 	}
 
 	EffectChainTester tester(nullptr, out_width, out_height, FORMAT_BGRA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, gamma_curve, output_format);
