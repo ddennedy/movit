@@ -437,7 +437,7 @@ TEST(ResampleEffectTest, Precision) {
 }
 
 #ifdef HAVE_BENCHMARK
-template<> inline uint8_t from_fp32<uint8_t>(float x) { return x; }
+template<> inline uint8_t from_fp32<uint8_t>(float x) { return lrintf(x * 255.0f); }
 
 template<class T>
 void BM_ResampleEffect(benchmark::State &state, GammaCurve gamma_curve, GLenum output_format, const std::string &shader_type)
