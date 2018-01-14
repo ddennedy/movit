@@ -93,8 +93,8 @@ private:
 	
 	// Both of these are owned by us if owns_effects is true (before finalize()),
 	// and otherwise owned by the EffectChain.
-	bool owns_effects;
-	SingleResamplePassEffect *hpass, *vpass;
+	std::unique_ptr<SingleResamplePassEffect> hpass_owner, vpass_owner;
+	SingleResamplePassEffect *hpass = nullptr, *vpass = nullptr;
 	int input_width, input_height, output_width, output_height;
 
 	float offset_x, offset_y;

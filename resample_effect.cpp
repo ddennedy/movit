@@ -300,8 +300,7 @@ double compute_sum_sq_error(const Tap<float>* weights, unsigned num_weights,
 }  // namespace
 
 ResampleEffect::ResampleEffect()
-	: owns_effects(true),
-	  input_width(1280),
+	: input_width(1280),
 	  input_height(720),
 	  offset_x(0.0f), offset_y(0.0f),
 	  zoom_x(1.0f), zoom_y(1.0f),
@@ -311,9 +310,11 @@ ResampleEffect::ResampleEffect()
 	register_int("height", &output_height);
 
 	// The first blur pass will forward resolution information to us.
-	hpass = new SingleResamplePassEffect(this);
+	hpass_owner.reset(new SingleResamplePassEffect(this));
+	hpass = hpass_owner.get();
 	CHECK(hpass->set_int("direction", SingleResamplePassEffect::HORIZONTAL));
-	vpass = new SingleResamplePassEffect(nullptr);
+	vpass_owner.reset(new SingleResamplePassEffect(this));
+	vpass = vpass_owner.get();
 	CHECK(vpass->set_int("direction", SingleResamplePassEffect::VERTICAL));
 
 	update_size();
@@ -321,21 +322,16 @@ ResampleEffect::ResampleEffect()
 
 ResampleEffect::~ResampleEffect()
 {
-	if (owns_effects) {
-		delete hpass;
-		delete vpass;
-	}
 }
 
 void ResampleEffect::rewrite_graph(EffectChain *graph, Node *self)
 {
-	Node *hpass_node = graph->add_node(hpass);
-	Node *vpass_node = graph->add_node(vpass);
+	Node *hpass_node = graph->add_node(hpass_owner.release());
+	Node *vpass_node = graph->add_node(vpass_owner.release());
 	graph->connect_nodes(hpass_node, vpass_node);
 	graph->replace_receiver(self, hpass_node);
 	graph->replace_sender(self, vpass_node);
 	self->disabled = true;
-	owns_effects = false;
 } 
 
 // We get this information forwarded from the first blur pass,
