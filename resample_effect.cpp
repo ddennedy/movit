@@ -435,8 +435,8 @@ bool ResampleEffect::set_float(const string &key, float value) {
 SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	: parent(parent),
 	  direction(HORIZONTAL),
- 	  input_width(1280),
- 	  input_height(720),
+	  input_width(1280),
+	  input_height(720),
 	  offset(0.0),
 	  zoom(1.0),
 	  last_input_width(-1),
