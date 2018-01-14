@@ -448,8 +448,7 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	  last_output_width(-1),
 	  last_output_height(-1),
 	  last_offset(0.0 / 0.0),  // NaN.
-	  last_zoom(0.0 / 0.0),  // NaN.
-	  last_texture_width(-1), last_texture_height(-1)
+	  last_zoom(0.0 / 0.0)  // NaN.
 {
 	register_int("direction", (int *)&direction);
 	register_int("input_width", &input_width);
@@ -466,14 +465,11 @@ SingleResamplePassEffect::SingleResamplePassEffect(ResampleEffect *parent)
 	register_uniform_float("sample_x_offset", &uniform_sample_x_offset);
 	register_uniform_float("whole_pixel_offset", &uniform_whole_pixel_offset);
 
-	glGenTextures(1, &texnum);
-
 	call_once(lanczos_table_init_done, init_lanczos_table);
 }
 
 SingleResamplePassEffect::~SingleResamplePassEffect()
 {
-	glDeleteTextures(1, &texnum);
 }
 
 string SingleResamplePassEffect::output_fragment_shader()
@@ -518,17 +514,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 	// Encode as a two-component texture. Note the GL_REPEAT.
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, texnum);
+	glBindTexture(GL_TEXTURE_2D, tex.get_texnum());
 	check_error();
-	if (last_texture_width == -1) {
-		// Need to set this state the first time.
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		check_error();
-	}
 
 	GLenum type, internal_format;
 	void *pixels;
@@ -543,19 +530,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		pixels = weights.bilinear_weights_fp16.get();
 	}
 
-	if (int(weights.src_bilinear_samples) == last_texture_width &&
-	    int(weights.dst_samples) == last_texture_height &&
-	    internal_format == last_texture_internal_format) {
-		// Texture dimensions and type are unchanged; it is more efficient
-		// to just update it rather than making an entirely new texture.
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, weights.src_bilinear_samples, weights.dst_samples, GL_RG, type, pixels);
-	} else {
-		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, weights.src_bilinear_samples, weights.dst_samples, 0, GL_RG, type, pixels);
-		last_texture_width = weights.src_bilinear_samples;
-		last_texture_height = weights.dst_samples;
-		last_texture_internal_format = internal_format;
-	}
-	check_error();
+	tex.update(weights.src_bilinear_samples, weights.dst_samples, internal_format, GL_RG, type, pixels);
 }
 
 ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
@@ -715,7 +690,7 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 
 	glActiveTexture(GL_TEXTURE0 + *sampler_num);
 	check_error();
-	glBindTexture(GL_TEXTURE_2D, texnum);
+	glBindTexture(GL_TEXTURE_2D, tex.get_texnum());
 	check_error();
 
 	uniform_sample_tex = *sampler_num;
@@ -742,6 +717,46 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 		check_error();
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		check_error();
+	}
+}
+
+Support2DTexture::Support2DTexture()
+{
+	glGenTextures(1, &texnum);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	check_error();
+}
+
+Support2DTexture::~Support2DTexture()
+{
+	glDeleteTextures(1, &texnum);
+	check_error();
+}
+
+void Support2DTexture::update(GLint width, GLint height, GLenum internal_format, GLenum format, GLenum type, const GLvoid * data)
+{
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	if (width == last_texture_width &&
+	    height == last_texture_height &&
+	    internal_format == last_texture_internal_format) {
+		// Texture dimensions and type are unchanged; it is more efficient
+		// to just update it rather than making an entirely new texture.
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, type, data);
+		check_error();
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, data);
+		check_error();
+		last_texture_width = width;
+		last_texture_height = height;
+		last_texture_internal_format = internal_format;
 	}
 }
 

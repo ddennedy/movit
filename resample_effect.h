@@ -46,6 +46,23 @@ struct ScalingWeights {
 };
 ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset);
 
+// A simple manager for support data stored in a 2D texture.
+// Consider moving it to a shared location of more classes
+// should need similar functionality.
+class Support2DTexture {
+public:
+	Support2DTexture();
+	~Support2DTexture();
+
+	void update(GLint width, GLint height, GLenum internal_format, GLenum format, GLenum type, const GLvoid * data);
+	GLint get_texnum() const { return texnum; }
+
+private:
+	GLuint texnum = 0;
+	GLint last_texture_width = -1, last_texture_height = -1;
+	GLenum last_texture_internal_format = GL_INVALID_ENUM;
+};
+
 class ResampleEffect : public Effect {
 public:
 	ResampleEffect();
@@ -124,7 +141,6 @@ private:
 	ResampleEffect *parent;
 	EffectChain *chain;
 	Direction direction;
-	GLuint texnum;
 	GLint uniform_sample_tex;
 	float uniform_num_loops, uniform_slice_height, uniform_sample_x_scale, uniform_sample_x_offset;
 	float uniform_whole_pixel_offset;
@@ -136,8 +152,7 @@ private:
 	float last_offset, last_zoom;
 	int src_bilinear_samples, num_loops;
 	float slice_height;
-	int last_texture_width, last_texture_height;
-	GLuint last_texture_internal_format;
+	Support2DTexture tex;
 };
 
 }  // namespace movit
