@@ -605,15 +605,16 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 	// to compute the destination pixel, and how many depend on the scaling factor.
 	// Thus, the kernel width will vary with how much we scale.
 	float radius_scaling_factor = min(scaling_factor, 1.0f);
-	int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
-	int src_samples = int_radius * 2 + 1;
+	const int int_radius = lrintf(LANCZOS_RADIUS / radius_scaling_factor);
+	const int src_samples = int_radius * 2 + 1;
 	unique_ptr<Tap<float>[]> weights(new Tap<float>[dst_samples * src_samples]);
 	float subpixel_offset = offset - lrintf(offset);  // The part not covered by whole_pixel_offset.
 	assert(subpixel_offset >= -0.5f && subpixel_offset <= 0.5f);
+	float inv_scaling_factor = 1.0f / scaling_factor;
 	for (unsigned y = 0; y < dst_samples; ++y) {
 		// Find the point around which we want to sample the source image,
 		// compensating for differing pixel centers as the scale changes.
-		float center_src_y = (y + 0.5f) / scaling_factor - 0.5f;
+		float center_src_y = (y + 0.5f) * inv_scaling_factor - 0.5f;
 		int base_src_y = lrintf(center_src_y);
 
 		// Now sample <int_radius> pixels on each side around that point.
