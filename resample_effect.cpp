@@ -502,7 +502,7 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 		assert(false);
 	}
 
-	ScalingWeights weights = calculate_scaling_weights(src_size, dst_size, zoom, offset);
+	ScalingWeights weights = calculate_bilinear_scaling_weights(src_size, dst_size, zoom, offset);
 	src_bilinear_samples = weights.src_bilinear_samples;
 	num_loops = weights.num_loops;
 	slice_height = 1.0f / weights.num_loops;
@@ -528,6 +528,8 @@ void SingleResamplePassEffect::update_texture(GLuint glsl_program_num, const str
 
 	tex.update(weights.src_bilinear_samples, weights.dst_samples, internal_format, GL_RG, type, pixels);
 }
+
+namespace {
 
 ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
 {
@@ -627,16 +629,33 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 		}
 	}
 
+	ScalingWeights ret;
+	ret.src_bilinear_samples = src_samples;
+	ret.dst_samples = dst_samples;
+	ret.num_loops = num_loops;
+	ret.bilinear_weights_fp16 = nullptr;
+	ret.bilinear_weights_fp32 = move(weights);
+	return ret;
+}
+
+}  // namespace
+
+ScalingWeights calculate_bilinear_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset)
+{
+	ScalingWeights ret = calculate_scaling_weights(src_size, dst_size, zoom, offset);
+	unique_ptr<Tap<float>[]> weights = move(ret.bilinear_weights_fp32);
+	const int src_samples = ret.src_bilinear_samples;
+
 	// Now make use of the bilinear filtering in the GPU to reduce the number of samples
 	// we need to make. Try fp16 first; if it's not accurate enough, we go to fp32.
 	// Our tolerance level for total error is a bit higher than the one for invididual
 	// samples, since one would assume overall errors in the shape don't matter as much.
 	const float max_error = 2.0f / (255.0f * 255.0f);
 	unique_ptr<Tap<fp16_int_t>[]> bilinear_weights_fp16;
-	int src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp16);
+	int src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, ret.dst_samples, &bilinear_weights_fp16);
 	unique_ptr<Tap<float>[]> bilinear_weights_fp32 = nullptr;
 	double max_sum_sq_error_fp16 = 0.0;
-	for (unsigned y = 0; y < dst_samples; ++y) {
+	for (unsigned y = 0; y < ret.dst_samples; ++y) {
 		double sum_sq_error_fp16 = compute_sum_sq_error(
 			weights.get() + y * src_samples, src_samples,
 			bilinear_weights_fp16.get() + y * src_bilinear_samples, src_bilinear_samples,
@@ -649,13 +668,10 @@ ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, f
 
 	if (max_sum_sq_error_fp16 > max_error) {
 		bilinear_weights_fp16.reset();
-		src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, dst_samples, &bilinear_weights_fp32);
+		src_bilinear_samples = combine_many_samples(weights.get(), src_size, src_samples, ret.dst_samples, &bilinear_weights_fp32);
 	}
 
-	ScalingWeights ret;
 	ret.src_bilinear_samples = src_bilinear_samples;
-	ret.dst_samples = dst_samples;
-	ret.num_loops = num_loops;
 	ret.bilinear_weights_fp16 = move(bilinear_weights_fp16);
 	ret.bilinear_weights_fp32 = move(bilinear_weights_fp32);
 	return ret;

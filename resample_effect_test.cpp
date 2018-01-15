@@ -480,7 +480,7 @@ BENCHMARK_CAPTURE(BM_ResampleEffectHalf, Float16Upscale, GAMMA_LINEAR, "fragment
 BENCHMARK_CAPTURE(BM_ResampleEffectInt8, Int8Downscale, GAMMA_REC_709, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
 BENCHMARK_CAPTURE(BM_ResampleEffectHalf, Float16Downscale, GAMMA_LINEAR, "fragment")->Args({1280, 720, 640, 360})->Args({1280, 720, 320, 180})->Args({1280, 720, 321, 181})->UseRealTime()->Unit(benchmark::kMicrosecond);
 
-void BM_ComputeScalingWeights(benchmark::State &state)
+void BM_ComputeBilinearScalingWeights(benchmark::State &state)
 {
 	constexpr unsigned src_size = 1280;
 	constexpr unsigned dst_size = 35;
@@ -488,15 +488,15 @@ void BM_ComputeScalingWeights(benchmark::State &state)
 	movit_texel_subpixel_precision = 64;  // To get consistent results across GPUs; this is a CPU test.
 
 	// One iteration warmup to make sure the Lanczos table is computed.
-	calculate_scaling_weights(src_size, dst_size, 0.999f, 0.0f);
+	calculate_bilinear_scaling_weights(src_size, dst_size, 0.999f, 0.0f);
 
 	for (auto _ : state) {
-		ScalingWeights weights = calculate_scaling_weights(src_size, dst_size, 0.999f, 0.0f);
+		ScalingWeights weights = calculate_bilinear_scaling_weights(src_size, dst_size, 0.999f, 0.0f);
 	}
 
 	movit_texel_subpixel_precision = old_precision;
 }
-BENCHMARK(BM_ComputeScalingWeights)->Unit(benchmark::kMicrosecond);
+BENCHMARK(BM_ComputeBilinearScalingWeights)->Unit(benchmark::kMicrosecond);
 
 #endif
 

@@ -44,7 +44,7 @@ struct ScalingWeights {
 	std::unique_ptr<Tap<fp16_int_t>[]> bilinear_weights_fp16;
 	std::unique_ptr<Tap<float>[]> bilinear_weights_fp32;
 };
-ScalingWeights calculate_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset);
+ScalingWeights calculate_bilinear_scaling_weights(unsigned src_size, unsigned dst_size, float zoom, float offset);
 
 // A simple manager for support data stored in a 2D texture.
 // Consider moving it to a shared location of more classes
