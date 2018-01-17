@@ -721,16 +721,6 @@ void SingleResamplePassEffect::set_gl_state(GLuint glsl_program_num, const strin
 	} else {
 		uniform_whole_pixel_offset = lrintf(offset) / float(input_width);
 	}
-
-	// We specifically do not want mipmaps on the input texture;
-	// they break minification.
-	Node *self = chain->find_node_for_effect(this);
-	if (chain->has_input_sampler(self, 0)) {
-		glActiveTexture(chain->get_input_sampler(self, 0));
-		check_error();
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		check_error();
-	}
 }
 
 Support2DTexture::Support2DTexture()

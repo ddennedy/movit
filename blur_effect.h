@@ -33,12 +33,6 @@ public:
 
 	std::string effect_type_id() const override { return "BlurEffect"; }
 
-	// We want this for the same reason as ResizeEffect; we could end up scaling
-	// down quite a lot.
-	bool needs_texture_bounce() const override { return true; }
-	bool needs_mipmaps() const override { return true; }
-	bool needs_srgb_primaries() const override { return false; }
-
 	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 
 	std::string output_fragment_shader() override {
@@ -71,8 +65,10 @@ public:
 
 	std::string output_fragment_shader() override;
 
+	// We want this for the same reason as ResizeEffect; we could end up scaling
+	// down quite a lot.
 	bool needs_texture_bounce() const override { return true; }
-	bool needs_mipmaps() const override { return true; }
+	MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
 	bool needs_srgb_primaries() const override { return false; }
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 

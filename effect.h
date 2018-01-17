@@ -169,12 +169,37 @@ public:
 	// either will be fine.
 	virtual bool needs_texture_bounce() const { return false; }
 
-	// Whether this effect expects mipmaps or not. If you set this to
-	// true, you will be sampling with bilinear filtering; if not,
-	// you could be sampling with simple linear filtering and no mipmaps
-	// (although there is no guarantee; if a different effect in the chain
-	// needs mipmaps, you will also get them).
-	virtual bool needs_mipmaps() const { return false; }
+	// Whether this effect expects mipmaps or not.
+	enum MipmapRequirements {
+		// If chosen, you will be sampling with bilinear filtering,
+		// ie. the closest mipmap will be chosen, and then there will be
+		// bilinear interpolation inside it (GL_LINEAR_MIPMAP_NEAREST).
+		NEEDS_MIPMAPS,
+
+		// Whether the effect doesn't really care whether input textures
+		// are with or without mipmaps. You could get the same effect
+		// as NEEDS_MIPMAPS or CANNOT_ACCEPT_MIPMAPS; normally, you won't
+		// get them, but if a different effect in the same phase needs mipmaps,
+		// you will also get them.
+		DOES_NOT_NEED_MIPMAPS,
+
+		// The opposite of NEEDS_MIPMAPS; you will always be sampling from
+		// the most detailed mip level (GL_LINEAR). Effects with NEEDS_MIPMAPS
+		// and CANNOT_ACCEPT_MIPMAPS can not coexist within the same phase;
+		// such phases will be split.
+		//
+		// This is the only choice that makes sense for a compute shader,
+		// given that it doesn't have screen-space derivatives and thus
+		// always will sample the most detailed mip level.
+		CANNOT_ACCEPT_MIPMAPS,
+	};
+	virtual MipmapRequirements needs_mipmaps() const {
+		if (is_compute_shader()) {
+			return CANNOT_ACCEPT_MIPMAPS;
+		} else {
+			return DOES_NOT_NEED_MIPMAPS;
+		}
+	}
 
 	// Whether there is a direct correspondence between input and output
 	// texels. Specifically, the effect must not:

@@ -1004,7 +1004,7 @@ TEST(YCbCrInputTest, TenBitPlanar) {
 class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
-	bool needs_mipmaps() const override { return true; }
+	MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
 
 	// To be allowed to mess with the sampler state.
 	bool needs_texture_bounce() const override { return true; }

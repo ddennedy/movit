@@ -163,7 +163,7 @@ Node *EffectChain::add_node(Effect *effect)
 	node->output_color_space = COLORSPACE_INVALID;
 	node->output_gamma_curve = GAMMA_INVALID;
 	node->output_alpha_type = ALPHA_INVALID;
-	node->needs_mipmaps = false;
+	node->needs_mipmaps = Effect::DOES_NOT_NEED_MIPMAPS;
 	node->one_to_one_sampling = false;
 	node->strong_one_to_one_sampling = false;
 
@@ -655,8 +655,12 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 		assert(node->effect->one_to_one_sampling() >= node->effect->strong_one_to_one_sampling());
 
-		if (node->effect->needs_mipmaps()) {
-			node->needs_mipmaps = true;
+		if (node->effect->needs_mipmaps() != Effect::DOES_NOT_NEED_MIPMAPS) {
+			// Can't have incompatible requirements imposed on us from a dependent effect;
+			// if so, it should have started a new phase instead.
+			assert(node->needs_mipmaps == Effect::DOES_NOT_NEED_MIPMAPS ||
+			       node->needs_mipmaps == node->effect->needs_mipmaps());
+			node->needs_mipmaps = node->effect->needs_mipmaps();
 		}
 
 		// This should currently only happen for effects that are inputs
@@ -694,12 +698,14 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			// Note that we cannot do this propagation as a normal pass,
 			// because it needs information about where the phases end
 			// (we should not propagate the flag across phases).
-			if (node->needs_mipmaps) {
-				if (deps[i]->effect->num_inputs() == 0) {
+			if (node->needs_mipmaps != Effect::DOES_NOT_NEED_MIPMAPS) {
+				if (deps[i]->effect->num_inputs() == 0 && node->needs_mipmaps == Effect::NEEDS_MIPMAPS) {
 					Input *input = static_cast<Input *>(deps[i]->effect);
 					start_new_phase |= !input->can_supply_mipmaps();
-				} else {
-					deps[i]->needs_mipmaps = true;
+				} else if (deps[i]->effect->needs_mipmaps() == Effect::DOES_NOT_NEED_MIPMAPS) {
+					deps[i]->needs_mipmaps = node->needs_mipmaps;
+				} else if (deps[i]->effect->needs_mipmaps() != node->needs_mipmaps) {
+					start_new_phase = true;
 				}
 			}
 
@@ -788,7 +794,9 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	phase->input_needs_mipmaps = false;
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
-		phase->input_needs_mipmaps |= node->effect->needs_mipmaps();
+		if (node->effect->needs_mipmaps() == Effect::NEEDS_MIPMAPS) {
+			phase->input_needs_mipmaps = true;
+		}
 	}
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];

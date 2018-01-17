@@ -10,6 +10,8 @@
 #include "test_util.h"
 #include "util.h"
 
+using namespace std;
+
 namespace movit {
 
 TEST(FlatInput, SimpleGrayscale) {
@@ -318,6 +320,75 @@ TEST(FlatInput, ExternalTexture) {
 	pool.release_2d_texture(tex);
 
 	expect_equal(expected_data, out_data, 4, size);
+}
+
+// Just an IdentityEffect, but marks as needing mipmaps, so that we can use it
+// for downscaling to verify mipmaps were used.
+class MipmapNeedingEffect : public Effect {
+public:
+        MipmapNeedingEffect() {}
+        MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
+
+        string effect_type_id() const override { return "MipmapNeedingEffect"; }
+        string output_fragment_shader() override { return read_file("identity.frag"); }
+
+private:
+        EffectChain *chain;
+};
+
+TEST(FlatInput, ExternalTextureMipmapState) {
+	const int width = 4;
+	const int height = 4;
+
+	float data[width * height] = {
+		1.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0,
+	};
+	float expected_data[] = {
+		0.0625,
+	};
+	float out_data[1];
+
+	EffectChainTester tester(nullptr, 1, 1, FORMAT_RGB, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	ResourcePool pool;
+	GLuint tex = pool.create_2d_texture(GL_R8, width, height);
+	check_error();
+	glBindTexture(GL_TEXTURE_2D, tex);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	check_error();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	check_error();
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, data);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	check_error();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	check_error();
+	glGenerateMipmap(GL_TEXTURE_2D);
+	check_error();
+
+	// Turn off mipmaps, so that we verify that Movit turns it back on.
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	check_error();
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, width, height);
+	input->set_texture_num(tex);
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(new MipmapNeedingEffect);
+
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	pool.release_2d_texture(tex);
+
+	expect_equal(expected_data, out_data, 1, 1);
 }
 
 TEST(FlatInput, NoData) {

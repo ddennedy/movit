@@ -20,7 +20,7 @@ public:
 	// We want processing done pre-filtering and mipmapped,
 	// in case we need to scale down a lot.
 	bool needs_texture_bounce() const override { return true; }
-	bool needs_mipmaps() const override { return true; }
+	MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
 
 	bool changes_output_size() const override { return true; }

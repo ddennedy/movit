@@ -70,11 +70,6 @@ public:
 
 	std::string effect_type_id() const override { return "ResampleEffect"; }
 
-	// We want this for the same reason as ResizeEffect; we could end up scaling
-	// down quite a lot.
-	bool needs_texture_bounce() const override { return true; }
-	bool needs_srgb_primaries() const override { return false; }
-
 	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 
 	std::string output_fragment_shader() override {
@@ -116,6 +111,10 @@ public:
 	bool needs_texture_bounce() const override { return true; }
 	bool needs_srgb_primaries() const override { return false; }
 	AlphaHandling alpha_handling() const override { return INPUT_PREMULTIPLIED_ALPHA_KEEP_BLANK; }
+
+	// We specifically do not want mipmaps on the input texture;
+	// they break minification.
+	MipmapRequirements needs_mipmaps() const override { return CANNOT_ACCEPT_MIPMAPS; }
 
 	void inform_added(EffectChain *chain) override { this->chain = chain; }
 	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override {

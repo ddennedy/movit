@@ -154,7 +154,8 @@ public:
 template<class T>
 class RewritingEffect : public Effect {
 public:
-	RewritingEffect() : effect(new T()), replaced_node(nullptr) {}
+	template<class... Args>
+	RewritingEffect(Args &&... args) : effect(new T(std::forward<Args>(args)...)), replaced_node(nullptr) {}
 	string effect_type_id() const override { return "RewritingEffect[" + effect->effect_type_id() + "]"; }
 	string output_fragment_shader() override { EXPECT_TRUE(false); return read_file("identity.frag"); }
 	void rewrite_graph(EffectChain *graph, Node *self) override {
@@ -565,7 +566,7 @@ TEST(EffectChainTest, AlphaConversionsWithNonBlankAlphaPreservingEffect) {
 class MipmapNeedingEffect : public Effect {
 public:
 	MipmapNeedingEffect() {}
-	bool needs_mipmaps() const override { return true; }
+	MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
 
 	// To be allowed to mess with the sampler state.
 	bool needs_texture_bounce() const override { return true; }
@@ -771,6 +772,74 @@ TEST(EffectChainTest, ResizeDownByFourThenUpByFour) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 4, 16);
+}
+
+// An effect to verify that you can turn off mipmaps; it downscales by two,
+// which gives blur with mipmaps and aliasing (picks out every other pixel)
+// without.
+class Downscale2xEffect : public Effect {
+public:
+	explicit Downscale2xEffect(MipmapRequirements mipmap_requirements)
+		: mipmap_requirements(mipmap_requirements)
+	{
+		register_vec2("offset", offset);
+	}
+	MipmapRequirements needs_mipmaps() const override { return mipmap_requirements; }
+
+	string effect_type_id() const override { return "Downscale2xEffect"; }
+	string output_fragment_shader() override { return read_file("downscale2x.frag"); }
+
+private:
+	const MipmapRequirements mipmap_requirements;
+	EffectChain *chain;
+	float offset[2] { 0.0f, 0.0f };
+};
+
+TEST(EffectChainTest, MipmapChainGetsSplit) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+	};
+
+	// The intermediate result after the first step looks like this,
+	// assuming there are no mipmaps (the zeros are due to border behavior):
+	//
+	//   0 0 0 0
+	//   0 0 0 0
+	//   1 1 0 0
+	//   1 1 0 0
+	//
+	// so another 2x downscale towards the bottom left will give
+	//
+	//   0 0
+	//   1 0
+	//
+	// with yet more zeros coming in on the top and the right from the border.
+	float expected_data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 0.0f,
+	};
+	float out_data[4 * 4];
+
+	float offset[] = { -0.5f / 4.0f, -0.5f / 4.0f };
+	RewritingEffect<Downscale2xEffect> *pick_out_top_left = new RewritingEffect<Downscale2xEffect>(Effect::CANNOT_ACCEPT_MIPMAPS);
+	ASSERT_TRUE(pick_out_top_left->effect->set_vec2("offset", offset));
+
+	RewritingEffect<Downscale2xEffect> *downscale2x = new RewritingEffect<Downscale2xEffect>(Effect::NEEDS_MIPMAPS);
+
+	EffectChainTester tester(data, 4, 4, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	tester.get_chain()->add_effect(pick_out_top_left);
+	tester.get_chain()->add_effect(downscale2x);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	EXPECT_NE(pick_out_top_left->replaced_node->containing_phase,
+	          downscale2x->replaced_node->containing_phase);
+
+	expect_equal(expected_data, out_data, 4, 4);
 }
 
 // An effect that adds its two inputs together. Used below.

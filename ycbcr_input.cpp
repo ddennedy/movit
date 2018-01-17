@@ -147,6 +147,8 @@ void YCbCrInput::set_gl_state(GLuint glsl_program_num, const string& prefix, uns
 		} else {
 			glBindTexture(GL_TEXTURE_2D, texture_num[channel]);
 			check_error();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, needs_mipmaps ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			check_error();
 		}
 	}
 
