@@ -112,6 +112,12 @@ enum FramebufferTransformation {
 	SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION,
 };
 
+// Whether a link is into another phase or not; see Node::incoming_link_type.
+enum NodeLinkType {
+	IN_ANOTHER_PHASE,
+	IN_SAME_PHASE
+};
+
 // A node in the graph; basically an effect and some associated information.
 class Node {
 public:
@@ -143,11 +149,21 @@ private:
 	// sampler state here.
 	int bound_sampler_num;
 
+	// For each node in incoming_links, whether it comes from another phase
+	// or not. This is required because in some rather obscure cases,
+	// it is possible to have an input twice in the same phase; both by
+	// itself and as a bounced input.
+	//
+	// TODO: It is possible that we might even need to bounce multiple
+	// times and thus disambiguate also between different external phases,
+	// but we'll deal with that when we need to care about it, if ever.
+	std::vector<NodeLinkType> incoming_link_type;
+
 	// Used during the building of the effect chain.
 	Colorspace output_color_space;
 	GammaCurve output_gamma_curve;
 	AlphaType output_alpha_type;
-	bool needs_mipmaps;  // Directly or indirectly.
+	Effect::MipmapRequirements needs_mipmaps;  // Directly or indirectly.
 
 	// Set if this effect, and all effects consuming output from this node
 	// (in the same phase) have one_to_one_sampling() set.
@@ -168,8 +184,6 @@ struct Phase {
 	// Position and texcoord attribute indexes, although it doesn't matter
 	// which is which, because they contain the same data.
 	std::set<GLint> attribute_indexes;
-
-	bool input_needs_mipmaps;
 
 	// Inputs are only inputs from other phases (ie., those that come from RTT);
 	// input textures are counted as part of <effects>.
@@ -197,7 +211,7 @@ struct Phase {
 
 	// Identifier used to create unique variables in GLSL.
 	// Unique per-phase to increase cacheability of compiled shaders.
-	std::map<Node *, std::string> effect_ids;
+	std::map<std::pair<Node *, NodeLinkType>, std::string> effect_ids;
 
 	// Uniforms for this phase; combined from all the effects.
 	std::vector<Uniform<int>> uniforms_image2d;

@@ -376,7 +376,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *input = phase->inputs[i]->output_node;
 		char effect_id[256];
 		sprintf(effect_id, "in%u", i);
-		phase->effect_ids.insert(make_pair(input, effect_id));
+		phase->effect_ids.insert(make_pair(make_pair(input, IN_ANOTHER_PHASE), effect_id));
 	
 		frag_shader += string("uniform sampler2D tex_") + effect_id + ";\n";
 		frag_shader += string("vec4 ") + effect_id + "(vec2 tc) {\n";
@@ -405,26 +405,29 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		Node *node = phase->effects[i];
 		char effect_id[256];
 		sprintf(effect_id, "eff%u", i);
-		phase->effect_ids.insert(make_pair(node, effect_id));
+		bool inserted = phase->effect_ids.insert(make_pair(make_pair(node, IN_SAME_PHASE), effect_id)).second;
+		assert(inserted);
 	}
 
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
-		const string effect_id = phase->effect_ids[node];
+		const string effect_id = phase->effect_ids[make_pair(node, IN_SAME_PHASE)];
 		if (node->incoming_links.size() == 1) {
 			Node *input = node->incoming_links[0];
+			NodeLinkType link_type = node->incoming_link_type[0];
 			if (i != 0 && input->effect->is_compute_shader()) {
 				// First effect after the compute shader reads the value
 				// that cs_output() wrote to a global variable.
 				frag_shader += string("#define INPUT(tc) CS_OUTPUT_VAL\n");
 			} else {
-				frag_shader += string("#define INPUT ") + phase->effect_ids[input] + "\n";
+				frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(input, link_type)] + "\n";
 			}
 		} else {
 			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
 				assert(!node->incoming_links[j]->effect->is_compute_shader());
 				char buf[256];
-				sprintf(buf, "#define INPUT%d %s\n", j + 1, phase->effect_ids[node->incoming_links[j]].c_str());
+				string effect_id = phase->effect_ids[make_pair(node->incoming_links[j], node->incoming_link_type[j])];
+				sprintf(buf, "#define INPUT%d %s\n", j + 1, effect_id.c_str());
 				frag_shader += buf;
 			}
 		}
@@ -448,15 +451,15 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 	}
 	if (phase->is_compute_shader) {
-		frag_shader += string("#define INPUT ") + phase->effect_ids[phase->compute_shader_node] + "\n";
+		frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(phase->compute_shader_node, IN_SAME_PHASE)] + "\n";
 		if (phase->compute_shader_node == phase->effects.back()) {
 			// No postprocessing.
 			frag_shader += "#define CS_POSTPROC(tc) CS_OUTPUT_VAL\n";
 		} else {
-			frag_shader += string("#define CS_POSTPROC ") + phase->effect_ids[phase->effects.back()] + "\n";
+			frag_shader += string("#define CS_POSTPROC ") + phase->effect_ids[make_pair(phase->effects.back(), IN_SAME_PHASE)] + "\n";
 		}
 	} else {
-		frag_shader += string("#define INPUT ") + phase->effect_ids[phase->effects.back()] + "\n";
+		frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(phase->effects.back(), IN_SAME_PHASE)] + "\n";
 	}
 
 	// If we're the last phase, add the right #defines for Y'CbCr multi-output as needed.
@@ -540,7 +543,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		Effect *effect = node->effect;
-		const string effect_id = phase->effect_ids[node];
+		const string effect_id = phase->effect_ids[make_pair(node, IN_SAME_PHASE)];
 		extract_uniform_declarations(effect->uniforms_image2d, "image2D", effect_id, &phase->uniforms_image2d, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_sampler2d, "sampler2D", effect_id, &phase->uniforms_sampler2d, &frag_shader_uniforms);
 		extract_uniform_declarations(effect->uniforms_bool, "bool", effect_id, &phase->uniforms_bool, &frag_shader_uniforms);
@@ -699,12 +702,27 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			// because it needs information about where the phases end
 			// (we should not propagate the flag across phases).
 			if (node->needs_mipmaps != Effect::DOES_NOT_NEED_MIPMAPS) {
-				if (deps[i]->effect->num_inputs() == 0 && node->needs_mipmaps == Effect::NEEDS_MIPMAPS) {
-					Input *input = static_cast<Input *>(deps[i]->effect);
-					start_new_phase |= !input->can_supply_mipmaps();
-				} else if (deps[i]->effect->needs_mipmaps() == Effect::DOES_NOT_NEED_MIPMAPS) {
+				// The node can have a value set (ie. not DOES_NOT_NEED_MIPMAPS)
+				// if we have diamonds in the graph; if so, choose that.
+				// If not, the effect on the node can also decide (this is the
+				// more common case).
+				Effect::MipmapRequirements dep_mipmaps = deps[i]->needs_mipmaps;
+				if (dep_mipmaps == Effect::DOES_NOT_NEED_MIPMAPS) {
+					if (deps[i]->effect->num_inputs() == 0) {
+						Input *input = static_cast<Input *>(deps[i]->effect);
+						dep_mipmaps = input->can_supply_mipmaps() ? Effect::DOES_NOT_NEED_MIPMAPS : Effect::CANNOT_ACCEPT_MIPMAPS;
+					} else {
+						dep_mipmaps = deps[i]->effect->needs_mipmaps();
+					}
+				}
+				if (dep_mipmaps == Effect::DOES_NOT_NEED_MIPMAPS) {
 					deps[i]->needs_mipmaps = node->needs_mipmaps;
-				} else if (deps[i]->effect->needs_mipmaps() != node->needs_mipmaps) {
+				} else if (dep_mipmaps != node->needs_mipmaps) {
+					// The dependency cannot supply our mipmap demands
+					// (either because it's an input that can't do mipmaps,
+					// or because there's a conflict between mipmap-needing
+					// and mipmap-refusing effects somewhere in the graph),
+					// so they cannot be in the same phase.
 					start_new_phase = true;
 				}
 			}
@@ -764,6 +782,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				deps[i]->strong_one_to_one_sampling = node->strong_one_to_one_sampling &&
 					deps[i]->effect->strong_one_to_one_sampling();
 			}
+
+			node->incoming_link_type.push_back(start_new_phase ? IN_ANOTHER_PHASE : IN_SAME_PHASE);
 		}
 	}
 
@@ -791,19 +811,13 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 	phase->effects = topological_sort(phase->effects);
 
 	// Figure out if we need mipmaps or not, and if so, tell the inputs that.
-	phase->input_needs_mipmaps = false;
-	for (unsigned i = 0; i < phase->effects.size(); ++i) {
-		Node *node = phase->effects[i];
-		if (node->effect->needs_mipmaps() == Effect::NEEDS_MIPMAPS) {
-			phase->input_needs_mipmaps = true;
-		}
-	}
+	// (RTT inputs have different logic, which is checked in execute_phase().)
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		if (node->effect->num_inputs() == 0) {
 			Input *input = static_cast<Input *>(node->effect);
-			assert(!phase->input_needs_mipmaps || input->can_supply_mipmaps());
-			CHECK(input->set_int("needs_mipmaps", phase->input_needs_mipmaps));
+			assert(node->needs_mipmaps != Effect::NEEDS_MIPMAPS || input->can_supply_mipmaps());
+			CHECK(input->set_int("needs_mipmaps", node->needs_mipmaps == Effect::NEEDS_MIPMAPS));
 		}
 	}
 
@@ -2131,7 +2145,7 @@ void EffectChain::print_phase_timing()
 
 void EffectChain::execute_phase(Phase *phase,
                                 const map<Phase *, GLuint> &output_textures,
-                                const std::vector<DestinationTexture> &destinations,
+                                const vector<DestinationTexture> &destinations,
                                 set<Phase *> *generated_mipmaps)
 {
 	// Set up RTT inputs for this phase.
@@ -2143,12 +2157,36 @@ void EffectChain::execute_phase(Phase *phase,
 		assert(it != output_textures.end());
 		glBindTexture(GL_TEXTURE_2D, it->second);
 		check_error();
-		if (phase->input_needs_mipmaps && generated_mipmaps->count(input) == 0) {
+
+		// See if anything using this RTT input (in this phase) needs mipmaps.
+		// TODO: It could be that we get conflicting logic here, if we have
+		// multiple effects with incompatible mipmaps using the same
+		// RTT input. However, that is obscure enough that we can deal
+		// with it at some future point (preferably when we have
+		// universal support for separate sampler objects!). For now,
+		// an assert is good enough. See also the TODO at bound_sampler_num.
+		bool any_needs_mipmaps = false, any_refuses_mipmaps = false;
+		for (Node *node : phase->effects) {
+			assert(node->incoming_links.size() == node->incoming_link_type.size());
+			for (size_t i = 0; i < node->incoming_links.size(); ++i) {
+				if (node->incoming_links[i] == input->output_node &&
+				    node->incoming_link_type[i] == IN_ANOTHER_PHASE) {
+					if (node->needs_mipmaps == Effect::NEEDS_MIPMAPS) {
+						any_needs_mipmaps = true;
+					} else if (node->needs_mipmaps == Effect::CANNOT_ACCEPT_MIPMAPS) {
+						any_refuses_mipmaps = true;
+					}
+				}
+			}
+		}
+		assert(!(any_needs_mipmaps && any_refuses_mipmaps));
+
+		if (any_needs_mipmaps && generated_mipmaps->count(input) == 0) {
 			glGenerateMipmap(GL_TEXTURE_2D);
 			check_error();
 			generated_mipmaps->insert(input);
 		}
-		setup_rtt_sampler(sampler, phase->input_needs_mipmaps);
+		setup_rtt_sampler(sampler, any_needs_mipmaps);
 		phase->input_samplers[sampler] = sampler;  // Bind the sampler to the right uniform.
 	}
 
@@ -2183,7 +2221,7 @@ void EffectChain::execute_phase(Phase *phase,
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		unsigned old_sampler_num = sampler_num;
-		node->effect->set_gl_state(instance_program_num, phase->effect_ids[node], &sampler_num);
+		node->effect->set_gl_state(instance_program_num, phase->effect_ids[make_pair(node, IN_SAME_PHASE)], &sampler_num);
 		check_error();
 
 		if (node->effect->is_single_texture()) {

@@ -826,17 +826,17 @@ TEST(EffectChainTest, MipmapChainGetsSplit) {
 	float out_data[4 * 4];
 
 	float offset[] = { -0.5f / 4.0f, -0.5f / 4.0f };
-	RewritingEffect<Downscale2xEffect> *pick_out_top_left = new RewritingEffect<Downscale2xEffect>(Effect::CANNOT_ACCEPT_MIPMAPS);
-	ASSERT_TRUE(pick_out_top_left->effect->set_vec2("offset", offset));
+	RewritingEffect<Downscale2xEffect> *pick_out_bottom_left = new RewritingEffect<Downscale2xEffect>(Effect::CANNOT_ACCEPT_MIPMAPS);
+	ASSERT_TRUE(pick_out_bottom_left->effect->set_vec2("offset", offset));
 
 	RewritingEffect<Downscale2xEffect> *downscale2x = new RewritingEffect<Downscale2xEffect>(Effect::NEEDS_MIPMAPS);
 
 	EffectChainTester tester(data, 4, 4, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
-	tester.get_chain()->add_effect(pick_out_top_left);
+	tester.get_chain()->add_effect(pick_out_bottom_left);
 	tester.get_chain()->add_effect(downscale2x);
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
-	EXPECT_NE(pick_out_top_left->replaced_node->containing_phase,
+	EXPECT_NE(pick_out_bottom_left->replaced_node->containing_phase,
 	          downscale2x->replaced_node->containing_phase);
 
 	expect_equal(expected_data, out_data, 4, 4);
@@ -949,6 +949,78 @@ TEST(EffectChainTest, DiamondGraphWithOneInputUsedInTwoPhases) {
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
 
 	expect_equal(expected_data, out_data, 2, 2);
+}
+
+// Constructs the graph
+//
+//                        FlatInput                               |
+//                       /         \                              |
+//  Downscale2xEffect (mipmaps)  Downscale2xEffect (no mipmaps)   |
+//                      |           |                             |
+//  Downscale2xEffect (mipmaps)  Downscale2xEffect (no mipmaps)   |
+//                       \         /                              |
+//                        AddEffect                               |
+//
+// and verifies that it gives the correct output. Due to the conflicting
+// mipmap demands, EffectChain needs to make two phases; exactly where it's
+// split is less important, though (this is a fairly obscure situation that
+// is unlikely to happen in practice).
+TEST(EffectChainTest, DiamondGraphWithConflictingMipmaps) {
+	float data[] = {
+		0.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,
+	};
+
+	// Same situation as MipmapChainGetsSplit. The output of the two
+	// downscales with no mipmaps looks like this:
+	//
+	//    0 0 0 0
+	//    0 0 0 0
+	//    0 0 0 0
+	//    1 0 0 0
+	//
+	// and the one with mipmaps is 0.25 everywhere. Due to postmultiplied
+	// alpha, we get the average even though we are using AddEffect.
+	float expected_data[] = {
+		0.125f, 0.125f, 0.125f, 0.125f,
+		0.125f, 0.125f, 0.125f, 0.125f,
+		0.125f, 0.125f, 0.125f, 0.125f,
+		0.625f, 0.125f, 0.125f, 0.125f,
+	};
+	float out_data[4 * 4];
+
+	float offset[] = { -0.5f / 4.0f, -0.5f / 4.0f };
+	Downscale2xEffect *nomipmap1 = new Downscale2xEffect(Effect::CANNOT_ACCEPT_MIPMAPS);
+	Downscale2xEffect *nomipmap2 = new Downscale2xEffect(Effect::CANNOT_ACCEPT_MIPMAPS);
+	ASSERT_TRUE(nomipmap1->set_vec2("offset", offset));
+	ASSERT_TRUE(nomipmap2->set_vec2("offset", offset));
+
+	Downscale2xEffect *mipmap1 = new Downscale2xEffect(Effect::NEEDS_MIPMAPS);
+	Downscale2xEffect *mipmap2 = new Downscale2xEffect(Effect::NEEDS_MIPMAPS);
+
+	EffectChainTester tester(nullptr, 4, 4);
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	FlatInput *input = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 4);
+	input->set_pixel_data(data);
+
+	tester.get_chain()->add_input(input);
+
+	tester.get_chain()->add_effect(nomipmap1, input);
+	tester.get_chain()->add_effect(nomipmap2, nomipmap1);
+
+	tester.get_chain()->add_effect(mipmap1, input);
+	tester.get_chain()->add_effect(mipmap2, mipmap1);
+
+	tester.get_chain()->add_effect(new AddEffect(), nomipmap2, mipmap2);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	expect_equal(expected_data, out_data, 4, 4);
 }
 
 TEST(EffectChainTest, EffectUsedTwiceOnlyGetsOneGammaConversion) {
