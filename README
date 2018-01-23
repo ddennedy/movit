@@ -29,11 +29,9 @@ OK, you need
 * The [epoxy] library, for dealing with OpenGL extensions on various
   platforms.
 
-Movit has been tested with Intel GPUs with the Mesa drivers
-(you'll probably need at least Mesa 8.0), Radeon 3850 and GeForce GTX 550
-on Linux with the manufacturer's drivers, and with GeForce 8800 on OS X.
-Again, most likely, GPU compatibility shouldn't be a big issue. See below
-for performance estimates.
+Movit has been tested with various Intel, AMD and NVIDIA GPUs, on Linux
+and Windows. Again, most likely, GPU compatibility shouldn't be a big issue.
+See below for performance estimates.
 
 
 Still TL;DR, please give me the list of filters
