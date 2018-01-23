@@ -116,13 +116,13 @@ fragment shaders. While “run on the GPU” does not equal “infinite speed”
 GPU programming is probably the _simplest_ way of writing highly parallel code,
 and it also frees the CPU to do other things like video decoding.
 
-Although compute shaders are supported, and can be used or speedups if
+Although compute shaders are supported, and can be used for speedups if
 available (currently, only the deinterlacer runs as a compute shader), it is
 surprisingly hard to get good performance for compute shaders for anything
 nontrivial. This is also one of the primary reasons why Movit uses GLSL and
 not any of the major GPU compute frameworks (CUDA and OpenCL), although it
 is also important that it is widely supported (unlike CUDA) and driver quality
-general is fairly good (unlike OpenCL).
+generally is fairly good (unlike OpenCL).
 
 Exactly what speeds you can expect is of course highly dependent on
 your GPU and the exact filter chain you are running. As a rule of thumb,
