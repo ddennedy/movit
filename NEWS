@@ -1,3 +1,39 @@
+Movit 1.6.0, January 24th, 2018
+
+  - Support for effects that work as compute shaders. Compute shaders are
+    generally slower than fragment shaders for the same algorithm,
+    but allow some forms of communication between shader invocations
+    and have more flexible output, which can enable more efficient algorithms. 
+    See effect.h for more details. Note that the fastest rendering API on
+    EffectChain is now to a texture if possible, not to an FBO. This will
+    only matter if the last effect is a compute shader.
+    
+  - Movit now includes a compute shader implementation of DeinterlaceEffect,
+    which is automatically used instead of the fragment shader implementation
+    if your GPU and OpenGL driver supports it (in practice, this means on
+    all platforms except on macOS). The compute shader version is typically
+    20–80% faster than the fragment shader version, depending on your GPU
+    and other factors.
+
+    A compute shader implementation of ResampleEffect was written but
+    ultimately failed to be faster, and so is not included.
+
+  - Support for microbenchmarks of effects through the Google microbenchmarking
+    framework (optional). Currently, DeinterlaceEffect and ResampleEffect has
+    benchmarks; enable them by running the unit test with --benchmark (also try
+    --benchmark --help).
+
+  - Effects can now explicitly request _not_ to have mipmaps, which means they
+    can do so without needing to request bounce and fiddling with the sampler
+    state. Note that this is an API change for effects.
+
+  - Movit now requires C++11, both to build and to #include the header files.
+    Support for SDL1 has been dropped; unit tests and the demo program now need
+    SDL2.
+
+  - Various smaller bugfixes and optimizations.
+    
+
 Movit 1.5.3, August 10th, 2017
 
   - Various bugfixes.
