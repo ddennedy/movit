@@ -1786,9 +1786,6 @@ void EffectChain::add_dither_if_needed()
 // Compute shaders can't output to the framebuffer, so if the last
 // phase ends in a compute shader, add a dummy phase at the end that
 // only blits directly from the temporary texture.
-//
-// TODO: Add an API for rendering directly to textures, for the cases
-// where we're only rendering to an FBO anyway.
 void EffectChain::add_dummy_effect_if_needed()
 {
 	Node *output = find_output_node();
