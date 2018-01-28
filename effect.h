@@ -225,7 +225,7 @@ public:
 	virtual bool one_to_one_sampling() const { return strong_one_to_one_sampling(); }
 
 	// Similar in use to one_to_one_sampling(), but even stricter:
-	// The effect must modify texture coordinate in any way when
+	// The effect must not modify texture coordinate in any way when
 	// calling its input(s). This allows it to also be used after
 	// a compute shader, in the same phase.
 	//
