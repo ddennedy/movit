@@ -26,9 +26,12 @@ void cs_output(uvec2 coord, vec4 val)
 
 void cs_output(ivec2 coord, vec4 val)
 {
-	// Run the value through any preprocessing steps we might have.
+	// Run the value through any postprocessing steps we might have.
+	// Note that we need to give in the actual coordinates, since the
+	// effect could have multiple (non-compute) inputs, and would also
+	// be allowed to make effects based on the texture coordinate alone.
 	CS_OUTPUT_VAL = val;
-	val = CS_POSTPROC(vec2(0.0, 0.0));
+	val = CS_POSTPROC(NORMALIZE_TEXTURE_COORDS(coord));
 
 #if SQUARE_ROOT_TRANSFORMATION
 	// Make sure we don't give negative values to sqrt.

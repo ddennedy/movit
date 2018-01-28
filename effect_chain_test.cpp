@@ -1776,4 +1776,113 @@ TEST(ComputeShaderTest, ResizingComputeThenOneToOne) {
 	EXPECT_EQ(1u, phase->output_height);
 }
 
+class StrongOneToOneAddEffect : public AddEffect {
+public:
+	StrongOneToOneAddEffect() {}
+	string effect_type_id() const override { return "StrongOneToOneAddEffect"; }
+	bool strong_one_to_one_sampling() const override { return true; }
+};
+
+TEST(ComputeShaderTest, NoTwoComputeInSamePhase) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float expected_data[] = {
+		0.0f, 0.3f,
+	};
+	float out_data[2];
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	EffectChainTester tester(nullptr, 2, 1);
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input1->set_pixel_data(data);
+	tester.get_chain()->add_input(input1);
+	Effect *downscale1 = tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input2->set_pixel_data(data);
+	tester.get_chain()->add_input(input2);
+	Effect *downscale2 = tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+
+	tester.get_chain()->add_effect(new StrongOneToOneAddEffect(), downscale1, downscale2);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, 2, 1);
+}
+
+// Like the previous test, but the adder effect is not directly connected
+// to the compute shaders (so the status has to be propagated through those effects).
+TEST(ComputeShaderTest, NoTwoComputeInSamePhaseIndirect) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float expected_data[] = {
+		0.0f, 0.3f,
+	};
+	float out_data[2];
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	EffectChainTester tester(nullptr, 2, 1);
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input1->set_pixel_data(data);
+	tester.get_chain()->add_input(input1);
+	tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+	Effect *identity1 = tester.get_chain()->add_effect(new OneToOneEffect());
+
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input2->set_pixel_data(data);
+	tester.get_chain()->add_input(input2);
+	tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+	Effect *identity2 = tester.get_chain()->add_effect(new OneToOneEffect());
+
+	tester.get_chain()->add_effect(new StrongOneToOneAddEffect(), identity1, identity2);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, 2, 1);
+}
+
+// Like the previous test, but the adder is not strong one-to-one
+// (so there are two different compute shader inputs, but none of them
+// are in the same phase).
+TEST(ComputeShaderTest, BounceTextureFromTwoComputeShaders) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float expected_data[] = {
+		0.0f, 0.3f,
+	};
+	float out_data[2];
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	EffectChainTester tester(nullptr, 2, 1);
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input1->set_pixel_data(data);
+	tester.get_chain()->add_input(input1);
+	tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+	Effect *identity1 = tester.get_chain()->add_effect(new OneToOneEffect());
+
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input2->set_pixel_data(data);
+	tester.get_chain()->add_input(input2);
+	tester.get_chain()->add_effect(new Downscale2xComputeEffect());
+	Effect *identity2 = tester.get_chain()->add_effect(new OneToOneEffect());
+
+	tester.get_chain()->add_effect(new AddEffect(), identity1, identity2);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(expected_data, out_data, 2, 1);
+}
+
 }  // namespace movit

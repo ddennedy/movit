@@ -412,23 +412,27 @@ void EffectChain::compile_glsl_program(Phase *phase)
 	for (unsigned i = 0; i < phase->effects.size(); ++i) {
 		Node *node = phase->effects[i];
 		const string effect_id = phase->effect_ids[make_pair(node, IN_SAME_PHASE)];
-		if (node->incoming_links.size() == 1) {
-			Node *input = node->incoming_links[0];
-			NodeLinkType link_type = node->incoming_link_type[0];
-			if (i != 0 && input->effect->is_compute_shader()) {
-				// First effect after the compute shader reads the value
-				// that cs_output() wrote to a global variable.
-				frag_shader += string("#define INPUT(tc) CS_OUTPUT_VAL\n");
+		for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
+			if (node->incoming_links.size() == 1) {
+				frag_shader += "#define INPUT";
 			} else {
-				frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(input, link_type)] + "\n";
-			}
-		} else {
-			for (unsigned j = 0; j < node->incoming_links.size(); ++j) {
-				assert(!node->incoming_links[j]->effect->is_compute_shader());
 				char buf[256];
-				string effect_id = phase->effect_ids[make_pair(node->incoming_links[j], node->incoming_link_type[j])];
-				sprintf(buf, "#define INPUT%d %s\n", j + 1, effect_id.c_str());
+				sprintf(buf, "#define INPUT%d", j + 1);
 				frag_shader += buf;
+			}
+
+			Node *input = node->incoming_links[j];
+			NodeLinkType link_type = node->incoming_link_type[j];
+			if (i != 0 &&
+			    input->effect->is_compute_shader() &&
+			    node->incoming_link_type[j] == IN_SAME_PHASE) {
+				// First effect after the compute shader reads the value
+				// that cs_output() wrote to a global variable,
+				// ignoring the tc (since all such effects have to be
+				// strong one-to-one).
+				frag_shader += "(tc) CS_OUTPUT_VAL\n";
+			} else {
+				frag_shader += string(" ") + phase->effect_ids[make_pair(input, link_type)] + "\n";
 			}
 		}
 	
@@ -679,6 +683,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 
 		phase->effects.push_back(node);
 		if (node->effect->is_compute_shader()) {
+			assert(phase->compute_shader_node == nullptr ||
+			       phase->compute_shader_node == node);
 			phase->is_compute_shader = true;
 			phase->compute_shader_node = node;
 		}
@@ -753,13 +759,17 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			}
 
 			if (deps[i]->effect->is_compute_shader()) {
-				// Only one compute shader per phase; we should have been stopped
-				// already due to the fact that compute shaders are not one-to-one.
-				assert(!phase->is_compute_shader);
-
-				// If all nodes so far are strong one-to-one, we can put them after
-				// the compute shader (ie., process them on the output).
-				start_new_phase = !node->strong_one_to_one_sampling;
+				if (phase->is_compute_shader) {
+					// Only one compute shader per phase.
+					start_new_phase = true;
+				} else if (!node->strong_one_to_one_sampling) {
+					// If all nodes so far are strong one-to-one, we can put them after
+					// the compute shader (ie., process them on the output).
+					start_new_phase = !node->strong_one_to_one_sampling;
+				} else {
+					phase->is_compute_shader = true;
+					phase->compute_shader_node = deps[i];
+				}
 			} else if (deps[i]->effect->sets_virtual_output_size()) {
 				assert(deps[i]->effect->changes_output_size());
 				// If the next effect sets a virtual size to rely on OpenGL's
@@ -1783,20 +1793,38 @@ void EffectChain::add_dither_if_needed()
 	dither_effect = dither->effect;
 }
 
+namespace {
+
+// Whether this effect will cause the phase it is in to become a compute shader phase.
+bool induces_compute_shader(Node *node)
+{
+	if (node->effect->is_compute_shader()) {
+		return true;
+	}
+	if (!node->effect->strong_one_to_one_sampling()) {
+		// This effect can't be chained after a compute shader.
+		return false;
+	}
+	// If at least one of the effects we depend on is a compute shader,
+	// one of them will be put in the same phase as us (the other ones,
+	// if any, will be bounced).
+	for (Node *dep : node->incoming_links) {
+		if (induces_compute_shader(dep)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+}  // namespace
+
 // Compute shaders can't output to the framebuffer, so if the last
 // phase ends in a compute shader, add a dummy phase at the end that
 // only blits directly from the temporary texture.
 void EffectChain::add_dummy_effect_if_needed()
 {
 	Node *output = find_output_node();
-
-	// See if the last effect that's not strong one-to-one is a compute shader.
-	Node *last_effect = output;
-	while (last_effect->effect->num_inputs() == 1 &&
-	       last_effect->effect->strong_one_to_one_sampling()) {
-		last_effect = last_effect->incoming_links[0];
-	}
-	if (last_effect->effect->is_compute_shader()) {
+	if (induces_compute_shader(output)) {
 		Node *dummy = add_node(new ComputeShaderOutputDisplayEffect());
 		connect_nodes(output, dummy);
 		has_dummy_effect = true;
