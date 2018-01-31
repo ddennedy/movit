@@ -1,3 +1,10 @@
+Movit 1.6.1, January 31st, 2018
+
+  - Loosen up some restrictions on strong one-to-one-effects. In particular,
+    this fixes a bug with MixEffect and compute shaders that hit some
+    Nageru setups.
+
+
 Movit 1.6.0, January 24th, 2018
 
   - Support for effects that work as compute shaders. Compute shaders are
