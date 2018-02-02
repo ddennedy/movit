@@ -1,6 +1,6 @@
 #include "fp16.h"
 
-#include <math.h>
+#include <cmath>
 #include <gtest/gtest.h>
 
 namespace movit {
@@ -56,27 +56,27 @@ union fp32 {
 TEST(FP16Test, NaN) {
 	// Ignore the sign bit.
 	EXPECT_EQ(0x7e00, fp32_to_fp16(0.0 / 0.0).val & 0x7fff);
-	EXPECT_TRUE(isnan(fp16_to_fp32(make_fp16(0xfe00))));
+	EXPECT_TRUE(std::isnan(fp16_to_fp32(make_fp16(0xfe00))));
 
 	fp32 borderline_inf;
 	borderline_inf.u = 0x7f800000ull;
 	fp32 borderline_nan;
 	borderline_nan.u = 0x7f800001ull;
 
-	ASSERT_FALSE(isfinite(borderline_inf.f));
-	ASSERT_FALSE(isnan(borderline_inf.f));
+	ASSERT_FALSE(std::isfinite(borderline_inf.f));
+	ASSERT_FALSE(std::isnan(borderline_inf.f));
 
-	ASSERT_FALSE(isfinite(borderline_nan.f));
-	ASSERT_TRUE(isnan(borderline_nan.f));
+	ASSERT_FALSE(std::isfinite(borderline_nan.f));
+	ASSERT_TRUE(std::isnan(borderline_nan.f));
 
 	double borderline_inf_roundtrip = fp16_to_fp32(fp32_to_fp16(borderline_inf.f));
 	double borderline_nan_roundtrip = fp16_to_fp32(fp32_to_fp16(borderline_nan.f));
 
-	EXPECT_FALSE(isfinite(borderline_inf_roundtrip));
-	EXPECT_FALSE(isnan(borderline_inf_roundtrip));
+	EXPECT_FALSE(std::isfinite(borderline_inf_roundtrip));
+	EXPECT_FALSE(std::isnan(borderline_inf_roundtrip));
 
-	EXPECT_FALSE(isfinite(borderline_nan_roundtrip));
-	EXPECT_TRUE(isnan(borderline_nan_roundtrip));
+	EXPECT_FALSE(std::isfinite(borderline_nan_roundtrip));
+	EXPECT_TRUE(std::isnan(borderline_nan_roundtrip));
 }
 
 TEST(FP16Test, Denormals) {
