@@ -765,7 +765,7 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				} else if (!node->strong_one_to_one_sampling) {
 					// If all nodes so far are strong one-to-one, we can put them after
 					// the compute shader (ie., process them on the output).
-					start_new_phase = !node->strong_one_to_one_sampling;
+					start_new_phase = true;
 				} else {
 					phase->is_compute_shader = true;
 					phase->compute_shader_node = deps[i];
@@ -2029,7 +2029,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 			phase->timer_query_objects_running.push_back(timer_query_object);
 		}
 		bool last_phase = (phase_num == num_phases - 1);
-		if (phase_num == num_phases - 1) {
+		if (last_phase) {
 			// Last phase goes to the output the user specified.
 			if (!phase->is_compute_shader) {
 				glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
