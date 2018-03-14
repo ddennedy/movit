@@ -1885,4 +1885,44 @@ TEST(ComputeShaderTest, BounceTextureFromTwoComputeShaders) {
 	expect_equal(expected_data, out_data, 2, 1);
 }
 
+// Requires mipmaps, but is otherwise like IdentityEffect.
+class MipmapNeedingIdentityEffect : public IdentityEffect {
+public:
+	MipmapNeedingIdentityEffect() {}
+	MipmapRequirements needs_mipmaps() const override { return NEEDS_MIPMAPS; }
+	string effect_type_id() const override { return "MipmapNeedingIdentityEffect"; }
+	bool strong_one_to_one_sampling() const override { return true; }
+};
+
+TEST(ComputeShaderTest, StrongOneToOneButStillNotChained) {
+	float data[] = {
+		0.0f, 0.25f, 0.3f, 0.8f,
+		0.75f, 1.0f, 1.0f, 0.2f,
+	};
+	float out_data[8];
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	EffectChainTester tester(nullptr, 4, 2);
+
+	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input1->set_pixel_data(data);
+	tester.get_chain()->add_input(input1);
+	Effect *compute_effect = tester.get_chain()->add_effect(new IdentityComputeEffect());
+
+	FlatInput *input2 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
+	input2->set_pixel_data(data);
+	tester.get_chain()->add_input(input2);
+
+	// Not chained with the compute shader because MipmapNeedingIdentityEffect comes in
+	// the same phase, and compute shaders cannot supply mipmaps.
+	tester.get_chain()->add_effect(new StrongOneToOneAddEffect(), compute_effect, input2);
+	tester.get_chain()->add_effect(new MipmapNeedingIdentityEffect());
+
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+	expect_equal(data, out_data, 4, 2);
+}
+
 }  // namespace movit

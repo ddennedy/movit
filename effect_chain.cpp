@@ -432,6 +432,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 				// strong one-to-one).
 				frag_shader += "(tc) CS_OUTPUT_VAL\n";
 			} else {
+				assert(phase->effect_ids.count(make_pair(input, link_type)));
 				frag_shader += string(" ") + phase->effect_ids[make_pair(input, link_type)] + "\n";
 			}
 		}
@@ -455,6 +456,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 		frag_shader += "\n";
 	}
 	if (phase->is_compute_shader) {
+		assert(phase->effect_ids.count(make_pair(phase->compute_shader_node, IN_SAME_PHASE)));
 		frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(phase->compute_shader_node, IN_SAME_PHASE)] + "\n";
 		if (phase->compute_shader_node == phase->effects.back()) {
 			// No postprocessing.
@@ -463,6 +465,7 @@ void EffectChain::compile_glsl_program(Phase *phase)
 			frag_shader += string("#define CS_POSTPROC ") + phase->effect_ids[make_pair(phase->effects.back(), IN_SAME_PHASE)] + "\n";
 		}
 	} else {
+		assert(phase->effect_ids.count(make_pair(phase->effects.back(), IN_SAME_PHASE)));
 		frag_shader += string("#define INPUT ") + phase->effect_ids[make_pair(phase->effects.back(), IN_SAME_PHASE)] + "\n";
 	}
 
@@ -766,7 +769,7 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 					// If all nodes so far are strong one-to-one, we can put them after
 					// the compute shader (ie., process them on the output).
 					start_new_phase = true;
-				} else {
+				} else if (!start_new_phase) {
 					phase->is_compute_shader = true;
 					phase->compute_shader_node = deps[i];
 				}
@@ -1916,6 +1919,22 @@ void EffectChain::finalize()
 
 	output_dot("step21-split-to-phases.dot");
 
+	// There are some corner cases where we thought we needed to add a dummy
+	// effect, but then it turned out later we didn't (e.g. induces_compute_shader()
+	// didn't see a mipmap conflict coming, which would cause the compute shader
+	// to be split off from the inal phase); if so, remove the extra phase
+	// at the end, since it will give us some trouble during execution.
+	//
+	// TODO: Remove induces_compute_shader() and replace it with precise tracking.
+	if (has_dummy_effect && !phases[phases.size() - 2]->is_compute_shader) {
+		resource_pool->release_glsl_program(phases.back()->glsl_program_num);
+		delete phases.back();
+		phases.pop_back();
+		has_dummy_effect = false;
+	}
+
+	output_dot("step22-dummy-phase-removal.dot");
+
 	assert(phases[0]->inputs.empty());
 	
 	finalized = true;
@@ -2006,6 +2025,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		assert(y == 0);
 		assert(num_phases >= 2);
 		assert(!phases.back()->is_compute_shader);
+		assert(phases[phases.size() - 2]->is_compute_shader);
 		assert(phases.back()->effects.size() == 1);
 		assert(phases.back()->effects[0]->effect->effect_type_id() == "ComputeShaderOutputDisplayEffect");
 
@@ -2032,6 +2052,7 @@ void EffectChain::render(GLuint dest_fbo, const vector<DestinationTexture> &dest
 		if (last_phase) {
 			// Last phase goes to the output the user specified.
 			if (!phase->is_compute_shader) {
+				assert(dest_fbo != (GLuint)-1);
 				glBindFramebuffer(GL_FRAMEBUFFER, dest_fbo);
 				check_error();
 				GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
