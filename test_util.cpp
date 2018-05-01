@@ -100,36 +100,16 @@ Input *EffectChainTester::add_input(const unsigned char *data, MovitPixelFormat 
 
 void EffectChainTester::run(float *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<float>(out_data, NULL, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
-}
-
-void EffectChainTester::run(float *out_data, float *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
-{
-	internal_run<float>(out_data, out_data2, NULL, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
-}
-
-void EffectChainTester::run(float *out_data, float *out_data2, float *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
-{
-	internal_run(out_data, out_data2, out_data3, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
+	internal_run(out_data, GL_FLOAT, format, color_space, gamma_curve, alpha_format);
 }
 
 void EffectChainTester::run(unsigned char *out_data, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
-	internal_run<unsigned char>(out_data, NULL, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
-}
-
-void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
-{
-	internal_run<unsigned char>(out_data, out_data2, NULL, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
-}
-
-void EffectChainTester::run(unsigned char *out_data, unsigned char *out_data2, unsigned char *out_data3, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
-{
-	internal_run(out_data, out_data2, out_data3, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
+	internal_run(out_data, GL_UNSIGNED_BYTE, format, color_space, gamma_curve, alpha_format);
 }
 
 template<class T>
-void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, GLenum internal_format, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
+void EffectChainTester::internal_run(T *out_data, GLenum internal_format, GLenum format, Colorspace color_space, GammaCurve gamma_curve, OutputAlphaFormat alpha_format)
 {
 	if (!finalized) {
 		finalize_chain(color_space, gamma_curve, alpha_format);
@@ -145,87 +125,67 @@ void EffectChainTester::internal_run(T *out_data, T *out_data2, T *out_data3, GL
 		assert(false);
 	}
 
-	unsigned num_outputs;
-	if (out_data3 != NULL) {
-		num_outputs = 3;
-	} else if (out_data2 != NULL) {
-		num_outputs = 2;
-	} else {
-		num_outputs = 1;
-	}
+	GLuint fbo, texnum;
 
-	GLuint fbo, texnum[3];
-
-	glGenTextures(num_outputs, texnum);
+	glGenTextures(1, &texnum);
 	check_error();
-	for (unsigned i = 0; i < num_outputs; ++i) {
-		glBindTexture(GL_TEXTURE_2D, texnum[i]);
-		check_error();
-		glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, NULL);
-		check_error();
-	}
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	check_error();
+	glTexImage2D(GL_TEXTURE_2D, 0, framebuffer_format, width, height, 0, GL_RGBA, type, NULL);
+	check_error();
 
 	glGenFramebuffers(1, &fbo);
 	check_error();
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	check_error();
-	for (unsigned i = 0; i < num_outputs; ++i) {
-		glFramebufferTexture2D(
-			GL_FRAMEBUFFER,
-			GL_COLOR_ATTACHMENT0 + i,
-			GL_TEXTURE_2D,
-			texnum[i],
-			0);
-		check_error();
-	}
-
-	GLenum bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(num_outputs, bufs);
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		texnum,
+		0);
+	check_error();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	check_error();
 
 	chain.render_to_fbo(fbo, width, height);
 
-	T *data[3] = { out_data, out_data2, out_data3 };
-
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	check_error();
-	for (unsigned i = 0; i < num_outputs; ++i) {
-		T *ptr = data[i];
-		glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
-		if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
-			// GLES will only read GL_RGBA.
-			T *temp = new T[width * height * 4];
-			glReadPixels(0, 0, width, height, GL_RGBA, internal_format, temp);
-			check_error();
-			if (format == GL_ALPHA) {
-				for (unsigned i = 0; i < width * height; ++i) {
-					ptr[i] = temp[i * 4 + 3];
-				}
-			} else if (format == GL_BLUE) {
-				for (unsigned i = 0; i < width * height; ++i) {
-					ptr[i] = temp[i * 4 + 2];
-				}
-			} else {
-				for (unsigned i = 0; i < width * height; ++i) {
-					ptr[i] = temp[i * 4];
-				}
+	if (!epoxy_is_desktop_gl() && (format == GL_RED || format == GL_BLUE || format == GL_ALPHA)) {
+		// GLES will only read GL_RGBA.
+		T *temp = new T[width * height * 4];
+		glReadPixels(0, 0, width, height, GL_RGBA, internal_format, temp);
+		check_error();
+		if (format == GL_ALPHA) {
+			for (unsigned i = 0; i < width * height; ++i) {
+				out_data[i] = temp[i * 4 + 3];
 			}
-			delete[] temp;
+		} else if (format == GL_BLUE) {
+			for (unsigned i = 0; i < width * height; ++i) {
+				out_data[i] = temp[i * 4 + 2];
+			}
 		} else {
-			glReadPixels(0, 0, width, height, format, internal_format, ptr);
-			check_error();
+			for (unsigned i = 0; i < width * height; ++i) {
+				out_data[i] = temp[i * 4];
+			}
 		}
-
-		if (format == GL_RGBA) {
-			vertical_flip(ptr, width * 4, height);
-		} else {
-			vertical_flip(ptr, width, height);
-		}
+		delete[] temp;
+	} else {
+		glReadPixels(0, 0, width, height, format, internal_format, out_data);
+		check_error();
 	}
 
 	glDeleteFramebuffers(1, &fbo);
 	check_error();
-	glDeleteTextures(num_outputs, texnum);
+	glDeleteTextures(1, &texnum);
 	check_error();
+
+	if (format == GL_RGBA) {
+		width *= 4;
+	}
+
+	vertical_flip(out_data, width, height);
 }
 
 void EffectChainTester::add_output(const ImageFormat &format, OutputAlphaFormat alpha_format)
@@ -234,9 +194,9 @@ void EffectChainTester::add_output(const ImageFormat &format, OutputAlphaFormat 
 	output_added = true;
 }
 
-void EffectChainTester::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format, const YCbCrFormat &ycbcr_format, YCbCrOutputSplitting output_splitting)
+void EffectChainTester::add_ycbcr_output(const ImageFormat &format, OutputAlphaFormat alpha_format, const YCbCrFormat &ycbcr_format)
 {
-	chain.add_ycbcr_output(format, alpha_format, ycbcr_format, output_splitting);
+	chain.add_ycbcr_output(format, alpha_format, ycbcr_format);
 	output_added = true;
 }
 
