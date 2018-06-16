@@ -192,7 +192,7 @@ string YCbCrInput::output_fragment_shader()
 
 void YCbCrInput::change_ycbcr_format(const YCbCrFormat &ycbcr_format)
 {
-	if (cb_cr_offsets_equal) {
+	if (ycbcr_input_splitting == YCBCR_INPUT_SPLIT_Y_AND_CBCR && cb_cr_offsets_equal) {
 		assert((fabs(ycbcr_format.cb_x_position - ycbcr_format.cr_x_position) < 1e-6) &&
 		       (fabs(ycbcr_format.cb_y_position - ycbcr_format.cr_y_position) < 1e-6));
 	}
