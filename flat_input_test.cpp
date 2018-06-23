@@ -331,9 +331,6 @@ public:
 
         string effect_type_id() const override { return "MipmapNeedingEffect"; }
         string output_fragment_shader() override { return read_file("identity.frag"); }
-
-private:
-        EffectChain *chain;
 };
 
 TEST(FlatInput, ExternalTextureMipmapState) {

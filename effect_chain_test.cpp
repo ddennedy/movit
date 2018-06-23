@@ -791,7 +791,6 @@ public:
 
 private:
 	const MipmapRequirements mipmap_requirements;
-	EffectChain *chain;
 	float offset[2] { 0.0f, 0.0f };
 };
 
