@@ -693,16 +693,15 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 		}
 
 		// Find all the dependencies of this effect, and add them to the stack.
-		vector<Node *> deps = node->incoming_links;
-		assert(node->effect->num_inputs() == deps.size());
-		for (unsigned i = 0; i < deps.size(); ++i) {
+		assert(node->effect->num_inputs() == node->incoming_links.size());
+		for (Node *dep : node->incoming_links) {
 			bool start_new_phase = false;
 
-			Effect::MipmapRequirements save_needs_mipmaps = deps[i]->needs_mipmaps;
+			Effect::MipmapRequirements save_needs_mipmaps = dep->needs_mipmaps;
 
 			if (node->effect->needs_texture_bounce() &&
-			    !deps[i]->effect->is_single_texture() &&
-			    !deps[i]->effect->override_disable_bounce()) {
+			    !dep->effect->is_single_texture() &&
+			    !dep->effect->override_disable_bounce()) {
 				start_new_phase = true;
 			}
 
@@ -717,17 +716,17 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				// if we have diamonds in the graph; if so, choose that.
 				// If not, the effect on the node can also decide (this is the
 				// more common case).
-				Effect::MipmapRequirements dep_mipmaps = deps[i]->needs_mipmaps;
+				Effect::MipmapRequirements dep_mipmaps = dep->needs_mipmaps;
 				if (dep_mipmaps == Effect::DOES_NOT_NEED_MIPMAPS) {
-					if (deps[i]->effect->num_inputs() == 0) {
-						Input *input = static_cast<Input *>(deps[i]->effect);
+					if (dep->effect->num_inputs() == 0) {
+						Input *input = static_cast<Input *>(dep->effect);
 						dep_mipmaps = input->can_supply_mipmaps() ? Effect::DOES_NOT_NEED_MIPMAPS : Effect::CANNOT_ACCEPT_MIPMAPS;
 					} else {
-						dep_mipmaps = deps[i]->effect->needs_mipmaps();
+						dep_mipmaps = dep->effect->needs_mipmaps();
 					}
 				}
 				if (dep_mipmaps == Effect::DOES_NOT_NEED_MIPMAPS) {
-					deps[i]->needs_mipmaps = node->needs_mipmaps;
+					dep->needs_mipmaps = node->needs_mipmaps;
 				} else if (dep_mipmaps != node->needs_mipmaps) {
 					// The dependency cannot supply our mipmap demands
 					// (either because it's an input that can't do mipmaps,
@@ -738,8 +737,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				}
 			}
 
-			if (deps[i]->outgoing_links.size() > 1) {
-				if (!deps[i]->effect->is_single_texture()) {
+			if (dep->outgoing_links.size() > 1) {
+				if (!dep->effect->is_single_texture()) {
 					// More than one effect uses this as the input,
 					// and it is not a texture itself.
 					// The easiest thing to do (and probably also the safest
@@ -747,7 +746,7 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 					// and then let the next passes read from that.
 					start_new_phase = true;
 				} else {
-					assert(deps[i]->effect->num_inputs() == 0);
+					assert(dep->effect->num_inputs() == 0);
 
 					// For textures, we try to be slightly more clever;
 					// if none of our outputs need a bounce, we don't bounce
@@ -756,14 +755,14 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 					// Strictly speaking, we could bounce it for some outputs
 					// and use it directly for others, but the processing becomes
 					// somewhat simpler if the effect is only used in one such way.
-					for (unsigned j = 0; j < deps[i]->outgoing_links.size(); ++j) {
-						Node *rdep = deps[i]->outgoing_links[j];
+					for (unsigned j = 0; j < dep->outgoing_links.size(); ++j) {
+						Node *rdep = dep->outgoing_links[j];
 						start_new_phase |= rdep->effect->needs_texture_bounce();
 					}
 				}
 			}
 
-			if (deps[i]->effect->is_compute_shader()) {
+			if (dep->effect->is_compute_shader()) {
 				if (phase->is_compute_shader) {
 					// Only one compute shader per phase.
 					start_new_phase = true;
@@ -773,14 +772,14 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 					start_new_phase = true;
 				} else if (!start_new_phase) {
 					phase->is_compute_shader = true;
-					phase->compute_shader_node = deps[i];
+					phase->compute_shader_node = dep;
 				}
-			} else if (deps[i]->effect->sets_virtual_output_size()) {
-				assert(deps[i]->effect->changes_output_size());
+			} else if (dep->effect->sets_virtual_output_size()) {
+				assert(dep->effect->changes_output_size());
 				// If the next effect sets a virtual size to rely on OpenGL's
 				// bilinear sampling, we'll really need to break the phase here.
 				start_new_phase = true;
-			} else if (deps[i]->effect->changes_output_size() && !node->one_to_one_sampling) {
+			} else if (dep->effect->changes_output_size() && !node->one_to_one_sampling) {
 				// If the next effect changes size and we don't have one-to-one sampling,
 				// we also need to break here.
 				start_new_phase = true;
@@ -790,17 +789,17 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 				// Since we're starting a new phase here, we don't need to impose any
 				// new demands on this effect. Restore the status we had before we
 				// started looking at it.
-				deps[i]->needs_mipmaps = save_needs_mipmaps;
+				dep->needs_mipmaps = save_needs_mipmaps;
 
-				phase->inputs.push_back(construct_phase(deps[i], completed_effects));
+				phase->inputs.push_back(construct_phase(dep, completed_effects));
 			} else {
-				effects_todo_this_phase.push(deps[i]);
+				effects_todo_this_phase.push(dep);
 
 				// Propagate the one-to-one status down through the dependency.
-				deps[i]->one_to_one_sampling = node->one_to_one_sampling &&
-					deps[i]->effect->one_to_one_sampling();
-				deps[i]->strong_one_to_one_sampling = node->strong_one_to_one_sampling &&
-					deps[i]->effect->strong_one_to_one_sampling();
+				dep->one_to_one_sampling = node->one_to_one_sampling &&
+					dep->effect->one_to_one_sampling();
+				dep->strong_one_to_one_sampling = node->strong_one_to_one_sampling &&
+					dep->effect->strong_one_to_one_sampling();
 			}
 
 			node->incoming_link_type.push_back(start_new_phase ? IN_ANOTHER_PHASE : IN_SAME_PHASE);
