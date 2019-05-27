@@ -3,10 +3,6 @@
 #define YCBCR_ALSO_OUTPUT_RGBA 0
 #endif
 
-uniform sampler2D PREFIX(tex_y);
-uniform sampler2D PREFIX(tex_cb);
-uniform sampler2D PREFIX(tex_cr);
-
 #if YCBCR_ALSO_OUTPUT_RGBA
 vec4[2] FUNCNAME(vec2 tc) {
 #else
