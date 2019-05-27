@@ -698,6 +698,8 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 		for (unsigned i = 0; i < deps.size(); ++i) {
 			bool start_new_phase = false;
 
+			Effect::MipmapRequirements save_needs_mipmaps = deps[i]->needs_mipmaps;
+
 			if (node->effect->needs_texture_bounce() &&
 			    !deps[i]->effect->is_single_texture() &&
 			    !deps[i]->effect->override_disable_bounce()) {
@@ -785,6 +787,11 @@ Phase *EffectChain::construct_phase(Node *output, map<Node *, Phase *> *complete
 			}
 
 			if (start_new_phase) {
+				// Since we're starting a new phase here, we don't need to impose any
+				// new demands on this effect. Restore the status we had before we
+				// started looking at it.
+				deps[i]->needs_mipmaps = save_needs_mipmaps;
+
 				phase->inputs.push_back(construct_phase(deps[i], completed_effects));
 			} else {
 				effects_todo_this_phase.push(deps[i]);

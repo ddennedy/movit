@@ -1924,4 +1924,42 @@ TEST(ComputeShaderTest, StrongOneToOneButStillNotChained) {
 	expect_equal(data, out_data, 4, 2);
 }
 
+TEST(EffectChainTest, BounceResetsMipmapNeeds) {
+	float data[] = {
+		0.0f, 0.25f,
+		0.75f, 1.0f,
+	};
+	float out_data[1];
+
+	ImageFormat format;
+	format.color_space = COLORSPACE_sRGB;
+	format.gamma_curve = GAMMA_LINEAR;
+
+	NonMipmapCapableInput *input = new NonMipmapCapableInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 2, 2);
+	input->set_pixel_data(data);
+
+	RewritingEffect<IdentityEffect> *identity = new RewritingEffect<IdentityEffect>();
+
+	RewritingEffect<ResizeEffect> *downscale = new RewritingEffect<ResizeEffect>();  // Needs mipmaps.
+	ASSERT_TRUE(downscale->effect->set_int("width", 1));
+	ASSERT_TRUE(downscale->effect->set_int("height", 1));
+
+	EffectChainTester tester(nullptr, 1, 1);
+	tester.get_chain()->add_input(input);
+	tester.get_chain()->add_effect(identity);
+	tester.get_chain()->add_effect(downscale);
+	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
+
+	Node *input_node = identity->replaced_node->incoming_links[0];
+
+	// The ResizeEffect needs mipmaps. Normally, that would mean that it should
+	// propagate this tatus down through the IdentityEffect. However, since we
+	// bounce (due to the resize), the dependency breaks there, and we don't
+	// need to bounce again between the input and the IdentityEffect.
+	EXPECT_EQ(input_node->containing_phase,
+	          identity->replaced_node->containing_phase);
+	EXPECT_NE(identity->replaced_node->containing_phase,
+	          downscale->replaced_node->containing_phase);
+}
+
 }  // namespace movit
