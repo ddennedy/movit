@@ -211,6 +211,7 @@ private:
 	struct Texture2D {
 		GLint internal_format;
 		GLsizei width, height;
+		GLsync no_reuse_before = nullptr;
 	};
 
 	// A mapping from texture number to format details. This is filled if the

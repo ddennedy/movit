@@ -42,6 +42,7 @@ ResourcePool::~ResourcePool()
 	for (GLuint free_texture_num : texture_freelist) {
 		assert(texture_formats.count(free_texture_num) != 0);
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
+		glDeleteSync(texture_formats[free_texture_num].no_reuse_before);
 		texture_formats.erase(free_texture_num);
 		glDeleteTextures(1, &free_texture_num);
 		check_error();
@@ -337,7 +338,10 @@ GLuint ResourcePool::create_2d_texture(GLint internal_format, GLsizei width, GLs
 		    format_it->second.height == height) {
 			texture_freelist_bytes -= estimate_texture_size(format_it->second);
 			texture_freelist.erase(freelist_it);
+			GLsync sync = format_it->second.no_reuse_before;
 			pthread_mutex_unlock(&lock);
+			glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+			glDeleteSync(sync);
 			return texture_num;
 		}
 	}
@@ -449,12 +453,14 @@ void ResourcePool::release_2d_texture(GLuint texture_num)
 	texture_freelist.push_front(texture_num);
 	assert(texture_formats.count(texture_num) != 0);
 	texture_freelist_bytes += estimate_texture_size(texture_formats[texture_num]);
+	texture_formats[texture_num].no_reuse_before = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 	while (texture_freelist_bytes > texture_freelist_max_bytes) {
 		GLuint free_texture_num = texture_freelist.back();
 		texture_freelist.pop_back();
 		assert(texture_formats.count(free_texture_num) != 0);
 		texture_freelist_bytes -= estimate_texture_size(texture_formats[free_texture_num]);
+		glDeleteSync(texture_formats[free_texture_num].no_reuse_before);
 		texture_formats.erase(free_texture_num);
 		glDeleteTextures(1, &free_texture_num);
 		check_error();
