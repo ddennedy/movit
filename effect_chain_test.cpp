@@ -129,6 +129,10 @@ TEST_P(WithAndWithoutComputeShaderTest, TopLeftOrigin) {
 	EffectChainTester tester(data, 3, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
 	tester.get_chain()->set_output_origin(OUTPUT_ORIGIN_TOP_LEFT);
 	if (GetParam() == "compute") {
+		if (!movit_compute_shaders_supported) {
+			fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+			return;
+		}
 		tester.get_chain()->add_effect(new IdentityComputeEffect());
 	}
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -1294,6 +1298,10 @@ TEST_P(WithAndWithoutComputeShaderTest, NoBounceWithOneToOneSampling) {
 	RewritingEffect<OneToOneEffect> *effect2 = new RewritingEffect<OneToOneEffect>();
 
 	if (GetParam() == "compute") {
+		if (!movit_compute_shaders_supported) {
+			fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+			return;
+		}
 		tester.get_chain()->add_effect(new IdentityComputeEffect());
 	} else {
 		tester.get_chain()->add_effect(new NonVirtualResizeEffect(size, size));
@@ -1548,6 +1556,10 @@ TEST_P(WithAndWithoutComputeShaderTest, SquareRoot10bitIntermediateAccuracy) {
 	EffectChainTester tester(data, size, 1, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
 	tester.get_chain()->set_intermediate_format(GL_RGB10_A2, SQUARE_ROOT_FRAMEBUFFER_TRANSFORMATION);
 	if (GetParam() == "compute") {
+		if (!movit_compute_shaders_supported) {
+			fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+			return;
+		}
 		tester.get_chain()->add_effect(new IdentityComputeEffect());
 	} else {
 		tester.get_chain()->add_effect(new IdentityEffect());
@@ -1717,6 +1729,10 @@ TEST(ComputeShaderTest, ComputeThenOneToOne) {
 	};
 	float out_data[8];
 	EffectChainTester tester(data, 4, 2, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 	tester.get_chain()->add_effect(new MirrorComputeEffect());
 	tester.get_chain()->add_effect(new OneToOneEffect());
 	tester.run(out_data, GL_RED, COLORSPACE_sRGB, GAMMA_LINEAR);
@@ -1760,6 +1776,10 @@ TEST(ComputeShaderTest, ResizingComputeThenOneToOne) {
 	};
 	float out_data[2];
 	EffectChainTester tester(nullptr, 2, 1);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 	tester.add_input(data, FORMAT_GRAYSCALE, COLORSPACE_sRGB, GAMMA_LINEAR, 4, 2);
 
 	RewritingEffect<Downscale2xComputeEffect> *downscale_effect = new RewritingEffect<Downscale2xComputeEffect>();
@@ -1797,6 +1817,10 @@ TEST(ComputeShaderTest, NoTwoComputeInSamePhase) {
 	format.gamma_curve = GAMMA_LINEAR;
 
 	EffectChainTester tester(nullptr, 2, 1);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 
 	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
 	input1->set_pixel_data(data);
@@ -1830,6 +1854,10 @@ TEST(ComputeShaderTest, NoTwoComputeInSamePhaseIndirect) {
 	format.gamma_curve = GAMMA_LINEAR;
 
 	EffectChainTester tester(nullptr, 2, 1);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 
 	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
 	input1->set_pixel_data(data);
@@ -1866,6 +1894,10 @@ TEST(ComputeShaderTest, BounceTextureFromTwoComputeShaders) {
 	format.gamma_curve = GAMMA_LINEAR;
 
 	EffectChainTester tester(nullptr, 2, 1);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 
 	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
 	input1->set_pixel_data(data);
@@ -1905,6 +1937,10 @@ TEST(ComputeShaderTest, StrongOneToOneButStillNotChained) {
 	format.gamma_curve = GAMMA_LINEAR;
 
 	EffectChainTester tester(nullptr, 4, 2);
+	if (!movit_compute_shaders_supported) {
+		fprintf(stderr, "Skipping test; no support for compile shaders.\n");
+		return;
+	}
 
 	FlatInput *input1 = new FlatInput(format, FORMAT_GRAYSCALE, GL_FLOAT, 4, 2);
 	input1->set_pixel_data(data);
