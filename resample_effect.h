@@ -42,9 +42,8 @@ public:
 
 	virtual void inform_input_size(unsigned input_num, unsigned width, unsigned height);
 
-	virtual std::string output_fragment_shader() {
-		assert(false);
-	}
+	virtual std::string output_fragment_shader();
+
 	virtual void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) {
 		assert(false);
 	}
