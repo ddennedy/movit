@@ -346,6 +346,12 @@ void ResampleEffect::inform_input_size(unsigned input_num, unsigned width, unsig
 	update_size();
 }
 
+string ResampleEffect::output_fragment_shader()
+{
+	assert(false);
+	return string();
+}
+
 void ResampleEffect::update_size()
 {
 	bool ok = true;

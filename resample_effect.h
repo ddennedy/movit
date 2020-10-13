@@ -72,9 +72,7 @@ public:
 
 	void inform_input_size(unsigned input_num, unsigned width, unsigned height) override;
 
-	std::string output_fragment_shader() override {
-		assert(false);
-	}
+	std::string output_fragment_shader() override;
 	void set_gl_state(GLuint glsl_program_num, const std::string &prefix, unsigned *sampler_num) override {
 		assert(false);
 	}
