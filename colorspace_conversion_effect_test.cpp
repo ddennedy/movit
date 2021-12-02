@@ -41,7 +41,7 @@ TEST(ColorspaceConversionEffectTest, sRGB_Primaries) {
 	};
 	float out_data[4 * 5];
 
-	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR);
+	EffectChainTester tester(data, 1, 5, FORMAT_RGBA_POSTMULTIPLIED_ALPHA, COLORSPACE_sRGB, GAMMA_LINEAR, GL_RGBA32F);
 	tester.run(out_data, GL_RGBA, COLORSPACE_XYZ, GAMMA_LINEAR);
 
 	// Black should stay black.
@@ -87,6 +87,21 @@ TEST(ColorspaceConversionEffectTest, sRGB_Primaries) {
 	EXPECT_NEAR(0.150, blue_x, 1e-3);
 	EXPECT_NEAR(0.060, blue_y, 1e-3);
 	EXPECT_FLOAT_EQ(1.0f, out_data[4 * 4 + 3]);
+
+	// The forward matrix should be exactly as specified in the standard,
+	// up to floating-point precision. (We're not compliant with the
+	// inverse matrix, but we should be very close.)
+	EXPECT_FLOAT_EQ(0.4124f, out_data[2 * 4 + 0]);
+	EXPECT_FLOAT_EQ(0.2126f, out_data[2 * 4 + 1]);
+	EXPECT_FLOAT_EQ(0.0193f, out_data[2 * 4 + 2]);
+
+	EXPECT_FLOAT_EQ(0.3576f, out_data[3 * 4 + 0]);
+	EXPECT_FLOAT_EQ(0.7152f, out_data[3 * 4 + 1]);
+	EXPECT_FLOAT_EQ(0.1192f, out_data[3 * 4 + 2]);
+
+	EXPECT_FLOAT_EQ(0.1805f, out_data[4 * 4 + 0]);
+	EXPECT_FLOAT_EQ(0.0722f, out_data[4 * 4 + 1]);
+	EXPECT_FLOAT_EQ(0.9505f, out_data[4 * 4 + 2]);
 }
 
 TEST(ColorspaceConversionEffectTest, Rec601_525_Primaries) {

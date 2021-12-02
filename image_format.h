@@ -27,12 +27,12 @@ enum MovitPixelFormat {
 
 enum Colorspace {
 	COLORSPACE_INVALID = -1,  // For internal use.
-	COLORSPACE_sRGB = 0,
-	COLORSPACE_REC_709 = 0,  // Same as sRGB.
+	COLORSPACE_REC_709 = 0,
 	COLORSPACE_REC_601_525 = 1,
 	COLORSPACE_REC_601_625 = 2,
 	COLORSPACE_XYZ = 3,  // Mostly useful for testing and debugging.
 	COLORSPACE_REC_2020 = 4,
+	COLORSPACE_sRGB = 5,  // Used to be same as COLORSPACE_REC_709.
 };
 
 enum GammaCurve {
