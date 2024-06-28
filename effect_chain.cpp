@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 #include <Eigen/Core>
+#include <cstdint>
 
 #include "alpha_division_effect.h"
 #include "alpha_multiplication_effect.h"
@@ -888,25 +889,25 @@ void EffectChain::output_dot(const char *filename)
 		}
 
 		if (in_phases.empty()) {
-			fprintf(fp, "  n%p [label=\"%s\"];\n", nodes[i], nodes[i]->effect->effect_type_id().c_str());
+			fprintf(fp, "  n%lu [label=\"%s\"];\n", (uintptr_t)nodes[i], nodes[i]->effect->effect_type_id().c_str());
 		} else if (in_phases.size() == 1) {
-			fprintf(fp, "  n%p [label=\"%s\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
-				nodes[i], nodes[i]->effect->effect_type_id().c_str(),
+			fprintf(fp, "  n%lu [label=\"%s\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
+				(uintptr_t)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
 				(in_phases[0] % 8) + 1);
 		} else {
 			// If we had new enough Graphviz, style="wedged" would probably be ideal here.
 			// But alas.
-			fprintf(fp, "  n%p [label=\"%s [in multiple phases]\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
-				nodes[i], nodes[i]->effect->effect_type_id().c_str(),
-				(in_phases[0] % 8) + 1);
+			fprintf(fp, "  n%lu [label=\"%s [in multiple phases]\" style=\"filled\" fillcolor=\"/accent8/%d\"];\n",
+				(uintptr_t)nodes[i], nodes[i]->effect->effect_type_id().c_str(),
+				((in_phases[0] % 8) + 1));
 		}
 
 		char from_node_id[256];
-		snprintf(from_node_id, 256, "n%p", nodes[i]);
+		snprintf(from_node_id, 256, "n%lu", (uintptr_t)nodes[i]);
 
 		for (unsigned j = 0; j < nodes[i]->outgoing_links.size(); ++j) {
 			char to_node_id[256];
-			snprintf(to_node_id, 256, "n%p", nodes[i]->outgoing_links[j]);
+			snprintf(to_node_id, 256, "n%lu", (uintptr_t)nodes[i]->outgoing_links[j]);
 
 			vector<string> labels = get_labels_for_edge(nodes[i], nodes[i]->outgoing_links[j]);
 			output_dot_edge(fp, from_node_id, to_node_id, labels);
