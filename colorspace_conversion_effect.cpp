@@ -38,12 +38,28 @@ Matrix3d ColorspaceConversionEffect::get_xyz_matrix(Colorspace space)
 	if (space == COLORSPACE_XYZ) {
 		return Matrix3d::Identity();
 	}
+	if (space == COLORSPACE_sRGB) {
+		// sRGB is not defined by the color primaries, but by concrete
+		// forward and inverse matrices that are rounded-off versions
+		// of the Rec. 709 color space (see
+		// https://photosauce.net/blog/post/what-makes-srgb-a-special-color-space).
+		// We're not compliant with the inverse matrix, since we'd be
+		// too accurate (sRGB is specified for 8-bit only); however,
+		// results should be very close in practice (and even closer to
+		// scRGB's inverse matrix, which is a higher-accuracy inversion of
+		// the same forward matrix).
+		return Matrix3d{
+			{ 0.4124, 0.3576, 0.1805 },
+			{ 0.2126, 0.7152, 0.0722 },
+			{ 0.0193, 0.1192, 0.9505 }
+		};
+	}
 
 	double x_R, x_G, x_B;
 	double y_R, y_G, y_B;
 
 	switch (space) {
-	case COLORSPACE_REC_709:  // And sRGB.
+	case COLORSPACE_REC_709:
 		x_R = rec709_x_R; x_G = rec709_x_G; x_B = rec709_x_B;
 		y_R = rec709_y_R; y_G = rec709_y_G; y_B = rec709_y_B;
 		break;
