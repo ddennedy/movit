@@ -48,11 +48,11 @@ Matrix3d ColorspaceConversionEffect::get_xyz_matrix(Colorspace space)
 		// results should be very close in practice (and even closer to
 		// scRGB's inverse matrix, which is a higher-accuracy inversion of
 		// the same forward matrix).
-		return Matrix3d{
-			{ 0.4124, 0.3576, 0.1805 },
-			{ 0.2126, 0.7152, 0.0722 },
-			{ 0.0193, 0.1192, 0.9505 }
-		};
+		Matrix3d m;
+		m << 0.4124, 0.3576, 0.1805,
+			 0.2126, 0.7152, 0.0722,
+			 0.0193, 0.1192, 0.9505;
+		return m;
 	}
 
 	double x_R, x_G, x_B;
