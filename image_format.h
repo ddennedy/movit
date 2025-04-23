@@ -43,6 +43,7 @@ enum GammaCurve {
 	GAMMA_REC_709 = 2,  // Same as Rec. 601.
 	GAMMA_REC_2020_10_BIT = 2,  // Same as Rec. 601.
 	GAMMA_REC_2020_12_BIT = 3,
+	GAMMA_HLG = 4,
 };
 
 enum YCbCrLumaCoefficients {

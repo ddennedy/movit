@@ -63,3 +63,4 @@ m4
 configure
 Makefile
 movit.pc
+.qtc_clangd/

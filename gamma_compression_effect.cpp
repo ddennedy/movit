@@ -10,11 +10,14 @@ namespace movit {
 
 GammaCompressionEffect::GammaCompressionEffect()
 	: destination_curve(GAMMA_LINEAR)
+	, uniform_lambda(1.0)
 {
 	register_int("destination_curve", (int *)&destination_curve);
 	register_uniform_float("linear_scale", &uniform_linear_scale);
 	register_uniform_float_array("c", uniform_c, 5);
+	register_uniform_float_array("clog", uniform_c, 5);
 	register_uniform_float("beta", &uniform_beta);
+	register_uniform_float("lambda", &uniform_lambda);
 }
 
 string GammaCompressionEffect::output_fragment_shader()
@@ -24,7 +27,8 @@ string GammaCompressionEffect::output_fragment_shader()
 	}
 	if (destination_curve == GAMMA_sRGB ||
 	    destination_curve == GAMMA_REC_709 ||  // Also includes Rec. 601, and 10-bit Rec. 2020.
-	    destination_curve == GAMMA_REC_2020_12_BIT) {
+	    destination_curve == GAMMA_REC_2020_12_BIT ||
+		destination_curve == GAMMA_HLG) {
 		return read_file("gamma_compression_effect.frag");
 	}
 	assert(false);
@@ -113,6 +117,27 @@ void GammaCompressionEffect::set_gl_state(GLuint glsl_program_num, const string 
 		uniform_c[3] = 0.2919741179;
 		uniform_c[4] = -0.09256205770;
 		uniform_beta = 0.0181;
+	}
+	if (destination_curve == GAMMA_HLG) {
+		// ITU-R BT.2100 HLG OETF
+		// See https://github.com/ampas/aces-core/blob/dev/lib/Lib.Academy.DisplayEncoding.ctl
+		// HLG is defined as a piecewise function:
+		// For 0 <= x <= 1/12: y = sqrt(3 * x) (gamma curve in uniform_c)
+		// For x > 1/12: y = a * log(12 * x - b) + c (logarithmic curve in uniform_clog)
+		// Approximate the curves using a polynomial fit.
+		uniform_linear_scale = 0.0;
+		uniform_beta = 0.0;
+		uniform_lambda = 1.0/12.0;
+		uniform_c[0] = -0.08541688528;
+		uniform_c[1] = 1.292793370;
+		uniform_c[2] = -0.4070417645;
+		uniform_c[3] = 0.2923891828;
+		uniform_c[4] = -0.09273699351;
+		uniform_clog[0] = 0.2956430364;
+		uniform_clog[1] = 3.053077112;
+		uniform_clog[2] = -6.603120539;
+		uniform_clog[3] = 6.900197720;
+		uniform_clog[4] = -2.646605002;
 	}
 }
 

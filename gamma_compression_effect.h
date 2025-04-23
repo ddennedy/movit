@@ -37,7 +37,7 @@ public:
 
 private:
 	GammaCurve destination_curve;
-	float uniform_linear_scale, uniform_c[5], uniform_beta;
+	float uniform_linear_scale, uniform_c[5], uniform_clog[5], uniform_beta, uniform_lambda;
 };
 
 }  // namespace movit

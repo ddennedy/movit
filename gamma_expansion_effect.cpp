@@ -10,11 +10,14 @@ namespace movit {
 
 GammaExpansionEffect::GammaExpansionEffect()
 	: source_curve(GAMMA_LINEAR)
+	, uniform_lambda(1.0)
 {
 	register_int("source_curve", (int *)&source_curve);
 	register_uniform_float("linear_scale", &uniform_linear_scale);
 	register_uniform_float_array("c", uniform_c, 5);
+	register_uniform_float_array("clog", uniform_c, 5);
 	register_uniform_float("beta", &uniform_beta);
+	register_uniform_float("lambda", &uniform_lambda);
 }
 
 string GammaExpansionEffect::output_fragment_shader()
@@ -24,7 +27,8 @@ string GammaExpansionEffect::output_fragment_shader()
 	}
 	if (source_curve == GAMMA_sRGB ||
 	    source_curve == GAMMA_REC_709 ||  // Also includes Rec. 601, and 10-bit Rec. 2020.
-	    source_curve == GAMMA_REC_2020_12_BIT) {
+	    source_curve == GAMMA_REC_2020_12_BIT ||
+		source_curve == GAMMA_HLG) {
 		return read_file("gamma_expansion_effect.frag");
 	}
 	assert(false);
@@ -124,6 +128,26 @@ void GammaExpansionEffect::set_gl_state(GLuint glsl_program_num, const string &p
 		uniform_c[3] = 0.2131291155;
 		uniform_c[4] = -0.04213877222;
 		uniform_beta = 0.0181 * 4.5;
+	}
+	if (source_curve == GAMMA_HLG) {
+		// ITU-R BT.2100 HLG EOTF
+		// HLG is defined as a piecewise function:
+		// For 0 <= x <= 0.5: y = pow(x, 2) / 3 (gamma curve in uniform_c)
+		// For x > 0.5: y = (exp((x - c) / a) + b) / 12 (logarithmic curve in uniform_clog)
+		// Approximate the curve using a polynomial fit.
+		uniform_linear_scale = 0.0;
+		uniform_beta = 0.0;
+		uniform_lambda = 0.5;
+		uniform_c[0] = 0.005137028744;
+		uniform_c[1] = 0.09802596889;
+		uniform_c[2] = 0.7255768864;
+		uniform_c[3] = 0.2135067966;
+		uniform_c[4] = -0.04225094667;
+		uniform_clog[0] = 1.590301927;
+		uniform_clog[1] = -9.971298321;
+		uniform_clog[2] = 24.13609081;
+		uniform_clog[3] = -26.11686805;
+		uniform_clog[4] = 11.36168973;
 	}
 }
 
