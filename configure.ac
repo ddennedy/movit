@@ -12,7 +12,7 @@ PKG_CHECK_MODULES([Eigen3], [eigen3])
 PKG_CHECK_MODULES([epoxy], [epoxy])
 PKG_CHECK_MODULES([FFTW3], [fftw3])
 
-CXXFLAGS="$CXXFLAGS -std=gnu++11"
+CXXFLAGS="$CXXFLAGS -std=gnu++14"
 
 # Needed for unit tests and the demo app.
 with_demo_app=yes

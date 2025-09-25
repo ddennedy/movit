@@ -3,6 +3,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <cassert>
 
 #include "ycbcr.h"
 
