@@ -4,6 +4,7 @@
 // Various utilities.
 
 #include <epoxy/gl.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <Eigen/Core>
