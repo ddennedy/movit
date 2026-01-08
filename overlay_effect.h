@@ -1,12 +1,9 @@
 #ifndef _MOVIT_OVERLAY_EFFECT_H
 #define _MOVIT_OVERLAY_EFFECT_H 1
 
-// Put one image on top of another, using alpha where appropriate.
-// (If both images are the same aspect and the top image has alpha=1.0
-// for all pixels, you will not see anything of the one on the bottom.)
-//
-// This is the “over” operation from Porter-Duff blending, also used
-// when merging layers in e.g. GIMP or Photoshop.
+// Put one image on top of another, using various blending modes.
+// Supports all Qt QPainter::CompositionMode blend modes including
+// Porter-Duff operations and SVG 1.2 blend modes.
 //
 // The first input is the bottom, and the second is the top.
 
@@ -18,6 +15,37 @@ namespace movit {
 
 class OverlayEffect : public Effect {
 public:
+	// Blend modes matching Qt QPainter::CompositionMode
+	enum BlendMode {
+		// Porter-Duff modes
+		BLEND_MODE_SOURCE_OVER,
+		BLEND_MODE_DESTINATION_OVER,
+		BLEND_MODE_CLEAR,
+		BLEND_MODE_SOURCE,
+		BLEND_MODE_DESTINATION,
+		BLEND_MODE_SOURCE_IN,
+		BLEND_MODE_DESTINATION_IN,
+		BLEND_MODE_SOURCE_OUT,
+		BLEND_MODE_DESTINATION_OUT,
+		BLEND_MODE_SOURCE_ATOP,
+		BLEND_MODE_DESTINATION_ATOP,
+		BLEND_MODE_XOR,
+		
+		// SVG 1.2 blend modes
+		BLEND_MODE_PLUS,
+		BLEND_MODE_MULTIPLY,
+		BLEND_MODE_SCREEN,
+		BLEND_MODE_OVERLAY,
+		BLEND_MODE_DARKEN,
+		BLEND_MODE_LIGHTEN,
+		BLEND_MODE_COLOR_DODGE,
+		BLEND_MODE_COLOR_BURN,
+		BLEND_MODE_HARD_LIGHT,
+		BLEND_MODE_SOFT_LIGHT,
+		BLEND_MODE_DIFFERENCE,
+		BLEND_MODE_EXCLUSION
+	};
+
 	OverlayEffect();
 	std::string effect_type_id() const override { return "OverlayEffect"; }
 	std::string output_fragment_shader() override;
@@ -37,6 +65,9 @@ private:
 	// If true, overlays input1 on top of input2 instead of vice versa.
 	// Must be set before finalize.
 	bool swap_inputs;
+	
+	// Blend mode to use (default is source over)
+	int blend_mode;
 };
 
 }  // namespace movit
