@@ -16,6 +16,10 @@
 // Formulas derived from Qt's qcompositionfunctions.cpp
 // Note: All inputs use premultiplied alpha (Sca, Dca format where color * alpha)
 
+// Prevent redefinition when overlay effect is used multiple times
+#ifndef OVERLAY_BLEND_FUNCTIONS
+#define OVERLAY_BLEND_FUNCTIONS
+
 // Helper function for alpha blending
 float mix_alpha(float da, float sa) {
 	return sa + da - sa * da;
@@ -313,6 +317,8 @@ vec4 blend_exclusion(vec4 bottom, vec4 top) {
 	
 	return vec4(result, mix_alpha(da, sa));
 }
+
+#endif // OVERLAY_BLEND_FUNCTIONS
 
 vec4 FUNCNAME(vec2 tc) {
 // SWAP_INPUTS will be #defined to 1 if we want to swap the two inputs,
